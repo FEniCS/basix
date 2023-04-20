@@ -17,11 +17,10 @@
 using namespace basix;
 
 //----------------------------------------------------------------------------
-FiniteElement basix::element::create_hermite(cell::type celltype, int degree,
-                                             bool discontinuous)
+template <std::floating_point T>
+FiniteElement<T> basix::element::create_hermite(cell::type celltype, int degree,
+                                                bool discontinuous)
 {
-  using T = double;
-
   if (celltype != cell::type::interval and celltype != cell::type::triangle
       and celltype != cell::type::tetrahedron)
   {
@@ -99,10 +98,13 @@ FiniteElement basix::element::create_hermite(cell::type celltype, int degree,
 
   sobolev::space space
       = discontinuous ? sobolev::space::L2 : sobolev::space::H2;
-  return FiniteElement(
+  return FiniteElement<T>(
       element::family::Hermite, celltype, degree, {},
       impl::mdspan_t<T, 2>(math::eye<T>(ndofs).data(), ndofs, ndofs), xview,
       Mview, 1, maps::type::identity, space, discontinuous, -1, degree,
       element::lagrange_variant::unset, element::dpc_variant::unset);
 }
+//-----------------------------------------------------------------------------
+template FiniteElement<float> element::create_hermite(cell::type, int, bool);
+template FiniteElement<double> element::create_hermite(cell::type, int, bool);
 //-----------------------------------------------------------------------------

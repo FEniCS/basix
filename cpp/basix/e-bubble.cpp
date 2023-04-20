@@ -15,11 +15,10 @@
 using namespace basix;
 
 //----------------------------------------------------------------------------
-FiniteElement basix::element::create_bubble(cell::type celltype, int degree,
-                                            bool discontinuous)
+template <std::floating_point T>
+FiniteElement<T> basix::element::create_bubble(cell::type celltype, int degree,
+                                               bool discontinuous)
 {
-  using T = double;
-
   if (discontinuous)
     throw std::runtime_error("Cannot create a discontinuous bubble element.");
 
@@ -70,7 +69,7 @@ FiniteElement basix::element::create_bubble(cell::type celltype, int degree,
   const auto [_pts, wts] = quadrature::make_quadrature<T>(
       quadrature::type::Default, celltype, 2 * degree);
   impl::mdspan_t<const T, 2> pts(_pts.data(), wts.size(),
-                               _pts.size() / wts.size());
+                                 _pts.size() / wts.size());
   const auto [_phi, shape] = polyset::tabulate(celltype, degree, 0, pts);
   impl::mdspan_t<const T, 3> phi(_phi.data(), shape);
 
@@ -185,9 +184,12 @@ FiniteElement basix::element::create_bubble(cell::type celltype, int degree,
   impl::mdspan_t<T, 2> wview(wcoeffs.data(), wcoeffs.extents());
   sobolev::space space
       = discontinuous ? sobolev::space::L2 : sobolev::space::H1;
-  return FiniteElement(
+  return FiniteElement<T>(
       element::family::bubble, celltype, degree, {}, wview, impl::to_mdspan(x),
       impl::to_mdspan(M), 0, maps::type::identity, space, discontinuous, -1,
       degree, element::lagrange_variant::unset, element::dpc_variant::unset);
 }
+//-----------------------------------------------------------------------------
+template FiniteElement<float> element::create_bubble(cell::type, int, bool);
+template FiniteElement<double> element::create_bubble(cell::type, int, bool);
 //-----------------------------------------------------------------------------

@@ -230,10 +230,10 @@ Interface to the Basix C++ library.
       .value("CR", element::family::CR)
       .value("Hermite", element::family::Hermite);
 
-  py::class_<FiniteElement>(m, "FiniteElement", "Finite Element")
+  py::class_<FiniteElement<double>>(m, "FiniteElement", "Finite Element")
       .def(
           "tabulate",
-          [](const FiniteElement& self, int n,
+          [](const FiniteElement<double>& self, int n,
              const py::array_t<double, py::array::c_style>& x)
           {
             if (x.ndim() != 2)
@@ -244,10 +244,10 @@ Interface to the Basix C++ library.
             return py::array_t<double>(shape, t.data());
           },
           basix::docstring::FiniteElement__tabulate.c_str())
-      .def("__eq__", &FiniteElement::operator==)
+      .def("__eq__", &FiniteElement<double>::operator==)
       .def(
           "push_forward",
-          [](const FiniteElement& self,
+          [](const FiniteElement<double>& self,
              const py::array_t<double, py::array::c_style>& U,
              const py::array_t<double, py::array::c_style>& J,
              const py::array_t<double, py::array::c_style>& detJ,
@@ -266,7 +266,7 @@ Interface to the Basix C++ library.
           basix::docstring::FiniteElement__push_forward.c_str())
       .def(
           "pull_back",
-          [](const FiniteElement& self,
+          [](const FiniteElement<double>& self,
              const py::array_t<double, py::array::c_style>& u,
              const py::array_t<double, py::array::c_style>& J,
              const py::array_t<double, py::array::c_style>& detJ,
@@ -285,7 +285,7 @@ Interface to the Basix C++ library.
           basix::docstring::FiniteElement__pull_back.c_str())
       .def(
           "apply_dof_transformation",
-          [](const FiniteElement& self, py::array_t<double>& data,
+          [](const FiniteElement<double>& self, py::array_t<double>& data,
              int block_size, std::uint32_t cell_info)
           {
             std::span<double> data_span(data.mutable_data(), data.size());
@@ -295,7 +295,7 @@ Interface to the Basix C++ library.
           basix::docstring::FiniteElement__apply_dof_transformation.c_str())
       .def(
           "apply_dof_transformation_to_transpose",
-          [](const FiniteElement& self, py::array_t<double>& data,
+          [](const FiniteElement<double>& self, py::array_t<double>& data,
              int block_size, std::uint32_t cell_info)
           {
             std::span<double> data_span(data.mutable_data(), data.size());
@@ -307,7 +307,7 @@ Interface to the Basix C++ library.
               .c_str())
       .def(
           "apply_inverse_transpose_dof_transformation",
-          [](const FiniteElement& self, py::array_t<double>& data,
+          [](const FiniteElement<double>& self, py::array_t<double>& data,
              int block_size, std::uint32_t cell_info)
           {
             std::span<double> data_span(data.mutable_data(), data.size());
@@ -319,7 +319,7 @@ Interface to the Basix C++ library.
               FiniteElement__apply_inverse_transpose_dof_transformation.c_str())
       .def(
           "base_transformations",
-          [](const FiniteElement& self)
+          [](const FiniteElement<double>& self)
           {
             auto [t, shape] = self.base_transformations();
             return py::array_t<double>(shape, t.data());
@@ -327,7 +327,7 @@ Interface to the Basix C++ library.
           basix::docstring::FiniteElement__base_transformations.c_str())
       .def(
           "entity_transformations",
-          [](const FiniteElement& self)
+          [](const FiniteElement<double>& self)
           {
             auto t = self.entity_transformations();
             py::dict t2;
@@ -341,18 +341,19 @@ Interface to the Basix C++ library.
           basix::docstring::FiniteElement__entity_transformations.c_str())
       .def(
           "get_tensor_product_representation",
-          [](const FiniteElement& self)
+          [](const FiniteElement<double>& self)
           { return self.get_tensor_product_representation(); },
           basix::docstring::FiniteElement__get_tensor_product_representation
               .c_str())
-      .def_property_readonly("degree", &FiniteElement::degree)
-      .def_property_readonly("highest_degree", &FiniteElement::highest_degree)
+      .def_property_readonly("degree", &FiniteElement<double>::degree)
+      .def_property_readonly("highest_degree",
+                             &FiniteElement<double>::highest_degree)
       .def_property_readonly("highest_complete_degree",
-                             &FiniteElement::highest_complete_degree)
-      .def_property_readonly("cell_type", &FiniteElement::cell_type)
-      .def_property_readonly("dim", &FiniteElement::dim)
+                             &FiniteElement<double>::highest_complete_degree)
+      .def_property_readonly("cell_type", &FiniteElement<double>::cell_type)
+      .def_property_readonly("dim", &FiniteElement<double>::dim)
       .def_property_readonly("num_entity_dofs",
-                             [](const FiniteElement& self)
+                             [](const FiniteElement<double>& self)
                              {
                                // TODO: remove this function. Information can
                                // retrieved from entity_dofs.
@@ -366,9 +367,9 @@ Interface to the Basix C++ library.
                                }
                                return num_edofs;
                              })
-      .def_property_readonly("entity_dofs", &FiniteElement::entity_dofs)
+      .def_property_readonly("entity_dofs", &FiniteElement<double>::entity_dofs)
       .def_property_readonly("num_entity_closure_dofs",
-                             [](const FiniteElement& self)
+                             [](const FiniteElement<double>& self)
                              {
                                // TODO: remove this function. Information can
                                // retrieved from entity_closure_dofs.
@@ -383,60 +384,63 @@ Interface to the Basix C++ library.
                                return num_edofs;
                              })
       .def_property_readonly("entity_closure_dofs",
-                             &FiniteElement::entity_closure_dofs)
+                             &FiniteElement<double>::entity_closure_dofs)
       .def_property_readonly("value_size",
-                             [](const FiniteElement& self)
+                             [](const FiniteElement<double>& self)
                              {
                                return std::accumulate(
                                    self.value_shape().begin(),
                                    self.value_shape().end(), 1,
                                    std::multiplies{});
                              })
-      .def_property_readonly("value_shape", &FiniteElement::value_shape)
-      .def_property_readonly("discontinuous", &FiniteElement::discontinuous)
-      .def_property_readonly("family", &FiniteElement::family)
+      .def_property_readonly("value_shape", &FiniteElement<double>::value_shape)
+      .def_property_readonly("discontinuous",
+                             &FiniteElement<double>::discontinuous)
+      .def_property_readonly("family", &FiniteElement<double>::family)
       .def_property_readonly("lagrange_variant",
-                             &FiniteElement::lagrange_variant)
-      .def_property_readonly("dpc_variant", &FiniteElement::dpc_variant)
+                             &FiniteElement<double>::lagrange_variant)
+      .def_property_readonly("dpc_variant", &FiniteElement<double>::dpc_variant)
       .def_property_readonly(
           "dof_transformations_are_permutations",
-          &FiniteElement::dof_transformations_are_permutations)
-      .def_property_readonly("dof_transformations_are_identity",
-                             &FiniteElement::dof_transformations_are_identity)
+          &FiniteElement<double>::dof_transformations_are_permutations)
+      .def_property_readonly(
+          "dof_transformations_are_identity",
+          &FiniteElement<double>::dof_transformations_are_identity)
       .def_property_readonly("interpolation_is_identity",
-                             &FiniteElement::interpolation_is_identity)
-      .def_property_readonly("map_type", &FiniteElement::map_type)
-      .def_property_readonly("sobolev_space", &FiniteElement::sobolev_space)
+                             &FiniteElement<double>::interpolation_is_identity)
+      .def_property_readonly("map_type", &FiniteElement<double>::map_type)
+      .def_property_readonly("sobolev_space",
+                             &FiniteElement<double>::sobolev_space)
       .def_property_readonly("points",
-                             [](const FiniteElement& self)
+                             [](const FiniteElement<double>& self)
                              {
                                auto& [x, shape] = self.points();
                                return py::array_t<double>(shape, x.data(),
                                                           py::cast(self));
                              })
       .def_property_readonly("interpolation_matrix",
-                             [](const FiniteElement& self)
+                             [](const FiniteElement<double>& self)
                              {
                                auto& [P, shape] = self.interpolation_matrix();
                                return py::array_t<double>(shape, P.data(),
                                                           py::cast(self));
                              })
       .def_property_readonly("dual_matrix",
-                             [](const FiniteElement& self)
+                             [](const FiniteElement<double>& self)
                              {
                                auto& [D, shape] = self.dual_matrix();
                                return py::array_t<double>(shape, D.data(),
                                                           py::cast(self));
                              })
       .def_property_readonly("coefficient_matrix",
-                             [](const FiniteElement& self)
+                             [](const FiniteElement<double>& self)
                              {
                                auto& [P, shape] = self.coefficient_matrix();
                                return py::array_t<double>(shape, P.data(),
                                                           py::cast(self));
                              })
       .def_property_readonly("wcoeffs",
-                             [](const FiniteElement& self)
+                             [](const FiniteElement<double>& self)
                              {
                                auto& [P, shape] = self.wcoeffs();
                                return py::array_t<double>(shape, P.data(),
@@ -444,7 +448,7 @@ Interface to the Basix C++ library.
                              })
       .def_property_readonly(
           "M",
-          [](const FiniteElement& self)
+          [](const FiniteElement<double>& self)
           {
             const std::array<std::vector<std::pair<std::vector<double>,
                                                    std::array<std::size_t, 4>>>,
@@ -465,7 +469,7 @@ Interface to the Basix C++ library.
           })
       .def_property_readonly(
           "x",
-          [](const FiniteElement& self)
+          [](const FiniteElement<double>& self)
           {
             const std::array<std::vector<std::pair<std::vector<double>,
                                                    std::array<std::size_t, 2>>>,
@@ -484,11 +488,13 @@ Interface to the Basix C++ library.
             }
             return x;
           })
-      .def_property_readonly("has_tensor_product_factorisation",
-                             &FiniteElement::has_tensor_product_factorisation)
+      .def_property_readonly(
+          "has_tensor_product_factorisation",
+          &FiniteElement<double>::has_tensor_product_factorisation)
       .def_property_readonly("interpolation_nderivs",
-                             &FiniteElement::interpolation_nderivs)
-      .def_property_readonly("dof_ordering", &FiniteElement::dof_ordering);
+                             &FiniteElement<double>::interpolation_nderivs)
+      .def_property_readonly("dof_ordering",
+                             &FiniteElement<double>::dof_ordering);
 
   py::enum_<element::lagrange_variant>(m, "LagrangeVariant")
       .value("unset", element::lagrange_variant::unset)
@@ -529,7 +535,8 @@ Interface to the Basix C++ library.
              std::vector<py::array_t<double, py::array::c_style>>>& M,
          int interpolation_nderivs, maps::type map_type,
          sobolev::space sobolev_space, bool discontinuous,
-         int highest_complete_degree, int highest_degree) -> FiniteElement
+         int highest_complete_degree,
+         int highest_degree) -> FiniteElement<double>
       {
         if (x.size() != 4)
           throw std::runtime_error("x has the wrong size");
@@ -565,7 +572,7 @@ Interface to the Basix C++ library.
         for (std::size_t i = 0; i < value_shape.size(); ++i)
           _vs[i] = static_cast<std::size_t>(value_shape[i]);
 
-        return basix::create_custom_element(
+        return basix::create_custom_element<double>(
             cell_type, _vs,
             mdspan_t<const double, 2>(wcoeffs.data(), wcoeffs.shape(0),
                                       wcoeffs.shape(1)),
@@ -579,10 +586,11 @@ Interface to the Basix C++ library.
       [](element::family family_name, cell::type cell_name, int degree,
          element::lagrange_variant lvariant, element::dpc_variant dvariant,
          bool discontinuous,
-         const std::vector<int>& dof_ordering) -> FiniteElement
+         const std::vector<int>& dof_ordering) -> FiniteElement<double>
       {
-        return basix::create_element(family_name, cell_name, degree, lvariant,
-                                     dvariant, discontinuous, dof_ordering);
+        return basix::create_element<double>(family_name, cell_name, degree,
+                                             lvariant, dvariant, discontinuous,
+                                             dof_ordering);
       },
       py::arg("family_name"), py::arg("cell_name"), py::arg("degree"),
       py::arg("lagrange_variant") = element::lagrange_variant::unset,
@@ -594,7 +602,8 @@ Interface to the Basix C++ library.
   // Interpolate between elements
   m.def(
       "compute_interpolation_operator",
-      [](const FiniteElement& element_from, const FiniteElement& element_to)
+      [](const FiniteElement<double>& element_from,
+         const FiniteElement<double>& element_to)
           -> const py::array_t<double, py::array::c_style>
       {
         auto [out, shape] = basix::compute_interpolation_operator<double>(

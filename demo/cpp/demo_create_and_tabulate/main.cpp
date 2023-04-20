@@ -14,6 +14,8 @@ namespace stdex = std::experimental;
 template <typename T, std::size_t d>
 using mdspan_t = stdex::mdspan<T, stdex::dextents<std::size_t, d>>;
 
+using T = double;
+
 int main(int argc, char* argv[])
 {
   // Create a degree 4 Lagrange element on a quadrilateral
@@ -28,7 +30,7 @@ int main(int argc, char* argv[])
   auto variant = basix::element::lagrange_variant::equispaced;
 
   // Create the lagrange element
-  basix::FiniteElement lagrange = basix::create_element(
+  basix::FiniteElement lagrange = basix::create_element<T>(
       family, cell_type, k, variant, basix::element::dpc_variant::unset, false);
 
   // Get the number of degrees of freedom for the element
@@ -37,8 +39,7 @@ int main(int argc, char* argv[])
 
   // Create a set of points, and tabulate the basis functions
   // of the Lagrange element at these points.
-  std::vector<double> points
-      = {0.0, 0.0, 0.1, 0.1, 0.2, 0.3, 0.3, 0.6, 0.4, 1.0};
+  std::vector<T> points = {0.0, 0.0, 0.1, 0.1, 0.2, 0.3, 0.3, 0.6, 0.4, 1.0};
 
   auto [tab_data, shape] = lagrange.tabulate(0, points, {points.size() / 2, 2});
 
@@ -47,7 +48,7 @@ int main(int argc, char* argv[])
     std::cout << s << " ";
   std::cout << "]" << std::endl;
 
-  mdspan_t<const double, 4> tab(tab_data.data(), shape);
+  mdspan_t<const T, 4> tab(tab_data.data(), shape);
   std::cout << "Tabulate data (0, 0, :, 0): [ ";
   for (std::size_t i = 0; i < tab.extent(2); ++i)
     std::cout << tab(0, 0, i, 0) << " ";

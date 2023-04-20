@@ -113,7 +113,6 @@ std::vector<bool> facet_orientations(cell::type cell_type);
 /// Get the reference volumes of the facets of a reference cell
 /// @param cell_type Type of cell
 /// @return The volumes of the references associated with each facet
-// FIXME: This could be a std::vector<double>
 template <std::floating_point T>
 std::vector<T> facet_reference_volumes(cell::type cell_type);
 

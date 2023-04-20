@@ -99,7 +99,7 @@ map_points(const cell::type celltype0, const cell::type celltype1,
 template <std::floating_point T>
 std::tuple<std::vector<std::vector<T>>, std::array<std::size_t, 2>,
            std::vector<std::vector<T>>, std::array<std::size_t, 4>>
-moments::make_integral_moments(const FiniteElement& V, cell::type celltype,
+moments::make_integral_moments(const FiniteElement<T>& V, cell::type celltype,
                                std::size_t value_size, int q_deg)
 {
   const cell::type sub_celltype = V.cell_type();
@@ -187,8 +187,9 @@ moments::make_integral_moments(const FiniteElement& V, cell::type celltype,
 template <std::floating_point T>
 std::tuple<std::vector<std::vector<T>>, std::array<std::size_t, 2>,
            std::vector<std::vector<T>>, std::array<std::size_t, 4>>
-moments::make_dot_integral_moments(const FiniteElement& V, cell::type celltype,
-                                   std::size_t value_size, int q_deg)
+moments::make_dot_integral_moments(const FiniteElement<T>& V,
+                                   cell::type celltype, std::size_t value_size,
+                                   int q_deg)
 {
   const cell::type sub_celltype = V.cell_type();
   const std::size_t entity_dim = cell::topological_dimension(sub_celltype);
@@ -260,7 +261,7 @@ moments::make_dot_integral_moments(const FiniteElement& V, cell::type celltype,
 template <std::floating_point T>
 std::tuple<std::vector<std::vector<T>>, std::array<std::size_t, 2>,
            std::vector<std::vector<T>>, std::array<std::size_t, 4>>
-moments::make_tangent_integral_moments(const FiniteElement& V,
+moments::make_tangent_integral_moments(const FiniteElement<T>& V,
                                        cell::type celltype,
                                        std::size_t value_size, int q_deg)
 {
@@ -332,7 +333,7 @@ moments::make_tangent_integral_moments(const FiniteElement& V,
 template <std::floating_point T>
 std::tuple<std::vector<std::vector<T>>, std::array<std::size_t, 2>,
            std::vector<std::vector<T>>, std::array<std::size_t, 4>>
-moments::make_normal_integral_moments(const FiniteElement& V,
+moments::make_normal_integral_moments(const FiniteElement<T>& V,
                                       cell::type celltype,
                                       std::size_t value_size, int q_deg)
 {
@@ -424,56 +425,45 @@ moments::make_normal_integral_moments(const FiniteElement& V,
   return {pb, pshape, Db, Dshape};
 }
 //----------------------------------------------------------------------------
-
 /// @cond
-// Explicit instantiation for double and float
-// template std::tuple<std::vector<std::vector<float>>, std::array<std::size_t,
-// 2>,
-//                     std::vector<std::vector<float>>, std::array<std::size_t,
-//                     4>>
-// moments::make_integral_moments(const FiniteElement&, cell::type, std::size_t,
-//                                int);
+template std::tuple<std::vector<std::vector<float>>, std::array<std::size_t, 2>,
+                    std::vector<std::vector<float>>, std::array<std::size_t, 4>>
+moments::make_integral_moments(const FiniteElement<float>&, cell::type,
+                               std::size_t, int);
 template std::tuple<
     std::vector<std::vector<double>>, std::array<std::size_t, 2>,
     std::vector<std::vector<double>>, std::array<std::size_t, 4>>
-moments::make_integral_moments(const FiniteElement&, cell::type, std::size_t,
-                               int);
+moments::make_integral_moments(const FiniteElement<double>&, cell::type,
+                               std::size_t, int);
 
-// template std::tuple<std::vector<std::vector<float>>, std::array<std::size_t,
-// 2>,
-//                     std::vector<std::vector<float>>, std::array<std::size_t,
-//                     4>>
-// moments::make_dot_integral_moments(const FiniteElement&, cell::type,
-//                                    std::size_t, int);
+template std::tuple<std::vector<std::vector<float>>, std::array<std::size_t, 2>,
+                    std::vector<std::vector<float>>, std::array<std::size_t, 4>>
+moments::make_dot_integral_moments(const FiniteElement<float>&, cell::type,
+                                   std::size_t, int);
 template std::tuple<
     std::vector<std::vector<double>>, std::array<std::size_t, 2>,
     std::vector<std::vector<double>>, std::array<std::size_t, 4>>
-moments::make_dot_integral_moments(const FiniteElement&, cell::type,
+moments::make_dot_integral_moments(const FiniteElement<double>&, cell::type,
                                    std::size_t, int);
 
-// template std::tuple<std::vector<std::vector<float>>, std::array<std::size_t,
-// 2>,
-//                     std::vector<std::vector<float>>, std::array<std::size_t,
-//                     4>>
-// moments::make_tangent_integral_moments(const FiniteElement&, cell::type,
-//                                        std::size_t, int);
+template std::tuple<std::vector<std::vector<float>>, std::array<std::size_t, 2>,
+                    std::vector<std::vector<float>>, std::array<std::size_t, 4>>
+moments::make_tangent_integral_moments(const FiniteElement<float>&, cell::type,
+                                       std::size_t, int);
 template std::tuple<
     std::vector<std::vector<double>>, std::array<std::size_t, 2>,
     std::vector<std::vector<double>>, std::array<std::size_t, 4>>
-moments::make_tangent_integral_moments(const FiniteElement&, cell::type,
+moments::make_tangent_integral_moments(const FiniteElement<double>&, cell::type,
                                        std::size_t, int);
 
-// template std::tuple<std::vector<std::vector<float>>, std::array<std::size_t,
-// 2>,
-//                     std::vector<std::vector<float>>, std::array<std::size_t,
-//                     4>>
-// moments::make_normal_integral_moments(const FiniteElement&, cell::type,
-//                                       std::size_t, int);
+template std::tuple<std::vector<std::vector<float>>, std::array<std::size_t, 2>,
+                    std::vector<std::vector<float>>, std::array<std::size_t, 4>>
+moments::make_normal_integral_moments(const FiniteElement<float>&, cell::type,
+                                      std::size_t, int);
 template std::tuple<
     std::vector<std::vector<double>>, std::array<std::size_t, 2>,
     std::vector<std::vector<double>>, std::array<std::size_t, 4>>
-moments::make_normal_integral_moments(const FiniteElement&, cell::type,
+moments::make_normal_integral_moments(const FiniteElement<double>&, cell::type,
                                       std::size_t, int);
 /// @endcond
-
 //----------------------------------------------------------------------------

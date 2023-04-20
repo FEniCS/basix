@@ -16,8 +16,8 @@ using mdspan_t = stdex::mdspan<T, stdex::dextents<std::size_t, D>>;
 //----------------------------------------------------------------------------
 template <std::floating_point T>
 std::pair<std::vector<T>, std::array<std::size_t, 2>>
-basix::compute_interpolation_operator(const FiniteElement& element_from,
-                                      const FiniteElement& element_to)
+basix::compute_interpolation_operator(const FiniteElement<T>& element_from,
+                                      const FiniteElement<T>& element_to)
 {
   if (element_from.cell_type() != element_to.cell_type())
   {
@@ -94,16 +94,12 @@ basix::compute_interpolation_operator(const FiniteElement& element_from,
   }
 }
 //----------------------------------------------------------------------------
-
 /// @cond
-// Explicit instantiation for double and float
-// template std::pair<std::vector<float>, std::array<std::size_t, 2>>
-// basix::compute_interpolation_operator(const FiniteElement&,
-//                                       const FiniteElement&);
+template std::pair<std::vector<float>, std::array<std::size_t, 2>>
+basix::compute_interpolation_operator(const FiniteElement<float>&,
+                                      const FiniteElement<float>&);
 template std::pair<std::vector<double>, std::array<std::size_t, 2>>
-basix::compute_interpolation_operator(const FiniteElement&,
-                                      const FiniteElement&);
-
+basix::compute_interpolation_operator(const FiniteElement<double>&,
+                                      const FiniteElement<double>&);
 /// @endcond
-
 //-----------------------------------------------------------------------------

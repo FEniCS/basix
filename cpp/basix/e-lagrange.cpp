@@ -206,7 +206,7 @@ std::pair<std::array<std::vector<impl::mdarray_t<T, 2>>, 4>,
           std::array<std::vector<impl::mdarray_t<T, 4>>, 4>>
 vtk_data_interval(std::size_t degree)
 {
-  // constexpr std::size_t tdim = 1;
+  const T deg = static_cast<T>(degree);
   const std::vector<std::vector<std::vector<int>>> topology
       = cell::topology(cell::type::interval);
 
@@ -222,7 +222,7 @@ vtk_data_interval(std::size_t degree)
   // Points on interval
   auto& _x = x[1].emplace_back(degree - 1, 1);
   for (std::size_t i = 1; i < degree; ++i)
-    _x(i - 1, 0) = i / static_cast<T>(degree);
+    _x(i - 1, 0) = i / deg;
 
   auto& _M = M[1].emplace_back(degree - 1, 1, degree - 1, 1);
   for (std::size_t i = 0; i < degree - 1; ++i)
@@ -236,6 +236,7 @@ std::pair<std::array<std::vector<impl::mdarray_t<T, 2>>, 4>,
           std::array<std::vector<impl::mdarray_t<T, 4>>, 4>>
 vtk_data_triangle(std::size_t degree)
 {
+  const T deg = static_cast<T>(degree);
   const std::vector<std::vector<std::vector<int>>> topology
       = cell::topology(cell::type::triangle);
 
@@ -260,14 +261,14 @@ vtk_data_triangle(std::size_t degree)
 
     for (std::size_t i = 1; i < degree; ++i)
     {
-      xview[0](i - 1, 0) = i / static_cast<T>(degree);
+      xview[0](i - 1, 0) = i / deg;
       xview[0](i - 1, 1) = 0;
 
-      xview[1](i - 1, 0) = (degree - i) / static_cast<T>(degree);
-      xview[1](i - 1, 1) = i / static_cast<T>(degree);
+      xview[1](i - 1, 0) = (degree - i) / deg;
+      xview[1](i - 1, 1) = i / deg;
 
       xview[2](i - 1, 0) = 0;
-      xview[2](i - 1, 1) = (degree - i) / static_cast<T>(degree);
+      xview[2](i - 1, 1) = (degree - i) / deg;
     }
 
     for (int i = 0; i < 3; ++i)
@@ -300,6 +301,7 @@ std::pair<std::array<std::vector<impl::mdarray_t<T, 2>>, 4>,
           std::array<std::vector<impl::mdarray_t<T, 4>>, 4>>
 vtk_data_quadrilateral(std::size_t degree)
 {
+  const T deg = static_cast<T>(degree);
   const std::vector<std::vector<std::vector<int>>> topology
       = cell::topology(cell::type::quadrilateral);
 
@@ -325,17 +327,17 @@ vtk_data_quadrilateral(std::size_t degree)
 
     for (std::size_t i = 1; i < degree; ++i)
     {
-      xview[0](i - 1, 0) = i / static_cast<T>(degree);
+      xview[0](i - 1, 0) = i / deg;
       xview[0](i - 1, 1) = 0;
 
       xview[1](i - 1, 0) = 1;
-      xview[1](i - 1, 1) = i / static_cast<T>(degree);
+      xview[1](i - 1, 1) = i / deg;
 
-      xview[2](i - 1, 0) = i / static_cast<T>(degree);
+      xview[2](i - 1, 0) = i / deg;
       xview[2](i - 1, 1) = 1;
 
       xview[3](i - 1, 0) = 0;
-      xview[3](i - 1, 1) = i / static_cast<T>(degree);
+      xview[3](i - 1, 1) = i / deg;
     }
 
     for (int i = 0; i < 4; ++i)
@@ -354,8 +356,8 @@ vtk_data_quadrilateral(std::size_t degree)
     {
       for (std::size_t i = 1; i < degree; ++i)
       {
-        _x(n, 0) = i / static_cast<T>(degree);
-        _x(n, 1) = j / static_cast<T>(degree);
+        _x(n, 0) = i / deg;
+        _x(n, 1) = j / deg;
         ++n;
       }
     }
@@ -373,6 +375,8 @@ std::pair<std::array<std::vector<impl::mdarray_t<T, 2>>, 4>,
           std::array<std::vector<impl::mdarray_t<T, 4>>, 4>>
 vtk_data_tetrahedron(std::size_t degree)
 {
+  const T deg = static_cast<T>(degree);
+
   const std::vector<std::vector<std::vector<int>>> topology
       = cell::topology(cell::type::tetrahedron);
 
@@ -398,29 +402,29 @@ vtk_data_tetrahedron(std::size_t degree)
 
     for (std::size_t i = 1; i < degree; ++i)
     {
-      xview[0](i - 1, 0) = i / static_cast<T>(degree);
+      xview[0](i - 1, 0) = i / deg;
       xview[0](i - 1, 1) = 0;
       xview[0](i - 1, 2) = 0;
 
-      xview[1](i - 1, 0) = (degree - i) / static_cast<T>(degree);
-      xview[1](i - 1, 1) = i / static_cast<T>(degree);
+      xview[1](i - 1, 0) = (degree - i) / deg;
+      xview[1](i - 1, 1) = i / deg;
       xview[1](i - 1, 2) = 0;
 
       xview[2](i - 1, 0) = 0;
-      xview[2](i - 1, 1) = (degree - i) / static_cast<T>(degree);
+      xview[2](i - 1, 1) = (degree - i) / deg;
       xview[2](i - 1, 2) = 0;
 
       xview[3](i - 1, 0) = 0;
       xview[3](i - 1, 1) = 0;
-      xview[3](i - 1, 2) = i / static_cast<T>(degree);
+      xview[3](i - 1, 2) = i / deg;
 
-      xview[4](i - 1, 0) = (degree - i) / static_cast<T>(degree);
+      xview[4](i - 1, 0) = (degree - i) / deg;
       xview[4](i - 1, 1) = 0;
-      xview[4](i - 1, 2) = i / static_cast<T>(degree);
+      xview[4](i - 1, 2) = i / deg;
 
       xview[5](i - 1, 0) = 0;
-      xview[5](i - 1, 1) = (degree - i) / static_cast<T>(degree);
-      xview[5](i - 1, 2) = i / static_cast<T>(degree);
+      xview[5](i - 1, 1) = (degree - i) / deg;
+      xview[5](i - 1, 2) = i / deg;
     }
 
     for (int i = 0; i < 6; ++i)
@@ -502,6 +506,7 @@ std::pair<std::array<std::vector<impl::mdarray_t<T, 2>>, 4>,
           std::array<std::vector<impl::mdarray_t<T, 4>>, 4>>
 vtk_data_hexahedron(std::size_t degree)
 {
+  const T deg = static_cast<T>(degree);
   const std::vector<std::vector<std::vector<int>>> topology
       = cell::topology(cell::type::hexahedron);
 
@@ -531,53 +536,53 @@ vtk_data_hexahedron(std::size_t degree)
 
     for (std::size_t i = 1; i < degree; ++i)
     {
-      xview[0](i - 1, 0) = i / static_cast<T>(degree);
+      xview[0](i - 1, 0) = i / deg;
       xview[0](i - 1, 1) = 0;
       xview[0](i - 1, 2) = 0;
 
       xview[1](i - 1, 0) = 1;
-      xview[1](i - 1, 1) = i / static_cast<T>(degree);
+      xview[1](i - 1, 1) = i / deg;
       xview[1](i - 1, 2) = 0;
 
-      xview[2](i - 1, 0) = i / static_cast<T>(degree);
+      xview[2](i - 1, 0) = i / deg;
       xview[2](i - 1, 1) = 1;
       xview[2](i - 1, 2) = 0;
 
       xview[3](i - 1, 0) = 0;
-      xview[3](i - 1, 1) = i / static_cast<T>(degree);
+      xview[3](i - 1, 1) = i / deg;
       xview[3](i - 1, 2) = 0;
 
-      xview[4](i - 1, 0) = i / static_cast<T>(degree);
+      xview[4](i - 1, 0) = i / deg;
       xview[4](i - 1, 1) = 0;
       xview[4](i - 1, 2) = 1;
 
       xview[5](i - 1, 0) = 1;
-      xview[5](i - 1, 1) = i / static_cast<T>(degree);
+      xview[5](i - 1, 1) = i / deg;
       xview[5](i - 1, 2) = 1;
 
-      xview[6](i - 1, 0) = i / static_cast<T>(degree);
+      xview[6](i - 1, 0) = i / deg;
       xview[6](i - 1, 1) = 1;
       xview[6](i - 1, 2) = 1;
 
       xview[7](i - 1, 0) = 0;
-      xview[7](i - 1, 1) = i / static_cast<T>(degree);
+      xview[7](i - 1, 1) = i / deg;
       xview[7](i - 1, 2) = 1;
 
       xview[8](i - 1, 0) = 0;
       xview[8](i - 1, 1) = 0;
-      xview[8](i - 1, 2) = i / static_cast<T>(degree);
+      xview[8](i - 1, 2) = i / deg;
 
       xview[9](i - 1, 0) = 1;
       xview[9](i - 1, 1) = 0;
-      xview[9](i - 1, 2) = i / static_cast<T>(degree);
+      xview[9](i - 1, 2) = i / deg;
 
       xview[10](i - 1, 0) = 1;
       xview[10](i - 1, 1) = 1;
-      xview[10](i - 1, 2) = i / static_cast<T>(degree);
+      xview[10](i - 1, 2) = i / deg;
 
       xview[11](i - 1, 0) = 0;
       xview[11](i - 1, 1) = 1;
-      xview[11](i - 1, 2) = i / static_cast<T>(degree);
+      xview[11](i - 1, 2) = i / deg;
     }
 
     for (int i = 0; i < 12; ++i)
@@ -603,27 +608,27 @@ vtk_data_hexahedron(std::size_t degree)
       for (std::size_t i = 1; i < degree; ++i)
       {
         xview[0](n, 0) = 0;
-        xview[0](n, 1) = i / static_cast<T>(degree);
-        xview[0](n, 2) = j / static_cast<T>(degree);
+        xview[0](n, 1) = i / deg;
+        xview[0](n, 2) = j / deg;
 
         xview[1](n, 0) = 1;
-        xview[1](n, 1) = i / static_cast<T>(degree);
-        xview[1](n, 2) = j / static_cast<T>(degree);
+        xview[1](n, 1) = i / deg;
+        xview[1](n, 2) = j / deg;
 
-        xview[2](n, 0) = i / static_cast<T>(degree);
+        xview[2](n, 0) = i / deg;
         xview[2](n, 1) = 0;
-        xview[2](n, 2) = j / static_cast<T>(degree);
+        xview[2](n, 2) = j / deg;
 
-        xview[3](n, 0) = i / static_cast<T>(degree);
+        xview[3](n, 0) = i / deg;
         xview[3](n, 1) = 1;
-        xview[3](n, 2) = j / static_cast<T>(degree);
+        xview[3](n, 2) = j / deg;
 
-        xview[4](n, 0) = i / static_cast<T>(degree);
-        xview[4](n, 1) = j / static_cast<T>(degree);
+        xview[4](n, 0) = i / deg;
+        xview[4](n, 1) = j / deg;
         xview[4](n, 2) = 0;
 
-        xview[5](n, 0) = i / static_cast<T>(degree);
-        xview[5](n, 1) = j / static_cast<T>(degree);
+        xview[5](n, 0) = i / deg;
+        xview[5](n, 1) = j / deg;
         xview[5](n, 2) = 1;
 
         ++n;
@@ -649,9 +654,9 @@ vtk_data_hexahedron(std::size_t degree)
       {
         for (std::size_t i = 1; i < degree; ++i)
         {
-          _x(n, 0) = i / static_cast<T>(degree);
-          _x(n, 1) = j / static_cast<T>(degree);
-          _x(n, 2) = k / static_cast<T>(degree);
+          _x(n, 0) = i / deg;
+          _x(n, 1) = j / deg;
+          _x(n, 2) = k / deg;
           ++n;
         }
       }
@@ -748,10 +753,10 @@ variant_to_lattice(cell::type celltype, element::lagrange_variant variant)
 }
 //-----------------------------------------------------------------------------
 template <std::floating_point T>
-FiniteElement create_d_lagrange(cell::type celltype, int degree,
-                                element::lagrange_variant variant,
-                                lattice::type lattice_type,
-                                lattice::simplex_method simplex_method)
+FiniteElement<T> create_d_lagrange(cell::type celltype, int degree,
+                                   element::lagrange_variant variant,
+                                   lattice::type lattice_type,
+                                   lattice::simplex_method simplex_method)
 {
   if (celltype == cell::type::prism or celltype == cell::type::pyramid)
   {
@@ -798,7 +803,8 @@ FiniteElement create_d_lagrange(cell::type celltype, int degree,
       element::dpc_variant::unset);
 }
 //----------------------------------------------------------------------------
-std::vector<std::tuple<std::vector<FiniteElement>, std::vector<int>>>
+template <std::floating_point T>
+std::vector<std::tuple<std::vector<FiniteElement<T>>, std::vector<int>>>
 create_tensor_product_factors(cell::type celltype, int degree,
                               element::lagrange_variant variant)
 {
@@ -806,8 +812,8 @@ create_tensor_product_factors(cell::type celltype, int degree,
   {
   case cell::type::quadrilateral:
   {
-    FiniteElement sub_element
-        = element::create_lagrange(cell::type::interval, degree, variant, true);
+    FiniteElement<T> sub_element = element::create_lagrange<T>(
+        cell::type::interval, degree, variant, true);
     std::vector<int> perm((degree + 1) * (degree + 1));
     if (degree == 0)
       perm[0] = 0;
@@ -835,8 +841,8 @@ create_tensor_product_factors(cell::type celltype, int degree,
   }
   case cell::type::hexahedron:
   {
-    FiniteElement sub_element
-        = element::create_lagrange(cell::type::interval, degree, variant, true);
+    FiniteElement<T> sub_element = element::create_lagrange<T>(
+        cell::type::interval, degree, variant, true);
     std::vector<int> perm((degree + 1) * (degree + 1) * (degree + 1));
     if (degree == 0)
       perm[0] = 0;
@@ -901,8 +907,8 @@ create_tensor_product_factors(cell::type celltype, int degree,
 }
 //----------------------------------------------------------------------------
 template <std::floating_point T>
-FiniteElement create_vtk_element(cell::type celltype, std::size_t degree,
-                                 bool discontinuous)
+FiniteElement<T> create_vtk_element(cell::type celltype, std::size_t degree,
+                                    bool discontinuous)
 {
   if (celltype == cell::type::point)
     throw std::runtime_error("Invalid celltype");
@@ -963,8 +969,8 @@ FiniteElement create_vtk_element(cell::type celltype, std::size_t degree,
 }
 //-----------------------------------------------------------------------------
 template <std::floating_point T>
-FiniteElement create_legendre(cell::type celltype, int degree,
-                              bool discontinuous)
+FiniteElement<T> create_legendre(cell::type celltype, int degree,
+                                 bool discontinuous)
 {
   if (!discontinuous)
     throw std::runtime_error("Legendre variant must be discontinuous");
@@ -982,7 +988,7 @@ FiniteElement create_legendre(cell::type celltype, int degree,
       quadrature::type::Default, celltype, degree * 2);
   assert(!wts.empty());
   impl::mdspan_t<const T, 2> pts(_pts.data(), wts.size(),
-                               _pts.size() / wts.size());
+                                 _pts.size() / wts.size());
   const auto [_phi, pshape] = polynomials::tabulate(polynomials::type::legendre,
                                                     celltype, degree, pts);
   impl::mdspan_t<const T, 2> phi(_phi.data(), pshape);
@@ -1004,7 +1010,7 @@ FiniteElement create_legendre(cell::type celltype, int degree,
 
   sobolev::space space
       = discontinuous ? sobolev::space::L2 : sobolev::space::H1;
-  return FiniteElement(
+  return FiniteElement<T>(
       element::family::P, celltype, degree, {},
       impl::mdspan_t<T, 2>(math::eye<T>(ndofs).data(), ndofs, ndofs),
       impl::to_mdspan(x), impl::to_mdspan(M), 0, maps::type::identity, space,
@@ -1013,8 +1019,8 @@ FiniteElement create_legendre(cell::type celltype, int degree,
 }
 //-----------------------------------------------------------------------------
 template <std::floating_point T>
-FiniteElement create_bernstein(cell::type celltype, int degree,
-                               bool discontinuous)
+FiniteElement<T> create_bernstein(cell::type celltype, int degree,
+                                  bool discontinuous)
 {
   assert(degree > 0);
   if (celltype != cell::type::interval and celltype != cell::type::triangle
@@ -1112,7 +1118,7 @@ FiniteElement create_bernstein(cell::type celltype, int degree,
           quadrature::type::Default, ct[d], degree * 2);
       assert(!wts.empty());
       impl::mdspan_t<const T, 2> pts(_pts.data(), wts.size(),
-                                   _pts.size() / wts.size());
+                                     _pts.size() / wts.size());
 
       const auto [_phi, pshape] = polynomials::tabulate(
           polynomials::type::legendre, ct[d], degree, pts);
@@ -1175,7 +1181,7 @@ FiniteElement create_bernstein(cell::type celltype, int degree,
   sobolev::space space
       = discontinuous ? sobolev::space::L2 : sobolev::space::H1;
   const std::size_t ndofs = polyset::dim(celltype, degree);
-  return FiniteElement(
+  return FiniteElement<T>(
       element::family::P, celltype, degree, {},
       impl::mdspan_t<T, 2>(math::eye<T>(ndofs).data(), ndofs, ndofs),
       impl::to_mdspan(x), impl::to_mdspan(M), 0, maps::type::identity, space,
@@ -1186,13 +1192,12 @@ FiniteElement create_bernstein(cell::type celltype, int degree,
 } // namespace
 
 //----------------------------------------------------------------------------
-FiniteElement basix::element::create_lagrange(cell::type celltype, int degree,
-                                              lagrange_variant variant,
-                                              bool discontinuous,
-                                              std::vector<int> dof_ordering)
+template <std::floating_point T>
+FiniteElement<T>
+basix::element::create_lagrange(cell::type celltype, int degree,
+                                lagrange_variant variant, bool discontinuous,
+                                std::vector<int> dof_ordering)
 {
-  using T = double;
-
   if (celltype == cell::type::point)
   {
     if (degree != 0)
@@ -1202,7 +1207,7 @@ FiniteElement basix::element::create_lagrange(cell::type celltype, int degree,
     std::array<std::vector<impl::mdarray_t<T, 4>>, 4> M;
     x[0].emplace_back(1, 0);
     M[0].emplace_back(std::vector<T>{1.0}, 1, 1, 1, 1);
-    return FiniteElement(
+    return FiniteElement<T>(
         family::P, cell::type::point, 0, {},
         impl::mdspan_t<T, 2>(math::eye<T>(1).data(), 1, 1), impl::to_mdspan(x),
         impl::to_mdspan(M), 0, maps::type::identity, sobolev::space::H1,
@@ -1318,7 +1323,7 @@ FiniteElement basix::element::create_lagrange(cell::type celltype, int degree,
           impl::mdspan_t<const T, 2> lattice(pt.data(), shape);
           std::span<const T> x0(entity_x.data(), entity_x_shape[1]);
           impl::mdspan_t<const T, 2> entity_x_view(entity_x.data(),
-                                                 entity_x_shape);
+                                                   entity_x_shape);
 
           auto& _x = x[dim].emplace_back(shape[0], entity_x_shape[1]);
           for (std::size_t i = 0; i < shape[0]; ++i)
@@ -1356,11 +1361,18 @@ FiniteElement basix::element::create_lagrange(cell::type celltype, int degree,
   sobolev::space space
       = discontinuous ? sobolev::space::L2 : sobolev::space::H1;
   auto tensor_factors
-      = create_tensor_product_factors(celltype, degree, variant);
-  return FiniteElement(
+      = create_tensor_product_factors<T>(celltype, degree, variant);
+  return FiniteElement<T>(
       family::P, celltype, degree, {},
       impl::mdspan_t<T, 2>(math::eye<T>(ndofs).data(), ndofs, ndofs), xview,
       Mview, 0, maps::type::identity, space, discontinuous, degree, degree,
       variant, dpc_variant::unset, tensor_factors, dof_ordering);
 }
+//-----------------------------------------------------------------------------
+template FiniteElement<float> element::create_lagrange(cell::type, int,
+                                                       lagrange_variant, bool,
+                                                       std::vector<int>);
+template FiniteElement<double> element::create_lagrange(cell::type, int,
+                                                        lagrange_variant, bool,
+                                                        std::vector<int>);
 //-----------------------------------------------------------------------------

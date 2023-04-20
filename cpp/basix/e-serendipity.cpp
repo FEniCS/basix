@@ -30,7 +30,7 @@ impl::mdarray_t<T, 2> make_serendipity_space_2d(int degree)
   const auto [_pts, wts] = quadrature::make_quadrature<T>(
       quadrature::type::Default, cell::type::quadrilateral, 2 * degree);
   impl::mdspan_t<const T, 2> pts(_pts.data(), wts.size(),
-                               _pts.size() / wts.size());
+                                 _pts.size() / wts.size());
   const auto [_Pq, shape]
       = polyset::tabulate(cell::type::quadrilateral, degree, 0, pts);
   impl::mdspan_t<const T, 3> Pq(_Pq.data(), shape);
@@ -129,7 +129,7 @@ impl::mdarray_t<T, 2> make_serendipity_space_3d(int degree)
   const auto [_pts, wts] = quadrature::make_quadrature<T>(
       quadrature::type::Default, cell::type::hexahedron, 2 * degree);
   impl::mdspan_t<const T, 2> pts(_pts.data(), wts.size(),
-                               _pts.size() / wts.size());
+                                 _pts.size() / wts.size());
 
   const auto [_Ph, shape]
       = polyset::tabulate(cell::type::hexahedron, degree, 0, pts);
@@ -184,7 +184,7 @@ impl::mdarray_t<T, 2> make_serendipity_div_space_2d(int degree)
   auto [_pts, wts] = quadrature::make_quadrature<T>(
       quadrature::type::Default, cell::type::quadrilateral, 2 * degree + 2);
   impl::mdspan_t<const T, 2> pts(_pts.data(), wts.size(),
-                               _pts.size() / wts.size());
+                                 _pts.size() / wts.size());
   const auto [_Pq, shape]
       = polyset::tabulate(cell::type::quadrilateral, degree + 1, 0, pts);
   impl::mdspan_t<const T, 3> Pq(_Pq.data(), shape);
@@ -253,7 +253,7 @@ impl::mdarray_t<T, 2> make_serendipity_div_space_3d(int degree)
   const auto [_pts, wts] = quadrature::make_quadrature<T>(
       quadrature::type::Default, cell::type::hexahedron, 2 * degree + 2);
   impl::mdspan_t<const T, 2> pts(_pts.data(), wts.size(),
-                               _pts.size() / wts.size());
+                                 _pts.size() / wts.size());
 
   const auto [_Pq, shape]
       = polyset::tabulate(cell::type::hexahedron, degree + 1, 0, pts);
@@ -400,7 +400,7 @@ impl::mdarray_t<T, 2> make_serendipity_curl_space_2d(int degree)
   const auto [_pts, wts] = quadrature::make_quadrature<T>(
       quadrature::type::Default, cell::type::quadrilateral, 2 * degree + 2);
   impl::mdspan_t<const T, 2> pts(_pts.data(), wts.size(),
-                               _pts.size() / wts.size());
+                                 _pts.size() / wts.size());
   const auto [_Pq, shape]
       = polyset::tabulate(cell::type::quadrilateral, degree + 1, 0, pts);
   impl::mdspan_t<const T, 3> Pq(_Pq.data(), shape);
@@ -474,7 +474,7 @@ impl::mdarray_t<T, 2> make_serendipity_curl_space_3d(int degree)
   const auto [_pts, wts] = quadrature::make_quadrature<T>(
       quadrature::type::Default, cell::type::hexahedron, 2 * degree + 2);
   impl::mdspan_t<const T, 2> pts(_pts.data(), wts.size(),
-                               _pts.size() / wts.size());
+                                 _pts.size() / wts.size());
   const auto [_Pq, shape]
       = polyset::tabulate(cell::type::hexahedron, degree + 1, 0, pts);
   impl::mdspan_t<const T, 3> Pq(_Pq.data(), shape);
@@ -653,8 +653,8 @@ impl::mdarray_t<T, 2> make_serendipity_curl_space_3d(int degree)
 }
 //----------------------------------------------------------------------------
 template <std::floating_point T>
-FiniteElement create_legendre_dpc(cell::type celltype, int degree,
-                                  bool discontinuous)
+FiniteElement<T> create_legendre_dpc(cell::type celltype, int degree,
+                                     bool discontinuous)
 {
   if (!discontinuous)
     throw std::runtime_error("Legendre variant must be discontinuous");
@@ -679,7 +679,7 @@ FiniteElement create_legendre_dpc(cell::type celltype, int degree,
   const auto [_pts, wts] = quadrature::make_quadrature<T>(
       quadrature::type::Default, celltype, degree * 2);
   impl::mdspan_t<const T, 2> pts(_pts.data(), wts.size(),
-                               _pts.size() / wts.size());
+                                 _pts.size() / wts.size());
 
   // Evaluate moment space at quadrature points
   const auto [_phi, shape] = polynomials::tabulate(polynomials::type::legendre,
@@ -737,12 +737,12 @@ FiniteElement create_legendre_dpc(cell::type celltype, int degree,
     }
   }
 
-  return FiniteElement(element::family::DPC, celltype, degree, {},
-                       impl::mdspan_t<T, 2>(wcoeffs.data(), wcoeffs.extents()),
-                       impl::to_mdspan(x), impl::to_mdspan(M), 0,
-                       maps::type::identity, sobolev::space::L2, discontinuous,
-                       degree, degree, element::lagrange_variant::unset,
-                       element::dpc_variant::legendre);
+  return FiniteElement<T>(
+      element::family::DPC, celltype, degree, {},
+      impl::mdspan_t<T, 2>(wcoeffs.data(), wcoeffs.extents()),
+      impl::to_mdspan(x), impl::to_mdspan(M), 0, maps::type::identity,
+      sobolev::space::L2, discontinuous, degree, degree,
+      element::lagrange_variant::unset, element::dpc_variant::legendre);
 }
 //-----------------------------------------------------------------------------
 template <std::floating_point T>
@@ -953,13 +953,12 @@ impl::mdarray_t<T, 2> make_dpc_points(cell::type celltype, int degree,
 } // namespace
 
 //----------------------------------------------------------------------------
-FiniteElement element::create_serendipity(cell::type celltype, int degree,
-                                          element::lagrange_variant lvariant,
-                                          element::dpc_variant dvariant,
-                                          bool discontinuous)
+template <std::floating_point T>
+FiniteElement<T> element::create_serendipity(cell::type celltype, int degree,
+                                             element::lagrange_variant lvariant,
+                                             element::dpc_variant dvariant,
+                                             bool discontinuous)
 {
-  using T = double;
-
   if (degree == 0)
     throw std::runtime_error("Cannot create degree 0 serendipity");
 
@@ -1008,7 +1007,7 @@ FiniteElement element::create_serendipity(cell::type celltype, int degree,
 
   if (degree >= 2)
   {
-    FiniteElement moment_space = element::create_lagrange(
+    FiniteElement moment_space = element::create_lagrange<T>(
         cell::type::interval, degree - 2, lvariant, true);
     auto [_x, xshape, _M, Mshape] = moments::make_integral_moments<T>(
         moment_space, celltype, 1, 2 * degree - 2);
@@ -1030,7 +1029,7 @@ FiniteElement element::create_serendipity(cell::type celltype, int degree,
   {
     if (degree >= 4)
     {
-      FiniteElement moment_space = element::create_dpc(
+      FiniteElement moment_space = element::create_dpc<T>(
           cell::type::quadrilateral, degree - 4, dvariant, true);
       auto [_x, xshape, _M, Mshape] = moments::make_integral_moments<T>(
           moment_space, celltype, 1, 2 * degree - 4);
@@ -1054,8 +1053,8 @@ FiniteElement element::create_serendipity(cell::type celltype, int degree,
     if (degree >= 6)
     {
       auto [_x, xshape, _M, Mshape] = moments::make_integral_moments<T>(
-          element::create_dpc(cell::type::hexahedron, degree - 6, dvariant,
-                              true),
+          element::create_dpc<T>(cell::type::hexahedron, degree - 6, dvariant,
+                                 true),
           celltype, 1, 2 * degree - 6);
       assert(_x.size() == _M.size());
       for (std::size_t i = 0; i < _x.size(); ++i)
@@ -1113,19 +1112,19 @@ FiniteElement element::create_serendipity(cell::type celltype, int degree,
 
   sobolev::space space
       = discontinuous ? sobolev::space::L2 : sobolev::space::H1;
-  return FiniteElement(element::family::serendipity, celltype, degree, {},
-                       impl::mdspan_t<const T, 2>(wbuffer.data(), wshape), xview,
-                       Mview, 0, maps::type::identity, space, discontinuous,
-                       degree < static_cast<int>(tdim) ? 1 : degree / tdim,
-                       degree, lvariant, dvariant);
+  return FiniteElement<T>(element::family::serendipity, celltype, degree, {},
+                          impl::mdspan_t<const T, 2>(wbuffer.data(), wshape),
+                          xview, Mview, 0, maps::type::identity, space,
+                          discontinuous,
+                          degree < static_cast<int>(tdim) ? 1 : degree / tdim,
+                          degree, lvariant, dvariant);
 }
 //----------------------------------------------------------------------------
-FiniteElement element::create_dpc(cell::type celltype, int degree,
-                                  element::dpc_variant variant,
-                                  bool discontinuous)
+template <std::floating_point T>
+FiniteElement<T> element::create_dpc(cell::type celltype, int degree,
+                                     element::dpc_variant variant,
+                                     bool discontinuous)
 {
-  using T = double;
-
   // Only tabulate for scalar. Vector spaces can easily be built from
   // the scalar space.
   if (!discontinuous)
@@ -1200,23 +1199,21 @@ FiniteElement element::create_dpc(cell::type celltype, int degree,
   for (std::size_t i = 0; i < _M.extent(0); ++i)
     _M(i, 0, i, 0) = 1.0;
 
-  const impl::mdarray_t<T, 2> pt
-      = make_dpc_points<T>(celltype, degree, variant);
+  impl::mdarray_t<T, 2> pt = make_dpc_points<T>(celltype, degree, variant);
   x[tdim].push_back(pt);
-
-  return FiniteElement(
+  return FiniteElement<T>(
       element::family::DPC, celltype, degree, {},
-      impl::mdspan_t<T, 2>(wcoeffs.data(), wcoeffs.extents()), impl::to_mdspan(x),
-      impl::to_mdspan(M), 0, maps::type::identity, sobolev::space::L2,
-      discontinuous, degree, degree, element::lagrange_variant::unset, variant);
+      impl::mdspan_t<T, 2>(wcoeffs.data(), wcoeffs.extents()),
+      impl::to_mdspan(x), impl::to_mdspan(M), 0, maps::type::identity,
+      sobolev::space::L2, discontinuous, degree, degree,
+      element::lagrange_variant::unset, variant);
 }
 //-----------------------------------------------------------------------------
-FiniteElement element::create_serendipity_div(
+template <std::floating_point T>
+FiniteElement<T> element::create_serendipity_div(
     cell::type celltype, int degree, element::lagrange_variant lvariant,
     element::dpc_variant dvariant, bool discontinuous)
 {
-  using T = double;
-
   if (degree == 0)
     throw std::runtime_error("Cannot create degree 0 serendipity");
 
@@ -1243,8 +1240,8 @@ FiniteElement element::create_serendipity_div(
   {
     FiniteElement facet_moment_space
         = facettype == cell::type::interval
-              ? element::create_lagrange(facettype, degree, lvariant, true)
-              : element::create_dpc(facettype, degree, dvariant, true);
+              ? element::create_lagrange<T>(facettype, degree, lvariant, true)
+              : element::create_dpc<T>(facettype, degree, dvariant, true);
     auto [_x, xshape, _M, Mshape] = moments::make_normal_integral_moments<T>(
         facet_moment_space, celltype, tdim, 2 * degree + 1);
     assert(_x.size() == _M.size());
@@ -1259,7 +1256,7 @@ FiniteElement element::create_serendipity_div(
   if (degree >= 2)
   {
     FiniteElement cell_moment_space
-        = element::create_dpc(celltype, degree - 2, dvariant, true);
+        = element::create_dpc<T>(celltype, degree - 2, dvariant, true);
     auto [_x, xshape, _M, Mshape] = moments::make_integral_moments<T>(
         cell_moment_space, celltype, tdim, 2 * degree - 1);
     assert(_x.size() == _M.size());
@@ -1309,19 +1306,18 @@ FiniteElement element::create_serendipity_div(
 
   sobolev::space space
       = discontinuous ? sobolev::space::L2 : sobolev::space::HDiv;
-  return FiniteElement(element::family::BDM, celltype, degree, {tdim},
-                       impl::mdspan_t<const T, 2>(wbuffer.data(), wshape), xview,
-                       Mview, 0, maps::type::contravariantPiola, space,
-                       discontinuous, degree / tdim, degree + 1, lvariant,
-                       dvariant);
+  return FiniteElement<T>(element::family::BDM, celltype, degree, {tdim},
+                          impl::mdspan_t<const T, 2>(wbuffer.data(), wshape),
+                          xview, Mview, 0, maps::type::contravariantPiola,
+                          space, discontinuous, degree / tdim, degree + 1,
+                          lvariant, dvariant);
 }
 //-----------------------------------------------------------------------------
-FiniteElement element::create_serendipity_curl(
+template <std::floating_point T>
+FiniteElement<T> element::create_serendipity_curl(
     cell::type celltype, int degree, element::lagrange_variant lvariant,
     element::dpc_variant dvariant, bool discontinuous)
 {
-  using T = double;
-
   if (degree == 0)
     throw std::runtime_error("Cannot create degree 0 serendipity");
 
@@ -1337,7 +1333,7 @@ FiniteElement element::create_serendipity_curl(
   const auto [_Qpts, wts] = quadrature::make_quadrature<T>(
       quadrature::type::Default, celltype, 2 * degree + 1);
   impl::mdspan_t<const T, 2> Qpts(_Qpts.data(), wts.size(),
-                                _Qpts.size() / wts.size());
+                                  _Qpts.size() / wts.size());
 
   std::vector<T> wbuffer;
   std::array<std::size_t, 2> wshape;
@@ -1367,7 +1363,7 @@ FiniteElement element::create_serendipity_curl(
   }
 
   {
-    FiniteElement edge_moment_space = element::create_lagrange(
+    FiniteElement edge_moment_space = element::create_lagrange<T>(
         cell::type::interval, degree, lvariant, true);
     auto [_x, xshape, _M, Mshape] = moments::make_tangent_integral_moments<T>(
         edge_moment_space, celltype, tdim, 2 * degree + 1);
@@ -1382,7 +1378,7 @@ FiniteElement element::create_serendipity_curl(
   if (degree >= 2)
   {
     // Face integral moment
-    FiniteElement moment_space = element::create_dpc(
+    FiniteElement moment_space = element::create_dpc<T>(
         cell::type::quadrilateral, degree - 2, dvariant, true);
     auto [_x, xshape, _M, Mshape] = moments::make_integral_moments<T>(
         moment_space, celltype, tdim, 2 * degree - 1);
@@ -1406,8 +1402,8 @@ FiniteElement element::create_serendipity_curl(
     {
       // Interior integral moment
       auto [_x, xshape, _M, Mshape] = moments::make_integral_moments<T>(
-          element::create_dpc(cell::type::hexahedron, degree - 4, dvariant,
-                              true),
+          element::create_dpc<T>(cell::type::hexahedron, degree - 4, dvariant,
+                                 true),
           celltype, tdim, 2 * degree - 3);
       assert(_x.size() == _M.size());
       for (std::size_t i = 0; i < _x.size(); ++i)
@@ -1440,11 +1436,37 @@ FiniteElement element::create_serendipity_curl(
 
   sobolev::space space
       = discontinuous ? sobolev::space::L2 : sobolev::space::HCurl;
-  return FiniteElement(element::family::N2E, celltype, degree, {tdim},
-                       impl::mdspan_t<const T, 2>(wbuffer.data(), wshape), xview,
-                       Mview, 0, maps::type::covariantPiola, space,
-                       discontinuous,
-                       (degree == 2 && tdim == 3) ? 1 : degree / tdim,
-                       degree + 1, lvariant, dvariant);
+  return FiniteElement<T>(element::family::N2E, celltype, degree, {tdim},
+                          impl::mdspan_t<const T, 2>(wbuffer.data(), wshape),
+                          xview, Mview, 0, maps::type::covariantPiola, space,
+                          discontinuous,
+                          (degree == 2 && tdim == 3) ? 1 : degree / tdim,
+                          degree + 1, lvariant, dvariant);
 }
+//-----------------------------------------------------------------------------
+template FiniteElement<float>
+element::create_serendipity(cell::type, int, element::lagrange_variant,
+                            element::dpc_variant, bool);
+template FiniteElement<double>
+element::create_serendipity(cell::type, int, element::lagrange_variant,
+                            element::dpc_variant, bool);
+
+template FiniteElement<float> element::create_dpc(cell::type, int,
+                                                  element::dpc_variant, bool);
+template FiniteElement<double> element::create_dpc(cell::type, int,
+                                                   element::dpc_variant, bool);
+
+template FiniteElement<float>
+element::create_serendipity_div(cell::type, int, element::lagrange_variant,
+                                element::dpc_variant, bool);
+template FiniteElement<double>
+element::create_serendipity_div(cell::type, int, element::lagrange_variant,
+                                element::dpc_variant, bool);
+
+template FiniteElement<float>
+element::create_serendipity_curl(cell::type, int, element::lagrange_variant,
+                                 element::dpc_variant, bool);
+template FiniteElement<double>
+element::create_serendipity_curl(cell::type, int, element::lagrange_variant,
+                                 element::dpc_variant, bool);
 //-----------------------------------------------------------------------------

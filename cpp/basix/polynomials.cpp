@@ -139,7 +139,6 @@ int polynomials::dim(polynomials::type, cell::type cell, int d)
 }
 //-----------------------------------------------------------------------------
 /// @cond
-// Explicit instantiation for double and float
 template std::pair<std::vector<float>, std::array<std::size_t, 2>>
 polynomials::tabulate(
     polynomials::type, cell::type, int,
@@ -150,7 +149,5 @@ polynomials::tabulate(
     polynomials::type, cell::type, int,
     std::experimental::mdspan<const double,
                               std::experimental::dextents<std::size_t, 2>>);
-
 /// @endcond
-
 //-----------------------------------------------------------------------------

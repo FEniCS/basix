@@ -15,11 +15,10 @@
 using namespace basix;
 
 //-----------------------------------------------------------------------------
-FiniteElement basix::element::create_cr(cell::type celltype, int degree,
-                                        bool discontinuous)
+template <std::floating_point T>
+FiniteElement<T> basix::element::create_cr(cell::type celltype, int degree,
+                                           bool discontinuous)
 {
-  using T = double;
-
   if (degree != 1)
     throw std::runtime_error("Degree must be 1 for Crouzeix-Raviart");
 
@@ -88,10 +87,13 @@ FiniteElement basix::element::create_cr(cell::type celltype, int degree,
     Mview = impl::to_mdspan(Mbuffer, Mshape);
   }
 
-  return FiniteElement(
+  return FiniteElement<T>(
       element::family::CR, celltype, 1, {},
       impl::mdspan_t<T, 2>(math::eye<T>(ndofs).data(), ndofs, ndofs), xview,
       Mview, 0, maps::type::identity, sobolev::space::L2, discontinuous, degree,
       degree, element::lagrange_variant::unset, element::dpc_variant::unset);
 }
+//-----------------------------------------------------------------------------
+template FiniteElement<float> element::create_cr(cell::type, int, bool);
+template FiniteElement<double> element::create_cr(cell::type, int, bool);
 //-----------------------------------------------------------------------------

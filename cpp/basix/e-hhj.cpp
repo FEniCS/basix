@@ -14,11 +14,10 @@
 using namespace basix;
 
 //-----------------------------------------------------------------------------
-FiniteElement basix::element::create_hhj(cell::type celltype, int degree,
-                                         bool discontinuous)
+template <std::floating_point T>
+FiniteElement<T> basix::element::create_hhj(cell::type celltype, int degree,
+                                            bool discontinuous)
 {
-  using T = double;
-
   if (celltype != cell::type::triangle)
     throw std::runtime_error("Unsupported celltype");
 
@@ -89,9 +88,9 @@ FiniteElement basix::element::create_hhj(cell::type celltype, int degree,
         const auto [ptsbuffer, wts]
             = quadrature::make_quadrature<T>(ct, degree + (degree + 1 - d));
         impl::mdspan_t<const T, 2> pts(ptsbuffer.data(), wts.size(),
-                                     ptsbuffer.size() / wts.size());
+                                       ptsbuffer.size() / wts.size());
 
-        FiniteElement moment_space = create_lagrange(
+        FiniteElement<T> moment_space = create_lagrange<T>(
             ct, degree + 1 - d, element::lagrange_variant::legendre, true);
         const auto [phib, phishape] = moment_space.tabulate(0, pts);
         impl::mdspan_t<const T, 4> moment_values(phib.data(), phishape);
@@ -177,10 +176,13 @@ FiniteElement basix::element::create_hhj(cell::type celltype, int degree,
 
   sobolev::space space
       = discontinuous ? sobolev::space::L2 : sobolev::space::HDivDiv;
-  return FiniteElement(
+  return FiniteElement<T>(
       element::family::HHJ, celltype, degree, {tdim, tdim},
       impl::mdspan_t<T, 2>(wcoeffs.data(), wcoeffs.extents()), xview, Mview, 0,
       maps::type::doubleContravariantPiola, space, discontinuous, -1, degree,
       element::lagrange_variant::unset, element::dpc_variant::unset);
 }
+//-----------------------------------------------------------------------------
+template FiniteElement<float> element::create_hhj(cell::type, int, bool);
+template FiniteElement<double> element::create_hhj(cell::type, int, bool);
 //-----------------------------------------------------------------------------

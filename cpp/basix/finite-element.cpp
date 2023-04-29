@@ -20,7 +20,10 @@
 #include <basix/version.h>
 #include <cmath>
 #include <concepts>
+#include <limits>
 #include <numeric>
+
+#include <iostream>
 
 #define str_macro(X) #X
 #define str(X) str_macro(X)
@@ -770,9 +773,17 @@ FiniteElement<F>::FiniteElement(
           rtot += r;
         }
 
-        if ((trans.extent(2) != 1 and std::abs(rmin) > 1.0e-8)
-            or std::abs(rmax - 1.0) > 1.0e-8 or std::abs(rtot - 1.0) > 1.0e-8)
+        constexpr F eps = 10.0 * std::numeric_limits<F>::epsilon();
+        if ((trans.extent(2) != 1 and std::abs(rmin) > eps)
+            or std::abs(rmax - 1.0) > eps or std::abs(rtot - 1.0) > eps)
         {
+          std::cout << "Basix (a): " << double(rmin) << ", " << double(rmax)
+                    << ", " << double(rtot) << std::endl;
+          std::cout << "Basix (b): " << std::abs(rmin) << ", "
+                    << std::abs(rmax - F(1.0)) << ", "
+                    << std::abs(rtot - F(1.0)) << std::endl;
+          std::cout << "Basix (eps): " << std::numeric_limits<F>::epsilon()
+                    << std::endl;
           _dof_transformations_are_permutations = false;
           _dof_transformations_are_identity = false;
           break;
@@ -907,17 +918,12 @@ FiniteElement<F>::FiniteElement(
               matint.resize(dim * dim);
               mdspan_t<F, 2> mat_int(matint.data(), dim, dim);
               math::dot(M, M, mat_int);
-
               math::dot(mat_int, M, Minv);
             }
             else if (ctype == cell::type::triangle and i == 0)
-            {
               math::dot(M, M, Minv);
-            }
             else
-            {
               Minv_b.assign(M_b.begin(), M_b.end());
-            }
 
             {
               std::pair<std::vector<F>, std::array<std::size_t, 2>> mat_inv

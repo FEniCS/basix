@@ -58,10 +58,16 @@ class _ElementBase(_FiniteElementBase):
         self._map = mapname
         self._degree = degree
         self._value_shape = value_shape
+        self._gdim = gdim
 
     def __repr__(self):
         """Get the representation of the element."""
         return self._repr
+
+    @_abstractmethod
+    def reconstruct(self, **kwargs):
+        """Create an element that is the same as this element except for any values passed in as kwargs."""
+        pass
 
     def sub_elements(self) -> _typing.List:
         """Return a list of sub elements."""
@@ -339,6 +345,19 @@ class _BasixElement(_ElementBase):
 
         self.element = element
 
+    def reconstruct(self, **kwargs):
+        """Create an element that is the same as this element except for any values passed in as kwargs."""
+        element_inputs = {
+            "family": self.element.family, "cell": self.cell_type, "degree": self.degree,
+            "lagrange_variant": self.lagrange_variant, "dpc_variant": self.dpc_variant,
+            "rank": None, "shape": tuple(self._value_shape), "symmetry": None, "gdim": self._gdim
+        }
+        for key, value in kwargs.items():
+            if key not in element_inputs:
+                raise ValueError(f"Invalid input: {key}")
+            element_inputs[key] = value
+        return element(**element_inputs)
+
     @property
     def basix_sobolev_space(self):
         """Return a Basix enum representing the underlying Sobolev space."""
@@ -540,6 +559,10 @@ class _ComponentElement(_ElementBase):
                          f"Component of {element.family_name}",
                          element.cell_type.name, (1, ), element._degree, gdim=gdim)
 
+    def reconstruct(self, **kwargs):
+        """Create an element that is the same as this element except for any values passed in as kwargs."""
+        raise NotImplementedError()
+
     @property
     def basix_sobolev_space(self):
         """Return a Basix enum representing the underlying Sobolev space."""
@@ -705,6 +728,10 @@ class _MixedElement(_ElementBase):
         super().__init__("mixed element (" + ", ".join(i._repr for i in sub_elements) + ")",
                          "mixed element", sub_elements[0].cell_type.name,
                          (sum(i.value_size for i in sub_elements), ), mapname=mapname, gdim=gdim)
+
+    def reconstruct(self, **kwargs):
+        """Create an element that is the same as this element except for any values passed in as kwargs."""
+        raise NotImplementedError()
 
     def degree(self) -> int:
         """Degree of the element."""
@@ -948,6 +975,21 @@ class _BlockedElement(_ElementBase):
             self._symmetry = {(i, j): (j, i) for i in range(shape[0]) for j in range(i)}
             self._flattened_sub_element_mapping = [
                 sub_element_mapping[(i, j)] for i in range(shape[0]) for j in range(shape[1])]
+
+    def reconstruct(self, **kwargs):
+        """Create an element that is the same as this element except for any values passed in as kwargs."""
+        element_inputs = {
+            "family": self.family(), "cell": self.cell_type, "degree": self.degree(),
+            "lagrange_variant": self.lagrange_variant, "dpc_variant": self.dpc_variant, "rank": len(self._value_shape),
+            "shape": tuple(self._value_shape), "symmetry": self._has_symmetry if len(self._value_shape) == 2 else None,
+            "gdim": self._gdim
+        }
+        for key, value in kwargs.items():
+            if key not in element_inputs:
+                raise ValueError(f"Invalid input: {key}")
+            element_inputs[key] = value
+        print(element_inputs)
+        return element(**element_inputs)
 
     @property
     def basix_sobolev_space(self):

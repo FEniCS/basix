@@ -114,3 +114,23 @@ def test_enriched_element(elements):
 def test_sobolev_space(e, space0, space1):
     assert e.sobolev_space().name == space0
     assert e.basix_sobolev_space == space1
+
+
+@pytest.mark.parametrize("family,rank,symmetry", [
+    (basix.ElementFamily.P, 0, None),
+    (basix.ElementFamily.P, 1, None),
+    (basix.ElementFamily.P, 2, False),
+    (basix.ElementFamily.P, 2, True),
+    (basix.ElementFamily.N1E, None, None),
+    (basix.ElementFamily.RT, None, None),
+    (basix.ElementFamily.Regge, None, None),
+])
+@pytest.mark.parametrize("cell", [basix.CellType.triangle, basix.CellType.tetrahedron])
+def test_reconstruct(family, rank, symmetry, cell):
+    e = basix.ufl.element(family, cell, 1, rank=rank, symmetry=symmetry)
+
+    e2 = e.reconstruct(degree=1)
+    assert e == e2
+
+    e2 = e.reconstruct(degree=2)
+    assert e != e2

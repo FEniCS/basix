@@ -23,8 +23,6 @@
 #include <limits>
 #include <numeric>
 
-#include <iostream>
-
 #define str_macro(X) #X
 #define str(X) str_macro(X)
 
@@ -777,13 +775,6 @@ FiniteElement<F>::FiniteElement(
         if ((trans.extent(2) != 1 and std::abs(rmin) > eps)
             or std::abs(rmax - 1.0) > eps or std::abs(rtot - 1.0) > eps)
         {
-          std::cout << "Basix (a): " << double(rmin) << ", " << double(rmax)
-                    << ", " << double(rtot) << std::endl;
-          std::cout << "Basix (b): " << std::abs(rmin) << ", "
-                    << std::abs(rmax - F(1.0)) << ", "
-                    << std::abs(rtot - F(1.0)) << std::endl;
-          std::cout << "Basix (eps): " << std::numeric_limits<F>::epsilon()
-                    << std::endl;
           _dof_transformations_are_permutations = false;
           _dof_transformations_are_identity = false;
           break;

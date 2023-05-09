@@ -20,6 +20,7 @@
 #include <basix/version.h>
 #include <cmath>
 #include <concepts>
+#include <limits>
 #include <numeric>
 
 #define str_macro(X) #X
@@ -755,7 +756,6 @@ FiniteElement<F>::FiniteElement(
   for (const auto& [ctype, trans_data] : _entity_transformations)
   {
     mdspan_t<const F, 3> trans(trans_data.first.data(), trans_data.second);
-
     for (std::size_t i = 0;
          _dof_transformations_are_permutations and i < trans.extent(0); ++i)
     {
@@ -770,15 +770,16 @@ FiniteElement<F>::FiniteElement(
           rtot += r;
         }
 
-        if ((trans.extent(2) != 1 and std::abs(rmin) > 1.0e-8)
-            or std::abs(rmax - 1.0) > 1.0e-8 or std::abs(rtot - 1.0) > 1.0e-8)
+        constexpr F eps = 10.0 * std::numeric_limits<float>::epsilon();
+        if ((trans.extent(2) != 1 and std::abs(rmin) > eps)
+            or std::abs(rmax - 1.0) > eps or std::abs(rtot - 1.0) > eps)
         {
           _dof_transformations_are_permutations = false;
           _dof_transformations_are_identity = false;
           break;
         }
 
-        if (std::abs(trans(i, row, row) - 1) > 1.0e-8)
+        if (std::abs(trans(i, row, row) - 1) > eps)
           _dof_transformations_are_identity = false;
       }
     }
@@ -842,7 +843,6 @@ FiniteElement<F>::FiniteElement(
     }
     else
     {
-
       // Precompute the DOF transformations
       for (const auto& [ctype, trans_data] : _entity_transformations)
       {
@@ -850,7 +850,6 @@ FiniteElement<F>::FiniteElement(
 
         // Buffers for matrices
         std::vector<F> M_b, Minv_b, matint;
-
         auto& etrans = _etrans.try_emplace(ctype).first->second;
         auto& etransT = _etransT.try_emplace(ctype).first->second;
         auto& etrans_invT = _etrans_invT.try_emplace(ctype).first->second;
@@ -868,7 +867,6 @@ FiniteElement<F>::FiniteElement(
           {
             const std::size_t dim = trans.extent(1);
             assert(dim == trans.extent(2));
-
             {
               std::pair<std::vector<F>, std::array<std::size_t, 2>> mat
                   = {std::vector<F>(dim * dim), {dim, dim}};
@@ -907,17 +905,12 @@ FiniteElement<F>::FiniteElement(
               matint.resize(dim * dim);
               mdspan_t<F, 2> mat_int(matint.data(), dim, dim);
               math::dot(M, M, mat_int);
-
               math::dot(mat_int, M, Minv);
             }
             else if (ctype == cell::type::triangle and i == 0)
-            {
               math::dot(M, M, Minv);
-            }
             else
-            {
               Minv_b.assign(M_b.begin(), M_b.end());
-            }
 
             {
               std::pair<std::vector<F>, std::array<std::size_t, 2>> mat_inv
@@ -955,7 +948,8 @@ FiniteElement<F>::FiniteElement(
     for (std::size_t col = 0; col < matM.extent(1); ++col)
     {
       F v = col == row ? 1.0 : 0.0;
-      if (std::abs(matM(row, col) - v) > 1.0e-12)
+      constexpr F eps = 100 * std::numeric_limits<F>::epsilon();
+      if (std::abs(matM(row, col) - v) > eps)
       {
         _interpolation_is_identity = false;
         break;

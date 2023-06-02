@@ -6,13 +6,14 @@
 
 #include "cell.h"
 #include <array>
+#include <concepts>
 #include <tuple>
 #include <utility>
 #include <vector>
 
 namespace basix
 {
-
+template <std::floating_point T>
 class FiniteElement;
 
 /// Functions to create integral moment DOFs
@@ -38,9 +39,10 @@ namespace moments
 /// the interpolation points are (number of entities, npoints, gdim).
 /// The indices on the interpolation matrix are (number of entities,
 /// ndofs, value_size, npoints, derivative)
-std::tuple<std::vector<std::vector<double>>, std::array<std::size_t, 2>,
-           std::vector<std::vector<double>>, std::array<std::size_t, 4>>
-make_integral_moments(const FiniteElement& moment_space, cell::type celltype,
+template <std::floating_point T>
+std::tuple<std::vector<std::vector<T>>, std::array<std::size_t, 2>,
+           std::vector<std::vector<T>>, std::array<std::size_t, 4>>
+make_integral_moments(const FiniteElement<T>& moment_space, cell::type celltype,
                       std::size_t value_size, int q_deg);
 
 /// @brief Make interpolation points and weights for dot product
@@ -65,9 +67,10 @@ make_integral_moments(const FiniteElement& moment_space, cell::type celltype,
 /// points are (number of entities, npoints, gdim). The indices on the
 /// interpolation matrix are (number of entities, ndofs, value_size,
 /// npoints, derivative)
-std::tuple<std::vector<std::vector<double>>, std::array<std::size_t, 2>,
-           std::vector<std::vector<double>>, std::array<std::size_t, 4>>
-make_dot_integral_moments(const FiniteElement& V, cell::type celltype,
+template <std::floating_point T>
+std::tuple<std::vector<std::vector<T>>, std::array<std::size_t, 2>,
+           std::vector<std::vector<T>>, std::array<std::size_t, 4>>
+make_dot_integral_moments(const FiniteElement<T>& V, cell::type celltype,
                           std::size_t value_size, int q_deg);
 
 /// @brief Make interpolation points and weights for tangent integral
@@ -87,9 +90,10 @@ make_dot_integral_moments(const FiniteElement& V, cell::type celltype,
 /// points are (number of entities, npoints, gdim). The indices on the
 /// interpolation matrix are (number of entities, ndofs, value_size,
 /// npoints, derivative)
-std::tuple<std::vector<std::vector<double>>, std::array<std::size_t, 2>,
-           std::vector<std::vector<double>>, std::array<std::size_t, 4>>
-make_tangent_integral_moments(const FiniteElement& V, cell::type celltype,
+template <std::floating_point T>
+std::tuple<std::vector<std::vector<T>>, std::array<std::size_t, 2>,
+           std::vector<std::vector<T>>, std::array<std::size_t, 4>>
+make_tangent_integral_moments(const FiniteElement<T>& V, cell::type celltype,
                               std::size_t value_size, int q_deg);
 
 ///  @brief Compute interpolation points and weights for normal integral
@@ -108,9 +112,10 @@ make_tangent_integral_moments(const FiniteElement& V, cell::type celltype,
 /// points are (number of entities, npoints, gdim). The indices on the
 /// interpolation matrix are (number of entities, ndofs, value_size,
 /// npoints, derivative)
-std::tuple<std::vector<std::vector<double>>, std::array<std::size_t, 2>,
-           std::vector<std::vector<double>>, std::array<std::size_t, 4>>
-make_normal_integral_moments(const FiniteElement& V, cell::type celltype,
+template <std::floating_point T>
+std::tuple<std::vector<std::vector<T>>, std::array<std::size_t, 2>,
+           std::vector<std::vector<T>>, std::array<std::size_t, 4>>
+make_normal_integral_moments(const FiniteElement<T>& V, cell::type celltype,
                              std::size_t value_size, int q_deg);
 
 } // namespace moments

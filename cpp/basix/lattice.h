@@ -6,6 +6,7 @@
 
 #include "cell.h"
 #include <array>
+#include <concepts>
 #include <utility>
 #include <vector>
 
@@ -24,7 +25,7 @@ enum class type
   chebyshev = 2,  /*!< Chebyshev points */
   gl = 4,         /*!< Gauss-Legendre (GL) points */
   chebyshev_plus_endpoints
-  = 10, /*!< Chebyshev points plus the endpoints of the interval */
+  = 10,           /*!< Chebyshev points plus the endpoints of the interval */
   gl_plus_endpoints
   = 11, /*!< Gauss-Legendre (GL) points plus the endpoints of the interval */
 };
@@ -67,7 +68,8 @@ enum class simplex_method
 /// @param simplex_method The method used to generate points on simplices
 /// @return Set of points. Shape is `(npoints, tdim)` and storage is
 /// row-major
-std::pair<std::vector<double>, std::array<std::size_t, 2>>
+template <std::floating_point T>
+std::pair<std::vector<T>, std::array<std::size_t, 2>>
 create(cell::type celltype, int n, lattice::type type, bool exterior,
        lattice::simplex_method simplex_method = lattice::simplex_method::none);
 

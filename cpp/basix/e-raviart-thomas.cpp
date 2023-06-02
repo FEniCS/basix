@@ -15,9 +15,10 @@
 using namespace basix;
 
 //----------------------------------------------------------------------------
-FiniteElement basix::element::create_rt(cell::type celltype, int degree,
-                                        element::lagrange_variant lvariant,
-                                        bool discontinuous)
+template <std::floating_point T>
+FiniteElement<T> basix::element::create_rt(cell::type celltype, int degree,
+                                           element::lagrange_variant lvariant,
+                                           bool discontinuous)
 {
   if (celltype != cell::type::triangle and celltype != cell::type::tetrahedron)
     throw std::runtime_error("Unsupported cell type");
@@ -40,17 +41,18 @@ FiniteElement basix::element::create_rt(cell::type celltype, int degree,
   const std::size_t ns = polyset::dim(facettype, degree - 1);
 
   // Evaluate the expansion polynomials at the quadrature points
-  const auto [_pts, wts] = quadrature::make_quadrature(
+  const auto [_pts, wts] = quadrature::make_quadrature<T>(
       quadrature::type::Default, celltype, 2 * degree);
-  impl::cmdspan2_t pts(_pts.data(), wts.size(), _pts.size() / wts.size());
+  impl::mdspan_t<const T, 2> pts(_pts.data(), wts.size(),
+                                 _pts.size() / wts.size());
   const auto [_phi, shape] = polyset::tabulate(celltype, degree, 0, pts);
-  impl::cmdspan3_t phi(_phi.data(), shape);
+  impl::mdspan_t<const T, 3> phi(_phi.data(), shape);
 
   // The number of order (degree) polynomials
   const std::size_t psize = phi.extent(1);
 
   // Create coefficients for order (degree-1) vector polynomials
-  impl::mdarray2_t B(nv * tdim + ns, psize * tdim);
+  impl::mdarray_t<T, 2> B(nv * tdim + ns, psize * tdim);
   for (std::size_t i = 0; i < tdim; ++i)
     for (std::size_t j = 0; j < nv; ++j)
       B(nv * i + j, psize * i + j) = 1.0;
@@ -73,20 +75,20 @@ FiniteElement basix::element::create_rt(cell::type celltype, int degree,
     }
   }
 
-  std::array<std::vector<impl::mdarray2_t>, 4> x;
-  std::array<std::vector<impl::mdarray4_t>, 4> M;
+  std::array<std::vector<impl::mdarray_t<T, 2>>, 4> x;
+  std::array<std::vector<impl::mdarray_t<T, 4>>, 4> M;
   for (std::size_t i = 0; i < tdim - 1; ++i)
   {
     const std::size_t num_ent = cell::num_sub_entities(celltype, i);
-    x[i] = std::vector(num_ent, impl::mdarray2_t(0, tdim));
-    M[i] = std::vector(num_ent, impl::mdarray4_t(0, tdim, 0, 1));
+    x[i] = std::vector(num_ent, impl::mdarray_t<T, 2>(0, tdim));
+    M[i] = std::vector(num_ent, impl::mdarray_t<T, 4>(0, tdim, 0, 1));
   }
 
   // Add integral moments on facets
   {
     const FiniteElement facet_moment_space
-        = element::create_lagrange(facettype, degree - 1, lvariant, true);
-    auto [_x, xshape, _M, Mshape] = moments::make_normal_integral_moments(
+        = element::create_lagrange<T>(facettype, degree - 1, lvariant, true);
+    auto [_x, xshape, _M, Mshape] = moments::make_normal_integral_moments<T>(
         facet_moment_space, celltype, tdim, 2 * degree - 1);
     assert(_x.size() == _M.size());
     for (std::size_t i = 0; i < _x.size(); ++i)
@@ -101,8 +103,8 @@ FiniteElement basix::element::create_rt(cell::type celltype, int degree,
   if (degree > 1)
   {
     // Interior integral moment
-    auto [_x, xshape, _M, Mshape] = moments::make_integral_moments(
-        element::create_lagrange(celltype, degree - 2, lvariant, true),
+    auto [_x, xshape, _M, Mshape] = moments::make_integral_moments<T>(
+        element::create_lagrange<T>(celltype, degree - 2, lvariant, true),
         celltype, tdim, 2 * degree - 2);
     assert(_x.size() == _M.size());
     for (std::size_t i = 0; i < _x.size(); ++i)
@@ -114,14 +116,14 @@ FiniteElement basix::element::create_rt(cell::type celltype, int degree,
   else
   {
     const std::size_t num_ent = cell::num_sub_entities(celltype, tdim);
-    x[tdim] = std::vector(num_ent, impl::mdarray2_t(0, tdim));
-    M[tdim] = std::vector(num_ent, impl::mdarray4_t(0, tdim, 0, 1));
+    x[tdim] = std::vector(num_ent, impl::mdarray_t<T, 2>(0, tdim));
+    M[tdim] = std::vector(num_ent, impl::mdarray_t<T, 4>(0, tdim, 0, 1));
   }
 
-  std::array<std::vector<cmdspan2_t>, 4> xview = impl::to_mdspan(x);
-  std::array<std::vector<cmdspan4_t>, 4> Mview = impl::to_mdspan(M);
-  std::array<std::vector<std::vector<double>>, 4> xbuffer;
-  std::array<std::vector<std::vector<double>>, 4> Mbuffer;
+  std::array<std::vector<mdspan_t<const T, 2>>, 4> xview = impl::to_mdspan(x);
+  std::array<std::vector<mdspan_t<const T, 4>>, 4> Mview = impl::to_mdspan(M);
+  std::array<std::vector<std::vector<T>>, 4> xbuffer;
+  std::array<std::vector<std::vector<T>>, 4> Mbuffer;
   if (discontinuous)
   {
     std::array<std::vector<std::array<std::size_t, 2>>, 4> xshape;
@@ -134,10 +136,15 @@ FiniteElement basix::element::create_rt(cell::type celltype, int degree,
 
   sobolev::space space
       = discontinuous ? sobolev::space::L2 : sobolev::space::HDiv;
-  return FiniteElement(element::family::RT, celltype, degree, {tdim},
-                       impl::mdspan2_t(B.data(), B.extents()), xview, Mview, 0,
-                       maps::type::contravariantPiola, space, discontinuous,
-                       degree - 1, degree, lvariant,
-                       element::dpc_variant::unset);
+  return FiniteElement<T>(element::family::RT, celltype, degree, {tdim},
+                          impl::mdspan_t<T, 2>(B.data(), B.extents()), xview,
+                          Mview, 0, maps::type::contravariantPiola, space,
+                          discontinuous, degree - 1, degree, lvariant,
+                          element::dpc_variant::unset);
 }
+//-----------------------------------------------------------------------------
+template FiniteElement<float>
+element::create_rt(cell::type, int, element::lagrange_variant, bool);
+template FiniteElement<double>
+element::create_rt(cell::type, int, element::lagrange_variant, bool);
 //-----------------------------------------------------------------------------

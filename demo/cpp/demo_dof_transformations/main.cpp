@@ -25,6 +25,8 @@
 #include <iomanip>
 #include <iostream>
 
+using T = double;
+
 static const std::map<basix::cell::type, std::string> type_to_name
     = {{basix::cell::type::point, "point"},
        {basix::cell::type::interval, "interval"},
@@ -50,8 +52,8 @@ int main(int argc, char* argv[])
 
     // Create the lagrange element
     basix::FiniteElement lagrange
-        = basix::create_element(family, cell_type, degree, variant,
-                                basix::element::dpc_variant::unset, false);
+        = basix::create_element<T>(family, cell_type, degree, variant,
+                                   basix::element::dpc_variant::unset, false);
 
     // Print bools as true/false instead of 0/1
     std::cout << std::boolalpha;
@@ -130,8 +132,8 @@ int main(int argc, char* argv[])
 
     // Create the lagrange element
     auto lagrange
-        = basix::create_element(family, cell_type, degree, variant,
-                                basix::element::dpc_variant::unset, false);
+        = basix::create_element<T>(family, cell_type, degree, variant,
+                                   basix::element::dpc_variant::unset, false);
 
     // We can verify this by checking that`dof_transformations_are_identity` is
     // `True`. To confirm that the transformations are identity matrices, we
@@ -157,7 +159,7 @@ int main(int argc, char* argv[])
     auto family = basix::element::family::N1E;
     auto cell_type = basix::cell::type::tetrahedron;
     int degree = 2;
-    auto nedelec = basix::create_element(
+    auto nedelec = basix::create_element<T>(
         family, cell_type, degree, basix::element::lagrange_variant::unset,
         basix::element::dpc_variant::unset, false);
 
@@ -194,9 +196,9 @@ int main(int argc, char* argv[])
     // To demonstrate how these transformations can be used, we create a
     // lattice of points where we will tabulate the element.
 
-    const auto [pdata, shape] = basix::lattice::create(
+    const auto [pdata, shape] = basix::lattice::create<T>(
         cell_type, 5, basix::lattice::type::equispaced, true);
-    std::experimental::mdspan<const double,
+    std::experimental::mdspan<const T,
                               std::experimental::dextents<std::size_t, 2>>
         points(pdata.data(), shape);
     int num_points = points.extent(0);
@@ -207,7 +209,7 @@ int main(int argc, char* argv[])
 
     const auto [original_data, orig_shape] = nedelec.tabulate(0, points);
     auto [mod_data, mod_shape] = nedelec.tabulate(0, points);
-    std::span<double> data(mod_data.data(), mod_data.size());
+    std::span<T> data(mod_data.data(), mod_data.size());
 
     // If the direction of edge 2 in the physical cell is reflected, it has
     // cell permutation info `....000010` so (from right to left):

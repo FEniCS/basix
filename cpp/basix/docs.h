@@ -414,7 +414,9 @@ Returns:
     A custom finite element
 )";
 
-const std::string create_element = R"(
+const std::string
+    create_element__family_cell_degree_lvariant_dvariant_discontinuous_dof_ordering
+    = R"(
 Create an element using a given Lagrange variant and a given DPC variant
 
 Args:
@@ -424,7 +426,7 @@ Args:
     lvariant: The variant of Lagrange to use
     dvariant: The variant of DPC to use
     discontinuous: Indicates whether the element is discontinuous between cells points of the element. The discontinuous element will have the same DOFs, but they will all be associated with the interior of the cell.
-    dof_layout: Ordering of dofs (optional arg)
+    dof_ordering: Ordering of dofs for ElementDofLayout
 
 Returns:
     A finite element
@@ -494,14 +496,14 @@ Returns:
 
     - The first index is the derivative. The first entry is the basis
     itself. Derivatives are stored in triangular (2D) or tetrahedral
-    (3D) ordering, eg if `(p, q)` denotes `p` order dervative with
-    repsect to `x` and `q` order derivative with respect to `y`, [0] ->
+    (3D) ordering, eg if `(p, q)` denotes `p` order derivative with
+    respect to `x` and `q` order derivative with respect to `y`, [0] ->
     (0, 0), [1] -> (1, 0), [2] -> (0, 1), [3] -> (2, 0), [4] -> (1, 1),
     [5] -> (0, 2), [6] -> (3, 0),...
-    The function basix::indexing::idx maps tuples `(p, q, r)` to the array
-    index.
+    The function basix::indexing::idx maps tuples `(p, q, r)` to the
+    array index.
 
-    - The second index is the point, with index `i` correspondign to the
+    - The second index is the point, with index `i` corresponding to the
     point in row `i` of @p x.
 
     - The third index is the basis function index.
@@ -597,14 +599,14 @@ Returns:
 )";
 
 const std::string space_intersection = R"(
-Get the intersection of two Sobolev spaces
+Get the intersection of two Sobolev spaces.
 
 Args:
-    space1: The first space
-    space2: The second space
+    space1: First space
+    space2: Second space
 
 Returns:
-    The intersection
+    Intersection of the spaces
 )";
 
 } // namespace basix::docstring

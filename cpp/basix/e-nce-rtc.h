@@ -6,6 +6,7 @@
 
 #include "cell.h"
 #include "finite-element.h"
+#include <concepts>
 
 namespace basix::element
 {
@@ -17,9 +18,10 @@ namespace basix::element
 /// @param[in] discontinuous Controls whether the element is continuous or
 /// discontinuous
 /// @return A finite element
-FiniteElement create_rtc(cell::type celltype, int degree,
-                         element::lagrange_variant lvariant,
-                         bool discontinuous);
+template <std::floating_point T>
+FiniteElement<T> create_rtc(cell::type celltype, int degree,
+                            element::lagrange_variant lvariant,
+                            bool discontinuous);
 
 /// Create NC H(curl) element
 /// @param[in] celltype The cell type
@@ -29,8 +31,9 @@ FiniteElement create_rtc(cell::type celltype, int degree,
 /// @param[in] discontinuous Controls whether the element is continuous or
 /// discontinuous
 /// @return A finite element
-FiniteElement create_nce(cell::type celltype, int degree,
-                         element::lagrange_variant lvariant,
-                         bool discontinuous);
+template <std::floating_point T>
+FiniteElement<T> create_nce(cell::type celltype, int degree,
+                            element::lagrange_variant lvariant,
+                            bool discontinuous);
 
 } // namespace basix::element

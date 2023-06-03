@@ -3,6 +3,7 @@ import ufl
 
 import basix
 import basix.ufl
+import numpy as np
 
 
 @pytest.mark.parametrize("inputs", [
@@ -24,7 +25,7 @@ def test_finite_element(inputs):
 ])
 def test_vector_element(inputs):
     e = basix.ufl.element(*inputs, rank=1)
-    table = e.tabulate(0, [[0, 0]])
+    table = e.tabulate(0, np.array([[0, 0]], dtype=np.float64))
     assert table.shape == (1, 1, e.dim)
 
 
@@ -48,7 +49,7 @@ def test_tensor_element_hash(inputs):
     e = basix.ufl.element(*inputs)
     sym = basix.ufl.blocked_element(e, shape=(2, 2), symmetry=True)
     asym = basix.ufl.blocked_element(e, shape=(2, 2), symmetry=False)
-    table = e.tabulate(0, [[0, 0]])
+    table = e.tabulate(0, np.array([[0, 0]], dtype=np.float64))
     assert table.shape == (1, 1, e.dim)
     assert sym != asym
     assert hash(sym) != hash(asym)

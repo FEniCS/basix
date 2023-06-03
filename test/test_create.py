@@ -48,6 +48,8 @@ def test_all_cells_included():
     for c in dir(basix.CellType):
         if not c.startswith("_") and c not in ["name", "value"]:
             all_cells.append(getattr(basix.CellType, c))
+    print(all_cells)
+    print(cells)
 
     assert sorted(all_cells) == sorted(cells)
 
@@ -57,6 +59,9 @@ def test_all_elements_included():
     for c in dir(basix.ElementFamily):
         if not c.startswith("_") and c not in ["name", "value"]:
             all_elements.append(getattr(basix.ElementFamily, c))
+    print(dir(basix.ElementFamily))
+    print(all_elements)
+    print(elements)
 
     assert sorted(all_elements) == sorted(elements)
 

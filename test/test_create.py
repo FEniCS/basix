@@ -44,24 +44,15 @@ variants = [
 
 
 def test_all_cells_included():
-    all_cells = list()
-    for c in dir(basix.CellType):
-        if not c.startswith("_") and c not in ["name", "value"]:
-            all_cells.append(getattr(basix.CellType, c))
-    print(all_cells)
-    print(cells)
+    all_cells = [getattr(basix.CellType, c) for c in dir(basix.CellType)
+                 if c[0].isalpha()]
 
     assert sorted(all_cells) == sorted(cells)
 
 
 def test_all_elements_included():
-    all_elements = list()
-    for c in dir(basix.ElementFamily):
-        if not c.startswith("_") and c not in ["name", "value"]:
-            all_elements.append(getattr(basix.ElementFamily, c))
-    print(dir(basix.ElementFamily))
-    print(all_elements)
-    print(elements)
+    all_elements = [getattr(basix.ElementFamily, e) for e in dir(basix.ElementFamily)
+                    if e[0].isalpha()]
 
     assert sorted(all_elements) == sorted(elements)
 

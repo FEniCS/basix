@@ -8,7 +8,8 @@ if(SKBUILD)
   # Always use lib/ in the Python root. Otherwise, environment used for
   # wheels might place in lib64/, which CMake on some systems will not
   # find.
-  set(CMAKE_INSTALL_LIBDIR lib)
+  set(CMAKE_INSTALL_LIBDIR ${SKBUILD_PROJECT_NAME}/lib)
+  set(CMAKE_INSTALL_INCLUDEDIR ${SKBUILD_PROJECT_NAME}/include)
 endif()
 
 include(FeatureSummary)

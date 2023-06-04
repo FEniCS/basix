@@ -3,8 +3,11 @@ name = "basix"
 version = "0.7.0.dev0"
 
 [build-system]
-requires = ["pybind11>=2.9.1", "cmake>=3.16", "scikit-build-core", "wheel"]
+requires = ["pybind11>=2.9.1", "cmake>=3.16", "scikit-build-core"]
 build-backend = "scikit_build_core.build"
+
+[tool.scikit-build]
+wheel.packages = ["python/basix"]
 
 [tool.cibuildwheel]
 build = ["cp{37,38,39}-manylinux_x86_64", "cp{37,38,39}-manylinux_aarch64", "cp{37,38,39}-macosx_x86_64", "cp{38,39}-macosx_arm64"]

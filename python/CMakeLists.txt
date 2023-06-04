@@ -63,5 +63,5 @@ if (SKBUILD)
     set_target_properties(_basixcpp PROPERTIES INSTALL_RPATH "$ORIGIN/lib")
   endif()
 
-  install(TARGETS _basixcpp DESTINATION .)
+  install(TARGETS _basixcpp DESTINATION ${SKBUILD_PROJECT_NAME})
 endif()

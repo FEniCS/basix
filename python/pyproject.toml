@@ -6,3 +6,6 @@ version = "0.7.0.dev0"
 # We require that the user installs cmake
 requires = ["scikit-build-core", "wheel", "pybind11>=2.9.1"]
 build-backend = "scikit_build_core.build"
+
+[tool.scikit-build]
+wheel.packages = ["basix"]

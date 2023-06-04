@@ -3,7 +3,7 @@ name = "basix"
 version = "0.7.0.dev0"
 
 [build-system]
-requires = ["pybind11>=2.9.1", "cmake>=3.16", "scikit-build-core"]
+requires = ["pybind11>=2.9.1", "cmake>=3.16", "scikit-build-core", "numpy>=1.21"]
 build-backend = "scikit_build_core.build"
 
 [tool.scikit-build]

@@ -1,7 +1,10 @@
-[build-system]
-requires = ["setuptools>=42", "wheel", "pybind11>=2.9.1", "cmake>=3.16", "scikit-build>=0.12"]
+[project]
+name = "basix"
+version = "0.7.0.dev0"
 
-build-backend = "setuptools.build_meta"
+[build-system]
+requires = ["pybind11>=2.9.1", "cmake>=3.16", "scikit-build-core", "wheel"]
+build-backend = "scikit_build_core.build"
 
 [tool.cibuildwheel]
 build = ["cp{37,38,39}-manylinux_x86_64", "cp{37,38,39}-manylinux_aarch64", "cp{37,38,39}-macosx_x86_64", "cp{38,39}-macosx_arm64"]

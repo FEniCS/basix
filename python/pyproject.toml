@@ -1,5 +1,8 @@
+[project]
+name = "basix"
+version = "0.7.0.dev0"
+
 [build-system]
 # We require that the user installs cmake
-requires = ["setuptools>=42", "wheel", "pybind11>=2.9.1"]
-
-build-backend = "setuptools.build_meta"
+requires = ["scikit-build-core", "wheel", "pybind11>=2.9.1"]
+build-backend = "scikit_build_core.build"

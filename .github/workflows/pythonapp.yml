@@ -39,7 +39,6 @@ jobs:
 
       - name: Lint with flake8
         run: |
-          pip3 install flake8
           flake8 --statistics test/
           flake8 --statistics python/
           flake8 --statistics demo/python
@@ -51,12 +50,10 @@ jobs:
 
       - name: pydocstyle checks
         run: |
-          pip3 install pydocstyle
           python3 -m pydocstyle python/basix
 
       - name: Run units tests
         run: |
-          pip3 install pytest pytest-xdist sympy
           python3 -m pytest -n auto --durations 20 test/
 
       - name: Run simple CMake integration test

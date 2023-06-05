@@ -7,7 +7,7 @@ dependencies = ["numpy>=1.21"]
 [project.optional-dependencies]
 ci = ["pytest-xdist", "pytest", "numba", "scipy>=0.16", "flake8", "pydocstyle", "mypy",
       "fenics-ufl@git+https://github.com/fenics/ufl", "sympy", "matplotlib", "sphinx",
-      "markdown"]
+      "markdown", "yaml"]
 
 [tool.pytest.ini_options]
 testpaths = ["test"]

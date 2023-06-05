@@ -15,7 +15,7 @@ def is_canonical(version):
     return re.match(r'^([1-9][0-9]*!)?(0|[1-9][0-9]*)(\.(0|[1-9][0-9]*))*((a|b|rc)(0|[1-9][0-9]*))?(\.post(0|[1-9][0-9]*))?(\.dev(0|[1-9][0-9]*))?$', version) is not None  # noqa: E501
 
 
-def test_version(python_version=pkg_resources.get_distribution("basix").version, cpp_version=basix.__version__):
+def test_version(python_version=pkg_resources.get_distribution("fenics-basix").version, cpp_version=basix.__version__):
     assert is_canonical(python_version)
 
     # Strip Python-specific versioning (dev, post) and compare with C++
@@ -24,7 +24,7 @@ def test_version(python_version=pkg_resources.get_distribution("basix").version,
     stripped_version = stripped_version.replace("dev", "")
     if stripped_version != cpp_version:
         raise RuntimeError(
-            f"The version numbers of the Python ({pkg_resources.get_distribution('basix').version} "
+            f"The version numbers of the Python ({pkg_resources.get_distribution('fenics-basix').version} "
             + f"-> {stripped_version}) and pybind11/C++ ({basix.__version__}) libraries does not match")
 
 

@@ -1,5 +1,6 @@
 [project]
-name = "basix"
+name = "fenics-basix"
+packages = ["basix"]
 version = "0.7.0.dev0"
 dependencies = ["numpy>=1.21"]
 

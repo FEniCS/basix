@@ -93,7 +93,7 @@ target_sources(basix PRIVATE
 set_target_properties(basix PROPERTIES PUBLIC_HEADER basix/finite-element.h)
 set_target_properties(basix PROPERTIES PRIVATE_HEADER "${HEADERS_basix}")
 target_include_directories(basix PUBLIC
-  $<INSTALL_INTERFACE:basix/include>
+  $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
   "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR};${CMAKE_CURRENT_SOURCE_DIR}>")
 
 # The commented lines need CMake >= 3.18

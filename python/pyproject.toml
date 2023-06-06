@@ -1,13 +1,5 @@
-[project]
-name = "fenics-basix"
-packages = ["basix"]
-version = "0.7.0.dev0"
-dependencies = ["numpy>=1.21"]
-
 [build-system]
 # We require that the user installs cmake
-requires = ["scikit-build-core", "wheel", "pybind11>=2.9.1"]
-build-backend = "scikit_build_core.build"
+requires = ["setuptools>=42", "wheel", "pybind11>=2.9.1"]
 
-[tool.scikit-build]
-wheel.packages = ["basix"]
+build-backend = "setuptools.build_meta"

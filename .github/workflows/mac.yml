@@ -33,7 +33,7 @@ jobs:
 
       - name: Install Basix
         run: |
-          python -m pip -v install .[test]
+          python -m pip -v install .[ci]
 
       - name: Run units tests
         run: |

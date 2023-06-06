@@ -1,7 +1,12 @@
 [project]
 name = "fenics-basix"
-packages = ["basix"]
 version = "0.7.0.dev0"
+description = "Basix Python interface"
+readme = "README.md"
+requires-python = ">=3.7.0"
+license = {file = "LICENSE"}
+authors = [{email="fenics-dev@googlegroups.com"}, {name="FEniCS Project"}]
+packages = ["basix"]
 dependencies = ["numpy>=1.21"]
 
 [project.optional-dependencies]

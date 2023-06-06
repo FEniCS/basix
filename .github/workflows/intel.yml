@@ -38,7 +38,7 @@ jobs:
       - name: Install Basix
         run: |
           . /opt/intel/oneapi/setvars.sh
-          pip -v install .[ci]
+          pip -v install .[test]
 
       - name: Run units tests
         run: |

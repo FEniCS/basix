@@ -54,7 +54,7 @@ jobs:
           platforms: arm64
 
       - name: Build wheels
-        uses: pypa/cibuildwheel@v2.13.1
+        uses: pypa/cibuildwheel@v2.13.0
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v3

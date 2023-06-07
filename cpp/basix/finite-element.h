@@ -11,6 +11,7 @@
 #include "precompute.h"
 #include "sobolev-spaces.h"
 #include <array>
+#include <cstdint>
 #include <concepts>
 #include <functional>
 #include <map>

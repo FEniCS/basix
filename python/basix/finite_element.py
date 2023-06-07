@@ -54,6 +54,11 @@ def string_to_family(family: str, cell: str) -> _EF:
             "serendipity": _EF.serendipity,
             "S": _EF.serendipity,
         })
+    # Family names that are valid for simplices
+    if cell in ["interval", "triangle", "tetrahedron"]:
+        families.update({
+            "Hermite": _EF.Hermite,
+        })
     # Family names that are valid for quads and hexes
     if cell in ["quadrilateral", "hexahedron"]:
         families.update({

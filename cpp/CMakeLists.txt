@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.16)
+cmake_minimum_required(VERSION 3.19)
 
 # Set the version
 project(Basix VERSION "0.7.0.0" LANGUAGES CXX)
@@ -96,11 +96,8 @@ target_include_directories(basix PUBLIC
   $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
   "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR};${CMAKE_CURRENT_SOURCE_DIR}>")
 
-# The commented lines need CMake >= 3.18
-# target_link_libraries(basix PRIVATE BLAS::BLAS)
-# target_link_libraries(basix PRIVATE LAPACK::LAPACK)
-target_link_libraries(basix PRIVATE ${BLAS_LIBRARIES})
-target_link_libraries(basix PRIVATE ${LAPACK_LIBRARIES})
+target_link_libraries(basix PRIVATE BLAS::BLAS)
+target_link_libraries(basix PRIVATE LAPACK::LAPACK)
 
 # Set compiler flags
 list(APPEND BASIX_DEVELOPER_FLAGS -O2;-g;-pipe)

@@ -3,7 +3,7 @@ name = "fenics-basix"
 version = "0.7.0.dev0"
 description = "Basix Python interface"
 readme = "README.md"
-requires-python = ">=3.7.0"
+requires-python = ">=3.8.0"
 license = {file = "LICENSE"}
 authors = [{email="fenics-dev@googlegroups.com"}, {name="FEniCS Project"}]
 packages = ["basix"]
@@ -22,14 +22,14 @@ testpaths = ["test"]
 # addopts = "-n auto --durations 20"
 
 [build-system]
-requires = ["pybind11>=2.9.1", "cmake>=3.16", "scikit-build-core"]
+requires = ["pybind11>=2.9.1", "cmake>=3.19", "scikit-build-core"]
 build-backend = "scikit_build_core.build"
 
 [tool.scikit-build]
 wheel.packages = ["python/basix"]
 
 [tool.cibuildwheel]
-build = ["cp{37,38,39}-manylinux_x86_64", "cp{37,38,39}-manylinux_aarch64", "cp{37,38,39}-macosx_x86_64", "cp{38,39}-macosx_arm64"]
+build = ["cp{38,39,310}-manylinux_x86_64", "cp{38,39,310}-manylinux_aarch64", "cp{38,39,310}-macosx_x86_64", "cp{38,39,310}-macosx_arm64"]
 
 test-command = [
     "cmake -G Ninja -DPython3_EXECUTABLE=$(which python) -B build-dir -S {project}/test/test_cmake",
@@ -41,7 +41,7 @@ test-requires = ["pytest-xdist"]
 test-extras = ["test"]
 test-skip = "*-macosx_arm64 *-*linux_aarch64"
 
-manylinux-x86_64-image = "manylinux2014"
+manylinux-x86_64-image = "manylinux_2_28"
 
 [tool.cibuildwheel.linux]
 archs = ["x86_64", "aarch64"] # Forces arm64 build on x86_64 runner using emulation.

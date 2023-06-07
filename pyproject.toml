@@ -39,7 +39,7 @@ test-command = [
 ]
 test-requires = ["pytest-xdist"]
 test-extras = ["test"]
-test-skip = "*-macosx_arm64 *-*linux_aarch64"
+test-skip = "*-macosx_arm64"
 
 manylinux-x86_64-image = "manylinux_2_28"
 

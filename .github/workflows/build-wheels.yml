@@ -54,7 +54,7 @@ jobs:
           platforms: arm64
 
       - name: Build wheels
-        uses: pypa/cibuildwheel@v2.11.1
+        uses: pypa/cibuildwheel@v2.13.1
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v3
@@ -70,10 +70,10 @@ jobs:
           ref: ${{ github.event.inputs.basix_ref }}
 
       - name: Install skbuild
-        run: python -m pip install scikit-build
+        run: python -m pip install build
 
       - name: Build sdist
-        run: python setup.py sdist --formats=gztar
+        run: python -m build --sdist .
 
       - uses: actions/upload-artifact@v3
         with:

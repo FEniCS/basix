@@ -72,7 +72,7 @@ jobs:
       - name: Upgrade pip
         run: python -m pip install --upgrade pip setuptools
 
-      - name: Install skbuild
+      - name: Install build
         run: python -m pip install build
 
       - name: Build sdist

@@ -36,4 +36,4 @@ def type_to_string(quadraturetype: _QT) -> str:
     Returns:
         The quadrature rule as a string.
     """
-    return quadraturetype.name
+    return quadraturetype.__name__

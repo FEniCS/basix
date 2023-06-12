@@ -27,7 +27,7 @@ def type_to_string(latticetype: _LT) -> str:
     Returns:
         The lattice type as a string.
     """
-    return latticetype.name
+    return latticetype.__name__
 
 
 def string_to_simplex_method(method: str) -> _LSM:
@@ -53,4 +53,4 @@ def simplex_method_to_string(simplex_method: _LSM) -> str:
     Returns:
         The simplex method as a string.
     """
-    return simplex_method.name
+    return simplex_method.__name__

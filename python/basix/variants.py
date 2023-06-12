@@ -34,7 +34,7 @@ def lagrange_variant_to_string(variant: _LV) -> str:
     Returns:
         The Lagrange variant as a string.
     """
-    return variant.name
+    return variant.__name__
 
 
 def string_to_dpc_variant(variant: str) -> _DV:
@@ -60,4 +60,4 @@ def dpc_variant_to_string(variant: _DV) -> str:
     Returns:
         The DPC variant as a string.
     """
-    return variant.name
+    return variant.__name__

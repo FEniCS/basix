@@ -45,14 +45,14 @@ variants = [
 
 def test_all_cells_included():
     all_cells = [getattr(basix.CellType, c) for c in dir(basix.CellType)
-                 if c[0].isalpha() and c is not "name"]
+                 if c[0].isalpha() and c != "name"]
 
     assert sorted(all_cells) == sorted(cells)
 
 
 def test_all_elements_included():
     all_elements = [getattr(basix.ElementFamily, e) for e in dir(basix.ElementFamily)
-                    if e[0].isalpha() and e is not "name"]
+                    if e[0].isalpha() and e != "name"]
 
     assert sorted(all_elements) == sorted(elements)
 

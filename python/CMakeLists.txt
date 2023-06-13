@@ -25,19 +25,7 @@ if(NOT SKBUILD)
   endif()
 endif()
 
-execute_process(
-  COMMAND
-    "${Python3_EXECUTABLE}" -c
-    "import nanobind; print(nanobind.cmake_dir())"
-  OUTPUT_VARIABLE _tmp_dir
-  OUTPUT_STRIP_TRAILING_WHITESPACE COMMAND_ECHO STDOUT)
-list(APPEND CMAKE_PREFIX_PATH "${_tmp_dir}")
-
-# find_package(pybind11 REQUIRED CONFIG HINTS ${PYBIND11_DIR} ${PYBIND11_ROOT}
-#   $ENV{PYBIND11_DIR} $ENV{PYBIND11_ROOT})
-
 find_package(Python COMPONENTS Interpreter Development REQUIRED)
-
 
 # Detect the installed nanobind package and import it into CMake
 execute_process(
@@ -46,9 +34,7 @@ execute_process(
 list(APPEND CMAKE_PREFIX_PATH "${NB_DIR}")
 find_package(nanobind CONFIG REQUIRED)
 
-
 # Create the binding library
-# pybind11_add_module(_basixcpp MODULE wrapper.cpp)
 nanobind_add_module(_basixcpp MODULE wrapper.cpp)
 target_link_libraries(_basixcpp PRIVATE Basix::basix)
 
@@ -77,6 +63,5 @@ if (SKBUILD)
   endif()
 
   install(TARGETS _basixcpp DESTINATION basix)
-# install(TARGETS nanobind DESTINATION lib)
 
 endif()

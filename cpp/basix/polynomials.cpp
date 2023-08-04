@@ -23,9 +23,9 @@ using mdspan_t = stdex::mdspan<T, stdex::dextents<std::size_t, d>>;
 constexpr int single_choose(int n, int k)
 {
   int out = 1;
-  for (int i = k + 1; i <= n; ++i)
+  for (int i = n + 1 - k; i <= n; ++i)
     out *= i;
-  for (int i = 1; i <= n - k; ++i)
+  for (int i = 1; i <= k; ++i)
     out /= i;
   return out;
 }

@@ -17,6 +17,17 @@ namespace stdex = std::experimental;
 
 namespace
 {
+//-----------------------------------------------------------------------------
+constexpr int single_choose(int n, int k)
+{
+  int out = 1;
+  for (int i = n + 1 - k; i <= n; ++i)
+    out *= i;
+  for (int i = 1; i <= k; ++i)
+    out /= i;
+  return out;
+}
+//-----------------------------------------------------------------------------
 /// Compute coefficients in the Jacobi Polynomial recurrence relation
 template <typename T>
 constexpr std::array<T, 3> jrc(int a, int n)
@@ -125,52 +136,88 @@ void tabulate_polyset_line_macroedge_derivs(
 {
   assert(x.extent(0) > 0);
   assert(P.extent(0) == nderiv + 1);
-  assert(P.extent(1) == n + 1);
+  assert(P.extent(1) == 2 * n + 1);
   assert(P.extent(2) == x.extent(0));
-
-  std::fill(P.data_handle(), P.data_handle() + P.size(), 0.0);
-  for (std::size_t j = 0; j < P.extent(2); ++j)
-    P(0, 0, j) = 1.0;
-
-  if (n == 0)
-    return;
 
   auto x0 = stdex::submdspan(x, stdex::full_extent, 0);
 
-  for (std::size_t i = 0; i < P.extent(2); ++i)
-    P(0, 1, i) = (x0[i] * 2.0 - 1.0) * P(0, 0, i);
+  std::fill(P.data_handle(), P.data_handle() + P.size(), 0.0);
 
-  for (std::size_t p = 2; p <= n; ++p)
+  std::vector<T> factorials(n + 1, 0.0);
+
+  for (std::size_t k = 0; k <= n; ++k)
   {
-    const T a = 1.0 - 1.0 / static_cast<T>(p);
-    for (std::size_t i = 0; i < P.extent(2); ++i)
-    {
-      P(0, p, i) = (x0[i] * 2.0 - 1.0) * P(0, p - 1, i) * (a + 1.0)
-                   - P(0, p - 2, i) * a;
-    }
+    factorials[k] = (k % 2 == 0 ? 1 : -1) * single_choose(2 * n + 1 - k, n - k)
+                    * single_choose(n, k) * pow(2, n - k);
   }
-
-  for (std::size_t k = 1; k <= nderiv; ++k)
+  for (std::size_t d = 0; d <= nderiv; ++d)
   {
-    for (std::size_t p = 1; p <= n; ++p)
+    for (std::size_t p = 0; p < P.extent(2); ++p)
     {
-      const T a = 1.0 - 1.0 / static_cast<T>(p);
-      for (std::size_t i = 0; i < P.extent(2); ++i)
+      if (x0[p] <= 0.5)
       {
-        P(k, p, i) = (x0[i] * 2.0 - 1.0) * P(k, p - 1, i) * (a + 1.0)
-                     + 2 * k * P(k - 1, p - 1, i) * (a + 1.0)
-                     - P(k, p - 2, i) * a;
+        for (std::size_t k = 0; k + d <= n; ++k)
+        {
+          T x_term = pow(x0[p], n - k - d);
+          for (std::size_t i = n - k; i > n - k - d; --i)
+            x_term *= i;
+          P(d, 0, p) += factorials[k] * x_term;
+        }
+      }
+      else
+      {
+        for (std::size_t k = 0; k + d <= n; ++k)
+        {
+          T x_term = pow(1.0 - x0[p], n - k - d);
+          for (std::size_t i = n - k; i > n - k - d; --i)
+            x_term *= -i;
+          P(d, 0, p) += factorials[k] * x_term;
+        }
       }
     }
   }
 
-  // Normalise
-  for (std::size_t p = 0; p < P.extent(1); ++p)
+  for (std::size_t j = 0; j < n; ++j)
   {
-    const T norm = std::sqrt(2 * p + 1);
-    for (std::size_t i = 0; i < P.extent(0); ++i)
-      for (std::size_t j = 0; j < P.extent(2); ++j)
-        P(i, p, j) *= norm;
+    for (std::size_t k = 0; k <= j; ++k)
+    {
+      factorials[k] = (k % 2 == 0 ? 1 : -1)
+                      * single_choose(2 * n + 1 - k, j - k)
+                      * single_choose(j, k) * pow(2, j - k) * pow(2, n - j)
+                      * sqrt(4 * (n - j) + 2);
+    }
+    for (std::size_t d = 0; d <= nderiv; ++d)
+    {
+      for (std::size_t p = 0; p < P.extent(2); ++p)
+      {
+        if (x0[p] <= 0.5)
+        {
+          for (std::size_t k = 0; k + d <= j; ++k)
+          {
+            T x_term = pow(x0[p], j - k - d);
+            for (std::size_t i = j - k; i > j - k - d; --i)
+              x_term *= i;
+            P(d, j + 1, p) += factorials[k] * x_term;
+          }
+          P(d, j + 1, p) *= pow(0.5 - x0[p], n - j - d);
+          for (std::size_t i = n - j; i > n - j - d; --i)
+            P(d, j + 1, p) *= -i;
+        }
+        else
+        {
+          for (std::size_t k = 0; k + d <= j; ++k)
+          {
+            T x_term = pow(1.0 - x0[p], j - k - d);
+            for (std::size_t i = j - k; i > j - k - d; --i)
+              x_term *= -i;
+            P(d, j + n + 1, p) += factorials[k] * x_term;
+          }
+          P(d, j + n + 1, p) *= pow(x0[p] - 0.5, n - j - d);
+          for (std::size_t i = n - j; i > n - j - d; --i)
+            P(d, j + n + 1, p) *= i;
+        }
+      }
+    }
   }
 }
 //-----------------------------------------------------------------------------

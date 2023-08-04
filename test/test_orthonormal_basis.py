@@ -124,8 +124,6 @@ def test_standard(cell_type, order):
 @pytest.mark.parametrize("order", [0, 1, 2, 3, 4])
 def test_macroedge(cell_type, order):
     Qpts, Qwts = basix.make_quadrature(cell_type, basix.PolysetType.macroedge, 2*order + 1)
-    assert np.isclose(sum(Qwts), 1)
-    return
     basis = basix._basixcpp.tabulate_polynomial_set(
         cell_type, basix.PolysetType.macroedge, order, 0, Qpts)[0]
 

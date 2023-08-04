@@ -129,7 +129,8 @@ def test_tensor_product_factorisation_hexahedron(degree):
 
     # Quadrature degree
     Q = 2 * P + 2
-    points, _ = basix.make_quadrature(basix.QuadratureType.Default, basix.CellType.hexahedron, basix.PolysetType.standard, Q)
+    points, _ = basix.make_quadrature(
+        basix.QuadratureType.Default, basix.CellType.hexahedron, basix.PolysetType.standard, Q)
 
     # FIXME: This test assumes all factors formed by a single element
     perm = factors[1]

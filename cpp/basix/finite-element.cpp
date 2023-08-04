@@ -233,7 +233,8 @@ basix::create_element(element::family family, cell::type cell, int degree,
          {element::family::HHJ, {false, false}},
          {element::family::CR, {false, false}},
          {element::family::bubble, {false, false}},
-         {element::family::Hermite, {false, false}}};
+         {element::family::Hermite, {false, false}},
+         {element::family::iso, {true, false}}};
   if (auto it = has_variant.find(family); it != has_variant.end())
   {
     if (it->second[0] == false and lvariant != element::lagrange_variant::unset)
@@ -322,6 +323,8 @@ basix::create_element(element::family family, cell::type cell, int degree,
     return element::create_cr<T>(cell, degree, discontinuous);
   case element::family::bubble:
     return element::create_bubble<T>(cell, degree, discontinuous);
+  case element::family::iso:
+    return element::create_iso<T>(cell, degree, lvariant, discontinuous);
   case element::family::Hermite:
     return element::create_hermite<T>(cell, degree, discontinuous);
   default:

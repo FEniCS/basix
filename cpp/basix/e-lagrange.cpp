@@ -807,6 +807,58 @@ FiniteElement<T> create_d_lagrange(cell::type celltype, int degree,
 }
 //----------------------------------------------------------------------------
 template <std::floating_point T>
+FiniteElement<T>
+create_d_iso(cell::type celltype, int degree, element::lagrange_variant variant,
+             lattice::type lattice_type, lattice::simplex_method simplex_method)
+{
+  if (celltype == cell::type::prism or celltype == cell::type::pyramid)
+  {
+    throw std::runtime_error(
+        "This variant is not yet supported on prisms and pyramids.");
+  }
+
+  const std::size_t tdim = cell::topological_dimension(celltype);
+  const std::size_t ndofs
+      = polyset::dim(celltype, polyset::type::macroedge, degree);
+  const std::vector<std::vector<std::vector<int>>> topology
+      = cell::topology(celltype);
+
+  std::array<std::vector<impl::mdarray_t<T, 2>>, 4> x;
+  std::array<std::vector<impl::mdarray_t<T, 4>>, 4> M;
+  for (std::size_t i = 0; i < tdim; ++i)
+  {
+    std::size_t num_ent = cell::num_sub_entities(celltype, i);
+    x[i] = std::vector<impl::mdarray_t<T, 2>>(num_ent,
+                                              impl::mdarray_t<T, 2>(0, tdim));
+    M[i] = std::vector<impl::mdarray_t<T, 4>>(
+        num_ent, impl::mdarray_t<T, 4>(0, 1, 0, 1));
+  }
+
+  const int lattice_degree
+      = celltype == cell::type::triangle
+            ? 2 * degree + 3
+            : (celltype == cell::type::tetrahedron ? 2 * degree + 4
+                                                   : 2 * degree + 2);
+
+  // Create points in interior
+  const auto [pt, shape] = lattice::create<T>(
+      celltype, lattice_degree, lattice_type, false, simplex_method);
+  x[tdim].emplace_back(pt, shape);
+
+  const std::size_t num_dofs = shape[0];
+  auto& _M = M[tdim].emplace_back(num_dofs, 1, num_dofs, 1);
+  for (std::size_t i = 0; i < _M.extent(0); ++i)
+    _M(i, 0, i, 0) = 1.0;
+
+  return FiniteElement(
+      element::family::P, celltype, polyset::type::macroedge, degree, {},
+      impl::mdspan_t<const T, 2>(math::eye<T>(ndofs).data(), ndofs, ndofs),
+      impl::to_mdspan(x), impl::to_mdspan(M), 0, maps::type::identity,
+      sobolev::space::L2, true, degree, degree, variant,
+      element::dpc_variant::unset);
+}
+//----------------------------------------------------------------------------
+template <std::floating_point T>
 std::vector<std::tuple<std::vector<FiniteElement<T>>, std::vector<int>>>
 create_tensor_product_factors(cell::type celltype, int degree,
                               element::lagrange_variant variant)
@@ -1377,10 +1429,166 @@ basix::element::create_lagrange(cell::type celltype, int degree,
       variant, dpc_variant::unset, tensor_factors, dof_ordering);
 }
 //-----------------------------------------------------------------------------
+template <std::floating_point T>
+FiniteElement<T> basix::element::create_iso(cell::type celltype, int degree,
+                                            lagrange_variant variant,
+                                            bool discontinuous)
+{
+  if (celltype != cell::type::interval)
+  {
+    throw std::runtime_error(
+        "Can currently only create iso elements on an interval");
+  }
+
+  if (variant == lagrange_variant::unset)
+  {
+    if (degree < 3)
+      variant = element::lagrange_variant::gll_warped;
+    else
+    {
+      throw std::runtime_error(
+          "Lagrange elements of degree > 2 need to be given a variant.");
+    }
+  }
+
+  auto [lattice_type, simplex_method, exterior]
+      = variant_to_lattice(celltype, variant);
+
+  if (!exterior)
+  {
+    // Points used to define this variant are all interior to the cell,
+    // so this variant requires that the element is discontinuous
+    if (!discontinuous)
+    {
+      throw std::runtime_error("This variant of Lagrange is only supported for "
+                               "discontinuous elements");
+    }
+    return create_d_iso<T>(celltype, degree, variant, lattice_type,
+                           simplex_method);
+  }
+
+  const std::size_t tdim = cell::topological_dimension(celltype);
+  const std::size_t ndofs
+      = polyset::dim(celltype, polyset::type::macroedge, degree);
+  const std::vector<std::vector<std::vector<int>>> topology
+      = cell::topology(celltype);
+
+  std::array<std::vector<impl::mdarray_t<T, 2>>, 4> x;
+  std::array<std::vector<impl::mdarray_t<T, 4>>, 4> M;
+  if (degree == 0)
+  {
+    if (!discontinuous)
+    {
+      throw std::runtime_error(
+          "Cannot create a continuous order 0 Lagrange basis function");
+    }
+
+    for (std::size_t i = 0; i < tdim; ++i)
+    {
+      std::size_t num_entities = cell::num_sub_entities(celltype, i);
+      x[i] = std::vector(num_entities, impl::mdarray_t<T, 2>(0, tdim));
+      M[i] = std::vector(num_entities, impl::mdarray_t<T, 4>(0, 1, 0, 1));
+    }
+
+    const auto [pt, shape]
+        = lattice::create<T>(celltype, 0, lattice_type, true, simplex_method);
+    x[tdim].emplace_back(pt, shape[0], shape[1]);
+    auto& _M = M[tdim].emplace_back(shape[0], 1, shape[0], 1);
+    std::fill(_M.data(), _M.data() + _M.size(), 0);
+    for (std::size_t i = 0; i < shape[0]; ++i)
+      _M(i, 0, i, 0) = 1;
+  }
+  else
+  {
+    // Create points at nodes, ordered by topology (vertices first)
+    for (std::size_t dim = 0; dim <= tdim; ++dim)
+    {
+      // Loop over entities of dimension 'dim'
+      for (std::size_t e = 0; e < topology[dim].size(); ++e)
+      {
+        const auto [entity_x, entity_x_shape]
+            = cell::sub_entity_geometry<T>(celltype, dim, e);
+        if (dim == 0)
+        {
+          x[dim].emplace_back(entity_x, entity_x_shape[0], entity_x_shape[1]);
+          auto& _M
+              = M[dim].emplace_back(entity_x_shape[0], 1, entity_x_shape[0], 1);
+          std::fill(_M.data(), _M.data() + _M.size(), 0);
+          for (std::size_t i = 0; i < entity_x_shape[0]; ++i)
+            _M(i, 0, i, 0) = 1;
+        }
+        else if (dim == tdim)
+        {
+          const auto [pt, shape] = lattice::create<T>(
+              celltype, 2 * degree, lattice_type, false, simplex_method);
+          x[dim].emplace_back(pt, shape[0], shape[1]);
+          auto& _M = M[dim].emplace_back(shape[0], 1, shape[0], 1);
+          std::fill(_M.data(), _M.data() + _M.size(), 0);
+          for (std::size_t i = 0; i < shape[0]; ++i)
+            _M(i, 0, i, 0) = 1;
+        }
+        else
+        {
+          cell::type ct = cell::sub_entity_type(celltype, dim, e);
+          const auto [pt, shape] = lattice::create<T>(
+              ct, 2 * degree, lattice_type, false, simplex_method);
+          impl::mdspan_t<const T, 2> lattice(pt.data(), shape);
+          std::span<const T> x0(entity_x.data(), entity_x_shape[1]);
+          impl::mdspan_t<const T, 2> entity_x_view(entity_x.data(),
+                                                   entity_x_shape);
+
+          auto& _x = x[dim].emplace_back(shape[0], entity_x_shape[1]);
+          for (std::size_t i = 0; i < shape[0]; ++i)
+            for (std::size_t j = 0; j < entity_x_shape[1]; ++j)
+              _x(i, j) = x0[j];
+
+          for (std::size_t j = 0; j < shape[0]; ++j)
+            for (std::size_t k = 0; k < shape[1]; ++k)
+              for (std::size_t q = 0; q < tdim; ++q)
+                _x(j, q) += (entity_x_view(k + 1, q) - x0[q]) * lattice(j, k);
+
+          auto& _M = M[dim].emplace_back(shape[0], 1, shape[0], 1);
+          std::fill(_M.data(), _M.data() + _M.size(), 0);
+          for (std::size_t i = 0; i < shape[0]; ++i)
+            _M(i, 0, i, 0) = 1;
+        }
+      }
+    }
+  }
+
+  std::array<std::vector<mdspan_t<const T, 2>>, 4> xview = impl::to_mdspan(x);
+  std::array<std::vector<mdspan_t<const T, 4>>, 4> Mview = impl::to_mdspan(M);
+  std::array<std::vector<std::vector<T>>, 4> xbuffer;
+  std::array<std::vector<std::vector<T>>, 4> Mbuffer;
+  if (discontinuous)
+  {
+    std::array<std::vector<std::array<std::size_t, 2>>, 4> xshape;
+    std::array<std::vector<std::array<std::size_t, 4>>, 4> Mshape;
+    std::tie(xbuffer, xshape, Mbuffer, Mshape)
+        = make_discontinuous(xview, Mview, tdim, 1);
+    xview = impl::to_mdspan(xbuffer, xshape);
+    Mview = impl::to_mdspan(Mbuffer, Mshape);
+  }
+
+  sobolev::space space
+      = discontinuous ? sobolev::space::L2 : sobolev::space::H1;
+  auto tensor_factors
+      = create_tensor_product_factors<T>(celltype, degree, variant);
+  return FiniteElement<T>(
+      family::P, celltype, polyset::type::macroedge, degree, {},
+      impl::mdspan_t<T, 2>(math::eye<T>(ndofs).data(), ndofs, ndofs), xview,
+      Mview, 0, maps::type::identity, space, discontinuous, degree, degree,
+      variant, dpc_variant::unset, tensor_factors);
+}
+//-----------------------------------------------------------------------------
 template FiniteElement<float> element::create_lagrange(cell::type, int,
                                                        lagrange_variant, bool,
                                                        std::vector<int>);
 template FiniteElement<double> element::create_lagrange(cell::type, int,
                                                         lagrange_variant, bool,
                                                         std::vector<int>);
+template FiniteElement<float> element::create_iso(cell::type, int,
+                                                  lagrange_variant, bool);
+template FiniteElement<double> element::create_iso(cell::type, int,
+                                                   lagrange_variant, bool);
 //-----------------------------------------------------------------------------

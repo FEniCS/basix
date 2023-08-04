@@ -119,7 +119,8 @@ def test_gll():
     assert np.isclose(sum(wts), 2)
 
     # 2D quad
-    pts, wts = basix.make_quadrature(basix.QuadratureType.gll, basix.CellType.quadrilateral, basix.PolysetType.standard, m+1)
+    pts, wts = basix.make_quadrature(
+        basix.QuadratureType.gll, basix.CellType.quadrilateral, basix.PolysetType.standard, m+1)
     pts, wts = 2*pts-1, 4*wts
     ref_pts2 = np.array([[x, y] for x in ref_pts for y in ref_pts])
     assert (np.allclose(pts, ref_pts2))
@@ -129,7 +130,8 @@ def test_gll():
     assert np.isclose(sum(wts), 4)
 
     # 3D hex
-    pts, wts = basix.make_quadrature(basix.QuadratureType.gll, basix.CellType.hexahedron, basix.PolysetType.standard, m+1)
+    pts, wts = basix.make_quadrature(
+        basix.QuadratureType.gll, basix.CellType.hexahedron, basix.PolysetType.standard, m+1)
     pts, wts = 2*pts-1, 8*wts
     ref_pts3 = np.array([[x, y, z] for x in ref_pts for y in ref_pts for z in ref_pts])
     assert (np.allclose(pts, ref_pts3))

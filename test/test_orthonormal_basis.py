@@ -84,7 +84,7 @@ def test_prism(order):
             Qpts.append([p[0], p[1], q[0]])
             Qwts.append(u * v)
     basis = basix._basixcpp.tabulate_polynomial_set(
-        basix.CellType.prism,basix.PolysetType.standard, order, 0, Qpts)[0]
+        basix.CellType.prism, basix.PolysetType.standard, order, 0, Qpts)[0]
     ndofs = basis.shape[0]
 
     mat = np.zeros((ndofs, ndofs))

@@ -612,17 +612,20 @@ Interface to the Basix C++ library.
       },
       basix::docstring::compute_interpolation_operator.c_str());
 
+  py::enum_<polyset::type>(m, "PolysetType")
+      .value("standard", polyset::type::standard)
+      .value("edgeisoC0", polyset::type::edgeisoC0);
+
   m.def(
       "tabulate_polynomial_set",
-      [](cell::type celltype, int d, int n,
+      [](cell::type celltype, polyset::type polytype, int d, int n,
          const py::array_t<double, py::array::c_style>& x)
       {
         if (x.ndim() != 2)
           throw std::runtime_error("x has the wrong number of dimensions");
         stdex::mdspan<const double, stdex::dextents<std::size_t, 2>> _x(
             x.data(), x.shape(0), x.shape(1));
-        auto [p, shape]
-            = polyset::tabulate(celltype, polyset::type::standard, d, n, _x);
+        auto [p, shape] = polyset::tabulate(celltype, polytype, d, n, _x);
         return py::array_t<double>(shape, p.data());
       },
       basix::docstring::tabulate_polynomial_set.c_str());

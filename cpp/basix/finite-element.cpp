@@ -107,7 +107,7 @@ constexpr int num_transformations(cell::type cell_type)
 //-----------------------------------------------------------------------------
 template <std::floating_point T>
 std::pair<std::vector<T>, std::array<std::size_t, 2>> compute_dual_matrix(
-    cell::type cell_type, mdspan_t<const T, 2> B,
+    cell::type cell_type, polyset::type poly_type, mdspan_t<const T, 2> B,
     const std::array<std::vector<impl::mdspan_t<const T, 2>>, 4>& x,
     const std::array<std::vector<impl::mdspan_t<const T, 4>>, 4>& M, int degree,
     int nderivs)
@@ -125,7 +125,7 @@ std::pair<std::vector<T>, std::array<std::size_t, 2>> compute_dual_matrix(
     }
   }
 
-  std::size_t pdim = polyset::dim(cell_type, polyset::type::standard, degree);
+  std::size_t pdim = polyset::dim(cell_type, poly_type, degree);
   mdarray_t<T, 3> D(vs, pdim, num_dofs);
   std::fill(D.data(), D.data() + D.size(), 0);
   std::vector<T> Pb;
@@ -143,8 +143,8 @@ std::pair<std::vector<T>, std::array<std::size_t, 2>> compute_dual_matrix(
       if (x_e.extent(0) > 0)
       {
         std::array<std::size_t, 3> shape;
-        std::tie(Pb, shape) = polyset::tabulate(
-            cell_type, polyset::type::standard, degree, nderivs, x_e);
+        std::tie(Pb, shape)
+            = polyset::tabulate(cell_type, poly_type, degree, nderivs, x_e);
         P = mdspan_t<const T, 3>(Pb.data(), shape);
       }
 
@@ -438,8 +438,8 @@ FiniteElement<T> basix::create_custom_element(
     int highest_complete_degree, int highest_degree)
 {
   // Check that inputs are valid
-  const std::size_t psize
-      = polyset::dim(cell_type, polyset::type::standard, highest_degree);
+  polyset::type poly_type = polyset::type::standard;
+  const std::size_t psize = polyset::dim(cell_type, poly_type, highest_degree);
   const std::size_t value_size = std::reduce(
       value_shape.begin(), value_shape.end(), 1, std::multiplies{});
   const std::size_t deriv_count
@@ -502,8 +502,9 @@ FiniteElement<T> basix::create_custom_element(
     }
   }
 
-  auto [dualmatrix, dualshape] = compute_dual_matrix(
-      cell_type, wcoeffs, x, M, highest_degree, interpolation_nderivs);
+  auto [dualmatrix, dualshape]
+      = compute_dual_matrix(cell_type, poly_type, wcoeffs, x, M, highest_degree,
+                            interpolation_nderivs);
   if (math::is_singular(mdspan_t<const T, 2>(dualmatrix.data(), dualshape)))
   {
     throw std::runtime_error(
@@ -511,10 +512,10 @@ FiniteElement<T> basix::create_custom_element(
   }
 
   return basix::FiniteElement<T>(
-      element::family::custom, cell_type, highest_degree, value_shape, wcoeffs,
-      x, M, interpolation_nderivs, map_type, sobolev_space, discontinuous,
-      highest_complete_degree, highest_degree, element::lagrange_variant::unset,
-      element::dpc_variant::unset);
+      element::family::custom, cell_type, poly_type, highest_degree,
+      value_shape, wcoeffs, x, M, interpolation_nderivs, map_type,
+      sobolev_space, discontinuous, highest_complete_degree, highest_degree,
+      element::lagrange_variant::unset, element::dpc_variant::unset);
 }
 //-----------------------------------------------------------------------------
 /// @cond
@@ -535,8 +536,9 @@ template FiniteElement<double> basix::create_custom_element(
 /// @cond
 template <std::floating_point F>
 FiniteElement<F>::FiniteElement(
-    element::family family, cell::type cell_type, int degree,
-    const std::vector<std::size_t>& value_shape, mdspan_t<const F, 2> wcoeffs,
+    element::family family, cell::type cell_type, polyset::type poly_type,
+    int degree, const std::vector<std::size_t>& value_shape,
+    mdspan_t<const F, 2> wcoeffs,
     const std::array<std::vector<mdspan_t<const F, 2>>, 4>& x,
     const std::array<std::vector<mdspan_t<const F, 4>>, 4>& M,
     int interpolation_nderivs, maps::type map_type,
@@ -546,7 +548,8 @@ FiniteElement<F>::FiniteElement(
     std::vector<std::tuple<std::vector<FiniteElement<F>>, std::vector<int>>>
         tensor_factors,
     std::vector<int> dof_ordering)
-    : _cell_type(cell_type), _cell_tdim(cell::topological_dimension(cell_type)),
+    : _cell_type(cell_type), _poly_type(poly_type),
+      _cell_tdim(cell::topological_dimension(cell_type)),
       _cell_subentity_types(cell::subentity_types(cell_type)), _family(family),
       _lagrange_variant(lvariant), _dpc_variant(dvariant), _degree(degree),
       _interpolation_nderivs(interpolation_nderivs),
@@ -590,8 +593,9 @@ FiniteElement<F>::FiniteElement(
             wcoeffs_ortho_b.begin());
   if (family != element::family::P)
     orthogonalise(wcoeffs_ortho);
-  _dual_matrix = compute_dual_matrix<F>(cell_type, wcoeffs_ortho, x, M,
-                                        highest_degree, interpolation_nderivs);
+  _dual_matrix
+      = compute_dual_matrix<F>(cell_type, poly_type, wcoeffs_ortho, x, M,
+                               highest_degree, interpolation_nderivs);
 
   _wcoeffs
       = {wcoeffs_ortho_b, {wcoeffs_ortho.extent(0), wcoeffs_ortho.extent(1)}};
@@ -1031,13 +1035,12 @@ void FiniteElement<F>::tabulate(int nd, impl::mdspan_t<const F, 2> x,
   }
 
   const std::size_t psize
-      = polyset::dim(_cell_type, polyset::type::standard, _highest_degree);
+      = polyset::dim(_cell_type, _poly_type, _highest_degree);
   const std::array<std::size_t, 3> bsize
       = {(std::size_t)polyset::nderivs(_cell_type, nd), psize, x.extent(0)};
   std::vector<F> basis_b(bsize[0] * bsize[1] * bsize[2]);
   mdspan_t<F, 3> basis(basis_b.data(), bsize);
-  polyset::tabulate(basis, _cell_type, polyset::type::standard, _highest_degree,
-                    nd, x);
+  polyset::tabulate(basis, _cell_type, _poly_type, _highest_degree, nd, x);
   const int vs = std::accumulate(_value_shape.begin(), _value_shape.end(), 1,
                                  std::multiplies{});
 

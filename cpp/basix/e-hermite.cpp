@@ -100,7 +100,7 @@ FiniteElement<T> basix::element::create_hermite(cell::type celltype, int degree,
   sobolev::space space
       = discontinuous ? sobolev::space::L2 : sobolev::space::H2;
   return FiniteElement<T>(
-      element::family::Hermite, celltype, degree, {},
+      element::family::Hermite, celltype, polyset::type::standard, degree, {},
       impl::mdspan_t<T, 2>(math::eye<T>(ndofs).data(), ndofs, ndofs), xview,
       Mview, 1, maps::type::identity, space, discontinuous, -1, degree,
       element::lagrange_variant::unset, element::dpc_variant::unset);

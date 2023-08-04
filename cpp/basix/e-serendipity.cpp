@@ -744,7 +744,7 @@ FiniteElement<T> create_legendre_dpc(cell::type celltype, int degree,
   }
 
   return FiniteElement<T>(
-      element::family::DPC, celltype, degree, {},
+      element::family::DPC, celltype, polyset::type::standard, degree, {},
       impl::mdspan_t<T, 2>(wcoeffs.data(), wcoeffs.extents()),
       impl::to_mdspan(x), impl::to_mdspan(M), 0, maps::type::identity,
       sobolev::space::L2, discontinuous, degree, degree,
@@ -1118,12 +1118,12 @@ FiniteElement<T> element::create_serendipity(cell::type celltype, int degree,
 
   sobolev::space space
       = discontinuous ? sobolev::space::L2 : sobolev::space::H1;
-  return FiniteElement<T>(element::family::serendipity, celltype, degree, {},
-                          impl::mdspan_t<const T, 2>(wbuffer.data(), wshape),
-                          xview, Mview, 0, maps::type::identity, space,
-                          discontinuous,
-                          degree < static_cast<int>(tdim) ? 1 : degree / tdim,
-                          degree, lvariant, dvariant);
+  return FiniteElement<T>(
+      element::family::serendipity, celltype, polyset::type::standard, degree,
+      {}, impl::mdspan_t<const T, 2>(wbuffer.data(), wshape), xview, Mview, 0,
+      maps::type::identity, space, discontinuous,
+      degree < static_cast<int>(tdim) ? 1 : degree / tdim, degree, lvariant,
+      dvariant);
 }
 //----------------------------------------------------------------------------
 template <std::floating_point T>
@@ -1210,7 +1210,7 @@ FiniteElement<T> element::create_dpc(cell::type celltype, int degree,
   impl::mdarray_t<T, 2> pt = make_dpc_points<T>(celltype, degree, variant);
   x[tdim].push_back(pt);
   return FiniteElement<T>(
-      element::family::DPC, celltype, degree, {},
+      element::family::DPC, celltype, polyset::type::standard, degree, {},
       impl::mdspan_t<T, 2>(wcoeffs.data(), wcoeffs.extents()),
       impl::to_mdspan(x), impl::to_mdspan(M), 0, maps::type::identity,
       sobolev::space::L2, discontinuous, degree, degree,
@@ -1314,11 +1314,11 @@ FiniteElement<T> element::create_serendipity_div(
 
   sobolev::space space
       = discontinuous ? sobolev::space::L2 : sobolev::space::HDiv;
-  return FiniteElement<T>(element::family::BDM, celltype, degree, {tdim},
-                          impl::mdspan_t<const T, 2>(wbuffer.data(), wshape),
-                          xview, Mview, 0, maps::type::contravariantPiola,
-                          space, discontinuous, degree / tdim, degree + 1,
-                          lvariant, dvariant);
+  return FiniteElement<T>(
+      element::family::BDM, celltype, polyset::type::standard, degree, {tdim},
+      impl::mdspan_t<const T, 2>(wbuffer.data(), wshape), xview, Mview, 0,
+      maps::type::contravariantPiola, space, discontinuous, degree / tdim,
+      degree + 1, lvariant, dvariant);
 }
 //-----------------------------------------------------------------------------
 template <std::floating_point T>
@@ -1444,12 +1444,12 @@ FiniteElement<T> element::create_serendipity_curl(
 
   sobolev::space space
       = discontinuous ? sobolev::space::L2 : sobolev::space::HCurl;
-  return FiniteElement<T>(element::family::N2E, celltype, degree, {tdim},
-                          impl::mdspan_t<const T, 2>(wbuffer.data(), wshape),
-                          xview, Mview, 0, maps::type::covariantPiola, space,
-                          discontinuous,
-                          (degree == 2 && tdim == 3) ? 1 : degree / tdim,
-                          degree + 1, lvariant, dvariant);
+  return FiniteElement<T>(
+      element::family::N2E, celltype, polyset::type::standard, degree, {tdim},
+      impl::mdspan_t<const T, 2>(wbuffer.data(), wshape), xview, Mview, 0,
+      maps::type::covariantPiola, space, discontinuous,
+      (degree == 2 && tdim == 3) ? 1 : degree / tdim, degree + 1, lvariant,
+      dvariant);
 }
 //-----------------------------------------------------------------------------
 template FiniteElement<float>

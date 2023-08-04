@@ -180,7 +180,7 @@ FiniteElement<T> basix::element::create_rtc(cell::type celltype, int degree,
   sobolev::space space
       = discontinuous ? sobolev::space::L2 : sobolev::space::HCurl;
   return FiniteElement<T>(
-      element::family::RT, celltype, degree, {tdim},
+      element::family::RT, celltype, polyset::type::standard, degree, {tdim},
       impl::mdspan_t<T, 2>(wcoeffs.data(), wcoeffs.extents()), xview, Mview, 0,
       maps::type::contravariantPiola, space, discontinuous, degree - 1, degree,
       lvariant, element::dpc_variant::unset);
@@ -410,7 +410,7 @@ FiniteElement<T> basix::element::create_nce(cell::type celltype, int degree,
   sobolev::space space
       = discontinuous ? sobolev::space::L2 : sobolev::space::HCurl;
   return FiniteElement<T>(
-      element::family::N1E, celltype, degree, {tdim},
+      element::family::N1E, celltype, polyset::type::standard, degree, {tdim},
       impl::mdspan_t<T, 2>(wcoeffs.data(), wcoeffs.extents()), xview, Mview, 0,
       maps::type::covariantPiola, space, discontinuous, degree - 1, degree,
       lvariant, element::dpc_variant::unset);

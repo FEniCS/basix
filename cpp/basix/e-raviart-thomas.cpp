@@ -140,11 +140,11 @@ FiniteElement<T> basix::element::create_rt(cell::type celltype, int degree,
 
   sobolev::space space
       = discontinuous ? sobolev::space::L2 : sobolev::space::HDiv;
-  return FiniteElement<T>(element::family::RT, celltype, degree, {tdim},
-                          impl::mdspan_t<T, 2>(B.data(), B.extents()), xview,
-                          Mview, 0, maps::type::contravariantPiola, space,
-                          discontinuous, degree - 1, degree, lvariant,
-                          element::dpc_variant::unset);
+  return FiniteElement<T>(
+      element::family::RT, celltype, polyset::type::standard, degree, {tdim},
+      impl::mdspan_t<T, 2>(B.data(), B.extents()), xview, Mview, 0,
+      maps::type::contravariantPiola, space, discontinuous, degree - 1, degree,
+      lvariant, element::dpc_variant::unset);
 }
 //-----------------------------------------------------------------------------
 template FiniteElement<float>

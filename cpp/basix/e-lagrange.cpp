@@ -799,7 +799,7 @@ FiniteElement<T> create_d_lagrange(cell::type celltype, int degree,
     _M(i, 0, i, 0) = 1.0;
 
   return FiniteElement(
-      element::family::P, celltype, degree, {},
+      element::family::P, celltype, polyset::type::standard, degree, {},
       impl::mdspan_t<const T, 2>(math::eye<T>(ndofs).data(), ndofs, ndofs),
       impl::to_mdspan(x), impl::to_mdspan(M), 0, maps::type::identity,
       sobolev::space::L2, true, degree, degree, variant,
@@ -955,7 +955,7 @@ FiniteElement<T> create_vtk_element(cell::type celltype, std::size_t degree,
     auto [_x, _xshape, _M, _Mshape] = element::make_discontinuous(
         impl::to_mdspan(x), impl::to_mdspan(M), tdim, 1);
     return FiniteElement(
-        element::family::P, celltype, degree, {},
+        element::family::P, celltype, polyset::type::standard, degree, {},
         impl::mdspan_t<const T, 2>(math::eye<T>(ndofs).data(), ndofs, ndofs),
         impl::to_mdspan(_x, _xshape), impl::to_mdspan(_M, _Mshape), 0,
         maps::type::identity, sobolev::space::L2, discontinuous, degree, degree,
@@ -964,7 +964,7 @@ FiniteElement<T> create_vtk_element(cell::type celltype, std::size_t degree,
   else
   {
     return FiniteElement(
-        element::family::P, celltype, degree, {},
+        element::family::P, celltype, polyset::type::standard, degree, {},
         impl::mdspan_t<const T, 2>(math::eye<T>(ndofs).data(), ndofs, ndofs),
         impl::to_mdspan(x), impl::to_mdspan(M), 0, maps::type::identity,
         sobolev::space::H1, discontinuous, degree, degree,
@@ -1016,7 +1016,7 @@ FiniteElement<T> create_legendre(cell::type celltype, int degree,
   sobolev::space space
       = discontinuous ? sobolev::space::L2 : sobolev::space::H1;
   return FiniteElement<T>(
-      element::family::P, celltype, degree, {},
+      element::family::P, celltype, polyset::type::standard, degree, {},
       impl::mdspan_t<T, 2>(math::eye<T>(ndofs).data(), ndofs, ndofs),
       impl::to_mdspan(x), impl::to_mdspan(M), 0, maps::type::identity, space,
       discontinuous, degree, degree, element::lagrange_variant::legendre,
@@ -1188,7 +1188,7 @@ FiniteElement<T> create_bernstein(cell::type celltype, int degree,
   const std::size_t ndofs
       = polyset::dim(celltype, polyset::type::standard, degree);
   return FiniteElement<T>(
-      element::family::P, celltype, degree, {},
+      element::family::P, celltype, polyset::type::standard, degree, {},
       impl::mdspan_t<T, 2>(math::eye<T>(ndofs).data(), ndofs, ndofs),
       impl::to_mdspan(x), impl::to_mdspan(M), 0, maps::type::identity, space,
       discontinuous, degree, degree, element::lagrange_variant::bernstein,
@@ -1214,7 +1214,7 @@ basix::element::create_lagrange(cell::type celltype, int degree,
     x[0].emplace_back(1, 0);
     M[0].emplace_back(std::vector<T>{1.0}, 1, 1, 1, 1);
     return FiniteElement<T>(
-        family::P, cell::type::point, 0, {},
+        family::P, cell::type::point, polyset::type::standard, 0, {},
         impl::mdspan_t<T, 2>(math::eye<T>(1).data(), 1, 1), impl::to_mdspan(x),
         impl::to_mdspan(M), 0, maps::type::identity, sobolev::space::H1,
         discontinuous, degree, degree, element::lagrange_variant::unset,
@@ -1370,7 +1370,7 @@ basix::element::create_lagrange(cell::type celltype, int degree,
   auto tensor_factors
       = create_tensor_product_factors<T>(celltype, degree, variant);
   return FiniteElement<T>(
-      family::P, celltype, degree, {},
+      family::P, celltype, polyset::type::standard, degree, {},
       impl::mdspan_t<T, 2>(math::eye<T>(ndofs).data(), ndofs, ndofs), xview,
       Mview, 0, maps::type::identity, space, discontinuous, degree, degree,
       variant, dpc_variant::unset, tensor_factors, dof_ordering);

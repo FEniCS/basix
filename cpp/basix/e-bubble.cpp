@@ -191,9 +191,10 @@ FiniteElement<T> basix::element::create_bubble(cell::type celltype, int degree,
   sobolev::space space
       = discontinuous ? sobolev::space::L2 : sobolev::space::H1;
   return FiniteElement<T>(
-      element::family::bubble, celltype, degree, {}, wview, impl::to_mdspan(x),
-      impl::to_mdspan(M), 0, maps::type::identity, space, discontinuous, -1,
-      degree, element::lagrange_variant::unset, element::dpc_variant::unset);
+      element::family::bubble, celltype, polyset::type::standard, degree, {},
+      wview, impl::to_mdspan(x), impl::to_mdspan(M), 0, maps::type::identity,
+      space, discontinuous, -1, degree, element::lagrange_variant::unset,
+      element::dpc_variant::unset);
 }
 //-----------------------------------------------------------------------------
 template FiniteElement<float> element::create_bubble(cell::type, int, bool);

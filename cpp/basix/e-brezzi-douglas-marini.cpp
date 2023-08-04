@@ -95,7 +95,7 @@ FiniteElement<T> element::create_bdm(cell::type celltype, int degree,
   sobolev::space space
       = discontinuous ? sobolev::space::L2 : sobolev::space::HDiv;
   return FiniteElement<T>(
-      family::BDM, celltype, degree, {tdim},
+      family::BDM, celltype, polyset::type::standard, degree, {tdim},
       impl::mdspan_t<T, 2>(math::eye<T>(ndofs).data(), ndofs, ndofs), xview,
       Mview, 0, maps::type::contravariantPiola, space, discontinuous, degree,
       degree, lvariant, element::dpc_variant::unset);

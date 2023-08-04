@@ -179,10 +179,11 @@ FiniteElement<T> basix::element::create_hhj(cell::type celltype, int degree,
   sobolev::space space
       = discontinuous ? sobolev::space::L2 : sobolev::space::HDivDiv;
   return FiniteElement<T>(
-      element::family::HHJ, celltype, degree, {tdim, tdim},
-      impl::mdspan_t<T, 2>(wcoeffs.data(), wcoeffs.extents()), xview, Mview, 0,
-      maps::type::doubleContravariantPiola, space, discontinuous, -1, degree,
-      element::lagrange_variant::unset, element::dpc_variant::unset);
+      element::family::HHJ, celltype, polyset::type::standard, degree,
+      {tdim, tdim}, impl::mdspan_t<T, 2>(wcoeffs.data(), wcoeffs.extents()),
+      xview, Mview, 0, maps::type::doubleContravariantPiola, space,
+      discontinuous, -1, degree, element::lagrange_variant::unset,
+      element::dpc_variant::unset);
 }
 //-----------------------------------------------------------------------------
 template FiniteElement<float> element::create_hhj(cell::type, int, bool);

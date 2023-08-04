@@ -8,6 +8,7 @@
 #include "element-families.h"
 #include "maps.h"
 #include "mdspan.hpp"
+#include "polyset.h"
 #include "precompute.h"
 #include "sobolev-spaces.h"
 #include <array>
@@ -284,6 +285,7 @@ public:
   ///
   /// @param[in] family The element family
   /// @param[in] cell_type The cell type
+  /// @param[in] poly_type The polyset type
   /// @param[in] degree The degree of the element
   /// @param[in] interpolation_nderivs The number of derivatives that
   /// need to be used during interpolation
@@ -315,8 +317,9 @@ public:
   /// @param[in] dof_ordering DOF reordering: a mapping from the
   /// reference order to a new permuted order
   FiniteElement(
-      element::family family, cell::type cell_type, int degree,
-      const std::vector<std::size_t>& value_shape, mdspan_t<const F, 2> wcoeffs,
+      element::family family, cell::type cell_type, polyset::type poly_type,
+      int degree, const std::vector<std::size_t>& value_shape,
+      mdspan_t<const F, 2> wcoeffs,
       const std::array<std::vector<mdspan_t<const F, 2>>, 4>& x,
       const std::array<std::vector<mdspan_t<const F, 4>>, 4>& M,
       int interpolation_nderivs, maps::type map_type,
@@ -1151,6 +1154,9 @@ private:
 
   // Cell type
   cell::type _cell_type;
+
+  // Polyset type
+  polyset::type _poly_type;
 
   // Topological dimension of the cell
   std::size_t _cell_tdim;

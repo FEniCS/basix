@@ -113,6 +113,69 @@ void tabulate_polyset_line_derivs(
 //-----------------------------------------------------------------------------
 
 /// Compute the complete set of derivatives from 0 to nderiv, for all
+/// the polynomials up to order n on a line segment. The polynomials
+/// used are Legendre Polynomials, with the recurrence relation given by
+/// n P(n) = (2n - 1) x P_{n-1} - (n - 1) P_{n-2} in the interval [-1,
+/// 1]. The range is rescaled here to [0, 1].
+template <typename T>
+void tabulate_polyset_line_edgeiso_derivs(
+    stdex::mdspan<T, stdex::dextents<std::size_t, 3>> P, std::size_t n,
+    std::size_t nderiv,
+    stdex::mdspan<const T, stdex::dextents<std::size_t, 2>> x)
+{
+  assert(x.extent(0) > 0);
+  assert(P.extent(0) == nderiv + 1);
+  assert(P.extent(1) == n + 1);
+  assert(P.extent(2) == x.extent(0));
+
+  std::fill(P.data_handle(), P.data_handle() + P.size(), 0.0);
+  for (std::size_t j = 0; j < P.extent(2); ++j)
+    P(0, 0, j) = 1.0;
+
+  if (n == 0)
+    return;
+
+  auto x0 = stdex::submdspan(x, stdex::full_extent, 0);
+
+  for (std::size_t i = 0; i < P.extent(2); ++i)
+    P(0, 1, i) = (x0[i] * 2.0 - 1.0) * P(0, 0, i);
+
+  for (std::size_t p = 2; p <= n; ++p)
+  {
+    const T a = 1.0 - 1.0 / static_cast<T>(p);
+    for (std::size_t i = 0; i < P.extent(2); ++i)
+    {
+      P(0, p, i) = (x0[i] * 2.0 - 1.0) * P(0, p - 1, i) * (a + 1.0)
+                   - P(0, p - 2, i) * a;
+    }
+  }
+
+  for (std::size_t k = 1; k <= nderiv; ++k)
+  {
+    for (std::size_t p = 1; p <= n; ++p)
+    {
+      const T a = 1.0 - 1.0 / static_cast<T>(p);
+      for (std::size_t i = 0; i < P.extent(2); ++i)
+      {
+        P(k, p, i) = (x0[i] * 2.0 - 1.0) * P(k, p - 1, i) * (a + 1.0)
+                     + 2 * k * P(k - 1, p - 1, i) * (a + 1.0)
+                     - P(k, p - 2, i) * a;
+      }
+    }
+  }
+
+  // Normalise
+  for (std::size_t p = 0; p < P.extent(1); ++p)
+  {
+    const T norm = std::sqrt(2 * p + 1);
+    for (std::size_t i = 0; i < P.extent(0); ++i)
+      for (std::size_t j = 0; j < P.extent(2); ++j)
+        P(i, p, j) *= norm;
+  }
+}
+//-----------------------------------------------------------------------------
+
+/// Compute the complete set of derivatives from 0 to nderiv, for all
 /// the polynomials up to order n on a triangle in [0, 1][0, 1]. The
 /// polynomials P_{pq} are built up in sequence, firstly along q = 0,
 /// which is a line segment, as in tabulate_polyset_interval_derivs
@@ -1480,7 +1543,7 @@ void tabulate_polyset_prism_derivs(
 template <std::floating_point T>
 void polyset::tabulate(
     std::experimental::mdspan<T, std::experimental::dextents<std::size_t, 3>> P,
-    polyset::type ptype, cell::type celltype, int d, int n,
+    cell::type celltype, polyset::type ptype, int d, int n,
     std::experimental::mdspan<const T,
                               std::experimental::dextents<std::size_t, 2>>
         x)

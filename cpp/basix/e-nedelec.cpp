@@ -280,11 +280,11 @@ FiniteElement<T> element::create_nedelec(cell::type celltype, int degree,
 
   sobolev::space space
       = discontinuous ? sobolev::space::L2 : sobolev::space::HCurl;
-  return FiniteElement<T>(element::family::N1E, celltype, degree, {tdim},
-                          impl::mdspan_t<T, 2>(wcoeffs.data(), wshape), xview,
-                          Mview, 0, maps::type::covariantPiola, space,
-                          discontinuous, degree - 1, degree, lvariant,
-                          element::dpc_variant::unset);
+  return FiniteElement<T>(
+      element::family::N1E, celltype, polyset::type::standard, degree, {tdim},
+      impl::mdspan_t<T, 2>(wcoeffs.data(), wshape), xview, Mview, 0,
+      maps::type::covariantPiola, space, discontinuous, degree - 1, degree,
+      lvariant, element::dpc_variant::unset);
 }
 //-----------------------------------------------------------------------------
 template <std::floating_point T>
@@ -384,7 +384,7 @@ FiniteElement<T> element::create_nedelec2(cell::type celltype, int degree,
   const std::size_t psize
       = polyset::dim(celltype, polyset::type::standard, degree);
   return FiniteElement<T>(
-      element::family::N2E, celltype, degree, {tdim},
+      element::family::N2E, celltype, polyset::type::standard, degree, {tdim},
       impl::mdspan_t<T, 2>(math::eye<T>(tdim * psize).data(), tdim * psize,
                            tdim * psize),
       xview, Mview, 0, maps::type::covariantPiola, sobolev::space::HCurl,

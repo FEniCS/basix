@@ -180,10 +180,11 @@ FiniteElement<T> element::create_regge(cell::type celltype, int degree,
   sobolev::space space
       = discontinuous ? sobolev::space::L2 : sobolev::space::HEin;
   return FiniteElement<T>(
-      element::family::Regge, celltype, degree, {tdim, tdim},
-      impl::mdspan_t<T, 2>(wcoeffs.data(), wcoeffs.extents()), xview, Mview, 0,
-      maps::type::doubleCovariantPiola, space, discontinuous, -1, degree,
-      element::lagrange_variant::unset, element::dpc_variant::unset);
+      element::family::Regge, celltype, polyset::type::standard, degree,
+      {tdim, tdim}, impl::mdspan_t<T, 2>(wcoeffs.data(), wcoeffs.extents()),
+      xview, Mview, 0, maps::type::doubleCovariantPiola, space, discontinuous,
+      -1, degree, element::lagrange_variant::unset,
+      element::dpc_variant::unset);
 }
 //-----------------------------------------------------------------------------
 template FiniteElement<float> element::create_regge(cell::type, int, bool);

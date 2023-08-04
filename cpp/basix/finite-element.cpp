@@ -125,7 +125,7 @@ std::pair<std::vector<T>, std::array<std::size_t, 2>> compute_dual_matrix(
     }
   }
 
-  std::size_t pdim = polyset::dim(cell_type, degree);
+  std::size_t pdim = polyset::dim(cell_type, polyset::type::standard, degree);
   mdarray_t<T, 3> D(vs, pdim, num_dofs);
   std::fill(D.data(), D.data() + D.size(), 0);
   std::vector<T> Pb;
@@ -143,8 +143,8 @@ std::pair<std::vector<T>, std::array<std::size_t, 2>> compute_dual_matrix(
       if (x_e.extent(0) > 0)
       {
         std::array<std::size_t, 3> shape;
-        std::tie(Pb, shape)
-            = polyset::tabulate(cell_type, degree, nderivs, x_e);
+        std::tie(Pb, shape) = polyset::tabulate(
+            cell_type, polyset::type::standard, degree, nderivs, x_e);
         P = mdspan_t<const T, 3>(Pb.data(), shape);
       }
 
@@ -438,7 +438,8 @@ FiniteElement<T> basix::create_custom_element(
     int highest_complete_degree, int highest_degree)
 {
   // Check that inputs are valid
-  const std::size_t psize = polyset::dim(cell_type, highest_degree);
+  const std::size_t psize
+      = polyset::dim(cell_type, polyset::type::standard, highest_degree);
   const std::size_t value_size = std::reduce(
       value_shape.begin(), value_shape.end(), 1, std::multiplies{});
   const std::size_t deriv_count
@@ -1029,12 +1030,14 @@ void FiniteElement<F>::tabulate(int nd, impl::mdspan_t<const F, 2> x,
                              + std::to_string(_cell_tdim) + ").");
   }
 
-  const std::size_t psize = polyset::dim(_cell_type, _highest_degree);
+  const std::size_t psize
+      = polyset::dim(_cell_type, polyset::type::standard, _highest_degree);
   const std::array<std::size_t, 3> bsize
       = {(std::size_t)polyset::nderivs(_cell_type, nd), psize, x.extent(0)};
   std::vector<F> basis_b(bsize[0] * bsize[1] * bsize[2]);
   mdspan_t<F, 3> basis(basis_b.data(), bsize);
-  polyset::tabulate(basis, _cell_type, _highest_degree, nd, x);
+  polyset::tabulate(basis, _cell_type, polyset::type::standard, _highest_degree,
+                    nd, x);
   const int vs = std::accumulate(_value_shape.begin(), _value_shape.end(), 1,
                                  std::multiplies{});
 

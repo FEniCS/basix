@@ -31,8 +31,8 @@ impl::mdarray_t<T, 2> make_serendipity_space_2d(int degree)
       quadrature::type::Default, cell::type::quadrilateral, 2 * degree);
   impl::mdspan_t<const T, 2> pts(_pts.data(), wts.size(),
                                  _pts.size() / wts.size());
-  const auto [_Pq, shape]
-      = polyset::tabulate(cell::type::quadrilateral, degree, 0, pts);
+  const auto [_Pq, shape] = polyset::tabulate(
+      cell::type::quadrilateral, polyset::type::standard, degree, 0, pts);
   impl::mdspan_t<const T, 3> Pq(_Pq.data(), shape);
 
   const std::size_t psize = Pq.extent(1);
@@ -131,8 +131,8 @@ impl::mdarray_t<T, 2> make_serendipity_space_3d(int degree)
   impl::mdspan_t<const T, 2> pts(_pts.data(), wts.size(),
                                  _pts.size() / wts.size());
 
-  const auto [_Ph, shape]
-      = polyset::tabulate(cell::type::hexahedron, degree, 0, pts);
+  const auto [_Ph, shape] = polyset::tabulate(
+      cell::type::hexahedron, polyset::type::standard, degree, 0, pts);
   impl::mdspan_t<const T, 3> Ph(_Ph.data(), shape);
   const std::size_t psize = Ph.extent(1);
 
@@ -185,12 +185,13 @@ impl::mdarray_t<T, 2> make_serendipity_div_space_2d(int degree)
       quadrature::type::Default, cell::type::quadrilateral, 2 * degree + 2);
   impl::mdspan_t<const T, 2> pts(_pts.data(), wts.size(),
                                  _pts.size() / wts.size());
-  const auto [_Pq, shape]
-      = polyset::tabulate(cell::type::quadrilateral, degree + 1, 0, pts);
+  const auto [_Pq, shape] = polyset::tabulate(
+      cell::type::quadrilateral, polyset::type::standard, degree + 1, 0, pts);
   impl::mdspan_t<const T, 3> Pq(_Pq.data(), shape);
 
   const std::size_t psize = Pq.extent(1);
-  const std::size_t nv = polyset::dim(cell::type::triangle, degree);
+  const std::size_t nv
+      = polyset::dim(cell::type::triangle, polyset::type::standard, degree);
 
   // Create coefficients for order (degree) vector polynomials
   impl::mdarray_t<T, 2> wcoeffs(ndofs, psize * 2);
@@ -255,12 +256,13 @@ impl::mdarray_t<T, 2> make_serendipity_div_space_3d(int degree)
   impl::mdspan_t<const T, 2> pts(_pts.data(), wts.size(),
                                  _pts.size() / wts.size());
 
-  const auto [_Pq, shape]
-      = polyset::tabulate(cell::type::hexahedron, degree + 1, 0, pts);
+  const auto [_Pq, shape] = polyset::tabulate(
+      cell::type::hexahedron, polyset::type::standard, degree + 1, 0, pts);
   impl::mdspan_t<const T, 3> Pq(_Pq.data(), shape);
 
   const std::size_t psize = Pq.extent(1);
-  const std::size_t nv = polyset::dim(cell::type::tetrahedron, degree);
+  const std::size_t nv
+      = polyset::dim(cell::type::tetrahedron, polyset::type::standard, degree);
 
   // Create coefficients for order (degree) vector polynomials
   impl::mdarray_t<T, 2> wcoeffs(ndofs, psize * 3);
@@ -401,12 +403,13 @@ impl::mdarray_t<T, 2> make_serendipity_curl_space_2d(int degree)
       quadrature::type::Default, cell::type::quadrilateral, 2 * degree + 2);
   impl::mdspan_t<const T, 2> pts(_pts.data(), wts.size(),
                                  _pts.size() / wts.size());
-  const auto [_Pq, shape]
-      = polyset::tabulate(cell::type::quadrilateral, degree + 1, 0, pts);
+  const auto [_Pq, shape] = polyset::tabulate(
+      cell::type::quadrilateral, polyset::type::standard, degree + 1, 0, pts);
   impl::mdspan_t<const T, 3> Pq(_Pq.data(), shape);
 
   const std::size_t psize = Pq.extent(1);
-  const std::size_t nv = polyset::dim(cell::type::triangle, degree);
+  const std::size_t nv
+      = polyset::dim(cell::type::triangle, polyset::type::standard, degree);
 
   // Create coefficients for order (degree) vector polynomials
   impl::mdarray_t<T, 2> wcoeffs(ndofs, psize * 2);
@@ -475,12 +478,13 @@ impl::mdarray_t<T, 2> make_serendipity_curl_space_3d(int degree)
       quadrature::type::Default, cell::type::hexahedron, 2 * degree + 2);
   impl::mdspan_t<const T, 2> pts(_pts.data(), wts.size(),
                                  _pts.size() / wts.size());
-  const auto [_Pq, shape]
-      = polyset::tabulate(cell::type::hexahedron, degree + 1, 0, pts);
+  const auto [_Pq, shape] = polyset::tabulate(
+      cell::type::hexahedron, polyset::type::standard, degree + 1, 0, pts);
   impl::mdspan_t<const T, 3> Pq(_Pq.data(), shape);
 
   const std::size_t psize = Pq.extent(1);
-  const std::size_t nv = polyset::dim(cell::type::tetrahedron, degree);
+  const std::size_t nv
+      = polyset::dim(cell::type::tetrahedron, polyset::type::standard, degree);
 
   // Create coefficients for order (degree) vector polynomials
   impl::mdarray_t<T, 2> wcoeffs(ndofs, psize * 3);
@@ -673,8 +677,10 @@ FiniteElement<T> create_legendre_dpc(cell::type celltype, int degree,
   }
 
   const std::size_t tdim = cell::topological_dimension(celltype);
-  const std::size_t psize = polyset::dim(celltype, degree);
-  const std::size_t ndofs = polyset::dim(simplex_type, degree);
+  const std::size_t psize
+      = polyset::dim(celltype, polyset::type::standard, degree);
+  const std::size_t ndofs
+      = polyset::dim(simplex_type, polyset::type::standard, degree);
 
   const auto [_pts, wts] = quadrature::make_quadrature<T>(
       quadrature::type::Default, celltype, degree * 2);
@@ -1157,8 +1163,10 @@ FiniteElement<T> element::create_dpc(cell::type celltype, int degree,
   if (variant == element::dpc_variant::legendre)
     return create_legendre_dpc<T>(celltype, degree, discontinuous);
 
-  const std::size_t ndofs = polyset::dim(simplex_type, degree);
-  const std::size_t psize = polyset::dim(celltype, degree);
+  const std::size_t ndofs
+      = polyset::dim(simplex_type, polyset::type::standard, degree);
+  const std::size_t psize
+      = polyset::dim(celltype, polyset::type::standard, degree);
   impl::mdarray_t<T, 2> wcoeffs(ndofs, psize);
   if (celltype == cell::type::quadrilateral)
   {

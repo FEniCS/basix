@@ -31,7 +31,8 @@ FiniteElement<T> basix::element::create_hermite(cell::type celltype, int degree,
     throw std::runtime_error("Hermite element must have degree 3");
 
   const std::size_t tdim = cell::topological_dimension(celltype);
-  const std::size_t ndofs = polyset::dim(celltype, degree);
+  const std::size_t ndofs
+      = polyset::dim(celltype, polyset::type::standard, degree);
   const std::vector<std::vector<std::vector<int>>> topology
       = cell::topology(celltype);
 

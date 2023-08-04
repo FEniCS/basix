@@ -90,7 +90,8 @@ FiniteElement<T> element::create_bdm(cell::type celltype, int degree,
   }
 
   // The number of order (degree) scalar polynomials
-  const std::size_t ndofs = tdim * polyset::dim(celltype, degree);
+  const std::size_t ndofs
+      = tdim * polyset::dim(celltype, polyset::type::standard, degree);
   sobolev::space space
       = discontinuous ? sobolev::space::L2 : sobolev::space::HDiv;
   return FiniteElement<T>(

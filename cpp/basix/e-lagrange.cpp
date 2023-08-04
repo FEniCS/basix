@@ -27,7 +27,8 @@ impl::mdarray_t<T, 2> vtk_triangle_points(std::size_t degree)
   if (degree == 0)
     return basix::impl::mdarray_t<T, 2>({d, d}, 1, 2);
 
-  const std::size_t npoints = polyset::dim(cell::type::triangle, degree);
+  const std::size_t npoints
+      = polyset::dim(cell::type::triangle, polyset::type::standard, degree);
   impl::mdarray_t<T, 2> out(npoints, 2);
 
   out(0, 0) = d;
@@ -84,7 +85,8 @@ vtk_tetrahedron_points(std::size_t degree)
                                                                   2);
   }
 
-  const std::size_t npoints = polyset::dim(cell::type::tetrahedron, degree);
+  const std::size_t npoints
+      = polyset::dim(cell::type::tetrahedron, polyset::type::standard, degree);
   stdex::mdarray<T, stdex::extents<std::size_t, stdex::dynamic_extent, 3>> out(
       npoints, 3);
 
@@ -765,7 +767,8 @@ FiniteElement<T> create_d_lagrange(cell::type celltype, int degree,
   }
 
   const std::size_t tdim = cell::topological_dimension(celltype);
-  const std::size_t ndofs = polyset::dim(celltype, degree);
+  const std::size_t ndofs
+      = polyset::dim(celltype, polyset::type::standard, degree);
   const std::vector<std::vector<std::vector<int>>> topology
       = cell::topology(celltype);
 
@@ -945,7 +948,8 @@ FiniteElement<T> create_vtk_element(cell::type celltype, std::size_t degree,
   }
 
   const std::size_t tdim = cell::topological_dimension(celltype);
-  const std::size_t ndofs = polyset::dim(celltype, degree);
+  const std::size_t ndofs
+      = polyset::dim(celltype, polyset::type::standard, degree);
   if (discontinuous)
   {
     auto [_x, _xshape, _M, _Mshape] = element::make_discontinuous(
@@ -976,7 +980,8 @@ FiniteElement<T> create_legendre(cell::type celltype, int degree,
     throw std::runtime_error("Legendre variant must be discontinuous");
 
   const std::size_t tdim = cell::topological_dimension(celltype);
-  const std::size_t ndofs = polyset::dim(celltype, degree);
+  const std::size_t ndofs
+      = polyset::dim(celltype, polyset::type::standard, degree);
   const std::vector<std::vector<std::vector<int>>> topology
       = cell::topology(celltype);
 
@@ -1180,7 +1185,8 @@ FiniteElement<T> create_bernstein(cell::type celltype, int degree,
 
   sobolev::space space
       = discontinuous ? sobolev::space::L2 : sobolev::space::H1;
-  const std::size_t ndofs = polyset::dim(celltype, degree);
+  const std::size_t ndofs
+      = polyset::dim(celltype, polyset::type::standard, degree);
   return FiniteElement<T>(
       element::family::P, celltype, degree, {},
       impl::mdspan_t<T, 2>(math::eye<T>(ndofs).data(), ndofs, ndofs),
@@ -1257,7 +1263,8 @@ basix::element::create_lagrange(cell::type celltype, int degree,
   }
 
   const std::size_t tdim = cell::topological_dimension(celltype);
-  const std::size_t ndofs = polyset::dim(celltype, degree);
+  const std::size_t ndofs
+      = polyset::dim(celltype, polyset::type::standard, degree);
   const std::vector<std::vector<std::vector<int>>> topology
       = cell::topology(celltype);
 

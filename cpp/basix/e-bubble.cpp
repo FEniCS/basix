@@ -70,7 +70,8 @@ FiniteElement<T> basix::element::create_bubble(cell::type celltype, int degree,
       quadrature::type::Default, celltype, 2 * degree);
   impl::mdspan_t<const T, 2> pts(_pts.data(), wts.size(),
                                  _pts.size() / wts.size());
-  const auto [_phi, shape] = polyset::tabulate(celltype, degree, 0, pts);
+  const auto [_phi, shape]
+      = polyset::tabulate(celltype, polyset::type::standard, degree, 0, pts);
   impl::mdspan_t<const T, 3> phi(_phi.data(), shape);
 
   // The number of order (degree) polynomials
@@ -103,7 +104,8 @@ FiniteElement<T> basix::element::create_bubble(cell::type celltype, int degree,
   {
   case cell::type::interval:
   {
-    const auto [_phi1, shape] = polyset::tabulate(celltype, degree - 2, 0, pts);
+    const auto [_phi1, shape] = polyset::tabulate(
+        celltype, polyset::type::standard, degree - 2, 0, pts);
     impl::mdspan_t<const T, 3> p1(_phi1.data(), shape);
     phi1 = create_phi1(p1, phi1_buffer);
     for (std::size_t i = 0; i < pts.extent(0); ++i)
@@ -115,7 +117,8 @@ FiniteElement<T> basix::element::create_bubble(cell::type celltype, int degree,
   }
   case cell::type::triangle:
   {
-    const auto [_phi1, shape] = polyset::tabulate(celltype, degree - 3, 0, pts);
+    const auto [_phi1, shape] = polyset::tabulate(
+        celltype, polyset::type::standard, degree - 3, 0, pts);
     impl::mdspan_t<const T, 3> p1(_phi1.data(), shape);
     phi1 = create_phi1(p1, phi1_buffer);
     for (std::size_t i = 0; i < pts.extent(0); ++i)
@@ -128,7 +131,8 @@ FiniteElement<T> basix::element::create_bubble(cell::type celltype, int degree,
   }
   case cell::type::tetrahedron:
   {
-    const auto [_phi1, shape] = polyset::tabulate(celltype, degree - 4, 0, pts);
+    const auto [_phi1, shape] = polyset::tabulate(
+        celltype, polyset::type::standard, degree - 4, 0, pts);
     impl::mdspan_t<const T, 3> p1(_phi1.data(), shape);
     phi1 = create_phi1(p1, phi1_buffer);
     for (std::size_t i = 0; i < pts.extent(0); ++i)
@@ -142,7 +146,8 @@ FiniteElement<T> basix::element::create_bubble(cell::type celltype, int degree,
   }
   case cell::type::quadrilateral:
   {
-    const auto [_phi1, shape] = polyset::tabulate(celltype, degree - 2, 0, pts);
+    const auto [_phi1, shape] = polyset::tabulate(
+        celltype, polyset::type::standard, degree - 2, 0, pts);
     impl::mdspan_t<const T, 3> p1(_phi1.data(), shape);
     phi1 = create_phi1(p1, phi1_buffer);
     for (std::size_t i = 0; i < pts.extent(0); ++i)
@@ -155,7 +160,8 @@ FiniteElement<T> basix::element::create_bubble(cell::type celltype, int degree,
   }
   case cell::type::hexahedron:
   {
-    const auto [_phi1, shape] = polyset::tabulate(celltype, degree - 2, 0, pts);
+    const auto [_phi1, shape] = polyset::tabulate(
+        celltype, polyset::type::standard, degree - 2, 0, pts);
     impl::mdspan_t<const T, 3> p1(_phi1.data(), shape);
     phi1 = create_phi1(p1, phi1_buffer);
     for (std::size_t i = 0; i < pts.extent(0); ++i)

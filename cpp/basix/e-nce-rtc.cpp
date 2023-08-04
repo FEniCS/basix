@@ -40,22 +40,26 @@ FiniteElement<T> basix::element::create_rtc(cell::type celltype, int degree,
       quadrature::type::Default, celltype, 2 * degree);
   impl::mdspan_t<const T, 2> pts(_pts.data(), qwts.size(),
                                  _pts.size() / qwts.size());
-  const auto [_phi, shape] = polyset::tabulate(celltype, degree, 0, pts);
+  const auto [_phi, shape]
+      = polyset::tabulate(celltype, polyset::type::standard, degree, 0, pts);
   impl::mdspan_t<const T, 3> phi(_phi.data(), shape);
 
   // The number of order (degree) polynomials
   const std::size_t psize = phi.extent(1);
 
   const int facet_count = tdim == 2 ? 4 : 6;
-  const int facet_dofs = polyset::dim(facettype, degree - 1);
+  const int facet_dofs
+      = polyset::dim(facettype, polyset::type::standard, degree - 1);
   const int internal_dofs = tdim == 2 ? 2 * degree * (degree - 1)
                                       : 3 * degree * degree * (degree - 1);
   const std::size_t ndofs = facet_count * facet_dofs + internal_dofs;
 
   // Create coefficients for order (degree-1) vector polynomials
   impl::mdarray_t<T, 2> wcoeffs(ndofs, psize * tdim);
-  const int nv_interval = polyset::dim(cell::type::interval, degree);
-  const int ns_interval = polyset::dim(cell::type::interval, degree - 1);
+  const int nv_interval
+      = polyset::dim(cell::type::interval, polyset::type::standard, degree);
+  const int ns_interval
+      = polyset::dim(cell::type::interval, polyset::type::standard, degree - 1);
   int dof = 0;
   if (tdim == 2)
   {
@@ -203,14 +207,16 @@ FiniteElement<T> basix::element::create_nce(cell::type celltype, int degree,
       quadrature::type::Default, celltype, 2 * degree);
   impl::mdspan_t<const T, 2> pts(_pts.data(), wts.size(),
                                  _pts.size() / wts.size());
-  const auto [_phi, shape] = polyset::tabulate(celltype, degree, 0, pts);
+  const auto [_phi, shape]
+      = polyset::tabulate(celltype, polyset::type::standard, degree, 0, pts);
   impl::mdspan_t<const T, 3> phi(_phi.data(), shape);
 
   // The number of order (degree) polynomials
   const int psize = phi.extent(1);
 
   const int edge_count = tdim == 2 ? 4 : 12;
-  const int edge_dofs = polyset::dim(cell::type::interval, degree - 1);
+  const int edge_dofs
+      = polyset::dim(cell::type::interval, polyset::type::standard, degree - 1);
   const int face_count = tdim == 2 ? 1 : 6;
   const int face_dofs = 2 * degree * (degree - 1);
   const int volume_count = tdim == 2 ? 0 : 1;
@@ -221,8 +227,10 @@ FiniteElement<T> basix::element::create_nce(cell::type celltype, int degree,
   // Create coefficients for order (degree-1) vector polynomials
   impl::mdarray_t<T, 2> wcoeffs(ndofs, psize * tdim);
 
-  const int nv_interval = polyset::dim(cell::type::interval, degree);
-  const int ns_interval = polyset::dim(cell::type::interval, degree - 1);
+  const int nv_interval
+      = polyset::dim(cell::type::interval, polyset::type::standard, degree);
+  const int ns_interval
+      = polyset::dim(cell::type::interval, polyset::type::standard, degree - 1);
   int dof = 0;
   if (tdim == 2)
   {

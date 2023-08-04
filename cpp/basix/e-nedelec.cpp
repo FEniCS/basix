@@ -39,8 +39,8 @@ impl::mdarray_t<T, 2> create_nedelec_2d_space(int degree)
       quadrature::type::Default, cell::type::triangle, 2 * degree);
   impl::mdspan_t<const T, 2> pts(_pts.data(), wts.size(),
                                  _pts.size() / wts.size());
-  const auto [_phi, shape]
-      = polyset::tabulate(cell::type::triangle, degree, 0, pts);
+  const auto [_phi, shape] = polyset::tabulate(
+      cell::type::triangle, polyset::type::standard, degree, 0, pts);
   impl::mdspan_t<const T, 3> phi(_phi.data(), shape);
 
   const std::size_t psize = phi.extent(1);
@@ -100,8 +100,8 @@ impl::mdarray_t<T, 2> create_nedelec_3d_space(int degree)
       quadrature::type::Default, cell::type::tetrahedron, 2 * degree);
   impl::mdspan_t<const T, 2> pts(_pts.data(), wts.size(),
                                  _pts.size() / wts.size());
-  const auto [_phi, shape]
-      = polyset::tabulate(cell::type::tetrahedron, degree, 0, pts);
+  const auto [_phi, shape] = polyset::tabulate(
+      cell::type::tetrahedron, polyset::type::standard, degree, 0, pts);
   impl::mdspan_t<const T, 3> phi(_phi.data(), shape);
   const std::size_t psize = phi.extent(1);
 
@@ -381,7 +381,8 @@ FiniteElement<T> element::create_nedelec2(cell::type celltype, int degree,
     Mview = impl::to_mdspan(Mbuffer, Mshape);
   }
 
-  const std::size_t psize = polyset::dim(celltype, degree);
+  const std::size_t psize
+      = polyset::dim(celltype, polyset::type::standard, degree);
   return FiniteElement<T>(
       element::family::N2E, celltype, degree, {tdim},
       impl::mdspan_t<T, 2>(math::eye<T>(tdim * psize).data(), tdim * psize,

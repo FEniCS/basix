@@ -119,7 +119,8 @@ std::pair<std::vector<T>, std::array<std::size_t, 2>> polynomials::tabulate(
   {
   case polynomials::type::legendre:
   {
-    auto [values, shape] = polyset::tabulate(celltype, d, 0, x);
+    auto [values, shape]
+        = polyset::tabulate(celltype, polyset::type::standard, d, 0, x);
     assert(shape[0] == 1);
     return {std::move(values), {shape[1], shape[2]}};
   }
@@ -135,7 +136,7 @@ std::pair<std::vector<T>, std::array<std::size_t, 2>> polynomials::tabulate(
 //-----------------------------------------------------------------------------
 int polynomials::dim(polynomials::type, cell::type cell, int d)
 {
-  return polyset::dim(cell, d);
+  return polyset::dim(cell, polyset::type::standard, d);
 }
 //-----------------------------------------------------------------------------
 /// @cond

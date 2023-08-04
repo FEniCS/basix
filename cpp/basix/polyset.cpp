@@ -1480,91 +1480,125 @@ void tabulate_polyset_prism_derivs(
 template <std::floating_point T>
 void polyset::tabulate(
     std::experimental::mdspan<T, std::experimental::dextents<std::size_t, 3>> P,
-    cell::type celltype, int d, int n,
+    polyset::type ptype, cell::type celltype, int d, int n,
     std::experimental::mdspan<const T,
                               std::experimental::dextents<std::size_t, 2>>
         x)
 {
-  switch (celltype)
+  switch (ptype)
   {
-  case cell::type::point:
-    tabulate_polyset_point_derivs(P, d, n, x);
-    return;
-  case cell::type::interval:
-    tabulate_polyset_line_derivs(P, d, n, x);
-    return;
-  case cell::type::triangle:
-    tabulate_polyset_triangle_derivs(P, d, n, x);
-    return;
-  case cell::type::tetrahedron:
-    tabulate_polyset_tetrahedron_derivs(P, d, n, x);
-    return;
-  case cell::type::quadrilateral:
-    tabulate_polyset_quad_derivs(P, d, n, x);
-    return;
-  case cell::type::prism:
-    tabulate_polyset_prism_derivs(P, d, n, x);
-    return;
-  case cell::type::pyramid:
-    tabulate_polyset_pyramid_derivs(P, d, n, x);
-    return;
-  case cell::type::hexahedron:
-    tabulate_polyset_hex_derivs(P, d, n, x);
-    return;
+  case polyset::type::standard:
+    switch (celltype)
+    {
+    case cell::type::point:
+      tabulate_polyset_point_derivs(P, d, n, x);
+      return;
+    case cell::type::interval:
+      tabulate_polyset_line_derivs(P, d, n, x);
+      return;
+    case cell::type::triangle:
+      tabulate_polyset_triangle_derivs(P, d, n, x);
+      return;
+    case cell::type::tetrahedron:
+      tabulate_polyset_tetrahedron_derivs(P, d, n, x);
+      return;
+    case cell::type::quadrilateral:
+      tabulate_polyset_quad_derivs(P, d, n, x);
+      return;
+    case cell::type::prism:
+      tabulate_polyset_prism_derivs(P, d, n, x);
+      return;
+    case cell::type::pyramid:
+      tabulate_polyset_pyramid_derivs(P, d, n, x);
+      return;
+    case cell::type::hexahedron:
+      tabulate_polyset_hex_derivs(P, d, n, x);
+      return;
+    default:
+      throw std::runtime_error("Polynomial set: unsupported cell type");
+    }
+  case polyset::type::edgeisoC0:
+    switch (celltype)
+    {
+    case cell::type::point:
+      tabulate_polyset_point_derivs(P, d, n, x);
+      return;
+    case cell::type::interval:
+      tabulate_polyset_line_edgeiso_derivs(P, d, n, x);
+      return;
+    default:
+      throw std::runtime_error("Polynomial set: unsupported cell type");
+    }
   default:
-    throw std::runtime_error("Polynomial set: unsupported cell type");
+    throw std::runtime_error("Polynomial set: unsupported polynomial type.");
   }
 }
 //-----------------------------------------------------------------------------
 template <std::floating_point T>
 std::pair<std::vector<T>, std::array<std::size_t, 3>> polyset::tabulate(
-    cell::type celltype, int d, int n,
+    cell::type celltype, polyset::type ptype, int d, int n,
     std::experimental::mdspan<const T,
                               std::experimental::dextents<std::size_t, 2>>
         x)
 {
   std::array<std::size_t, 3> shape
       = {(std::size_t)polyset::nderivs(celltype, n),
-         (std::size_t)polyset::dim(celltype, d), x.extent(0)};
+         (std::size_t)polyset::dim(celltype, ptype, d), x.extent(0)};
   std::vector<T> P(shape[0] * shape[1] * shape[2]);
   stdex::mdspan<T, stdex::dextents<std::size_t, 3>> _P(P.data(), shape);
-  polyset::tabulate(_P, celltype, d, n, x);
+  polyset::tabulate(_P, celltype, ptype, d, n, x);
   return {std::move(P), std::move(shape)};
 }
 //-----------------------------------------------------------------------------
 /// @cond
 template std::pair<std::vector<float>, std::array<std::size_t, 3>>
 polyset::tabulate(
-    cell::type, int, int,
+    cell::type, polyset::type, int, int,
     std::experimental::mdspan<const float,
                               std::experimental::dextents<std::size_t, 2>>);
 template std::pair<std::vector<double>, std::array<std::size_t, 3>>
 polyset::tabulate(
-    cell::type, int, int,
+    cell::type, polyset::type, int, int,
     std::experimental::mdspan<const double,
                               std::experimental::dextents<std::size_t, 2>>);
 /// @endcond
 //-----------------------------------------------------------------------------
-int polyset::dim(cell::type celltype, int d)
+int polyset::dim(cell::type celltype, polyset::type ptype, int d)
 {
-  switch (celltype)
+  switch (ptype)
   {
-  case cell::type::point:
-    return 1;
-  case cell::type::triangle:
-    return (d + 1) * (d + 2) / 2;
-  case cell::type::tetrahedron:
-    return (d + 1) * (d + 2) * (d + 3) / 6;
-  case cell::type::prism:
-    return (d + 1) * (d + 1) * (d + 2) / 2;
-  case cell::type::pyramid:
-    return (d + 1) * (d + 2) * (2 * d + 3) / 6;
-  case cell::type::interval:
-    return (d + 1);
-  case cell::type::quadrilateral:
-    return (d + 1) * (d + 1);
-  case cell::type::hexahedron:
-    return (d + 1) * (d + 1) * (d + 1);
+  case polyset::type::standard:
+    switch (celltype)
+    {
+    case cell::type::point:
+      return 1;
+    case cell::type::triangle:
+      return (d + 1) * (d + 2) / 2;
+    case cell::type::tetrahedron:
+      return (d + 1) * (d + 2) * (d + 3) / 6;
+    case cell::type::prism:
+      return (d + 1) * (d + 1) * (d + 2) / 2;
+    case cell::type::pyramid:
+      return (d + 1) * (d + 2) * (2 * d + 3) / 6;
+    case cell::type::interval:
+      return (d + 1);
+    case cell::type::quadrilateral:
+      return (d + 1) * (d + 1);
+    case cell::type::hexahedron:
+      return (d + 1) * (d + 1) * (d + 1);
+    default:
+      return 1;
+    }
+  case polyset::type::edgeisoC0:
+    switch (celltype)
+    {
+    case cell::type::point:
+      return 1;
+    case cell::type::interval:
+      return 2 * d + 1;
+    default:
+      return 1;
+    }
   default:
     return 1;
   }

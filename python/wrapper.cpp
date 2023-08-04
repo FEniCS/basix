@@ -621,7 +621,8 @@ Interface to the Basix C++ library.
           throw std::runtime_error("x has the wrong number of dimensions");
         stdex::mdspan<const double, stdex::dextents<std::size_t, 2>> _x(
             x.data(), x.shape(0), x.shape(1));
-        auto [p, shape] = polyset::tabulate(celltype, d, n, _x);
+        auto [p, shape]
+            = polyset::tabulate(celltype, polyset::type::standard, d, n, _x);
         return py::array_t<double>(shape, p.data());
       },
       basix::docstring::tabulate_polynomial_set.c_str());

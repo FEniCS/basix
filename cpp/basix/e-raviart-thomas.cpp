@@ -31,21 +31,25 @@ FiniteElement<T> basix::element::create_rt(cell::type celltype, int degree,
       = (tdim == 2) ? cell::type::interval : cell::type::triangle;
 
   // The number of order (degree-1) scalar polynomials
-  const std::size_t nv = polyset::dim(celltype, degree - 1);
+  const std::size_t nv
+      = polyset::dim(celltype, polyset::type::standard, degree - 1);
 
   // The number of order (degree-2) scalar polynomials
-  const std::size_t ns0 = polyset::dim(celltype, degree - 2);
+  const std::size_t ns0
+      = polyset::dim(celltype, polyset::type::standard, degree - 2);
 
   // The number of additional polynomials in the polynomial basis for
   // Raviart-Thomas
-  const std::size_t ns = polyset::dim(facettype, degree - 1);
+  const std::size_t ns
+      = polyset::dim(facettype, polyset::type::standard, degree - 1);
 
   // Evaluate the expansion polynomials at the quadrature points
   const auto [_pts, wts] = quadrature::make_quadrature<T>(
       quadrature::type::Default, celltype, 2 * degree);
   impl::mdspan_t<const T, 2> pts(_pts.data(), wts.size(),
                                  _pts.size() / wts.size());
-  const auto [_phi, shape] = polyset::tabulate(celltype, degree, 0, pts);
+  const auto [_phi, shape]
+      = polyset::tabulate(celltype, polyset::type::standard, degree, 0, pts);
   impl::mdspan_t<const T, 3> phi(_phi.data(), shape);
 
   // The number of order (degree) polynomials

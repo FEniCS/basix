@@ -130,6 +130,14 @@
 /// quadratic terms, and cross-terms in two and three dimensions.
 namespace basix::polyset
 {
+
+/// Cell type
+enum class type
+{
+  standard = 0,
+  edgeisoC0 = 1,
+};
+
 /// @brief Tabulate the orthonormal polynomial basis, and derivatives,
 /// at points on the reference cell.
 ///
@@ -145,6 +153,7 @@ namespace basix::polyset
 /// 'triangular' with the lower derivatives appearing first.
 ///
 /// @param[in] celltype Cell type
+/// @param[in] ptype The polynomial type
 /// @param[in] d Polynomial degree
 /// @param[in] n Maximum derivative order. Use n = 0 for the basis only.
 /// @param[in] x Points at which to evaluate the basis. The shape is
@@ -169,7 +178,7 @@ namespace basix::polyset
 /// @todo Does the order for the third index need to be documented?
 template <std::floating_point T>
 std::pair<std::vector<T>, std::array<std::size_t, 3>>
-tabulate(cell::type celltype, int d, int n,
+tabulate(cell::type celltype, polyset::type ptype, int d, int n,
          std::experimental::mdspan<const T,
                                    std::experimental::dextents<std::size_t, 2>>
              x);
@@ -210,6 +219,7 @@ tabulate(cell::type celltype, int d, int n,
 /// - The third index is the basis function index.
 /// @todo Does the order for the third index need to be documented?
 /// @param[in] celltype Cell type
+/// @param[in] ptype The polynomial type
 /// @param[in] d Polynomial degree
 /// @param[in] n Maximum derivative order. Use n = 0 for the basis only.
 /// @param[in] x Points at which to evaluate the basis. The shape is
@@ -217,17 +227,18 @@ tabulate(cell::type celltype, int d, int n,
 template <std::floating_point T>
 void tabulate(
     std::experimental::mdspan<T, std::experimental::dextents<std::size_t, 3>> P,
-    cell::type celltype, int d, int n,
+    cell::type celltype, polyset::type ptype, int d, int n,
     std::experimental::mdspan<const T,
                               std::experimental::dextents<std::size_t, 2>>
         x);
 
 /// @brief Dimension of a polynomial space
 /// @param[in] cell The cell type
+/// @param[in] ptype The polynomial type
 /// @param[in] d The polynomial degree
 /// @return The number of terms in the basis spanning a space of
 /// polynomial degree @p d
-int dim(cell::type cell, int d);
+int dim(cell::type cell, polyset::type ptype, int d);
 
 /// @brief Number of derivatives that the orthonormal basis will have on
 /// the given cell.

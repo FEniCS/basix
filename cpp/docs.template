@@ -282,6 +282,7 @@ Returns:
 
 Args:
     {{polyset.h > tabulate > param > celltype}}
+    {{polyset.h > tabulate > param > ptype}}
     {{polyset.h > tabulate > param > d}}
     {{polyset.h > tabulate > param > n}}
     {{polyset.h > tabulate > param > x}}
@@ -315,27 +316,29 @@ Returns:
     {{polynomials.h > dim > return}}
 )";
 
-{{DOCTYPE}} make_quadrature__rule_celltype_m = R"(
-{{quadrature.h > make_quadrature(rule, celltype, m) > doc}}
+{{DOCTYPE}} make_quadrature__rule_celltype_polytype_m = R"(
+{{quadrature.h > make_quadrature(rule, celltype, polytype, m) > doc}}
 
 Args:
-    {{quadrature.h > make_quadrature(rule, celltype, m) > param > rule}}
-    {{quadrature.h > make_quadrature(rule, celltype, m) > param > celltype}}
-    {{quadrature.h > make_quadrature(rule, celltype, m) > param > m}}
+    {{quadrature.h > make_quadrature(rule, celltype, polytype, m) > param > rule}}
+    {{quadrature.h > make_quadrature(rule, celltype, polytype, m) > param > celltype}}
+    {{quadrature.h > make_quadrature(rule, celltype, polytype, m) > param > polytype}}
+    {{quadrature.h > make_quadrature(rule, celltype, polytype, m) > param > m}}
 
 Returns:
-    {{quadrature.h > make_quadrature(rule, celltype, m) > return}}
+    {{quadrature.h > make_quadrature(rule, celltype, polytype, m) > return}}
 )";
 
-{{DOCTYPE}} make_quadrature__celltype_m = R"(
-{{quadrature.h > make_quadrature(celltype, m) > doc}}
+{{DOCTYPE}} make_quadrature__celltype_polytype_m = R"(
+{{quadrature.h > make_quadrature(celltype, polytype, m) > doc}}
 
 Args:
-    {{quadrature.h > make_quadrature(celltype, m) > param > celltype}}
-    {{quadrature.h > make_quadrature(celltype, m) > param > m}}
+    {{quadrature.h > make_quadrature(celltype, polytype, m) > param > celltype}}
+    {{quadrature.h > make_quadrature(celltype, polytype, m) > param > polytype}}
+    {{quadrature.h > make_quadrature(celltype, polytype, m) > param > m}}
 
 Returns:
-    {{quadrature.h > make_quadrature(rule, celltype, m) > return}}
+    {{quadrature.h > make_quadrature(rule, celltype, polytype, m) > return}}
 )";
 
 {{DOCTYPE}} index__p = R"(

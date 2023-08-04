@@ -110,7 +110,7 @@ moments::make_integral_moments(const FiniteElement<T>& V, cell::type celltype,
 
   // Get the quadrature points and weights
   const auto [_pts, wts] = quadrature::make_quadrature<T>(
-      quadrature::type::Default, sub_celltype, q_deg);
+      quadrature::type::Default, sub_celltype, polyset::type::standard, q_deg);
   mdspan_t<const T, 2> pts(_pts.data(), wts.size(), _pts.size() / wts.size());
 
   // Evaluate moment space at quadrature points
@@ -196,7 +196,7 @@ moments::make_dot_integral_moments(const FiniteElement<T>& V,
   const std::size_t num_entities = cell::num_sub_entities(celltype, entity_dim);
 
   const auto [_pts, wts] = quadrature::make_quadrature<T>(
-      quadrature::type::Default, sub_celltype, q_deg);
+      quadrature::type::Default, sub_celltype, polyset::type::standard, q_deg);
   mdspan_t<const T, 2> pts(_pts.data(), wts.size(), _pts.size() / wts.size());
 
   // If this is always true, value_size input can be removed
@@ -277,7 +277,8 @@ moments::make_tangent_integral_moments(const FiniteElement<T>& V,
     throw std::runtime_error("Tangent is only well-defined on an edge.");
 
   const auto [_pts, wts] = quadrature::make_quadrature<T>(
-      quadrature::type::Default, cell::type::interval, q_deg);
+      quadrature::type::Default, cell::type::interval, polyset::type::standard,
+      q_deg);
   mdspan_t<const T, 2> pts(_pts.data(), wts.size(), _pts.size() / wts.size());
 
   // Evaluate moment space at quadrature points
@@ -348,7 +349,7 @@ moments::make_normal_integral_moments(const FiniteElement<T>& V,
 
   // Compute quadrature points for evaluating integral
   const auto [_pts, wts] = quadrature::make_quadrature<T>(
-      quadrature::type::Default, sub_celltype, q_deg);
+      quadrature::type::Default, sub_celltype, polyset::type::standard, q_deg);
   mdspan_t<const T, 2> pts(_pts.data(), wts.size(), _pts.size() / wts.size());
 
   // Evaluate moment space at quadrature points

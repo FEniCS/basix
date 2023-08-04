@@ -70,7 +70,7 @@ def test_tensor_product_factorisation_quadrilateral(degree):
 
     # Quadrature degree
     Q = 2 * P + 2
-    points, w = basix.make_quadrature(basix.QuadratureType.Default, cell_type, Q)
+    points, w = basix.make_quadrature(basix.QuadratureType.Default, cell_type, basix.PolysetType.standard, Q)
 
     # FIXME: This test assumes all factors formed by a single element
     perm = factors[1]
@@ -88,7 +88,7 @@ def test_tensor_product_factorisation_quadrilateral(degree):
     assert points.shape[0] == (P+2) * (P+2)
 
     cell1d = element0.cell_type
-    points, _ = basix.make_quadrature(basix.QuadratureType.Default, cell1d, Q)
+    points, _ = basix.make_quadrature(basix.QuadratureType.Default, cell1d, basix.PolysetType.standard, Q)
     data = element0.tabulate(1, points)
     phi0 = data[0, :, :, 0]
     dphi0 = data[1, :, :, 0]
@@ -129,7 +129,7 @@ def test_tensor_product_factorisation_hexahedron(degree):
 
     # Quadrature degree
     Q = 2 * P + 2
-    points, _ = basix.make_quadrature(basix.QuadratureType.Default, basix.CellType.hexahedron, Q)
+    points, _ = basix.make_quadrature(basix.QuadratureType.Default, basix.CellType.hexahedron, basix.PolysetType.standard, Q)
 
     # FIXME: This test assumes all factors formed by a single element
     perm = factors[1]
@@ -148,7 +148,7 @@ def test_tensor_product_factorisation_hexahedron(degree):
     assert points.shape[0] == (P+2) * (P+2) * (P+2)
 
     cell1d = element0.cell_type
-    points, w = basix.make_quadrature(basix.QuadratureType.Default, cell1d, Q)
+    points, w = basix.make_quadrature(basix.QuadratureType.Default, cell1d, basix.PolysetType.standard, Q)
     data = element0.tabulate(1, points)
     phi0 = data[0, :, :, 0]
     dphi0 = data[1, :, :, 0]

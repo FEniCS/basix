@@ -990,7 +990,7 @@ FiniteElement<T> create_legendre(cell::type celltype, int degree,
 
   // Evaluate moment space at quadrature points
   const auto [_pts, wts] = quadrature::make_quadrature<T>(
-      quadrature::type::Default, celltype, degree * 2);
+      quadrature::type::Default, celltype, polyset::type::standard, degree * 2);
   assert(!wts.empty());
   impl::mdspan_t<const T, 2> pts(_pts.data(), wts.size(),
                                  _pts.size() / wts.size());
@@ -1119,8 +1119,9 @@ FiniteElement<T> create_bernstein(cell::type celltype, int degree,
     }
     else
     {
-      const auto [_pts, wts] = quadrature::make_quadrature<T>(
-          quadrature::type::Default, ct[d], degree * 2);
+      const auto [_pts, wts]
+          = quadrature::make_quadrature<T>(quadrature::type::Default, ct[d],
+                                           polyset::type::standard, degree * 2);
       assert(!wts.empty());
       impl::mdspan_t<const T, 2> pts(_pts.data(), wts.size(),
                                      _pts.size() / wts.size());

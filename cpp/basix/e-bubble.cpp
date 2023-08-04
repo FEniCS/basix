@@ -67,7 +67,7 @@ FiniteElement<T> basix::element::create_bubble(cell::type celltype, int degree,
 
   // Evaluate the expansion polynomials at the quadrature points
   const auto [_pts, wts] = quadrature::make_quadrature<T>(
-      quadrature::type::Default, celltype, 2 * degree);
+      quadrature::type::Default, celltype, polyset::type::standard, 2 * degree);
   impl::mdspan_t<const T, 2> pts(_pts.data(), wts.size(),
                                  _pts.size() / wts.size());
   const auto [_phi, shape]

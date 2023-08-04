@@ -118,7 +118,7 @@ void tabulate_polyset_line_derivs(
 /// n P(n) = (2n - 1) x P_{n-1} - (n - 1) P_{n-2} in the interval [-1,
 /// 1]. The range is rescaled here to [0, 1].
 template <typename T>
-void tabulate_polyset_line_edgeiso_derivs(
+void tabulate_polyset_line_macroedge_derivs(
     stdex::mdspan<T, stdex::dextents<std::size_t, 3>> P, std::size_t n,
     std::size_t nderiv,
     stdex::mdspan<const T, stdex::dextents<std::size_t, 2>> x)
@@ -1580,14 +1580,14 @@ void polyset::tabulate(
     default:
       throw std::runtime_error("Polynomial set: unsupported cell type");
     }
-  case polyset::type::edgeisoC0:
+  case polyset::type::macroedge:
     switch (celltype)
     {
     case cell::type::point:
       tabulate_polyset_point_derivs(P, d, n, x);
       return;
     case cell::type::interval:
-      tabulate_polyset_line_edgeiso_derivs(P, d, n, x);
+      tabulate_polyset_line_macroedge_derivs(P, d, n, x);
       return;
     default:
       throw std::runtime_error("Polynomial set: unsupported cell type");
@@ -1652,7 +1652,7 @@ int polyset::dim(cell::type celltype, polyset::type ptype, int d)
     default:
       return 1;
     }
-  case polyset::type::edgeisoC0:
+  case polyset::type::macroedge:
     switch (celltype)
     {
     case cell::type::point:

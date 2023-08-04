@@ -614,7 +614,7 @@ Interface to the Basix C++ library.
 
   py::enum_<polyset::type>(m, "PolysetType")
       .value("standard", polyset::type::standard)
-      .value("edgeisoC0", polyset::type::edgeisoC0);
+      .value("macroedge", polyset::type::macroedge);
 
   m.def(
       "tabulate_polynomial_set",
@@ -632,25 +632,28 @@ Interface to the Basix C++ library.
 
   m.def(
       "make_quadrature",
-      [](quadrature::type rule, cell::type celltype, int m)
+      [](quadrature::type rule, cell::type celltype, polyset::type polytype,
+         int m)
       {
-        auto [pts, w] = quadrature::make_quadrature<double>(rule, celltype, m);
+        auto [pts, w]
+            = quadrature::make_quadrature<double>(rule, celltype, polytype, m);
         std::array<std::size_t, 2> shape = {w.size(), pts.size() / w.size()};
         return std::pair(py::array_t<double>(shape, pts.data()),
                          py::array_t<double>(w.size(), w.data()));
       },
-      basix::docstring::make_quadrature__rule_celltype_m.c_str());
+      basix::docstring::make_quadrature__rule_celltype_polytype_m.c_str());
 
   m.def(
       "make_quadrature",
-      [](cell::type celltype, int m)
+      [](cell::type celltype, polyset::type polytype, int m)
       {
-        auto [pts, w] = quadrature::make_quadrature<double>(celltype, m);
+        auto [pts, w]
+            = quadrature::make_quadrature<double>(celltype, polytype, m);
         std::array<std::size_t, 2> shape = {w.size(), pts.size() / w.size()};
         return std::pair(py::array_t<double>(shape, pts.data()),
                          py::array_t<double>(w.size(), w.data()));
       },
-      basix::docstring::make_quadrature__celltype_m.c_str());
+      basix::docstring::make_quadrature__celltype_polytype_m.c_str());
 
   m.def("index", py::overload_cast<int>(&basix::indexing::idx),
         basix::docstring::index__p.c_str())

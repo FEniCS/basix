@@ -36,7 +36,8 @@ impl::mdarray_t<T, 2> create_nedelec_2d_space(int degree)
 
   // Tabulate polynomial set at quadrature points
   const auto [_pts, wts] = quadrature::make_quadrature<T>(
-      quadrature::type::Default, cell::type::triangle, 2 * degree);
+      quadrature::type::Default, cell::type::triangle, polyset::type::standard,
+      2 * degree);
   impl::mdspan_t<const T, 2> pts(_pts.data(), wts.size(),
                                  _pts.size() / wts.size());
   const auto [_phi, shape] = polyset::tabulate(
@@ -97,7 +98,8 @@ impl::mdarray_t<T, 2> create_nedelec_3d_space(int degree)
 
   // Tabulate polynomial basis at quadrature points
   const auto [_pts, wts] = quadrature::make_quadrature<T>(
-      quadrature::type::Default, cell::type::tetrahedron, 2 * degree);
+      quadrature::type::Default, cell::type::tetrahedron,
+      polyset::type::standard, 2 * degree);
   impl::mdspan_t<const T, 2> pts(_pts.data(), wts.size(),
                                  _pts.size() / wts.size());
   const auto [_phi, shape] = polyset::tabulate(

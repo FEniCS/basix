@@ -434,30 +434,30 @@ Returns:
 )";
 
 const std::string compute_interpolation_operator = R"(
-Computes a matrix that represents the interpolation between two
-elements.
+@brief Compute a matrix that represents the interpolation between
+two elements.
 
 If the two elements have the same value size, this function returns
 the interpolation between them.
 
-If element_from has value size 1 and element_to has value size > 1, then
-this function returns a matrix to interpolate from a blocked element_from
-(ie multiple copies of element_from) into element_to.
+If element_from has value size 1 and element_to has value size > 1,
+then this function returns a matrix to interpolate from a blocked
+element_from (ie multiple copies of element_from) into element_to.
 
-If element_to has value size 1 and element_from has value size > 1, then
-this function returns a matrix that interpolates the components of
-element_from into copies of element_to.
+If element_to has value size 1 and element_from has value size > 1,
+then this function returns a matrix that interpolates the components
+of element_from into copies of element_to.
 
 NOTE: If the elements have different value sizes and both are
 greater than 1, this function throws a runtime error
 
-In order to interpolate functions between finite element spaces on arbitrary
-cells, the functions must be pulled back to the reference element (this pull
-back includes applying DOF transformations). The matrix that this function
-returns can then be applied, then the result pushed forward to the cell. If
-element_from and element_to have the same map type, then only the DOF
-transformations need to be applied, as the pull back and push forward cancel
-each other out.
+In order to interpolate functions between finite element spaces on
+arbitrary cells, the functions must be pulled back to the reference
+element (this pull back includes applying DOF transformations). The
+matrix that this function returns can then be applied, then the
+result pushed forward to the cell. If element_from and element_to
+have the same map type, then only the DOF transformations need to be
+applied, as the pull back and push forward cancel each other out.
 
 Args:
     element_from: The element to interpolate from
@@ -486,6 +486,7 @@ there are `(nderiv + 1)(nderiv + 2)(nderiv + 3)/6`. The ordering is
 
 Args:
     celltype: Cell type
+    ptype: The polynomial type
     d: Polynomial degree
     n: Maximum derivative order. Use n = 0 for the basis only.
     x: Points at which to evaluate the basis. The shape is (number of points, geometric dimension).
@@ -538,12 +539,13 @@ Returns:
     polynomial degree @p d
 )";
 
-const std::string make_quadrature__rule_celltype_m = R"(
+const std::string make_quadrature__rule_celltype_polytype_m = R"(
 Make a quadrature rule on a reference cell
 
 Args:
     rule: Type of quadrature rule (or use quadrature::Default)
     celltype: The cell type
+    polytype: The polyset type
     m: Maximum degree of polynomial that this quadrature rule will integrate exactly
 
 Returns:
@@ -551,11 +553,12 @@ Returns:
     arrays has shape (num points, gdim)
 )";
 
-const std::string make_quadrature__celltype_m = R"(
+const std::string make_quadrature__celltype_polytype_m = R"(
 Make a default quadrature rule on reference cell
 
 Args:
     celltype: The cell type
+    polytype: The polyset type
     m: Maximum degree of polynomial that this quadrature rule will integrate exactly
 
 Returns:
@@ -574,9 +577,9 @@ Returns:
 )";
 
 const std::string index__p_q = R"(
-Compute indexing in a 2D triangular array compressed into a 1D array.
-This can be used to find the index of a derivative returned by
-`FiniteElement::tabulate`. For instance to find d2N/dx2, use
+Compute indexing in a 2D triangular array compressed into a 1D
+array. This can be used to find the index of a derivative returned
+by `FiniteElement::tabulate`. For instance to find d2N/dx2, use
 `FiniteElement::tabulate(2, points)[idx(2, 0)];`
 
 Args:
@@ -588,7 +591,8 @@ Returns:
 )";
 
 const std::string index__p_q_r = R"(
-Compute indexing in a 3D tetrahedral array compressed into a 1D array
+Compute indexing in a 3D tetrahedral array compressed into a 1D
+array
 
 Args:
     p: Index in x

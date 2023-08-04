@@ -87,8 +87,8 @@ FiniteElement<T> element::create_regge(cell::type celltype, int degree,
 
         const std::size_t ndofs
             = polyset::dim(ct, polyset::type::standard, degree + 1 - d);
-        const auto [_pts, wts]
-            = quadrature::make_quadrature<T>(ct, degree + (degree + 1 - d));
+        const auto [_pts, wts] = quadrature::make_quadrature<T>(
+            ct, polyset::type::standard, degree + (degree + 1 - d));
         impl::mdspan_t<const T, 2> pts(_pts.data(), wts.size(),
                                        _pts.size() / wts.size());
 

@@ -28,7 +28,8 @@ impl::mdarray_t<T, 2> make_serendipity_space_2d(int degree)
 
   // Evaluate the expansion polynomials at the quadrature points
   const auto [_pts, wts] = quadrature::make_quadrature<T>(
-      quadrature::type::Default, cell::type::quadrilateral, 2 * degree);
+      quadrature::type::Default, cell::type::quadrilateral,
+      polyset::type::standard, 2 * degree);
   impl::mdspan_t<const T, 2> pts(_pts.data(), wts.size(),
                                  _pts.size() / wts.size());
   const auto [_Pq, shape] = polyset::tabulate(
@@ -127,7 +128,8 @@ impl::mdarray_t<T, 2> make_serendipity_space_3d(int degree)
 
   // Evaluate the expansion polynomials at the quadrature points
   const auto [_pts, wts] = quadrature::make_quadrature<T>(
-      quadrature::type::Default, cell::type::hexahedron, 2 * degree);
+      quadrature::type::Default, cell::type::hexahedron,
+      polyset::type::standard, 2 * degree);
   impl::mdspan_t<const T, 2> pts(_pts.data(), wts.size(),
                                  _pts.size() / wts.size());
 
@@ -182,7 +184,8 @@ impl::mdarray_t<T, 2> make_serendipity_div_space_2d(int degree)
 
   // Evaluate the expansion polynomials at the quadrature points
   auto [_pts, wts] = quadrature::make_quadrature<T>(
-      quadrature::type::Default, cell::type::quadrilateral, 2 * degree + 2);
+      quadrature::type::Default, cell::type::quadrilateral,
+      polyset::type::standard, 2 * degree + 2);
   impl::mdspan_t<const T, 2> pts(_pts.data(), wts.size(),
                                  _pts.size() / wts.size());
   const auto [_Pq, shape] = polyset::tabulate(
@@ -252,7 +255,8 @@ impl::mdarray_t<T, 2> make_serendipity_div_space_3d(int degree)
 
   // Evaluate the expansion polynomials at the quadrature points
   const auto [_pts, wts] = quadrature::make_quadrature<T>(
-      quadrature::type::Default, cell::type::hexahedron, 2 * degree + 2);
+      quadrature::type::Default, cell::type::hexahedron,
+      polyset::type::standard, 2 * degree + 2);
   impl::mdspan_t<const T, 2> pts(_pts.data(), wts.size(),
                                  _pts.size() / wts.size());
 
@@ -400,7 +404,8 @@ impl::mdarray_t<T, 2> make_serendipity_curl_space_2d(int degree)
 
   // Evaluate the expansion polynomials at the quadrature points
   const auto [_pts, wts] = quadrature::make_quadrature<T>(
-      quadrature::type::Default, cell::type::quadrilateral, 2 * degree + 2);
+      quadrature::type::Default, cell::type::quadrilateral,
+      polyset::type::standard, 2 * degree + 2);
   impl::mdspan_t<const T, 2> pts(_pts.data(), wts.size(),
                                  _pts.size() / wts.size());
   const auto [_Pq, shape] = polyset::tabulate(
@@ -475,7 +480,8 @@ impl::mdarray_t<T, 2> make_serendipity_curl_space_3d(int degree)
 
   // Evaluate the expansion polynomials at the quadrature points
   const auto [_pts, wts] = quadrature::make_quadrature<T>(
-      quadrature::type::Default, cell::type::hexahedron, 2 * degree + 2);
+      quadrature::type::Default, cell::type::hexahedron,
+      polyset::type::standard, 2 * degree + 2);
   impl::mdspan_t<const T, 2> pts(_pts.data(), wts.size(),
                                  _pts.size() / wts.size());
   const auto [_Pq, shape] = polyset::tabulate(
@@ -683,7 +689,7 @@ FiniteElement<T> create_legendre_dpc(cell::type celltype, int degree,
       = polyset::dim(simplex_type, polyset::type::standard, degree);
 
   const auto [_pts, wts] = quadrature::make_quadrature<T>(
-      quadrature::type::Default, celltype, degree * 2);
+      quadrature::type::Default, celltype, polyset::type::standard, degree * 2);
   impl::mdspan_t<const T, 2> pts(_pts.data(), wts.size(),
                                  _pts.size() / wts.size());
 
@@ -1338,8 +1344,9 @@ FiniteElement<T> element::create_serendipity_curl(
   const std::size_t tdim = cell::topological_dimension(celltype);
 
   // Evaluate the expansion polynomials at the quadrature points
-  const auto [_Qpts, wts] = quadrature::make_quadrature<T>(
-      quadrature::type::Default, celltype, 2 * degree + 1);
+  const auto [_Qpts, wts]
+      = quadrature::make_quadrature<T>(quadrature::type::Default, celltype,
+                                       polyset::type::standard, 2 * degree + 1);
   impl::mdspan_t<const T, 2> Qpts(_Qpts.data(), wts.size(),
                                   _Qpts.size() / wts.size());
 

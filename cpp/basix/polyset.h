@@ -135,7 +135,7 @@ namespace basix::polyset
 enum class type
 {
   standard = 0,
-  edgeisoC0 = 1,
+  macroedge = 1,
 };
 
 /// @brief Tabulate the orthonormal polynomial basis, and derivatives,

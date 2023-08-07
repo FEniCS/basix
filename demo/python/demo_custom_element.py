@@ -9,7 +9,7 @@
 
 import basix
 import numpy as np
-from basix import CellType, MapType, PolynomialType, LatticeType, SobolevSpace
+from basix import CellType, MapType, PolynomialType, LatticeType, SobolevSpace, PolysetType
 
 # Lagrange element with bubble
 # ============================
@@ -140,9 +140,11 @@ for _ in range(4):
 # - The highest degree of a polynomial in the element. In this example, this is 2. It is
 #   important that this value is correct, as it will be used to determine the number of
 #   polynomials to use when creating and tabulating the element.
+# - The type of polynomial set to use. In this example, we use standard polynomials.
 
 element = basix.create_custom_element(
-    CellType.quadrilateral, [], wcoeffs, x, M, 0, MapType.identity, SobolevSpace.H1, False, 1, 2)
+    CellType.quadrilateral, [], wcoeffs, x, M, 0, MapType.identity, SobolevSpace.H1, False, 1, 2,
+    PolysetType.standard)
 
 # We can now use this element in the same way we can use a built-in element. For example, we
 # can tabulate the element at a set of points. If the points we use are the same as the points
@@ -235,7 +237,7 @@ M[2].append(np.zeros((0, 2, 0, 1)))
 
 element = basix.create_custom_element(
     CellType.triangle, [2], wcoeffs, x, M, 0, MapType.contravariantPiola, SobolevSpace.HDiv,
-    False, 0, 1)
+    False, 0, 1, PolysetType.standard)
 
 # To confirm that we have defined this element correctly, we compare it to the built-in
 # Raviart--Thomas element.

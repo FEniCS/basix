@@ -271,7 +271,7 @@ class _ElementBase(_FiniteElementBase):
         raise NotImplementedError()
 
     @property
-    def polyset_type(self) -> basix.PolysetType:
+    def polyset_type(self) -> _basix.PolysetType:
         """The polyset type of the element."""
         raise NotImplementedError()
 
@@ -497,7 +497,7 @@ class _BasixElement(_ElementBase):
         return self.element.highest_degree
 
     @property
-    def polyset_type(self) -> basix.PolysetType:
+    def polyset_type(self) -> _basix.PolysetType:
         return self.element.polyset_type
 
     @property
@@ -1122,7 +1122,7 @@ class _BlockedElement(_ElementBase):
         return self.sub_element.highest_degree
 
     @property
-    def polyset_type(self) -> basix.PolysetType:
+    def polyset_type(self) -> _basix.PolysetType:
         return self.element.polyset_type
 
     @property

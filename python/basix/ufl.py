@@ -1356,7 +1356,7 @@ def enriched_element(elements: _typing.List[_ElementBase],
             set equal to the topological dimension of the cell.
     """
     ct = elements[0].cell_type
-    pt = elements[0].polyset_type
+    ptype = elements[0].polyset_type
     vshape = elements[0].value_shape()
     vsize = elements[0].value_size
     if map_type is None:
@@ -1374,7 +1374,7 @@ def enriched_element(elements: _typing.List[_ElementBase],
             discontinuous = False
         if e.cell_type != ct:
             raise ValueError("Enriched elements on different cell types not supported.")
-        if e.polyset_type != pt:
+        if e.polyset_type != ptype:
             raise ValueError("Enriched elements on different polyset types not supported.")
         if e.value_shape() != vshape or e.value_size != vsize:
             raise ValueError("Enriched elements on different value shapes not supported.")
@@ -1409,7 +1409,7 @@ def enriched_element(elements: _typing.List[_ElementBase],
         row += e.dim
 
     return custom_element(ct, list(vshape), wcoeffs, x, M, nderivs,
-                          map_type, ss, discontinuous, hcd, hd, pt, gdim=gdim)
+                          map_type, ss, discontinuous, hcd, hd, ptype, gdim=gdim)
 
 
 def custom_element(cell_type: _basix.CellType, value_shape: _typing.Union[_typing.List[int], _typing.Tuple[int, ...]],
@@ -1417,7 +1417,7 @@ def custom_element(cell_type: _basix.CellType, value_shape: _typing.Union[_typin
                    M: _typing.List[_typing.List[_npt.NDArray[_np.float64]]], interpolation_nderivs: int,
                    map_type: _basix.MapType, sobolev_space: _basix.SobolevSpace, discontinuous: bool,
                    highest_complete_degree: int, highest_degree: int,
-                   poly_type: _basix.PolysetType = _basix.PolysetType.standard,
+                   polyset_type: _basix.PolysetType = _basix.PolysetType.standard,
                    gdim: _typing.Optional[int] = None) -> _ElementBase:
     """Create a UFL compatible custom Basix element.
 
@@ -1442,7 +1442,7 @@ def custom_element(cell_type: _basix.CellType, value_shape: _typing.Union[_typin
     """
     return _BasixElement(_basix.create_custom_element(
         cell_type, list(value_shape), wcoeffs, x, M, interpolation_nderivs,
-        map_type, sobolev_space, discontinuous, highest_complete_degree, highest_degree, poly_type), gdim=gdim)
+        map_type, sobolev_space, discontinuous, highest_complete_degree, highest_degree, polyset_type), gdim=gdim)
 
 
 def mixed_element(elements: _typing.List[_ElementBase], gdim: _typing.Optional[int] = None) -> _ElementBase:

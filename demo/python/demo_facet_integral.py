@@ -15,7 +15,7 @@
 
 import basix
 import numpy as np
-from basix import ElementFamily, CellType, LagrangeVariant, PolysetType
+from basix import ElementFamily, CellType, LagrangeVariant
 
 # We define a degree 3 Lagrange space on a tetrahedron.
 
@@ -26,7 +26,7 @@ lagrange = basix.create_element(
 # rule on a triangle. We use an order 3 rule so that we can integrate the
 # basis functions in our space exactly.
 
-points, weights = basix.make_quadrature(CellType.triangle, PolysetType.standard, 3)
+points, weights = basix.quadrature.make_quadrature(CellType.triangle, 3)
 
 # Next, we must map the quadrature points to our facet. We use the function
 # `geometry` to get the coordinates of the vertices of the tetrahedron, and

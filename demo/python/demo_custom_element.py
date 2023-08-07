@@ -9,7 +9,7 @@
 
 import basix
 import numpy as np
-from basix import CellType, MapType, PolynomialType, LatticeType, SobolevSpace, PolysetType
+from basix import CellType, MapType, PolynomialType, LatticeType, SobolevSpace
 
 # Lagrange element with bubble
 # ============================
@@ -67,7 +67,7 @@ wcoeffs[3, 4] = 1
 # We compute these integrals using a degree 4 quadrature rule (this is the largest degree
 # that the integrand will be, so these integrals will be exact).
 
-pts, wts = basix.make_quadrature(CellType.quadrilateral, PolysetType.standard, 4)
+pts, wts = basix.quadrature.make_quadrature(CellType.quadrilateral, 4)
 poly = basix.tabulate_polynomials(PolynomialType.legendre, CellType.quadrilateral, 2, pts)
 x = pts[:, 0]
 y = pts[:, 1]
@@ -188,7 +188,7 @@ wcoeffs = np.zeros((3, 6))
 wcoeffs[0, 0] = 1
 wcoeffs[1, 3] = 1
 
-pts, wts = basix.make_quadrature(CellType.triangle, PolysetType.standard, 2)
+pts, wts = basix.quadrature.make_quadrature(CellType.triangle, 2)
 poly = basix.tabulate_polynomials(PolynomialType.legendre, CellType.triangle, 1, pts)
 x = pts[:, 0]
 y = pts[:, 1]
@@ -203,7 +203,7 @@ for i in range(3):
 # the element are integrals. We begin by defining a degree 1 quadrature rule on an interval.
 # This quadrature rule will be used to integrate on the edges of the triangle.
 
-pts, wts = basix.make_quadrature(CellType.interval, PolysetType.standard, 1)
+pts, wts = basix.quadrature.make_quadrature(CellType.interval, 1)
 
 # The points associated with each edge are calculated by mapping the quadrature points to each edge.
 

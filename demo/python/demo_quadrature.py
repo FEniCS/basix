@@ -28,14 +28,14 @@ from basix import ElementFamily, CellType, LagrangeVariant, PolysetType
 # `make_quadrature` returns two values: the points and the weights of the
 # quadrature rule.
 
-points, weights = basix.make_quadrature(CellType.triangle, PolysetType.standard, 4)
+points, weights = basix.quadrature.make_quadrature(CellType.triangle, 4)
 
 # If we want to control the type of quadrature used, we can pass in three
 # inputs to `make_quadrautre`. For example, the following code would force basix
 # to use a Gauss-Jacobi quadrature rule:
 
-points, weights = basix.make_quadrature(
-    basix.QuadratureType.gauss_jacobi, CellType.triangle, PolysetType.standard, 4)
+points, weights = basix.quadrature.make_quadrature(
+    CellType.triangle, 4, rule=basix.QuadratureType.gauss_jacobi)
 
 # We now use this quadrature rule to integrate the functions :math:`f(x,y)=x^3y`
 # and :math:`g(x,y)=x^3y^2` over the triangle. The exact values of these integrals

@@ -54,7 +54,7 @@ Returns:
 )";
 
 const std::string create_lattice__celltype_n_type_exterior = R"(
-@brief Create a lattice of points on a reference cell optionally
+Create a lattice of points on a reference cell optionally
 including the outer surface points.
 
 For a given `celltype`, this creates a set of points on a regular
@@ -80,7 +80,7 @@ Returns:
 )";
 
 const std::string create_lattice__celltype_n_type_exterior_method = R"(
-@brief Create a lattice of points on a reference cell optionally
+Create a lattice of points on a reference cell optionally
 including the outer surface points.
 
 For a given `celltype`, this creates a set of points on a regular
@@ -169,7 +169,7 @@ Returns:
 )";
 
 const std::string FiniteElement__tabulate = R"(
-@brief Compute basis values and derivatives at set of points.
+Compute basis values and derivatives at set of points.
 
 NOTE: The version of `FiniteElement::tabulate` with the basis data
 as an out argument should be preferred for repeated call where
@@ -270,7 +270,7 @@ Returns:
 )";
 
 const std::string FiniteElement__base_transformations = R"(
-@brief Get the base transformations.
+Get the base transformations.
 
 The base transformations represent the effect of rotating or reflecting
 a subentity of the cell on the numbering and orientation of the DOFs.
@@ -409,6 +409,7 @@ Args:
     discontinuous: Indicates whether or not this is the discontinuous version of the element
     highest_complete_degree: The highest degree n such that a Lagrange (or vector Lagrange) element of degree n is a subspace of this element
     highest_degree: The degree of a polynomial in this element's polyset
+    poly_type: The type of polyset to use for this element
 
 Returns:
     A custom finite element
@@ -434,7 +435,7 @@ Returns:
 )";
 
 const std::string compute_interpolation_operator = R"(
-@brief Compute a matrix that represents the interpolation between
+Compute a matrix that represents the interpolation between
 two elements.
 
 If the two elements have the same value size, this function returns
@@ -470,7 +471,7 @@ Returns:
 )";
 
 const std::string tabulate_polynomial_set = R"(
-@brief Tabulate the orthonormal polynomial basis, and derivatives,
+Tabulate the orthonormal polynomial basis, and derivatives,
 at points on the reference cell.
 
 All derivatives up to the given order are computed. If derivatives
@@ -513,7 +514,7 @@ Returns:
 )";
 
 const std::string tabulate_polynomials = R"(
-@brief Tabulate a set of polynomials.
+Tabulate a set of polynomials.
 
 Args:
     polytype: Polynomial type
@@ -527,7 +528,7 @@ Returns:
 )";
 
 const std::string polynomials_dim = R"(
-@brief Dimension of a polynomial space.
+Dimension of a polynomial space.
 
 Args:
     polytype: The polynomial type
@@ -600,5 +601,33 @@ Args:
 Returns:
     Intersection of the spaces
 )";
+
+const std::string superset = R"(
+Get the polyset types that is a superset of two types on the given
+cell
+
+Args:
+    cell: The cell type
+    type1: The first polyset type
+    type2: The second polyset type
+
+Returns::
+    The superset type
+)";
+
+const std::string restriction = R"(
+Get the polyset type that represents the restrictions of a type on a
+subentity
+
+Args:
+    ptype: The polyset type
+    cell: The cell type
+    restriction_cell: The cell type of the subentity
+
+Returns::
+    The restricted polyset type
+)";
+
+
 
 } // namespace basix::docstring

@@ -11,3 +11,6 @@ from ._basixcpp import (CellType, LatticeType, LatticeSimplexMethod, ElementFami
                         PolysetType)
 from ._basixcpp import (create_lattice, create_element, compute_interpolation_operator, topology,
                         geometry, index, tabulate_polynomials, create_custom_element)
+
+from ._basixcpp import superset as polyset_superset
+from ._basixcpp import restriction as polyset_restriction

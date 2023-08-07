@@ -271,9 +271,9 @@ class _ElementBase(_FiniteElementBase):
         raise NotImplementedError()
 
     @property
+    @_abstractmethod
     def polyset_type(self) -> _basix.PolysetType:
         """The polyset type of the element."""
-        raise NotImplementedError()
 
     @property
     def _wcoeffs(self) -> _npt.NDArray[_np.float64]:
@@ -673,6 +673,10 @@ class _ComponentElement(_ElementBase):
         return self.element.cell_type
 
     @property
+    def polyset_type(self) -> _basix.PolysetType:
+        return self.element.polyset_type
+
+    @property
     def discontinuous(self) -> bool:
         """True if the discontinuous version of the element is used."""
         return self.element.discontinuous
@@ -894,6 +898,13 @@ class _MixedElement(_ElementBase):
     def interpolation_nderivs(self) -> int:
         """Number of derivatives needed when interpolating."""
         return max([e.interpolation_nderivs for e in self._sub_elements])
+
+    @property
+    def polyset_type(self) -> _basix.PolysetType:
+        pt = _basix.PolysetType.standard
+        for e in self._sub_elements:
+            pt = _basix.polyset_superset(self.cell_type, pt, e.polyset_type)
+        return pt
 
 
 class _BlockedElement(_ElementBase):
@@ -1123,7 +1134,7 @@ class _BlockedElement(_ElementBase):
 
     @property
     def polyset_type(self) -> _basix.PolysetType:
-        return self.element.polyset_type
+        return self.sub_element.polyset_type
 
     @property
     def _wcoeffs(self) -> _npt.NDArray[_np.float64]:

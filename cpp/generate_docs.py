@@ -89,6 +89,7 @@ def get_docstring(matches):
     doc = doc.replace("@f$", "$")
     doc = doc.replace("@f[", "\\[")
     doc = doc.replace("@f]", "\\]")
+    doc = doc.replace("@brief", "")
     doc = doc.replace("@note", "NOTE:")
     doc = doc.replace("@todo", "TODO:")
     doc = doc.replace("@warning", "WARNING:")

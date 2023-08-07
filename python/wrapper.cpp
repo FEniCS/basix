@@ -620,6 +620,22 @@ Interface to the Basix C++ library.
       .value("macroedge", polyset::type::macroedge);
 
   m.def(
+      "superset",
+      [](cell::type cell, polyset::type type1, polyset::type type2)
+      {
+        return polyset::superset(cell, type1, type2);
+      },
+      basix::docstring::superset.c_str());
+
+  m.def(
+      "restriction",
+      [](polyset::type ptype, cell::type cell, cell::type restriction_cell)
+      {
+        return polyset::restriction(ptype, cell, restriction_cell);
+      },
+      basix::docstring::restriction.c_str());
+
+  m.def(
       "tabulate_polynomial_set",
       [](cell::type celltype, polyset::type polytype, int d, int n,
          const py::array_t<double, py::array::c_style>& x)

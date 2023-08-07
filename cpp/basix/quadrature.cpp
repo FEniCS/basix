@@ -4805,13 +4805,6 @@ quadrature::make_quadrature(quadrature::type rule, cell::type celltype,
 }
 //-----------------------------------------------------------------------------
 template <std::floating_point T>
-std::array<std::vector<T>, 2>
-quadrature::make_quadrature(cell::type celltype, polyset::type polytype, int m)
-{
-  return make_quadrature<T>(quadrature::type::Default, celltype, polytype, m);
-}
-//-----------------------------------------------------------------------------
-template <std::floating_point T>
 std::vector<T> quadrature::get_gl_points(int m)
 {
   std::vector<T> pts = compute_gauss_jacobi_points<T>(0, m);
@@ -4831,11 +4824,6 @@ template std::array<std::vector<float>, 2>
 quadrature::make_quadrature(quadrature::type, cell::type, polyset::type, int);
 template std::array<std::vector<double>, 2>
 quadrature::make_quadrature(quadrature::type, cell::type, polyset::type, int);
-
-template std::array<std::vector<float>, 2>
-quadrature::make_quadrature(cell::type, polyset::type, int);
-template std::array<std::vector<double>, 2>
-quadrature::make_quadrature(cell::type, polyset::type, int);
 
 template std::vector<float> quadrature::get_gl_points(int);
 template std::vector<double> quadrature::get_gl_points(int);

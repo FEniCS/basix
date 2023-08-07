@@ -553,19 +553,6 @@ Returns:
     arrays has shape (num points, gdim)
 )";
 
-const std::string make_quadrature__celltype_polytype_m = R"(
-Make a default quadrature rule on reference cell
-
-Args:
-    celltype: The cell type
-    polytype: The polyset type
-    m: Maximum degree of polynomial that this quadrature rule will integrate exactly
-
-Returns:
-    List of points and list of weights. The number of points
-    arrays has shape (num points, gdim)
-)";
-
 const std::string index__p = R"(
 Compute trivial indexing in a 1D array (for completeness)
 

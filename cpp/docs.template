@@ -329,18 +329,6 @@ Returns:
     {{quadrature.h > make_quadrature(rule, celltype, polytype, m) > return}}
 )";
 
-{{DOCTYPE}} make_quadrature__celltype_polytype_m = R"(
-{{quadrature.h > make_quadrature(celltype, polytype, m) > doc}}
-
-Args:
-    {{quadrature.h > make_quadrature(celltype, polytype, m) > param > celltype}}
-    {{quadrature.h > make_quadrature(celltype, polytype, m) > param > polytype}}
-    {{quadrature.h > make_quadrature(celltype, polytype, m) > param > m}}
-
-Returns:
-    {{quadrature.h > make_quadrature(rule, celltype, polytype, m) > return}}
-)";
-
 {{DOCTYPE}} index__p = R"(
 {{indexing.h > idx(p) > doc}}
 

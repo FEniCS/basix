@@ -583,7 +583,7 @@ def test_legendre_lagrange_variant(celltype, degree):
         basix.ElementFamily.P, celltype, degree, basix.LagrangeVariant.legendre, discontinuous=True)
 
     # Test that the basis functions are orthogonal
-    pts, wts = basix.make_quadrature(celltype, basix.PolysetType.standard, degree * 2)
+    pts, wts = basix.quadrature.make_quadrature(celltype, degree * 2)
     values = e.tabulate(0, pts)[0, :, :, 0].T
     for i, row_i in enumerate(values):
         for j, row_j in enumerate(values):
@@ -655,7 +655,7 @@ def test_legendre_dpc_variant(celltype, degree):
         basix.ElementFamily.DPC, celltype, degree, dpc_variant=basix.DPCVariant.legendre, discontinuous=True)
 
     # Test that the basis functions are orthogonal
-    pts, wts = basix.make_quadrature(celltype, basix.PolysetType.standard, degree * 2)
+    pts, wts = basix.quadrature.make_quadrature(celltype, degree * 2)
     values = e.tabulate(0, pts)[0, :, :, 0].T
     for i, row_i in enumerate(values):
         for j, row_j in enumerate(values):

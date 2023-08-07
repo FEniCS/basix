@@ -644,18 +644,6 @@ Interface to the Basix C++ library.
       },
       basix::docstring::make_quadrature__rule_celltype_polytype_m.c_str());
 
-  m.def(
-      "make_quadrature",
-      [](cell::type celltype, polyset::type polytype, int m)
-      {
-        auto [pts, w]
-            = quadrature::make_quadrature<double>(celltype, polytype, m);
-        std::array<std::size_t, 2> shape = {w.size(), pts.size() / w.size()};
-        return std::pair(py::array_t<double>(shape, pts.data()),
-                         py::array_t<double>(w.size(), w.data()));
-      },
-      basix::docstring::make_quadrature__celltype_polytype_m.c_str());
-
   m.def("index", py::overload_cast<int>(&basix::indexing::idx),
         basix::docstring::index__p.c_str())
       .def("index", py::overload_cast<int, int>(&basix::indexing::idx),

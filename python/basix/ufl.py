@@ -1406,7 +1406,7 @@ def custom_element(cell_type: _basix.CellType, value_shape: _typing.Union[_typin
                    M: _typing.List[_typing.List[_npt.NDArray[_np.float64]]], interpolation_nderivs: int,
                    map_type: _basix.MapType, sobolev_space: _basix.SobolevSpace, discontinuous: bool,
                    highest_complete_degree: int, highest_degree: int,
-                   poly_type: _basix.PolysetType poly_type = _basix.PolysetType.standard,
+                   poly_type: _basix.PolysetType = _basix.PolysetType.standard,
                    gdim: _typing.Optional[int] = None) -> _ElementBase:
     """Create a UFL compatible custom Basix element.
 

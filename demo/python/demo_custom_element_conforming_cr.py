@@ -9,7 +9,7 @@
 
 import basix
 import numpy as np
-from basix import CellType, MapType, PolynomialType, LatticeType, SobolevSpace, PolysetType
+from basix import CellType, MapType, PolynomialType, LatticeType, SobolevSpace
 
 from mpl_toolkits import mplot3d  # noqa: F401
 import matplotlib.pyplot as plt

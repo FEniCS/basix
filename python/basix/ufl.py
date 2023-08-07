@@ -271,6 +271,11 @@ class _ElementBase(_FiniteElementBase):
         raise NotImplementedError()
 
     @property
+    def polyset_type(self) -> basix.PolysetType:
+        """The polyset type of the element."""
+        raise NotImplementedError()
+
+    @property
     def _wcoeffs(self) -> _npt.NDArray[_np.float64]:
         """The coefficients used to define the polynomial set."""
         raise NotImplementedError()
@@ -490,6 +495,10 @@ class _BasixElement(_ElementBase):
     def highest_degree(self) -> int:
         """The highest degree of the element."""
         return self.element.highest_degree
+
+    @property
+    def polyset_type(self) -> basix.PolysetType:
+        return self.element.polyset_type
 
     @property
     def _wcoeffs(self) -> _npt.NDArray[_np.float64]:
@@ -1113,6 +1122,10 @@ class _BlockedElement(_ElementBase):
         return self.sub_element.highest_degree
 
     @property
+    def polyset_type(self) -> basix.PolysetType:
+        return self.element.polyset_type
+
+    @property
     def _wcoeffs(self) -> _npt.NDArray[_np.float64]:
         """Coefficients used to define the polynomial set."""
         sub_wc = self.sub_element._wcoeffs
@@ -1332,6 +1345,7 @@ def enriched_element(elements: _typing.List[_ElementBase],
             set equal to the topological dimension of the cell.
     """
     ct = elements[0].cell_type
+    pt = elements[0].polyset_type
     vshape = elements[0].value_shape()
     vsize = elements[0].value_size
     if map_type is None:
@@ -1349,6 +1363,8 @@ def enriched_element(elements: _typing.List[_ElementBase],
             discontinuous = False
         if e.cell_type != ct:
             raise ValueError("Enriched elements on different cell types not supported.")
+        if e.polyset_type != pt:
+            raise ValueError("Enriched elements on different polyset types not supported.")
         if e.value_shape() != vshape or e.value_size != vsize:
             raise ValueError("Enriched elements on different value shapes not supported.")
     nderivs = max(e.interpolation_nderivs for e in elements)
@@ -1382,7 +1398,7 @@ def enriched_element(elements: _typing.List[_ElementBase],
         row += e.dim
 
     return custom_element(ct, list(vshape), wcoeffs, x, M, nderivs,
-                          map_type, ss, discontinuous, hcd, hd, gdim=gdim)
+                          map_type, ss, discontinuous, hcd, hd, pt, gdim=gdim)
 
 
 def custom_element(cell_type: _basix.CellType, value_shape: _typing.Union[_typing.List[int], _typing.Tuple[int, ...]],
@@ -1390,6 +1406,7 @@ def custom_element(cell_type: _basix.CellType, value_shape: _typing.Union[_typin
                    M: _typing.List[_typing.List[_npt.NDArray[_np.float64]]], interpolation_nderivs: int,
                    map_type: _basix.MapType, sobolev_space: _basix.SobolevSpace, discontinuous: bool,
                    highest_complete_degree: int, highest_degree: int,
+                   poly_type: _basix.PolysetType poly_type = _basix.PolysetType.standard,
                    gdim: _typing.Optional[int] = None) -> _ElementBase:
     """Create a UFL compatible custom Basix element.
 
@@ -1408,12 +1425,13 @@ def custom_element(cell_type: _basix.CellType, value_shape: _typing.Union[_typin
         highest_complete_degree: The highest degree n such that a Lagrange (or vector Lagrange)
         element of degree n is a subspace of this element
         highest_degree: The degree of a polynomial in this element's polyset
+        polyset_type: The polyset type for the element
         gdim: Geometric dimension. If not set the geometric dimension is
             set equal to the topological dimension of the cell.
     """
     return _BasixElement(_basix.create_custom_element(
         cell_type, list(value_shape), wcoeffs, x, M, interpolation_nderivs,
-        map_type, sobolev_space, discontinuous, highest_complete_degree, highest_degree), gdim=gdim)
+        map_type, sobolev_space, discontinuous, highest_complete_degree, highest_degree, poly_type), gdim=gdim)
 
 
 def mixed_element(elements: _typing.List[_ElementBase], gdim: _typing.Optional[int] = None) -> _ElementBase:

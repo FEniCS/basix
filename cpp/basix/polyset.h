@@ -248,4 +248,22 @@ int dim(cell::type cell, polyset::type ptype, int d);
 /// polynomial degree @p d
 int nderivs(cell::type cell, int d);
 
+/// @brief Get the polyset types that is a superset of two types on the given
+/// cell
+/// @param[in] cell The cell type
+/// @param[in] type1 The first polyset type
+/// @param[in] type2 The second polyset type
+/// @return The superset type
+polyset::type superset(cell::type cell, polyset::type type1,
+                       polyset::type type2);
+
+/// @brief Get the polyset type that represents the restrictions of a type on a
+/// subentity
+/// @param[in] ptype The polyset type
+/// @param[in] cell The cell type
+/// @param[in] restriction_cell The cell type of the subentity
+/// @return The restricted polyset type
+polyset::type restriction(polyset::type ptype, cell::type cell,
+                          cell::type restriction_cell);
+
 } // namespace basix::polyset

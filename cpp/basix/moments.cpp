@@ -100,7 +100,8 @@ template <std::floating_point T>
 std::tuple<std::vector<std::vector<T>>, std::array<std::size_t, 2>,
            std::vector<std::vector<T>>, std::array<std::size_t, 4>>
 moments::make_integral_moments(const FiniteElement<T>& V, cell::type celltype,
-                               std::size_t value_size, int q_deg)
+                               polyset::type ptype, std::size_t value_size,
+                               int q_deg)
 {
   const cell::type sub_celltype = V.cell_type();
   const std::size_t entity_dim = cell::topological_dimension(sub_celltype);
@@ -110,7 +111,10 @@ moments::make_integral_moments(const FiniteElement<T>& V, cell::type celltype,
 
   // Get the quadrature points and weights
   const auto [_pts, wts] = quadrature::make_quadrature<T>(
-      quadrature::type::Default, sub_celltype, polyset::type::standard, q_deg);
+      quadrature::type::Default, sub_celltype,
+      polyset::superset(sub_celltype, V.polyset_type(),
+                        polyset::restriction(ptype, celltype, sub_celltype)),
+      q_deg);
   mdspan_t<const T, 2> pts(_pts.data(), wts.size(), _pts.size() / wts.size());
 
   // Evaluate moment space at quadrature points
@@ -188,15 +192,18 @@ template <std::floating_point T>
 std::tuple<std::vector<std::vector<T>>, std::array<std::size_t, 2>,
            std::vector<std::vector<T>>, std::array<std::size_t, 4>>
 moments::make_dot_integral_moments(const FiniteElement<T>& V,
-                                   cell::type celltype, std::size_t value_size,
-                                   int q_deg)
+                                   cell::type celltype, polyset::type ptype,
+                                   std::size_t value_size, int q_deg)
 {
   const cell::type sub_celltype = V.cell_type();
   const std::size_t entity_dim = cell::topological_dimension(sub_celltype);
   const std::size_t num_entities = cell::num_sub_entities(celltype, entity_dim);
 
   const auto [_pts, wts] = quadrature::make_quadrature<T>(
-      quadrature::type::Default, sub_celltype, polyset::type::standard, q_deg);
+      quadrature::type::Default, sub_celltype,
+      polyset::superset(sub_celltype, V.polyset_type(),
+                        polyset::restriction(ptype, celltype, sub_celltype)),
+      q_deg);
   mdspan_t<const T, 2> pts(_pts.data(), wts.size(), _pts.size() / wts.size());
 
   // If this is always true, value_size input can be removed
@@ -262,7 +269,7 @@ template <std::floating_point T>
 std::tuple<std::vector<std::vector<T>>, std::array<std::size_t, 2>,
            std::vector<std::vector<T>>, std::array<std::size_t, 4>>
 moments::make_tangent_integral_moments(const FiniteElement<T>& V,
-                                       cell::type celltype,
+                                       cell::type celltype, polyset::type ptype,
                                        std::size_t value_size, int q_deg)
 {
   const cell::type sub_celltype = V.cell_type();
@@ -277,7 +284,9 @@ moments::make_tangent_integral_moments(const FiniteElement<T>& V,
     throw std::runtime_error("Tangent is only well-defined on an edge.");
 
   const auto [_pts, wts] = quadrature::make_quadrature<T>(
-      quadrature::type::Default, cell::type::interval, polyset::type::standard,
+      quadrature::type::Default, cell::type::interval,
+      polyset::superset(sub_celltype, V.polyset_type(),
+                        polyset::restriction(ptype, celltype, sub_celltype)),
       q_deg);
   mdspan_t<const T, 2> pts(_pts.data(), wts.size(), _pts.size() / wts.size());
 
@@ -335,7 +344,7 @@ template <std::floating_point T>
 std::tuple<std::vector<std::vector<T>>, std::array<std::size_t, 2>,
            std::vector<std::vector<T>>, std::array<std::size_t, 4>>
 moments::make_normal_integral_moments(const FiniteElement<T>& V,
-                                      cell::type celltype,
+                                      cell::type celltype, polyset::type ptype,
                                       std::size_t value_size, int q_deg)
 {
   const std::size_t tdim = cell::topological_dimension(celltype);
@@ -349,7 +358,10 @@ moments::make_normal_integral_moments(const FiniteElement<T>& V,
 
   // Compute quadrature points for evaluating integral
   const auto [_pts, wts] = quadrature::make_quadrature<T>(
-      quadrature::type::Default, sub_celltype, polyset::type::standard, q_deg);
+      quadrature::type::Default, sub_celltype,
+      polyset::superset(sub_celltype, V.polyset_type(),
+                        polyset::restriction(ptype, celltype, sub_celltype)),
+      q_deg);
   mdspan_t<const T, 2> pts(_pts.data(), wts.size(), _pts.size() / wts.size());
 
   // Evaluate moment space at quadrature points
@@ -430,41 +442,41 @@ moments::make_normal_integral_moments(const FiniteElement<T>& V,
 template std::tuple<std::vector<std::vector<float>>, std::array<std::size_t, 2>,
                     std::vector<std::vector<float>>, std::array<std::size_t, 4>>
 moments::make_integral_moments(const FiniteElement<float>&, cell::type,
-                               std::size_t, int);
+                               polyset::type, std::size_t, int);
 template std::tuple<
     std::vector<std::vector<double>>, std::array<std::size_t, 2>,
     std::vector<std::vector<double>>, std::array<std::size_t, 4>>
 moments::make_integral_moments(const FiniteElement<double>&, cell::type,
-                               std::size_t, int);
+                               polyset::type, std::size_t, int);
 
 template std::tuple<std::vector<std::vector<float>>, std::array<std::size_t, 2>,
                     std::vector<std::vector<float>>, std::array<std::size_t, 4>>
 moments::make_dot_integral_moments(const FiniteElement<float>&, cell::type,
-                                   std::size_t, int);
+                                   polyset::type, std::size_t, int);
 template std::tuple<
     std::vector<std::vector<double>>, std::array<std::size_t, 2>,
     std::vector<std::vector<double>>, std::array<std::size_t, 4>>
 moments::make_dot_integral_moments(const FiniteElement<double>&, cell::type,
-                                   std::size_t, int);
+                                   polyset::type, std::size_t, int);
 
 template std::tuple<std::vector<std::vector<float>>, std::array<std::size_t, 2>,
                     std::vector<std::vector<float>>, std::array<std::size_t, 4>>
 moments::make_tangent_integral_moments(const FiniteElement<float>&, cell::type,
-                                       std::size_t, int);
+                                       polyset::type, std::size_t, int);
 template std::tuple<
     std::vector<std::vector<double>>, std::array<std::size_t, 2>,
     std::vector<std::vector<double>>, std::array<std::size_t, 4>>
 moments::make_tangent_integral_moments(const FiniteElement<double>&, cell::type,
-                                       std::size_t, int);
+                                       polyset::type, std::size_t, int);
 
 template std::tuple<std::vector<std::vector<float>>, std::array<std::size_t, 2>,
                     std::vector<std::vector<float>>, std::array<std::size_t, 4>>
 moments::make_normal_integral_moments(const FiniteElement<float>&, cell::type,
-                                      std::size_t, int);
+                                      polyset::type, std::size_t, int);
 template std::tuple<
     std::vector<std::vector<double>>, std::array<std::size_t, 2>,
     std::vector<std::vector<double>>, std::array<std::size_t, 4>>
 moments::make_normal_integral_moments(const FiniteElement<double>&, cell::type,
-                                      std::size_t, int);
+                                      polyset::type, std::size_t, int);
 /// @endcond
 //----------------------------------------------------------------------------

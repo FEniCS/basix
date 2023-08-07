@@ -486,6 +486,10 @@ public:
   /// @return The cell type
   cell::type cell_type() const { return _cell_type; }
 
+  /// Get the element polyset type
+  /// @return The polyset
+  polyset::type polyset_type() const { return _poly_type; }
+
   /// Get the element polynomial degree
   /// @return Polynomial degree
   int degree() const { return _degree; }
@@ -1317,6 +1321,7 @@ private:
 /// element
 /// @param[in] highest_degree The degree of a polynomial in this element's
 /// polyset
+/// @param[in] poly_type The type of polyset to use for this element
 /// @return A custom finite element
 template <std::floating_point T>
 FiniteElement<T> create_custom_element(
@@ -1326,7 +1331,7 @@ FiniteElement<T> create_custom_element(
     const std::array<std::vector<impl::mdspan_t<const T, 4>>, 4>& M,
     int interpolation_nderivs, maps::type map_type,
     sobolev::space sobolev_space, bool discontinuous,
-    int highest_complete_degree, int highest_degree);
+    int highest_complete_degree, int highest_degree, polyset::type poly_type);
 
 /// Create an element using a given Lagrange variant and a given DPC variant
 /// @param[in] family The element family

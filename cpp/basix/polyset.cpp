@@ -1739,3 +1739,25 @@ int polyset::nderivs(cell::type celltype, int n)
   }
 }
 //-----------------------------------------------------------------------------
+polyset::type polyset::superset(cell::type, polyset::type type1,
+                                polyset::type type2)
+{
+  if (type1 == type2)
+    return type1;
+  if (type1 == polyset::type::standard)
+    return type2;
+  if (type2 == polyset::type::standard)
+    return type1;
+  throw std::runtime_error("Unsupported superset of polynomial sets.");
+}
+//-----------------------------------------------------------------------------
+polyset::type polyset::restriction(polyset::type ptype, cell::type cell,
+                                   cell::type restriction_cell)
+{
+  if (ptype == polyset::type::standard)
+    return polyset::type::standard;
+  if (cell == restriction_cell)
+    return ptype;
+  throw std::runtime_error("Unsupported restriction of polynomial sets.");
+}
+//-----------------------------------------------------------------------------

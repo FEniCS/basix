@@ -438,10 +438,9 @@ FiniteElement<T> basix::create_custom_element(
     const std::array<std::vector<impl::mdspan_t<const T, 4>>, 4>& M,
     int interpolation_nderivs, maps::type map_type,
     sobolev::space sobolev_space, bool discontinuous,
-    int highest_complete_degree, int highest_degree)
+    int highest_complete_degree, int highest_degree, polyset::type poly_type)
 {
   // Check that inputs are valid
-  polyset::type poly_type = polyset::type::standard;
   const std::size_t psize = polyset::dim(cell_type, poly_type, highest_degree);
   const std::size_t value_size = std::reduce(
       value_shape.begin(), value_shape.end(), 1, std::multiplies{});
@@ -527,13 +526,13 @@ template FiniteElement<float> basix::create_custom_element(
     impl::mdspan_t<const float, 2> wcoeffs,
     const std::array<std::vector<impl::mdspan_t<const float, 2>>, 4>&,
     const std::array<std::vector<impl::mdspan_t<const float, 4>>, 4>&, int,
-    maps::type, sobolev::space sobolev_space, bool, int, int);
+    maps::type, sobolev::space sobolev_space, bool, int, int, polyset::type);
 template FiniteElement<double> basix::create_custom_element(
     cell::type, const std::vector<std::size_t>&,
     impl::mdspan_t<const double, 2> wcoeffs,
     const std::array<std::vector<impl::mdspan_t<const double, 2>>, 4>&,
     const std::array<std::vector<impl::mdspan_t<const double, 4>>, 4>&, int,
-    maps::type, sobolev::space sobolev_space, bool, int, int);
+    maps::type, sobolev::space sobolev_space, bool, int, int, polyset::type);
 /// @endcond
 //-----------------------------------------------------------------------------
 /// @cond

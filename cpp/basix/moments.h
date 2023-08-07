@@ -5,6 +5,7 @@
 #pragma once
 
 #include "cell.h"
+#include "polyset.h"
 #include <array>
 #include <concepts>
 #include <tuple>
@@ -43,7 +44,7 @@ template <std::floating_point T>
 std::tuple<std::vector<std::vector<T>>, std::array<std::size_t, 2>,
            std::vector<std::vector<T>>, std::array<std::size_t, 4>>
 make_integral_moments(const FiniteElement<T>& moment_space, cell::type celltype,
-                      std::size_t value_size, int q_deg);
+                      polyset::type ptype, std::size_t value_size, int q_deg);
 
 /// @brief Make interpolation points and weights for dot product
 /// integral moments.
@@ -71,7 +72,8 @@ template <std::floating_point T>
 std::tuple<std::vector<std::vector<T>>, std::array<std::size_t, 2>,
            std::vector<std::vector<T>>, std::array<std::size_t, 4>>
 make_dot_integral_moments(const FiniteElement<T>& V, cell::type celltype,
-                          std::size_t value_size, int q_deg);
+                          polyset::type ptype, std::size_t value_size,
+                          int q_deg);
 
 /// @brief Make interpolation points and weights for tangent integral
 /// moments.
@@ -94,7 +96,8 @@ template <std::floating_point T>
 std::tuple<std::vector<std::vector<T>>, std::array<std::size_t, 2>,
            std::vector<std::vector<T>>, std::array<std::size_t, 4>>
 make_tangent_integral_moments(const FiniteElement<T>& V, cell::type celltype,
-                              std::size_t value_size, int q_deg);
+                              polyset::type ptype, std::size_t value_size,
+                              int q_deg);
 
 ///  @brief Compute interpolation points and weights for normal integral
 ///  moments.
@@ -116,7 +119,8 @@ template <std::floating_point T>
 std::tuple<std::vector<std::vector<T>>, std::array<std::size_t, 2>,
            std::vector<std::vector<T>>, std::array<std::size_t, 4>>
 make_normal_integral_moments(const FiniteElement<T>& V, cell::type celltype,
-                             std::size_t value_size, int q_deg);
+                             polyset::type ptype, std::size_t value_size,
+                             int q_deg);
 
 } // namespace moments
 } // namespace basix

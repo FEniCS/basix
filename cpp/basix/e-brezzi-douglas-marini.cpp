@@ -41,7 +41,8 @@ FiniteElement<T> element::create_bdm(cell::type celltype, int degree,
       = create_lagrange<T>(facettype, degree, lvariant, true);
   {
     auto [_x, xshape, _M, Mshape] = moments::make_normal_integral_moments<T>(
-        facet_moment_space, celltype, tdim, degree * 2);
+        facet_moment_space, celltype, polyset::type::standard, tdim,
+        degree * 2);
     assert(_x.size() == _M.size());
     for (std::size_t i = 0; i < _x.size(); ++i)
     {
@@ -56,8 +57,8 @@ FiniteElement<T> element::create_bdm(cell::type celltype, int degree,
   {
     // Interior integral moment
     auto [_x, xshape, _M, Mshape] = moments::make_dot_integral_moments<T>(
-        create_nedelec<T>(celltype, degree - 1, lvariant, true), celltype, tdim,
-        2 * degree - 1);
+        create_nedelec<T>(celltype, degree - 1, lvariant, true), celltype,
+        polyset::type::standard, tdim, 2 * degree - 1);
     assert(_x.size() == _M.size());
     for (std::size_t i = 0; i < _x.size(); ++i)
     {

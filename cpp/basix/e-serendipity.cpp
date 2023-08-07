@@ -1022,7 +1022,7 @@ FiniteElement<T> element::create_serendipity(cell::type celltype, int degree,
     FiniteElement moment_space = element::create_lagrange<T>(
         cell::type::interval, degree - 2, lvariant, true);
     auto [_x, xshape, _M, Mshape] = moments::make_integral_moments<T>(
-        moment_space, celltype, 1, 2 * degree - 2);
+        moment_space, celltype, polyset::type::standard, 1, 2 * degree - 2);
     assert(_x.size() == _M.size());
     for (std::size_t i = 0; i < _x.size(); ++i)
     {
@@ -1044,7 +1044,7 @@ FiniteElement<T> element::create_serendipity(cell::type celltype, int degree,
       FiniteElement moment_space = element::create_dpc<T>(
           cell::type::quadrilateral, degree - 4, dvariant, true);
       auto [_x, xshape, _M, Mshape] = moments::make_integral_moments<T>(
-          moment_space, celltype, 1, 2 * degree - 4);
+          moment_space, celltype, polyset::type::standard, 1, 2 * degree - 4);
       assert(_x.size() == _M.size());
       for (std::size_t i = 0; i < _x.size(); ++i)
       {
@@ -1067,7 +1067,7 @@ FiniteElement<T> element::create_serendipity(cell::type celltype, int degree,
       auto [_x, xshape, _M, Mshape] = moments::make_integral_moments<T>(
           element::create_dpc<T>(cell::type::hexahedron, degree - 6, dvariant,
                                  true),
-          celltype, 1, 2 * degree - 6);
+          celltype, polyset::type::standard, 1, 2 * degree - 6);
       assert(_x.size() == _M.size());
       for (std::size_t i = 0; i < _x.size(); ++i)
       {
@@ -1257,7 +1257,8 @@ FiniteElement<T> element::create_serendipity_div(
               ? element::create_lagrange<T>(facettype, degree, lvariant, true)
               : element::create_dpc<T>(facettype, degree, dvariant, true);
     auto [_x, xshape, _M, Mshape] = moments::make_normal_integral_moments<T>(
-        facet_moment_space, celltype, tdim, 2 * degree + 1);
+        facet_moment_space, celltype, polyset::type::standard, tdim,
+        2 * degree + 1);
     assert(_x.size() == _M.size());
     for (std::size_t i = 0; i < _x.size(); ++i)
     {
@@ -1272,7 +1273,8 @@ FiniteElement<T> element::create_serendipity_div(
     FiniteElement cell_moment_space
         = element::create_dpc<T>(celltype, degree - 2, dvariant, true);
     auto [_x, xshape, _M, Mshape] = moments::make_integral_moments<T>(
-        cell_moment_space, celltype, tdim, 2 * degree - 1);
+        cell_moment_space, celltype, polyset::type::standard, tdim,
+        2 * degree - 1);
     assert(_x.size() == _M.size());
     for (std::size_t i = 0; i < _x.size(); ++i)
     {
@@ -1381,7 +1383,8 @@ FiniteElement<T> element::create_serendipity_curl(
     FiniteElement edge_moment_space = element::create_lagrange<T>(
         cell::type::interval, degree, lvariant, true);
     auto [_x, xshape, _M, Mshape] = moments::make_tangent_integral_moments<T>(
-        edge_moment_space, celltype, tdim, 2 * degree + 1);
+        edge_moment_space, celltype, polyset::type::standard, tdim,
+        2 * degree + 1);
     assert(_x.size() == _M.size());
     for (std::size_t i = 0; i < _x.size(); ++i)
     {
@@ -1396,7 +1399,7 @@ FiniteElement<T> element::create_serendipity_curl(
     FiniteElement moment_space = element::create_dpc<T>(
         cell::type::quadrilateral, degree - 2, dvariant, true);
     auto [_x, xshape, _M, Mshape] = moments::make_integral_moments<T>(
-        moment_space, celltype, tdim, 2 * degree - 1);
+        moment_space, celltype, polyset::type::standard, tdim, 2 * degree - 1);
     assert(_x.size() == _M.size());
     for (std::size_t i = 0; i < _x.size(); ++i)
     {
@@ -1419,7 +1422,7 @@ FiniteElement<T> element::create_serendipity_curl(
       auto [_x, xshape, _M, Mshape] = moments::make_integral_moments<T>(
           element::create_dpc<T>(cell::type::hexahedron, degree - 4, dvariant,
                                  true),
-          celltype, tdim, 2 * degree - 3);
+          celltype, polyset::type::standard, tdim, 2 * degree - 3);
       assert(_x.size() == _M.size());
       for (std::size_t i = 0; i < _x.size(); ++i)
       {

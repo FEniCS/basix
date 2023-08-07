@@ -352,6 +352,8 @@ Interface to the Basix C++ library.
       .def_property_readonly("highest_complete_degree",
                              &FiniteElement<double>::highest_complete_degree)
       .def_property_readonly("cell_type", &FiniteElement<double>::cell_type)
+      .def_property_readonly("polyset_type",
+                             &FiniteElement<double>::polyset_type)
       .def_property_readonly("dim", &FiniteElement<double>::dim)
       .def_property_readonly("num_entity_dofs",
                              [](const FiniteElement<double>& self)
@@ -536,8 +538,8 @@ Interface to the Basix C++ library.
              std::vector<py::array_t<double, py::array::c_style>>>& M,
          int interpolation_nderivs, maps::type map_type,
          sobolev::space sobolev_space, bool discontinuous,
-         int highest_complete_degree,
-         int highest_degree) -> FiniteElement<double>
+         int highest_complete_degree, int highest_degree,
+         polyset::type poly_type) -> FiniteElement<double>
       {
         if (x.size() != 4)
           throw std::runtime_error("x has the wrong size");
@@ -578,7 +580,7 @@ Interface to the Basix C++ library.
             mdspan_t<const double, 2>(wcoeffs.data(), wcoeffs.shape(0),
                                       wcoeffs.shape(1)),
             _x, _M, interpolation_nderivs, map_type, sobolev_space,
-            discontinuous, highest_complete_degree, highest_degree);
+            discontinuous, highest_complete_degree, highest_degree, poly_type);
       },
       basix::docstring::create_custom_element.c_str());
 

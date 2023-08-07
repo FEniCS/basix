@@ -34,6 +34,8 @@ namespace moments
 /// against
 /// @param celltype The cell type of the cell on which the space is
 /// being defined
+/// @param ptype The polyset type of the element this moment is being used to
+/// define
 /// @param value_size The value size of the space being defined
 /// @param q_deg The quadrature degree used for the integrals
 /// @return (interpolation points, interpolation matrix). The indices of
@@ -61,6 +63,8 @@ make_integral_moments(const FiniteElement<T>& moment_space, cell::type celltype,
 /// @param V The space to compute the integral moments against
 /// @param celltype The cell type of the cell on which the space is
 /// being defined
+/// @param ptype The polyset type of the element this moment is being used to
+/// define
 /// @param value_size The value size of the space being defined
 /// @param q_deg The quadrature degree used for the integrals
 /// @return (interpolation points, interpolation shape,  interpolation
@@ -84,6 +88,8 @@ make_dot_integral_moments(const FiniteElement<T>& V, cell::type celltype,
 /// @param V The space to compute the integral moments against
 /// @param celltype The cell type of the cell on which the space is
 /// being defined
+/// @param ptype The polyset type of the element this moment is being used to
+/// define
 /// @param value_size The value size of the space being defined the
 /// space
 /// @param q_deg The quadrature degree used for the integrals
@@ -108,6 +114,8 @@ make_tangent_integral_moments(const FiniteElement<T>& V, cell::type celltype,
 /// @param[in] V The space to compute the integral moments against
 /// @param[in] celltype The cell type of the cell on which the space is
 /// being defined
+/// @param ptype The polyset type of the element this moment is being used to
+/// define
 /// @param[in] value_size The value size of the space being defined
 /// @param[in] q_deg The quadrature degree used for the integrals
 /// @return (interpolation points, interpolation shape,  interpolation

@@ -48,7 +48,7 @@ def type_to_string(quadraturetype: _QT) -> str:
 
 def make_quadrature(
     cell: _CT, degree: int, rule: _QT = _QT.Default, polyset_type: _PT = _PT.standard
-) -> _typing.Tuple[_npt.NDArray[_np.float64],_npt.NDArray[_np.float64]]:
+) -> _typing.Tuple[_npt.NDArray[_np.float64], _npt.NDArray[_np.float64]]:
     """Create a quadrature rule.
 
     Args:
@@ -60,4 +60,4 @@ def make_quadrature(
     Returns:
         The quadrature points and weights
     """
-    return make_quadrature(rule, cell, polyset_type, degree)
+    return _mq(rule, cell, polyset_type, degree)

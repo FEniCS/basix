@@ -23,7 +23,7 @@ def test_cell_quadrature(celltype, order):
 @pytest.mark.parametrize("m", range(7))
 @pytest.mark.parametrize("scheme", [basix.QuadratureType.Default, basix.QuadratureType.gll])
 def test_qorder_line(m, scheme):
-    Qpts, Qwts = basix.quadrature.make_quadrature(scheme, basix.CellType.interval, m)
+    Qpts, Qwts = basix.quadrature.make_quadrature(basix.CellType.interval, m, rule=scheme)
     x = sympy.Symbol('x')
     f = x**m
     q = sympy.integrate(f, (x, 0, (1)))
@@ -36,7 +36,7 @@ def test_qorder_line(m, scheme):
 @pytest.mark.parametrize("m", range(6))
 @pytest.mark.parametrize("scheme", [basix.QuadratureType.Default, basix.QuadratureType.gauss_jacobi])
 def test_qorder_tri(m, scheme):
-    Qpts, Qwts = basix.quadrature.make_quadrature(scheme, basix.CellType.triangle, m)
+    Qpts, Qwts = basix.quadrature.make_quadrature(basix.CellType.triangle, m, rule=scheme)
     x = sympy.Symbol('x')
     y = sympy.Symbol('y')
     f = x**m + y**m
@@ -50,7 +50,7 @@ def test_qorder_tri(m, scheme):
 @pytest.mark.parametrize("m", range(1, 20))
 @pytest.mark.parametrize("scheme", [basix.QuadratureType.xiao_gimbutas])
 def test_xiao_gimbutas_tri(m, scheme):
-    Qpts, Qwts = basix.quadrature.make_quadrature(scheme, basix.CellType.triangle, m)
+    Qpts, Qwts = basix.quadrature.make_quadrature(basix.CellType.triangle, m, rule=scheme)
     x = sympy.Symbol('x')
     y = sympy.Symbol('y')
     f = x**m + 2 * y**m
@@ -64,7 +64,7 @@ def test_xiao_gimbutas_tri(m, scheme):
 @pytest.mark.parametrize("m", range(1, 16))
 @pytest.mark.parametrize("scheme", [basix.QuadratureType.xiao_gimbutas])
 def test_xiao_gimbutas_tet(m, scheme):
-    Qpts, Qwts = basix.quadrature.make_quadrature(scheme, basix.CellType.tetrahedron, m)
+    Qpts, Qwts = basix.quadrature.make_quadrature(basix.CellType.tetrahedron, m, rule=scheme)
     x = sympy.Symbol('x')
     y = sympy.Symbol('y')
     z = sympy.Symbol('z')
@@ -79,7 +79,7 @@ def test_xiao_gimbutas_tet(m, scheme):
 @pytest.mark.parametrize("m", range(9))
 @pytest.mark.parametrize("scheme", [basix.QuadratureType.Default, basix.QuadratureType.gauss_jacobi])
 def test_qorder_tet(m, scheme):
-    Qpts, Qwts = basix.quadrature.make_quadrature(scheme, basix.CellType.tetrahedron, m)
+    Qpts, Qwts = basix.quadrature.make_quadrature(basix.CellType.tetrahedron, m, rule=scheme)
     x = sympy.Symbol('x')
     y = sympy.Symbol('y')
     z = sympy.Symbol('z')

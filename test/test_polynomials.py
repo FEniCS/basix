@@ -19,7 +19,7 @@ z = sympy.Symbol("z")
     basix.CellType.tetrahedron, basix.CellType.hexahedron,
 ])
 def test_legendre(cell_type, degree):
-    points, weights = basix.quadrature.make_quadrature(cell_type, 2 * degree)
+    points, weights = basix.make_quadrature(cell_type, 2 * degree)
 
     polys = basix.tabulate_polynomials(basix.PolynomialType.legendre, cell_type, degree, points)
 
@@ -63,7 +63,7 @@ def evaluate(function, pt):
                             x**2, x**2 * z, x**2 * z**2], 2],
 ])
 def test_order(cell_type, functions, degree):
-    points, weights = basix.quadrature.make_quadrature(cell_type, 2 * degree)
+    points, weights = basix.make_quadrature(cell_type, 2 * degree)
     polys = basix.tabulate_polynomials(basix.PolynomialType.legendre, cell_type, degree, points)
 
     assert len(functions) == polys.shape[0]

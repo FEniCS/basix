@@ -14,3 +14,4 @@ from ._basixcpp import (create_lattice, create_element, compute_interpolation_op
 
 from ._basixcpp import superset as polyset_superset
 from ._basixcpp import restriction as polyset_restriction
+from .quadrature import make_quadrature

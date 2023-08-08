@@ -63,7 +63,7 @@ def create_ccr_triangle(degree):
         wcoeffs[dof_n, dof_n] = 1
         dof_n += 1
 
-    pts, wts = basix.quadrature.make_quadrature(CellType.triangle, 2 * (degree + 1))
+    pts, wts = basix.make_quadrature(CellType.triangle, 2 * (degree + 1))
     poly = basix.tabulate_polynomials(PolynomialType.legendre, CellType.triangle, degree + 1, pts)
     for i in range(1, degree):
         x = pts[:, 0]

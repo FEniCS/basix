@@ -327,7 +327,7 @@ std::pair<std::vector<T>, std::array<std::size_t, 2>> compute_transformation(
 
   const std::size_t ndofs = imat.extent(0);
   const std::size_t npts = pts.extent(0);
-  const int psize = polyset::dim(cell_type, degree);
+  const int psize = polyset::dim(cell_type, polyset::type::standard, degree);
 
   std::size_t dofstart = 0;
   for (int d = 0; d < tdim; ++d)
@@ -352,7 +352,7 @@ std::pair<std::vector<T>, std::array<std::size_t, 2>> compute_transformation(
   }
 
   auto [polyset_vals_b, polyset_shape] = polyset::tabulate(
-      cell_type, degree, 0,
+      cell_type, polyset::type::standard, degree, 0,
       mdspan_t<const T, 2>(mapped_pts.data(), mapped_pts.extents()));
   assert(polyset_shape[0] == 1);
   mdspan_t<const T, 2> polyset_vals(polyset_vals_b.data(), polyset_shape[1],

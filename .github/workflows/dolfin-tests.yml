@@ -51,7 +51,7 @@ jobs:
         if: github.event_name != 'workflow_dispatch'
         run: |
           python3 -m pip install git+https://github.com/FEniCS/ufl.git
-          python3 -m pip install git+https://github.com/FEniCS/ffcx.git
+          python3 -m pip install git+https://github.com/FEniCS/ffcx.git@mscroggs/make_quadrature
       - name: Install FEniCS Python components
         if: github.event_name == 'workflow_dispatch'
         run: |
@@ -64,7 +64,7 @@ jobs:
         with:
           path: ./dolfinx
           repository: FEniCS/dolfinx
-          ref: main
+          ref: mscroggs/make_quadrature
       - name: Get DOLFINx
         if: github.event_name == 'workflow_dispatch'
         uses: actions/checkout@v3

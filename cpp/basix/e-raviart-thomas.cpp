@@ -31,21 +31,25 @@ FiniteElement<T> basix::element::create_rt(cell::type celltype, int degree,
       = (tdim == 2) ? cell::type::interval : cell::type::triangle;
 
   // The number of order (degree-1) scalar polynomials
-  const std::size_t nv = polyset::dim(celltype, degree - 1);
+  const std::size_t nv
+      = polyset::dim(celltype, polyset::type::standard, degree - 1);
 
   // The number of order (degree-2) scalar polynomials
-  const std::size_t ns0 = polyset::dim(celltype, degree - 2);
+  const std::size_t ns0
+      = polyset::dim(celltype, polyset::type::standard, degree - 2);
 
   // The number of additional polynomials in the polynomial basis for
   // Raviart-Thomas
-  const std::size_t ns = polyset::dim(facettype, degree - 1);
+  const std::size_t ns
+      = polyset::dim(facettype, polyset::type::standard, degree - 1);
 
   // Evaluate the expansion polynomials at the quadrature points
   const auto [_pts, wts] = quadrature::make_quadrature<T>(
-      quadrature::type::Default, celltype, 2 * degree);
+      quadrature::type::Default, celltype, polyset::type::standard, 2 * degree);
   impl::mdspan_t<const T, 2> pts(_pts.data(), wts.size(),
                                  _pts.size() / wts.size());
-  const auto [_phi, shape] = polyset::tabulate(celltype, degree, 0, pts);
+  const auto [_phi, shape]
+      = polyset::tabulate(celltype, polyset::type::standard, degree, 0, pts);
   impl::mdspan_t<const T, 3> phi(_phi.data(), shape);
 
   // The number of order (degree) polynomials
@@ -89,7 +93,8 @@ FiniteElement<T> basix::element::create_rt(cell::type celltype, int degree,
     const FiniteElement facet_moment_space
         = element::create_lagrange<T>(facettype, degree - 1, lvariant, true);
     auto [_x, xshape, _M, Mshape] = moments::make_normal_integral_moments<T>(
-        facet_moment_space, celltype, tdim, 2 * degree - 1);
+        facet_moment_space, celltype, polyset::type::standard, tdim,
+        2 * degree - 1);
     assert(_x.size() == _M.size());
     for (std::size_t i = 0; i < _x.size(); ++i)
     {
@@ -105,7 +110,7 @@ FiniteElement<T> basix::element::create_rt(cell::type celltype, int degree,
     // Interior integral moment
     auto [_x, xshape, _M, Mshape] = moments::make_integral_moments<T>(
         element::create_lagrange<T>(celltype, degree - 2, lvariant, true),
-        celltype, tdim, 2 * degree - 2);
+        celltype, polyset::type::standard, tdim, 2 * degree - 2);
     assert(_x.size() == _M.size());
     for (std::size_t i = 0; i < _x.size(); ++i)
     {
@@ -136,11 +141,11 @@ FiniteElement<T> basix::element::create_rt(cell::type celltype, int degree,
 
   sobolev::space space
       = discontinuous ? sobolev::space::L2 : sobolev::space::HDiv;
-  return FiniteElement<T>(element::family::RT, celltype, degree, {tdim},
-                          impl::mdspan_t<T, 2>(B.data(), B.extents()), xview,
-                          Mview, 0, maps::type::contravariantPiola, space,
-                          discontinuous, degree - 1, degree, lvariant,
-                          element::dpc_variant::unset);
+  return FiniteElement<T>(
+      element::family::RT, celltype, polyset::type::standard, degree, {tdim},
+      impl::mdspan_t<T, 2>(B.data(), B.extents()), xview, Mview, 0,
+      maps::type::contravariantPiola, space, discontinuous, degree - 1, degree,
+      lvariant, element::dpc_variant::unset);
 }
 //-----------------------------------------------------------------------------
 template FiniteElement<float>

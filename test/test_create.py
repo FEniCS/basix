@@ -29,6 +29,7 @@ elements = [
     basix.ElementFamily.DPC,
     basix.ElementFamily.CR,
     basix.ElementFamily.Hermite,
+    basix.ElementFamily.iso,
     basix.ElementFamily.custom,
 ]
 

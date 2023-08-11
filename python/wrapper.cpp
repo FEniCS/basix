@@ -228,7 +228,8 @@ Interface to the Basix C++ library.
       .value("serendipity", element::family::serendipity)
       .value("DPC", element::family::DPC)
       .value("CR", element::family::CR)
-      .value("Hermite", element::family::Hermite);
+      .value("Hermite", element::family::Hermite)
+      .value("iso", element::family::iso);
 
   py::class_<FiniteElement<double>>(m, "FiniteElement", "Finite Element")
       .def(
@@ -351,6 +352,8 @@ Interface to the Basix C++ library.
       .def_property_readonly("highest_complete_degree",
                              &FiniteElement<double>::highest_complete_degree)
       .def_property_readonly("cell_type", &FiniteElement<double>::cell_type)
+      .def_property_readonly("polyset_type",
+                             &FiniteElement<double>::polyset_type)
       .def_property_readonly("dim", &FiniteElement<double>::dim)
       .def_property_readonly("num_entity_dofs",
                              [](const FiniteElement<double>& self)
@@ -535,8 +538,8 @@ Interface to the Basix C++ library.
              std::vector<py::array_t<double, py::array::c_style>>>& M,
          int interpolation_nderivs, maps::type map_type,
          sobolev::space sobolev_space, bool discontinuous,
-         int highest_complete_degree,
-         int highest_degree) -> FiniteElement<double>
+         int highest_complete_degree, int highest_degree,
+         polyset::type poly_type) -> FiniteElement<double>
       {
         if (x.size() != 4)
           throw std::runtime_error("x has the wrong size");
@@ -577,7 +580,7 @@ Interface to the Basix C++ library.
             mdspan_t<const double, 2>(wcoeffs.data(), wcoeffs.shape(0),
                                       wcoeffs.shape(1)),
             _x, _M, interpolation_nderivs, map_type, sobolev_space,
-            discontinuous, highest_complete_degree, highest_degree);
+            discontinuous, highest_complete_degree, highest_degree, poly_type);
       },
       basix::docstring::create_custom_element.c_str());
 
@@ -612,41 +615,52 @@ Interface to the Basix C++ library.
       },
       basix::docstring::compute_interpolation_operator.c_str());
 
+  py::enum_<polyset::type>(m, "PolysetType")
+      .value("standard", polyset::type::standard)
+      .value("macroedge", polyset::type::macroedge);
+
+  m.def(
+      "superset",
+      [](cell::type cell, polyset::type type1, polyset::type type2)
+      {
+        return polyset::superset(cell, type1, type2);
+      },
+      basix::docstring::superset.c_str());
+
+  m.def(
+      "restriction",
+      [](polyset::type ptype, cell::type cell, cell::type restriction_cell)
+      {
+        return polyset::restriction(ptype, cell, restriction_cell);
+      },
+      basix::docstring::restriction.c_str());
+
   m.def(
       "tabulate_polynomial_set",
-      [](cell::type celltype, int d, int n,
+      [](cell::type celltype, polyset::type polytype, int d, int n,
          const py::array_t<double, py::array::c_style>& x)
       {
         if (x.ndim() != 2)
           throw std::runtime_error("x has the wrong number of dimensions");
         stdex::mdspan<const double, stdex::dextents<std::size_t, 2>> _x(
             x.data(), x.shape(0), x.shape(1));
-        auto [p, shape] = polyset::tabulate(celltype, d, n, _x);
+        auto [p, shape] = polyset::tabulate(celltype, polytype, d, n, _x);
         return py::array_t<double>(shape, p.data());
       },
       basix::docstring::tabulate_polynomial_set.c_str());
 
   m.def(
       "make_quadrature",
-      [](quadrature::type rule, cell::type celltype, int m)
+      [](quadrature::type rule, cell::type celltype, polyset::type polytype,
+         int m)
       {
-        auto [pts, w] = quadrature::make_quadrature<double>(rule, celltype, m);
+        auto [pts, w]
+            = quadrature::make_quadrature<double>(rule, celltype, polytype, m);
         std::array<std::size_t, 2> shape = {w.size(), pts.size() / w.size()};
         return std::pair(py::array_t<double>(shape, pts.data()),
                          py::array_t<double>(w.size(), w.data()));
       },
-      basix::docstring::make_quadrature__rule_celltype_m.c_str());
-
-  m.def(
-      "make_quadrature",
-      [](cell::type celltype, int m)
-      {
-        auto [pts, w] = quadrature::make_quadrature<double>(celltype, m);
-        std::array<std::size_t, 2> shape = {w.size(), pts.size() / w.size()};
-        return std::pair(py::array_t<double>(shape, pts.data()),
-                         py::array_t<double>(w.size(), w.data()));
-      },
-      basix::docstring::make_quadrature__celltype_m.c_str());
+      basix::docstring::make_quadrature__rule_celltype_polytype_m.c_str());
 
   m.def("index", py::overload_cast<int>(&basix::indexing::idx),
         basix::docstring::index__p.c_str())

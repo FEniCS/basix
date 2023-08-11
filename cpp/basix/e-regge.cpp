@@ -25,7 +25,8 @@ FiniteElement<T> element::create_regge(cell::type celltype, int degree,
   const std::size_t tdim = cell::topological_dimension(celltype);
 
   const int nc = tdim * (tdim + 1) / 2;
-  const int basis_size = polyset::dim(celltype, degree);
+  const int basis_size
+      = polyset::dim(celltype, polyset::type::standard, degree);
   const std::size_t ndofs = basis_size * nc;
   const std::size_t psize = basis_size * tdim * tdim;
 
@@ -84,9 +85,10 @@ FiniteElement<T> element::create_regge(cell::type celltype, int degree,
         // Tabulate points in lattice
         cell::type ct = cell::sub_entity_type(celltype, d, e);
 
-        const std::size_t ndofs = polyset::dim(ct, degree + 1 - d);
-        const auto [_pts, wts]
-            = quadrature::make_quadrature<T>(ct, degree + (degree + 1 - d));
+        const std::size_t ndofs
+            = polyset::dim(ct, polyset::type::standard, degree + 1 - d);
+        const auto [_pts, wts] = quadrature::make_quadrature<T>(
+            quadrature::type::Default, ct, polyset::type::standard, degree + (degree + 1 - d));
         impl::mdspan_t<const T, 2> pts(_pts.data(), wts.size(),
                                        _pts.size() / wts.size());
 
@@ -178,10 +180,11 @@ FiniteElement<T> element::create_regge(cell::type celltype, int degree,
   sobolev::space space
       = discontinuous ? sobolev::space::L2 : sobolev::space::HEin;
   return FiniteElement<T>(
-      element::family::Regge, celltype, degree, {tdim, tdim},
-      impl::mdspan_t<T, 2>(wcoeffs.data(), wcoeffs.extents()), xview, Mview, 0,
-      maps::type::doubleCovariantPiola, space, discontinuous, -1, degree,
-      element::lagrange_variant::unset, element::dpc_variant::unset);
+      element::family::Regge, celltype, polyset::type::standard, degree,
+      {tdim, tdim}, impl::mdspan_t<T, 2>(wcoeffs.data(), wcoeffs.extents()),
+      xview, Mview, 0, maps::type::doubleCovariantPiola, space, discontinuous,
+      -1, degree, element::lagrange_variant::unset,
+      element::dpc_variant::unset);
 }
 //-----------------------------------------------------------------------------
 template FiniteElement<float> element::create_regge(cell::type, int, bool);

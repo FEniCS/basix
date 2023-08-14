@@ -111,6 +111,7 @@ The following elements are supported on a quadrilateral:
   - [Bubble](https://defelement.com/elements/bubble.html)
   - [DPC](https://defelement.com/elements/dpc.html)
   - [Serendipity](https://defelement.com/elements/serendipity.html)
+  - [iso](https://defelement.com/elements/p1-iso-p2.html)
 
 
 ### Tetrahedron

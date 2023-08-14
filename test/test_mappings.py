@@ -46,6 +46,7 @@ def run_map_test(e, J, detJ, K, reference_value_size, physical_value_size):
 
 @pytest.mark.parametrize("element_type, element_args", elements)
 def test_mappings_2d_to_2d(element_type, element_args):
+    random.seed(42)
     e = basix.create_element(element_type, basix.CellType.triangle, 1, *element_args)
     J = np.array([[random.random() + 1, random.random()],
                   [random.random(), random.random()]])

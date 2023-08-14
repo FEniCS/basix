@@ -1709,9 +1709,9 @@ def enriched_element(elements: _typing.List[_ElementBase],
         M_row = []
         for M_parts in zip(*M_lists):
             ndofs = sum(mat.shape[0] for mat in M_parts)
-            _npts = sum(mat.shape[2] for mat in M_parts)
+            npts = sum(mat.shape[2] for mat in M_parts)
             deriv_dim = max(mat.shape[3] for mat in M_parts)
-            new_M = _np.zeros((ndofs, vsize, _npts, deriv_dim))
+            new_M = _np.zeros((ndofs, vsize, npts, deriv_dim))
             pt = 0
             dof = 0
             for i, mat in enumerate(M_parts):

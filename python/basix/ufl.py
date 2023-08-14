@@ -1817,15 +1817,11 @@ def quadrature_element(
     if points is None:
         assert weights is None
         assert degree is not None
-        if cell.name == "vertex":
-            points = _np.ones((1, 0), dtype=_np.float64)
-            weights = _np.ones(1, dtype=_np.float64)
+        if scheme is None:
+            points, weights = _basix.make_quadrature(cell, degree)
         else:
-            if scheme is None:
-                points, weights = _basix.make_quadrature(cell, degree)
-            else:
-                points, weights = _basix.make_quadrature(
-                    cell, degree, rule=_basix.quadrature.string_to_type(scheme))
+            points, weights = _basix.make_quadrature(
+                cell, degree, rule=_basix.quadrature.string_to_type(scheme))
 
     assert points is not None
     assert weights is not None

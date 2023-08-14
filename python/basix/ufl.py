@@ -1202,11 +1202,6 @@ class _BlockedElement(_ElementBase):
 class _QuadratureElement(_ElementBase):
     """A quadrature element."""
 
-    _points: _npt.NDArray[_np.float64]
-    _weights: _npt.NDArray[_np.float64]
-    _entity_counts: _typing.List[int]
-    _cellname: str
-
     def __init__(self, cell: _basix.CellType, value_shape: _typing.Tuple[int, ...],
                  points: _npt.NDArray[_np.float64], weights: _npt.NDArray[_np.float64], mapname: str):
         """Initialise the element."""
@@ -1343,7 +1338,7 @@ class _QuadratureElement(_ElementBase):
     @property
     def cell_type(self) -> _basix.CellType:
         """Basix cell type used to initialise the element."""
-        return _basix.cell.string_to_type(self._cellname)
+        return self._cell
 
     @property
     def discontinuous(self) -> bool:
@@ -1507,7 +1502,7 @@ class _RealElement(_ElementBase):
     @property
     def cell_type(self) -> _basix.CellType:
         """Basix cell type used to initialise the element."""
-        return _basix.cell.string_to_type(self._cellname)
+        return self._cell
 
     @property
     def discontinuous(self) -> bool:

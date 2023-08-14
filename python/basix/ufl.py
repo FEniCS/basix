@@ -255,6 +255,15 @@ class _ElementBase(_FiniteElementBase):
         return False
 
     @property
+    def has_custom_quadrature(self) -> bool:
+        """True if the element has a custom quadrature rule."""
+        return False
+
+    def custom_quadrature(self) -> _typing.tuple(_npt.NDArray[_np.float64], _npt.NDArray[_np.float64]):
+        """True if the element has a custom quadrature rule."""
+        raise ValueError("Element does not have a custom quadrature rule.")
+
+    @property
     @_abstractmethod
     def map_type(self) -> _basix.MapType:
         """The Basix map type."""
@@ -1350,6 +1359,15 @@ class _QuadratureElement(_ElementBase):
     def polyset_type(self) -> _basix.PolysetType:
         """The polyset type of the element."""
         raise NotImplementedError()
+
+    @property
+    def has_custom_quadrature(self) -> bool:
+        """True if the element has a custom quadrature rule."""
+        return True
+
+    def custom_quadrature(self) -> _typing.tuple(_npt.NDArray[_np.float64], _npt.NDArray[_np.float64]):
+        """True if the element has a custom quadrature rule."""
+        return self._points, self._weights
 
 
 class _RealElement(_ElementBase):

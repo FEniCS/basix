@@ -1434,10 +1434,10 @@ FiniteElement<T> basix::element::create_iso(cell::type celltype, int degree,
                                             lagrange_variant variant,
                                             bool discontinuous)
 {
-  if (celltype != cell::type::interval)
+  if (celltype != cell::type::interval && celltype != cell::type::quadrilateral)
   {
-    throw std::runtime_error(
-        "Can currently only create iso elements on an interval");
+    throw std::runtime_error("Can currently only create iso elements on "
+                             "intervals and quadrilaterals");
   }
 
   if (variant == lagrange_variant::unset)

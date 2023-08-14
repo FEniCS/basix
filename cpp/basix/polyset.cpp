@@ -124,10 +124,8 @@ void tabulate_polyset_line_derivs(
 //-----------------------------------------------------------------------------
 
 /// Compute the complete set of derivatives from 0 to nderiv, for all
-/// the polynomials up to order n on a line segment. The polynomials
-/// used are Legendre Polynomials, with the recurrence relation given by
-/// n P(n) = (2n - 1) x P_{n-1} - (n - 1) P_{n-2} in the interval [-1,
-/// 1]. The range is rescaled here to [0, 1].
+/// the piecewise polynomials up to order n on a line segment split into two
+/// parts.
 template <typename T>
 void tabulate_polyset_line_macroedge_derivs(
     stdex::mdspan<T, stdex::dextents<std::size_t, 3>> P, std::size_t n,
@@ -154,6 +152,7 @@ void tabulate_polyset_line_macroedge_derivs(
   {
     for (std::size_t p = 0; p < P.extent(2); ++p)
     {
+      T value = 0.0;
       if (x0[p] <= 0.5)
       {
         for (std::size_t k = 0; k + d <= n; ++k)
@@ -161,7 +160,7 @@ void tabulate_polyset_line_macroedge_derivs(
           T x_term = pow(x0[p], n - k - d);
           for (std::size_t i = n - k; i > n - k - d; --i)
             x_term *= i;
-          P(d, 0, p) += factorials[k] * x_term;
+          value += factorials[k] * x_term;
         }
       }
       else
@@ -171,9 +170,10 @@ void tabulate_polyset_line_macroedge_derivs(
           T x_term = pow(1.0 - x0[p], n - k - d);
           for (std::size_t i = n - k; i > n - k - d; --i)
             x_term *= -i;
-          P(d, 0, p) += factorials[k] * x_term;
+          value += factorials[k] * x_term;
         }
       }
+      P(d, 0, p) = value;
     }
   }
 
@@ -192,29 +192,244 @@ void tabulate_polyset_line_macroedge_derivs(
       {
         if (x0[p] <= 0.5)
         {
+          T value = 0.0;
           for (std::size_t k = 0; k + d <= j; ++k)
           {
             T x_term = pow(x0[p], j - k - d);
             for (std::size_t i = j - k; i > j - k - d; --i)
               x_term *= i;
-            P(d, j + 1, p) += factorials[k] * x_term;
+            value += factorials[k] * x_term;
           }
-          P(d, j + 1, p) *= pow(0.5 - x0[p], n - j - d);
+          value *= pow(0.5 - x0[p], n - j - d);
           for (std::size_t i = n - j; i > n - j - d; --i)
-            P(d, j + 1, p) *= -i;
+            value *= -i;
+          P(d, j + 1, p) = value;
         }
         else
         {
+          T value = 0.0;
           for (std::size_t k = 0; k + d <= j; ++k)
           {
             T x_term = pow(1.0 - x0[p], j - k - d);
             for (std::size_t i = j - k; i > j - k - d; --i)
               x_term *= -i;
-            P(d, j + n + 1, p) += factorials[k] * x_term;
+            value += factorials[k] * x_term;
           }
-          P(d, j + n + 1, p) *= pow(x0[p] - 0.5, n - j - d);
+          value *= pow(x0[p] - 0.5, n - j - d);
           for (std::size_t i = n - j; i > n - j - d; --i)
-            P(d, j + n + 1, p) *= i;
+            value *= i;
+          P(d, j + n + 1, p) = value;
+        }
+      }
+    }
+  }
+}
+//-----------------------------------------------------------------------------
+
+/// Compute the complete set of derivatives from 0 to nderiv, for all
+/// the piecewise polynomials up to order n on a line segment split into two
+/// parts.
+template <typename T>
+void tabulate_polyset_quadrilateral_macroedge_derivs(
+    stdex::mdspan<T, stdex::dextents<std::size_t, 3>> P, std::size_t n,
+    std::size_t nderiv,
+    stdex::mdspan<const T, stdex::dextents<std::size_t, 2>> x)
+{
+  assert(x.extent(0) > 0);
+  assert(P.extent(0) == nderiv + 1);
+  assert(P.extent(1) == (2 * n + 1) * (2 * n + 1));
+  assert(P.extent(2) == x.extent(0));
+
+  // Indexing for quadrilateral basis functions
+  auto quad_idx = [n](std::size_t px, std::size_t py) -> std::size_t
+  { return (2 * n + 1) * px + py; };
+
+  auto x0 = stdex::submdspan(x, stdex::full_extent, 0);
+  auto x1 = stdex::submdspan(x, stdex::full_extent, 1);
+
+  std::fill(P.data_handle(), P.data_handle() + P.size(), 0.0);
+
+  std::vector<T> factorials(n + 1, 0.0);
+
+  // Fill with values of polynomials in x
+  for (std::size_t k = 0; k <= n; ++k)
+  {
+    factorials[k] = (k % 2 == 0 ? 1 : -1) * single_choose(2 * n + 1 - k, n - k)
+                    * single_choose(n, k) * pow(2, n - k);
+  }
+  for (std::size_t dx = 0; dx <= nderiv; ++dx)
+  {
+    for (std::size_t p = 0; p < P.extent(2); ++p)
+    {
+      T value = 0.0;
+      if (x0[p] <= 0.5)
+      {
+        for (std::size_t k = 0; k + dx <= n; ++k)
+        {
+          T x_term = pow(x0[p], n - k - dx);
+          for (std::size_t i = n - k; i > n - k - dx; --i)
+            x_term *= i;
+          value += factorials[k] * x_term;
+        }
+      }
+      else
+      {
+        for (std::size_t k = 0; k + dx <= n; ++k)
+        {
+          T x_term = pow(1.0 - x0[p], n - k - dx);
+          for (std::size_t i = n - k; i > n - k - dx; --i)
+            x_term *= -i;
+          value += factorials[k] * x_term;
+        }
+      }
+      for (std::size_t dy = 0; dy <= nderiv; ++dy)
+        for (std::size_t jy = 0; jy < 2 * n + 1; ++jy)
+          P(idx(dx, dy), quad_idx(0, jy), p) = value;
+    }
+  }
+
+  for (std::size_t j = 0; j < n; ++j)
+  {
+    for (std::size_t k = 0; k <= j; ++k)
+    {
+      factorials[k] = (k % 2 == 0 ? 1 : -1)
+                      * single_choose(2 * n + 1 - k, j - k)
+                      * single_choose(j, k) * pow(2, j - k) * pow(2, n - j)
+                      * sqrt(4 * (n - j) + 2);
+    }
+    for (std::size_t dx = 0; dx <= nderiv; ++dx)
+    {
+      for (std::size_t p = 0; p < P.extent(2); ++p)
+      {
+        if (x0[p] <= 0.5)
+        {
+          T value = 0.0;
+          for (std::size_t k = 0; k + dx <= j; ++k)
+          {
+            T x_term = pow(x0[p], j - k - dx);
+            for (std::size_t i = j - k; i > j - k - dx; --i)
+              x_term *= i;
+            value += factorials[k] * x_term;
+          }
+          value *= pow(0.5 - x0[p], n - j - dx);
+          for (std::size_t i = n - j; i > n - j - dx; --i)
+            value *= -i;
+          for (std::size_t dy = 0; dy <= nderiv; ++dy)
+            for (std::size_t jy = 0; jy < 2 * n + 1; ++jy)
+              P(idx(dx, dy), quad_idx(j + 1, jy), p) = value;
+        }
+        else
+        {
+          T value = 0.0;
+          for (std::size_t k = 0; k + dx <= j; ++k)
+          {
+            T x_term = pow(1.0 - x0[p], j - k - dx);
+            for (std::size_t i = j - k; i > j - k - dx; --i)
+              x_term *= -i;
+            value += factorials[k] * x_term;
+          }
+          value *= pow(x0[p] - 0.5, n - j - dx);
+          for (std::size_t i = n - j; i > n - j - dx; --i)
+            value *= i;
+          for (std::size_t dy = 0; dy <= nderiv; ++dy)
+            for (std::size_t jy = 0; jy < 2 * n + 1; ++jy)
+              P(idx(dx, dy), quad_idx(j + n + 1, jy), p) = value;
+        }
+      }
+    }
+  }
+
+  // Multiply by values of polynomials in y
+  for (std::size_t k = 0; k <= n; ++k)
+  {
+    factorials[k] = (k % 2 == 0 ? 1 : -1) * single_choose(2 * n + 1 - k, n - k)
+                    * single_choose(n, k) * pow(2, n - k);
+  }
+  for (std::size_t dy = 0; dy <= nderiv; ++dy)
+  {
+    for (std::size_t p = 0; p < P.extent(2); ++p)
+    {
+      T value = 0.0;
+      if (x1[p] <= 0.5)
+      {
+        for (std::size_t k = 0; k + dy <= n; ++k)
+        {
+          T y_term = pow(x1[p], n - k - dy);
+          for (std::size_t i = n - k; i > n - k - dy; --i)
+            y_term *= i;
+          value += factorials[k] * y_term;
+        }
+      }
+      else
+      {
+        for (std::size_t k = 0; k + dy <= n; ++k)
+        {
+          T y_term = pow(1.0 - x1[p], n - k - dy);
+          for (std::size_t i = n - k; i > n - k - dy; --i)
+            y_term *= -i;
+          value += factorials[k] * y_term;
+        }
+      }
+      for (std::size_t dx = 0; dx <= nderiv; ++dx)
+        for (std::size_t jx = 0; jx < 2 * n + 1; ++jx)
+          P(idx(dx, dy), quad_idx(jx, 0), p) *= value;
+    }
+  }
+
+  for (std::size_t j = 0; j < n; ++j)
+  {
+    for (std::size_t k = 0; k <= j; ++k)
+    {
+      factorials[k] = (k % 2 == 0 ? 1 : -1)
+                      * single_choose(2 * n + 1 - k, j - k)
+                      * single_choose(j, k) * pow(2, j - k) * pow(2, n - j)
+                      * sqrt(4 * (n - j) + 2);
+    }
+    for (std::size_t dy = 0; dy <= nderiv; ++dy)
+    {
+      for (std::size_t p = 0; p < P.extent(2); ++p)
+      {
+        if (x1[p] <= 0.5)
+        {
+          T value = 0.0;
+          for (std::size_t k = 0; k + dy <= j; ++k)
+          {
+            T y_term = pow(x1[p], j - k - dy);
+            for (std::size_t i = j - k; i > j - k - dy; --i)
+              y_term *= i;
+            value += factorials[k] * y_term;
+          }
+          value *= pow(0.5 - x1[p], n - j - dy);
+          for (std::size_t i = n - j; i > n - j - dy; --i)
+            value *= -i;
+          for (std::size_t dx = 0; dx <= nderiv; ++dx)
+            for (std::size_t jx = 0; jx < 2 * n + 1; ++jx)
+            {
+              P(idx(dx, dy), quad_idx(jx, j + 1), p) *= value;
+              P(idx(dx, dy), quad_idx(jx, j + n + 1), p) *= 0.0;
+            }
+        }
+        else
+        {
+          T value = 0.0;
+          for (std::size_t k = 0; k + dy <= j; ++k)
+          {
+            T y_term = pow(1.0 - x1[p], j - k - dy);
+            for (std::size_t i = j - k; i > j - k - dy; --i)
+              y_term *= -i;
+            value += factorials[k] * y_term;
+          }
+          value *= pow(x1[p] - 0.5, n - j - dy);
+          for (std::size_t i = n - j; i > n - j - dy; --i)
+            value *= i;
+          for (std::size_t dx = 0; dx <= nderiv; ++dx)
+          {
+            for (std::size_t jx = 0; jx < 2 * n + 1; ++jx)
+            {
+              P(idx(dx, dy), quad_idx(jx, j + 1), p) *= 0.0;
+              P(idx(dx, dy), quad_idx(jx, j + n + 1), p) *= value;
+            }
+          }
         }
       }
     }
@@ -1636,6 +1851,9 @@ void polyset::tabulate(
     case cell::type::interval:
       tabulate_polyset_line_macroedge_derivs(P, d, n, x);
       return;
+    case cell::type::quadrilateral:
+      tabulate_polyset_quadrilateral_macroedge_derivs(P, d, n, x);
+      return;
     default:
       throw std::runtime_error("Polynomial set: unsupported cell type");
     }
@@ -1706,6 +1924,8 @@ int polyset::dim(cell::type celltype, polyset::type ptype, int d)
       return 1;
     case cell::type::interval:
       return 2 * d + 1;
+    case cell::type::quadrilateral:
+      return (2 * d + 1) * (2 * d + 1);
     default:
       return 1;
     }

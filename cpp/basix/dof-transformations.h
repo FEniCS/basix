@@ -7,6 +7,7 @@
 #include "cell.h"
 #include "maps.h"
 #include "mdspan.hpp"
+#include "polyset.h"
 #include <array>
 #include <concepts>
 #include <map>
@@ -33,6 +34,7 @@ namespace basix::doftransforms
 /// @param[in] degree The degree of the element
 /// @param[in] vs The value size of the element
 /// @param[in] map_type The map type used by the element
+/// @param[in] ptype The polyset type used by the element
 /// @return Entity transformations. For each cell, the shape is
 /// (ntransformation, ndofs, ndofs)
 template <std::floating_point T>
@@ -48,6 +50,6 @@ compute_entity_transformations(
     std::experimental::mdspan<const T,
                               std::experimental::dextents<std::size_t, 2>>
         coeffs,
-    int degree, std::size_t vs, maps::type map_type);
+    int degree, std::size_t vs, maps::type map_type, polyset::type ptype);
 
 } // namespace basix::doftransforms

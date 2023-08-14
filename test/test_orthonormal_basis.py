@@ -120,6 +120,7 @@ def test_standard(cell_type, order):
 
 @pytest.mark.parametrize("cell_type", [
     basix.CellType.interval,
+    basix.CellType.quadrilateral,
 ])
 @pytest.mark.parametrize("order", [0, 1, 2, 3, 4])
 def test_macroedge(cell_type, order):

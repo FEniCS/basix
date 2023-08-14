@@ -71,7 +71,7 @@ The following elements are supported on an interval:
   - [Bubble](https://defelement.com/elements/bubble.html)
   - [Serendipity](https://defelement.com/elements/serendipity.html)
   - [Hermite](https://defelement.com/elements/hermite.html)
-
+  - [iso](https://defelement.com/elements/p1-iso-p2.html)
 
 ### Triangle
 

@@ -26,9 +26,9 @@ enum class lagrange_variant
   vtk = 20,
 };
 
-/// Variants of a DPC (discontinuous polynomial cubical) space that can be
-/// created. DPC spaces span the same set of polynomials as Lagrange spaces on
-/// simplices but are defined on tensor product cells.
+/// Variants of a DPC (discontinuous polynomial cubical) space that can
+/// be created. DPC spaces span the same set of polynomials as Lagrange
+/// spaces on simplices but are defined on tensor product cells.
 enum class dpc_variant
 {
   unset = -1,
@@ -56,7 +56,7 @@ enum class family
   bubble = 9,
   serendipity = 10,
   HHJ = 11,
-  Hermite = 12
+  Hermite = 12,
+  iso = 13,
 };
-
 } // namespace basix::element

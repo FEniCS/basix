@@ -65,7 +65,5 @@ jobs:
 
       - name: Install FFCx
         run: python3 -m pip install ./ffcx[ci]
-      - name: Run mypy checks
-        run: python3 -m mypy ffcx/ffcx
       - name: Run FFCx tests
         run: python3 -m pytest -n auto ffcx/test

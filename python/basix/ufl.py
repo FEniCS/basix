@@ -271,6 +271,11 @@ class _ElementBase(_FiniteElementBase):
         raise NotImplementedError()
 
     @property
+    @_abstractmethod
+    def polyset_type(self) -> _basix.PolysetType:
+        """The polyset type of the element."""
+
+    @property
     def _wcoeffs(self) -> _npt.NDArray[_np.float64]:
         """The coefficients used to define the polynomial set."""
         raise NotImplementedError()
@@ -492,6 +497,10 @@ class _BasixElement(_ElementBase):
         return self.element.highest_degree
 
     @property
+    def polyset_type(self) -> _basix.PolysetType:
+        return self.element.polyset_type
+
+    @property
     def _wcoeffs(self) -> _npt.NDArray[_np.float64]:
         """The coefficients used to define the polynomial set."""
         return self.element.wcoeffs
@@ -662,6 +671,10 @@ class _ComponentElement(_ElementBase):
     def cell_type(self) -> _basix.CellType:
         """Basix cell type used to initialise the element."""
         return self.element.cell_type
+
+    @property
+    def polyset_type(self) -> _basix.PolysetType:
+        return self.element.polyset_type
 
     @property
     def discontinuous(self) -> bool:
@@ -886,6 +899,13 @@ class _MixedElement(_ElementBase):
         """Number of derivatives needed when interpolating."""
         return max([e.interpolation_nderivs for e in self._sub_elements])
 
+    @property
+    def polyset_type(self) -> _basix.PolysetType:
+        pt = _basix.PolysetType.standard
+        for e in self._sub_elements:
+            pt = _basix.polyset_superset(self.cell_type, pt, e.polyset_type)
+        return pt
+
 
 class _BlockedElement(_ElementBase):
     """Element with a block size that contains multiple copies of a sub element.
@@ -994,10 +1014,8 @@ class _BlockedElement(_ElementBase):
         assert self.value_size == self._block_size  # TODO: remove this assumption
         output = []
         for table in self.sub_element.tabulate(nderivs, points):
-            new_table = _np.zeros((table.shape[0], table.shape[1] * self._block_size**2))
-            for block in range(self._block_size):
-                col = block * (self._block_size + 1)
-                new_table[:, col: col + table.shape[1] * self._block_size**2: self._block_size**2] = table
+            # Repeat sub element horizontally
+            new_table = _np.repeat(table, self._block_size, axis=-1)
             output.append(new_table)
         return _np.asarray(output, dtype=_np.float64)
 
@@ -1113,6 +1131,10 @@ class _BlockedElement(_ElementBase):
     def highest_degree(self) -> int:
         """The highest degree of the element."""
         return self.sub_element.highest_degree
+
+    @property
+    def polyset_type(self) -> _basix.PolysetType:
+        return self.sub_element.polyset_type
 
     @property
     def _wcoeffs(self) -> _npt.NDArray[_np.float64]:
@@ -1334,6 +1356,7 @@ def enriched_element(elements: _typing.List[_ElementBase],
             set equal to the topological dimension of the cell.
     """
     ct = elements[0].cell_type
+    ptype = elements[0].polyset_type
     vshape = elements[0].value_shape()
     vsize = elements[0].value_size
     if map_type is None:
@@ -1351,6 +1374,8 @@ def enriched_element(elements: _typing.List[_ElementBase],
             discontinuous = False
         if e.cell_type != ct:
             raise ValueError("Enriched elements on different cell types not supported.")
+        if e.polyset_type != ptype:
+            raise ValueError("Enriched elements on different polyset types not supported.")
         if e.value_shape() != vshape or e.value_size != vsize:
             raise ValueError("Enriched elements on different value shapes not supported.")
     nderivs = max(e.interpolation_nderivs for e in elements)
@@ -1384,7 +1409,7 @@ def enriched_element(elements: _typing.List[_ElementBase],
         row += e.dim
 
     return custom_element(ct, list(vshape), wcoeffs, x, M, nderivs,
-                          map_type, ss, discontinuous, hcd, hd, gdim=gdim)
+                          map_type, ss, discontinuous, hcd, hd, ptype, gdim=gdim)
 
 
 def custom_element(cell_type: _basix.CellType, value_shape: _typing.Union[_typing.List[int], _typing.Tuple[int, ...]],
@@ -1392,6 +1417,7 @@ def custom_element(cell_type: _basix.CellType, value_shape: _typing.Union[_typin
                    M: _typing.List[_typing.List[_npt.NDArray[_np.float64]]], interpolation_nderivs: int,
                    map_type: _basix.MapType, sobolev_space: _basix.SobolevSpace, discontinuous: bool,
                    highest_complete_degree: int, highest_degree: int,
+                   polyset_type: _basix.PolysetType = _basix.PolysetType.standard,
                    gdim: _typing.Optional[int] = None) -> _ElementBase:
     """Create a UFL compatible custom Basix element.
 
@@ -1410,12 +1436,13 @@ def custom_element(cell_type: _basix.CellType, value_shape: _typing.Union[_typin
         highest_complete_degree: The highest degree n such that a Lagrange (or vector Lagrange)
         element of degree n is a subspace of this element
         highest_degree: The degree of a polynomial in this element's polyset
+        polyset_type: The polyset type for the element
         gdim: Geometric dimension. If not set the geometric dimension is
             set equal to the topological dimension of the cell.
     """
     return _BasixElement(_basix.create_custom_element(
         cell_type, list(value_shape), wcoeffs, x, M, interpolation_nderivs,
-        map_type, sobolev_space, discontinuous, highest_complete_degree, highest_degree), gdim=gdim)
+        map_type, sobolev_space, discontinuous, highest_complete_degree, highest_degree, polyset_type), gdim=gdim)
 
 
 def mixed_element(elements: _typing.List[_ElementBase], gdim: _typing.Optional[int] = None) -> _ElementBase:

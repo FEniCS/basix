@@ -6,6 +6,7 @@
 
 #include "cell.h"
 #include "finite-element.h"
+#include <concepts>
 
 namespace basix::element
 {
@@ -17,6 +18,7 @@ namespace basix::element
 /// @param[in] discontinuous Controls whether the element is continuous or
 /// discontinuous
 /// @return A finite element
-FiniteElement create_cr(cell::type celltype, int degree, bool discontinuous);
+template <std::floating_point T>
+FiniteElement<T> create_cr(cell::type celltype, int degree, bool discontinuous);
 
 } // namespace basix::element

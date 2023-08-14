@@ -16,13 +16,16 @@ def test_finite_element(inputs):
 
 
 @pytest.mark.parametrize("inputs", [
+    ("Lagrange", "triangle", 1),
     ("Lagrange", "triangle", 2),
     ("Lagrange", basix.CellType.triangle, 2),
     (basix.ElementFamily.P, basix.CellType.triangle, 2),
     (basix.ElementFamily.P, "triangle", 2),
 ])
 def test_vector_element(inputs):
-    basix.ufl.element(*inputs, rank=1)
+    e = basix.ufl.element(*inputs, rank=1)
+    table = e.tabulate(0, [[0, 0]])
+    assert table.shape == (1, 1, e.dim)
 
 
 @pytest.mark.parametrize("inputs", [
@@ -45,6 +48,8 @@ def test_tensor_element_hash(inputs):
     e = basix.ufl.element(*inputs)
     sym = basix.ufl.blocked_element(e, shape=(2, 2), symmetry=True)
     asym = basix.ufl.blocked_element(e, shape=(2, 2), symmetry=False)
+    table = e.tabulate(0, [[0, 0]])
+    assert table.shape == (1, 1, e.dim)
     assert sym != asym
     assert hash(sym) != hash(asym)
 

@@ -4,7 +4,9 @@ import pytest
 
 
 @pytest.mark.parametrize("degree", range(1, 5))
-@pytest.mark.parametrize("cell", [basix.CellType.interval, basix.CellType.quadrilateral])
+@pytest.mark.parametrize("cell", [
+    basix.CellType.interval, basix.CellType.quadrilateral,
+    basix.CellType.hexahedron])
 def test_iso_element(degree, cell):
     e = basix.create_element(basix.ElementFamily.iso, cell, degree, basix.LagrangeVariant.gll_warped)
     e2 = basix.create_element(basix.ElementFamily.P, cell, 2 * degree, basix.LagrangeVariant.gll_warped)

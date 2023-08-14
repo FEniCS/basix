@@ -17,6 +17,17 @@ namespace stdex = std::experimental;
 
 namespace
 {
+//-----------------------------------------------------------------------------
+constexpr int single_choose(int n, int k)
+{
+  int out = 1;
+  for (int i = n + 1 - k; i <= n; ++i)
+    out *= i;
+  for (int i = 1; i <= k; ++i)
+    out /= i;
+  return out;
+}
+//-----------------------------------------------------------------------------
 /// Compute coefficients in the Jacobi Polynomial recurrence relation
 template <typename T>
 constexpr std::array<T, 3> jrc(int a, int n)
@@ -108,6 +119,105 @@ void tabulate_polyset_line_derivs(
     for (std::size_t i = 0; i < P.extent(0); ++i)
       for (std::size_t j = 0; j < P.extent(2); ++j)
         P(i, p, j) *= norm;
+  }
+}
+//-----------------------------------------------------------------------------
+
+/// Compute the complete set of derivatives from 0 to nderiv, for all
+/// the polynomials up to order n on a line segment. The polynomials
+/// used are Legendre Polynomials, with the recurrence relation given by
+/// n P(n) = (2n - 1) x P_{n-1} - (n - 1) P_{n-2} in the interval [-1,
+/// 1]. The range is rescaled here to [0, 1].
+template <typename T>
+void tabulate_polyset_line_macroedge_derivs(
+    stdex::mdspan<T, stdex::dextents<std::size_t, 3>> P, std::size_t n,
+    std::size_t nderiv,
+    stdex::mdspan<const T, stdex::dextents<std::size_t, 2>> x)
+{
+  assert(x.extent(0) > 0);
+  assert(P.extent(0) == nderiv + 1);
+  assert(P.extent(1) == 2 * n + 1);
+  assert(P.extent(2) == x.extent(0));
+
+  auto x0 = stdex::submdspan(x, stdex::full_extent, 0);
+
+  std::fill(P.data_handle(), P.data_handle() + P.size(), 0.0);
+
+  std::vector<T> factorials(n + 1, 0.0);
+
+  for (std::size_t k = 0; k <= n; ++k)
+  {
+    factorials[k] = (k % 2 == 0 ? 1 : -1) * single_choose(2 * n + 1 - k, n - k)
+                    * single_choose(n, k) * pow(2, n - k);
+  }
+  for (std::size_t d = 0; d <= nderiv; ++d)
+  {
+    for (std::size_t p = 0; p < P.extent(2); ++p)
+    {
+      if (x0[p] <= 0.5)
+      {
+        for (std::size_t k = 0; k + d <= n; ++k)
+        {
+          T x_term = pow(x0[p], n - k - d);
+          for (std::size_t i = n - k; i > n - k - d; --i)
+            x_term *= i;
+          P(d, 0, p) += factorials[k] * x_term;
+        }
+      }
+      else
+      {
+        for (std::size_t k = 0; k + d <= n; ++k)
+        {
+          T x_term = pow(1.0 - x0[p], n - k - d);
+          for (std::size_t i = n - k; i > n - k - d; --i)
+            x_term *= -i;
+          P(d, 0, p) += factorials[k] * x_term;
+        }
+      }
+    }
+  }
+
+  for (std::size_t j = 0; j < n; ++j)
+  {
+    for (std::size_t k = 0; k <= j; ++k)
+    {
+      factorials[k] = (k % 2 == 0 ? 1 : -1)
+                      * single_choose(2 * n + 1 - k, j - k)
+                      * single_choose(j, k) * pow(2, j - k) * pow(2, n - j)
+                      * sqrt(4 * (n - j) + 2);
+    }
+    for (std::size_t d = 0; d <= nderiv; ++d)
+    {
+      for (std::size_t p = 0; p < P.extent(2); ++p)
+      {
+        if (x0[p] <= 0.5)
+        {
+          for (std::size_t k = 0; k + d <= j; ++k)
+          {
+            T x_term = pow(x0[p], j - k - d);
+            for (std::size_t i = j - k; i > j - k - d; --i)
+              x_term *= i;
+            P(d, j + 1, p) += factorials[k] * x_term;
+          }
+          P(d, j + 1, p) *= pow(0.5 - x0[p], n - j - d);
+          for (std::size_t i = n - j; i > n - j - d; --i)
+            P(d, j + 1, p) *= -i;
+        }
+        else
+        {
+          for (std::size_t k = 0; k + d <= j; ++k)
+          {
+            T x_term = pow(1.0 - x0[p], j - k - d);
+            for (std::size_t i = j - k; i > j - k - d; --i)
+              x_term *= -i;
+            P(d, j + n + 1, p) += factorials[k] * x_term;
+          }
+          P(d, j + n + 1, p) *= pow(x0[p] - 0.5, n - j - d);
+          for (std::size_t i = n - j; i > n - j - d; --i)
+            P(d, j + n + 1, p) *= i;
+        }
+      }
+    }
   }
 }
 //-----------------------------------------------------------------------------
@@ -1480,91 +1590,125 @@ void tabulate_polyset_prism_derivs(
 template <std::floating_point T>
 void polyset::tabulate(
     std::experimental::mdspan<T, std::experimental::dextents<std::size_t, 3>> P,
-    cell::type celltype, int d, int n,
+    cell::type celltype, polyset::type ptype, int d, int n,
     std::experimental::mdspan<const T,
                               std::experimental::dextents<std::size_t, 2>>
         x)
 {
-  switch (celltype)
+  switch (ptype)
   {
-  case cell::type::point:
-    tabulate_polyset_point_derivs(P, d, n, x);
-    return;
-  case cell::type::interval:
-    tabulate_polyset_line_derivs(P, d, n, x);
-    return;
-  case cell::type::triangle:
-    tabulate_polyset_triangle_derivs(P, d, n, x);
-    return;
-  case cell::type::tetrahedron:
-    tabulate_polyset_tetrahedron_derivs(P, d, n, x);
-    return;
-  case cell::type::quadrilateral:
-    tabulate_polyset_quad_derivs(P, d, n, x);
-    return;
-  case cell::type::prism:
-    tabulate_polyset_prism_derivs(P, d, n, x);
-    return;
-  case cell::type::pyramid:
-    tabulate_polyset_pyramid_derivs(P, d, n, x);
-    return;
-  case cell::type::hexahedron:
-    tabulate_polyset_hex_derivs(P, d, n, x);
-    return;
+  case polyset::type::standard:
+    switch (celltype)
+    {
+    case cell::type::point:
+      tabulate_polyset_point_derivs(P, d, n, x);
+      return;
+    case cell::type::interval:
+      tabulate_polyset_line_derivs(P, d, n, x);
+      return;
+    case cell::type::triangle:
+      tabulate_polyset_triangle_derivs(P, d, n, x);
+      return;
+    case cell::type::tetrahedron:
+      tabulate_polyset_tetrahedron_derivs(P, d, n, x);
+      return;
+    case cell::type::quadrilateral:
+      tabulate_polyset_quad_derivs(P, d, n, x);
+      return;
+    case cell::type::prism:
+      tabulate_polyset_prism_derivs(P, d, n, x);
+      return;
+    case cell::type::pyramid:
+      tabulate_polyset_pyramid_derivs(P, d, n, x);
+      return;
+    case cell::type::hexahedron:
+      tabulate_polyset_hex_derivs(P, d, n, x);
+      return;
+    default:
+      throw std::runtime_error("Polynomial set: unsupported cell type");
+    }
+  case polyset::type::macroedge:
+    switch (celltype)
+    {
+    case cell::type::point:
+      tabulate_polyset_point_derivs(P, d, n, x);
+      return;
+    case cell::type::interval:
+      tabulate_polyset_line_macroedge_derivs(P, d, n, x);
+      return;
+    default:
+      throw std::runtime_error("Polynomial set: unsupported cell type");
+    }
   default:
-    throw std::runtime_error("Polynomial set: unsupported cell type");
+    throw std::runtime_error("Polynomial set: unsupported polynomial type.");
   }
 }
 //-----------------------------------------------------------------------------
 template <std::floating_point T>
 std::pair<std::vector<T>, std::array<std::size_t, 3>> polyset::tabulate(
-    cell::type celltype, int d, int n,
+    cell::type celltype, polyset::type ptype, int d, int n,
     std::experimental::mdspan<const T,
                               std::experimental::dextents<std::size_t, 2>>
         x)
 {
   std::array<std::size_t, 3> shape
       = {(std::size_t)polyset::nderivs(celltype, n),
-         (std::size_t)polyset::dim(celltype, d), x.extent(0)};
+         (std::size_t)polyset::dim(celltype, ptype, d), x.extent(0)};
   std::vector<T> P(shape[0] * shape[1] * shape[2]);
   stdex::mdspan<T, stdex::dextents<std::size_t, 3>> _P(P.data(), shape);
-  polyset::tabulate(_P, celltype, d, n, x);
+  polyset::tabulate(_P, celltype, ptype, d, n, x);
   return {std::move(P), std::move(shape)};
 }
 //-----------------------------------------------------------------------------
 /// @cond
 template std::pair<std::vector<float>, std::array<std::size_t, 3>>
 polyset::tabulate(
-    cell::type, int, int,
+    cell::type, polyset::type, int, int,
     std::experimental::mdspan<const float,
                               std::experimental::dextents<std::size_t, 2>>);
 template std::pair<std::vector<double>, std::array<std::size_t, 3>>
 polyset::tabulate(
-    cell::type, int, int,
+    cell::type, polyset::type, int, int,
     std::experimental::mdspan<const double,
                               std::experimental::dextents<std::size_t, 2>>);
 /// @endcond
 //-----------------------------------------------------------------------------
-int polyset::dim(cell::type celltype, int d)
+int polyset::dim(cell::type celltype, polyset::type ptype, int d)
 {
-  switch (celltype)
+  switch (ptype)
   {
-  case cell::type::point:
-    return 1;
-  case cell::type::triangle:
-    return (d + 1) * (d + 2) / 2;
-  case cell::type::tetrahedron:
-    return (d + 1) * (d + 2) * (d + 3) / 6;
-  case cell::type::prism:
-    return (d + 1) * (d + 1) * (d + 2) / 2;
-  case cell::type::pyramid:
-    return (d + 1) * (d + 2) * (2 * d + 3) / 6;
-  case cell::type::interval:
-    return (d + 1);
-  case cell::type::quadrilateral:
-    return (d + 1) * (d + 1);
-  case cell::type::hexahedron:
-    return (d + 1) * (d + 1) * (d + 1);
+  case polyset::type::standard:
+    switch (celltype)
+    {
+    case cell::type::point:
+      return 1;
+    case cell::type::triangle:
+      return (d + 1) * (d + 2) / 2;
+    case cell::type::tetrahedron:
+      return (d + 1) * (d + 2) * (d + 3) / 6;
+    case cell::type::prism:
+      return (d + 1) * (d + 1) * (d + 2) / 2;
+    case cell::type::pyramid:
+      return (d + 1) * (d + 2) * (2 * d + 3) / 6;
+    case cell::type::interval:
+      return (d + 1);
+    case cell::type::quadrilateral:
+      return (d + 1) * (d + 1);
+    case cell::type::hexahedron:
+      return (d + 1) * (d + 1) * (d + 1);
+    default:
+      return 1;
+    }
+  case polyset::type::macroedge:
+    switch (celltype)
+    {
+    case cell::type::point:
+      return 1;
+    case cell::type::interval:
+      return 2 * d + 1;
+    default:
+      return 1;
+    }
   default:
     return 1;
   }
@@ -1593,5 +1737,27 @@ int polyset::nderivs(cell::type celltype, int n)
   default:
     return 1;
   }
+}
+//-----------------------------------------------------------------------------
+polyset::type polyset::superset(cell::type, polyset::type type1,
+                                polyset::type type2)
+{
+  if (type1 == type2)
+    return type1;
+  if (type1 == polyset::type::standard)
+    return type2;
+  if (type2 == polyset::type::standard)
+    return type1;
+  throw std::runtime_error("Unsupported superset of polynomial sets.");
+}
+//-----------------------------------------------------------------------------
+polyset::type polyset::restriction(polyset::type ptype, cell::type cell,
+                                   cell::type restriction_cell)
+{
+  if (ptype == polyset::type::standard)
+    return polyset::type::standard;
+  if (cell == restriction_cell)
+    return ptype;
+  throw std::runtime_error("Unsupported restriction of polynomial sets.");
 }
 //-----------------------------------------------------------------------------

@@ -88,7 +88,7 @@ FiniteElement<T> basix::element::create_cr(cell::type celltype, int degree,
   }
 
   return FiniteElement<T>(
-      element::family::CR, celltype, 1, {},
+      element::family::CR, celltype, polyset::type::standard, 1, {},
       impl::mdspan_t<T, 2>(math::eye<T>(ndofs).data(), ndofs, ndofs), xview,
       Mview, 0, maps::type::identity, sobolev::space::L2, discontinuous, degree,
       degree, element::lagrange_variant::unset, element::dpc_variant::unset);

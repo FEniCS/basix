@@ -41,7 +41,8 @@ FiniteElement<T> element::create_bdm(cell::type celltype, int degree,
       = create_lagrange<T>(facettype, degree, lvariant, true);
   {
     auto [_x, xshape, _M, Mshape] = moments::make_normal_integral_moments<T>(
-        facet_moment_space, celltype, tdim, degree * 2);
+        facet_moment_space, celltype, polyset::type::standard, tdim,
+        degree * 2);
     assert(_x.size() == _M.size());
     for (std::size_t i = 0; i < _x.size(); ++i)
     {
@@ -56,8 +57,8 @@ FiniteElement<T> element::create_bdm(cell::type celltype, int degree,
   {
     // Interior integral moment
     auto [_x, xshape, _M, Mshape] = moments::make_dot_integral_moments<T>(
-        create_nedelec<T>(celltype, degree - 1, lvariant, true), celltype, tdim,
-        2 * degree - 1);
+        create_nedelec<T>(celltype, degree - 1, lvariant, true), celltype,
+        polyset::type::standard, tdim, 2 * degree - 1);
     assert(_x.size() == _M.size());
     for (std::size_t i = 0; i < _x.size(); ++i)
     {
@@ -90,11 +91,12 @@ FiniteElement<T> element::create_bdm(cell::type celltype, int degree,
   }
 
   // The number of order (degree) scalar polynomials
-  const std::size_t ndofs = tdim * polyset::dim(celltype, degree);
+  const std::size_t ndofs
+      = tdim * polyset::dim(celltype, polyset::type::standard, degree);
   sobolev::space space
       = discontinuous ? sobolev::space::L2 : sobolev::space::HDiv;
   return FiniteElement<T>(
-      family::BDM, celltype, degree, {tdim},
+      family::BDM, celltype, polyset::type::standard, degree, {tdim},
       impl::mdspan_t<T, 2>(math::eye<T>(ndofs).data(), ndofs, ndofs), xview,
       Mview, 0, maps::type::contravariantPiola, space, discontinuous, degree,
       degree, lvariant, element::dpc_variant::unset);

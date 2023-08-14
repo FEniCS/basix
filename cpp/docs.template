@@ -228,23 +228,24 @@ Returns:
 )";
 
 {{DOCTYPE}} create_custom_element = R"(
-{{finite-element.h > create_custom_element(cell_type, value_shape, wcoeffs, x, M, interpolation_nderivs, map_type, sobolev_space, discontinuous, highest_complete_degree, highest_degree) > doc}}
+{{finite-element.h > create_custom_element(cell_type, value_shape, wcoeffs, x, M, interpolation_nderivs, map_type, sobolev_space, discontinuous, highest_complete_degree, highest_degree, poly_type) > doc}}
 
 Args:
-    {{finite-element.h > create_custom_element(cell_type, value_shape, wcoeffs, x, M, interpolation_nderivs, map_type, sobolev_space, discontinuous, highest_complete_degree, highest_degree) > param > cell_type}}
-    {{finite-element.h > create_custom_element(cell_type, value_shape, wcoeffs, x, M, interpolation_nderivs, map_type, sobolev_space, discontinuous, highest_complete_degree, highest_degree) > param > value_shape}}
-    {{finite-element.h > create_custom_element(cell_type, value_shape, wcoeffs, x, M, interpolation_nderivs, map_type, sobolev_space, discontinuous, highest_complete_degree, highest_degree) > param > wcoeffs}}
-    {{finite-element.h > create_custom_element(cell_type, value_shape, wcoeffs, x, M, interpolation_nderivs, map_type, sobolev_space, discontinuous, highest_complete_degree, highest_degree) > param > x}}
-    {{finite-element.h > create_custom_element(cell_type, value_shape, wcoeffs, x, M, interpolation_nderivs, map_type, sobolev_space, discontinuous, highest_complete_degree, highest_degree) > param > M}}
-    {{finite-element.h > create_custom_element(cell_type, value_shape, wcoeffs, x, M, interpolation_nderivs, map_type, sobolev_space, discontinuous, highest_complete_degree, highest_degree) > param > interpolation_nderivs}}
-    {{finite-element.h > create_custom_element(cell_type, value_shape, wcoeffs, x, M, interpolation_nderivs, map_type, sobolev_space, discontinuous, highest_complete_degree, highest_degree) > param > map_type}}
-    {{finite-element.h > create_custom_element(cell_type, value_shape, wcoeffs, x, M, interpolation_nderivs, map_type, sobolev_space, discontinuous, highest_complete_degree, highest_degree) > param > sobolev_space}}
-    {{finite-element.h > create_custom_element(cell_type, value_shape, wcoeffs, x, M, interpolation_nderivs, map_type, sobolev_space, discontinuous, highest_complete_degree, highest_degree) > param > discontinuous}}
-    {{finite-element.h > create_custom_element(cell_type, value_shape, wcoeffs, x, M, interpolation_nderivs, map_type, sobolev_space, discontinuous, highest_complete_degree, highest_degree) > param > highest_complete_degree}}
-    {{finite-element.h > create_custom_element(cell_type, value_shape, wcoeffs, x, M, interpolation_nderivs, map_type, sobolev_space, discontinuous, highest_complete_degree, highest_degree) > param > highest_degree}}
+    {{finite-element.h > create_custom_element(cell_type, value_shape, wcoeffs, x, M, interpolation_nderivs, map_type, sobolev_space, discontinuous, highest_complete_degree, highest_degree, poly_type) > param > cell_type}}
+    {{finite-element.h > create_custom_element(cell_type, value_shape, wcoeffs, x, M, interpolation_nderivs, map_type, sobolev_space, discontinuous, highest_complete_degree, highest_degree, poly_type) > param > value_shape}}
+    {{finite-element.h > create_custom_element(cell_type, value_shape, wcoeffs, x, M, interpolation_nderivs, map_type, sobolev_space, discontinuous, highest_complete_degree, highest_degree, poly_type) > param > wcoeffs}}
+    {{finite-element.h > create_custom_element(cell_type, value_shape, wcoeffs, x, M, interpolation_nderivs, map_type, sobolev_space, discontinuous, highest_complete_degree, highest_degree, poly_type) > param > x}}
+    {{finite-element.h > create_custom_element(cell_type, value_shape, wcoeffs, x, M, interpolation_nderivs, map_type, sobolev_space, discontinuous, highest_complete_degree, highest_degree, poly_type) > param > M}}
+    {{finite-element.h > create_custom_element(cell_type, value_shape, wcoeffs, x, M, interpolation_nderivs, map_type, sobolev_space, discontinuous, highest_complete_degree, highest_degree, poly_type) > param > interpolation_nderivs}}
+    {{finite-element.h > create_custom_element(cell_type, value_shape, wcoeffs, x, M, interpolation_nderivs, map_type, sobolev_space, discontinuous, highest_complete_degree, highest_degree, poly_type) > param > map_type}}
+    {{finite-element.h > create_custom_element(cell_type, value_shape, wcoeffs, x, M, interpolation_nderivs, map_type, sobolev_space, discontinuous, highest_complete_degree, highest_degree, poly_type) > param > sobolev_space}}
+    {{finite-element.h > create_custom_element(cell_type, value_shape, wcoeffs, x, M, interpolation_nderivs, map_type, sobolev_space, discontinuous, highest_complete_degree, highest_degree, poly_type) > param > discontinuous}}
+    {{finite-element.h > create_custom_element(cell_type, value_shape, wcoeffs, x, M, interpolation_nderivs, map_type, sobolev_space, discontinuous, highest_complete_degree, highest_degree, poly_type) > param > highest_complete_degree}}
+    {{finite-element.h > create_custom_element(cell_type, value_shape, wcoeffs, x, M, interpolation_nderivs, map_type, sobolev_space, discontinuous, highest_complete_degree, highest_degree, poly_type) > param > highest_degree}}
+    {{finite-element.h > create_custom_element(cell_type, value_shape, wcoeffs, x, M, interpolation_nderivs, map_type, sobolev_space, discontinuous, highest_complete_degree, highest_degree, poly_type) > param > poly_type}}
 
 Returns:
-    {{finite-element.h > create_custom_element(cell_type, value_shape, wcoeffs, x, M, interpolation_nderivs, map_type, sobolev_space, discontinuous, highest_complete_degree, highest_degree) > return}}
+    {{finite-element.h > create_custom_element(cell_type, value_shape, wcoeffs, x, M, interpolation_nderivs, map_type, sobolev_space, discontinuous, highest_complete_degree, highest_degree, poly_type) > return}}
 )";
 
 
@@ -282,6 +283,7 @@ Returns:
 
 Args:
     {{polyset.h > tabulate > param > celltype}}
+    {{polyset.h > tabulate > param > ptype}}
     {{polyset.h > tabulate > param > d}}
     {{polyset.h > tabulate > param > n}}
     {{polyset.h > tabulate > param > x}}
@@ -315,27 +317,17 @@ Returns:
     {{polynomials.h > dim > return}}
 )";
 
-{{DOCTYPE}} make_quadrature__rule_celltype_m = R"(
-{{quadrature.h > make_quadrature(rule, celltype, m) > doc}}
+{{DOCTYPE}} make_quadrature__rule_celltype_polytype_m = R"(
+{{quadrature.h > make_quadrature(rule, celltype, polytype, m) > doc}}
 
 Args:
-    {{quadrature.h > make_quadrature(rule, celltype, m) > param > rule}}
-    {{quadrature.h > make_quadrature(rule, celltype, m) > param > celltype}}
-    {{quadrature.h > make_quadrature(rule, celltype, m) > param > m}}
+    {{quadrature.h > make_quadrature(rule, celltype, polytype, m) > param > rule}}
+    {{quadrature.h > make_quadrature(rule, celltype, polytype, m) > param > celltype}}
+    {{quadrature.h > make_quadrature(rule, celltype, polytype, m) > param > polytype}}
+    {{quadrature.h > make_quadrature(rule, celltype, polytype, m) > param > m}}
 
 Returns:
-    {{quadrature.h > make_quadrature(rule, celltype, m) > return}}
-)";
-
-{{DOCTYPE}} make_quadrature__celltype_m = R"(
-{{quadrature.h > make_quadrature(celltype, m) > doc}}
-
-Args:
-    {{quadrature.h > make_quadrature(celltype, m) > param > celltype}}
-    {{quadrature.h > make_quadrature(celltype, m) > param > m}}
-
-Returns:
-    {{quadrature.h > make_quadrature(rule, celltype, m) > return}}
+    {{quadrature.h > make_quadrature(rule, celltype, polytype, m) > return}}
 )";
 
 {{DOCTYPE}} index__p = R"(
@@ -381,5 +373,31 @@ Args:
 Returns:
     {{sobolev-spaces.h > space_intersection(space1, space2) > return}}
 )";
+
+{{DOCTYPE}} superset = R"(
+{{polyset.h > superset > doc}}
+
+Args:
+    {{polyset.h > superset > param > cell}}
+    {{polyset.h > superset > param > type1}}
+    {{polyset.h > superset > param > type2}}
+
+Returns::
+    {{polyset.h > superset > return}}
+)";
+
+{{DOCTYPE}} restriction = R"(
+{{polyset.h > restriction > doc}}
+
+Args:
+    {{polyset.h > restriction > param > ptype}}
+    {{polyset.h > restriction > param > cell}}
+    {{polyset.h > restriction > param > restriction_cell}}
+
+Returns::
+    {{polyset.h > restriction > return}}
+)";
+
+
 
 } // namespace basix::docstring

@@ -4706,7 +4706,38 @@ std::array<std::vector<T>, 2> make_xiao_gimbutas_quadrature(cell::type celltype,
     throw std::runtime_error(
         "Xiao-Gimbutas is only implemented for triangles.");
   }
-} // namespace
+}
+//-----------------------------------------------------------------------------
+template <std::floating_point T>
+std::array<std::vector<T>, 2>
+make_macroedge_quadrature(quadrature::type rule, cell::type celltype, int m)
+{
+  auto standard_q = quadrature::make_quadrature<T>(rule, celltype,
+                                                   polyset::type::standard, m);
+  switch (celltype)
+  {
+  case cell::type::interval:
+  {
+    if (m == 0)
+    {
+      return standard_q;
+    }
+    const std::size_t npts = standard_q[0].size();
+    std::vector<T> x(npts * 2);
+    std::vector<T> w(npts * 2);
+    for (std::size_t i = 0; i < npts; ++i)
+    {
+      x[i] = 0.5 * standard_q[0][i];
+      x[npts + i] = 0.5 + 0.5 * standard_q[0][i];
+      w[i] = 0.5 * standard_q[1][i];
+      w[npts + i] = 0.5 * standard_q[1][i];
+    }
+    return {std::move(x), std::move(w)};
+  }
+  default:
+    throw std::runtime_error("Macro quadrature not supported on this cell.");
+  }
+}
 //-----------------------------------------------------------------------------
 } // namespace
 //-----------------------------------------------------------------------------
@@ -4740,34 +4771,37 @@ quadrature::type quadrature::get_default_rule(cell::type celltype, int m)
 //-----------------------------------------------------------------------------
 template <std::floating_point T>
 std::array<std::vector<T>, 2>
-quadrature::make_quadrature(quadrature::type rule, cell::type celltype, int m)
+quadrature::make_quadrature(quadrature::type rule, cell::type celltype,
+                            polyset::type polytype, int m)
 {
-  switch (rule)
+  switch (polytype)
   {
-  case quadrature::type::Default:
-    return make_quadrature<T>(get_default_rule(celltype, m), celltype, m);
-  case quadrature::type::gauss_jacobi:
-    return make_gauss_jacobi_quadrature<T>(celltype, m);
-  case quadrature::type::gll:
-    return make_gll_quadrature<T>(celltype, m);
-  case quadrature::type::xiao_gimbutas:
-    return make_xiao_gimbutas_quadrature<T>(celltype, m);
-  case quadrature::type::zienkiewicz_taylor:
-    return make_zienkiewicz_taylor_quadrature<T>(celltype, m);
-  case quadrature::type::keast:
-    return make_keast_quadrature<T>(celltype, m);
-  case quadrature::type::strang_fix:
-    return make_strang_fix_quadrature<T>(celltype, m);
+  case polyset::type::standard:
+    switch (rule)
+    {
+    case quadrature::type::Default:
+      return make_quadrature<T>(get_default_rule(celltype, m), celltype,
+                                polytype, m);
+    case quadrature::type::gauss_jacobi:
+      return make_gauss_jacobi_quadrature<T>(celltype, m);
+    case quadrature::type::gll:
+      return make_gll_quadrature<T>(celltype, m);
+    case quadrature::type::xiao_gimbutas:
+      return make_xiao_gimbutas_quadrature<T>(celltype, m);
+    case quadrature::type::zienkiewicz_taylor:
+      return make_zienkiewicz_taylor_quadrature<T>(celltype, m);
+    case quadrature::type::keast:
+      return make_keast_quadrature<T>(celltype, m);
+    case quadrature::type::strang_fix:
+      return make_strang_fix_quadrature<T>(celltype, m);
+    default:
+      throw std::runtime_error("Unknown quadrature rule");
+    }
+  case polyset::type::macroedge:
+    return make_macroedge_quadrature<T>(rule, celltype, m);
   default:
-    throw std::runtime_error("Unknown quadrature rule");
+    throw std::runtime_error("Unsupported polyset type");
   }
-}
-//-----------------------------------------------------------------------------
-template <std::floating_point T>
-std::array<std::vector<T>, 2> quadrature::make_quadrature(cell::type celltype,
-                                                          int m)
-{
-  return make_quadrature<T>(quadrature::type::Default, celltype, m);
 }
 //-----------------------------------------------------------------------------
 template <std::floating_point T>
@@ -4787,14 +4821,9 @@ std::vector<T> quadrature::get_gll_points(int m)
 }
 //-----------------------------------------------------------------------------
 template std::array<std::vector<float>, 2>
-quadrature::make_quadrature(quadrature::type, cell::type, int);
+quadrature::make_quadrature(quadrature::type, cell::type, polyset::type, int);
 template std::array<std::vector<double>, 2>
-quadrature::make_quadrature(quadrature::type, cell::type, int);
-
-template std::array<std::vector<float>, 2>
-quadrature::make_quadrature(cell::type, int);
-template std::array<std::vector<double>, 2>
-quadrature::make_quadrature(cell::type, int);
+quadrature::make_quadrature(quadrature::type, cell::type, polyset::type, int);
 
 template std::vector<float> quadrature::get_gl_points(int);
 template std::vector<double> quadrature::get_gl_points(int);

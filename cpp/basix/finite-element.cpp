@@ -20,6 +20,7 @@
 #include <basix/version.h>
 #include <cmath>
 #include <concepts>
+#include <limits>
 #include <numeric>
 
 #define str_macro(X) #X
@@ -106,7 +107,7 @@ constexpr int num_transformations(cell::type cell_type)
 //-----------------------------------------------------------------------------
 template <std::floating_point T>
 std::pair<std::vector<T>, std::array<std::size_t, 2>> compute_dual_matrix(
-    cell::type cell_type, mdspan_t<const T, 2> B,
+    cell::type cell_type, polyset::type poly_type, mdspan_t<const T, 2> B,
     const std::array<std::vector<impl::mdspan_t<const T, 2>>, 4>& x,
     const std::array<std::vector<impl::mdspan_t<const T, 4>>, 4>& M, int degree,
     int nderivs)
@@ -124,7 +125,7 @@ std::pair<std::vector<T>, std::array<std::size_t, 2>> compute_dual_matrix(
     }
   }
 
-  std::size_t pdim = polyset::dim(cell_type, degree);
+  std::size_t pdim = polyset::dim(cell_type, poly_type, degree);
   mdarray_t<T, 3> D(vs, pdim, num_dofs);
   std::fill(D.data(), D.data() + D.size(), 0);
   std::vector<T> Pb;
@@ -143,7 +144,7 @@ std::pair<std::vector<T>, std::array<std::size_t, 2>> compute_dual_matrix(
       {
         std::array<std::size_t, 3> shape;
         std::tie(Pb, shape)
-            = polyset::tabulate(cell_type, degree, nderivs, x_e);
+            = polyset::tabulate(cell_type, poly_type, degree, nderivs, x_e);
         P = mdspan_t<const T, 3>(Pb.data(), shape);
       }
 
@@ -232,7 +233,8 @@ basix::create_element(element::family family, cell::type cell, int degree,
          {element::family::HHJ, {false, false}},
          {element::family::CR, {false, false}},
          {element::family::bubble, {false, false}},
-         {element::family::Hermite, {false, false}}};
+         {element::family::Hermite, {false, false}},
+         {element::family::iso, {true, false}}};
   if (auto it = has_variant.find(family); it != has_variant.end())
   {
     if (it->second[0] == false and lvariant != element::lagrange_variant::unset)
@@ -321,6 +323,8 @@ basix::create_element(element::family family, cell::type cell, int degree,
     return element::create_cr<T>(cell, degree, discontinuous);
   case element::family::bubble:
     return element::create_bubble<T>(cell, degree, discontinuous);
+  case element::family::iso:
+    return element::create_iso<T>(cell, degree, lvariant, discontinuous);
   case element::family::Hermite:
     return element::create_hermite<T>(cell, degree, discontinuous);
   default:
@@ -434,10 +438,10 @@ FiniteElement<T> basix::create_custom_element(
     const std::array<std::vector<impl::mdspan_t<const T, 4>>, 4>& M,
     int interpolation_nderivs, maps::type map_type,
     sobolev::space sobolev_space, bool discontinuous,
-    int highest_complete_degree, int highest_degree)
+    int highest_complete_degree, int highest_degree, polyset::type poly_type)
 {
   // Check that inputs are valid
-  const std::size_t psize = polyset::dim(cell_type, highest_degree);
+  const std::size_t psize = polyset::dim(cell_type, poly_type, highest_degree);
   const std::size_t value_size = std::reduce(
       value_shape.begin(), value_shape.end(), 1, std::multiplies{});
   const std::size_t deriv_count
@@ -500,8 +504,9 @@ FiniteElement<T> basix::create_custom_element(
     }
   }
 
-  auto [dualmatrix, dualshape] = compute_dual_matrix(
-      cell_type, wcoeffs, x, M, highest_degree, interpolation_nderivs);
+  auto [dualmatrix, dualshape]
+      = compute_dual_matrix(cell_type, poly_type, wcoeffs, x, M, highest_degree,
+                            interpolation_nderivs);
   if (math::is_singular(mdspan_t<const T, 2>(dualmatrix.data(), dualshape)))
   {
     throw std::runtime_error(
@@ -509,10 +514,10 @@ FiniteElement<T> basix::create_custom_element(
   }
 
   return basix::FiniteElement<T>(
-      element::family::custom, cell_type, highest_degree, value_shape, wcoeffs,
-      x, M, interpolation_nderivs, map_type, sobolev_space, discontinuous,
-      highest_complete_degree, highest_degree, element::lagrange_variant::unset,
-      element::dpc_variant::unset);
+      element::family::custom, cell_type, poly_type, highest_degree,
+      value_shape, wcoeffs, x, M, interpolation_nderivs, map_type,
+      sobolev_space, discontinuous, highest_complete_degree, highest_degree,
+      element::lagrange_variant::unset, element::dpc_variant::unset);
 }
 //-----------------------------------------------------------------------------
 /// @cond
@@ -521,20 +526,21 @@ template FiniteElement<float> basix::create_custom_element(
     impl::mdspan_t<const float, 2> wcoeffs,
     const std::array<std::vector<impl::mdspan_t<const float, 2>>, 4>&,
     const std::array<std::vector<impl::mdspan_t<const float, 4>>, 4>&, int,
-    maps::type, sobolev::space sobolev_space, bool, int, int);
+    maps::type, sobolev::space sobolev_space, bool, int, int, polyset::type);
 template FiniteElement<double> basix::create_custom_element(
     cell::type, const std::vector<std::size_t>&,
     impl::mdspan_t<const double, 2> wcoeffs,
     const std::array<std::vector<impl::mdspan_t<const double, 2>>, 4>&,
     const std::array<std::vector<impl::mdspan_t<const double, 4>>, 4>&, int,
-    maps::type, sobolev::space sobolev_space, bool, int, int);
+    maps::type, sobolev::space sobolev_space, bool, int, int, polyset::type);
 /// @endcond
 //-----------------------------------------------------------------------------
 /// @cond
 template <std::floating_point F>
 FiniteElement<F>::FiniteElement(
-    element::family family, cell::type cell_type, int degree,
-    const std::vector<std::size_t>& value_shape, mdspan_t<const F, 2> wcoeffs,
+    element::family family, cell::type cell_type, polyset::type poly_type,
+    int degree, const std::vector<std::size_t>& value_shape,
+    mdspan_t<const F, 2> wcoeffs,
     const std::array<std::vector<mdspan_t<const F, 2>>, 4>& x,
     const std::array<std::vector<mdspan_t<const F, 4>>, 4>& M,
     int interpolation_nderivs, maps::type map_type,
@@ -544,7 +550,8 @@ FiniteElement<F>::FiniteElement(
     std::vector<std::tuple<std::vector<FiniteElement<F>>, std::vector<int>>>
         tensor_factors,
     std::vector<int> dof_ordering)
-    : _cell_type(cell_type), _cell_tdim(cell::topological_dimension(cell_type)),
+    : _cell_type(cell_type), _poly_type(poly_type),
+      _cell_tdim(cell::topological_dimension(cell_type)),
       _cell_subentity_types(cell::subentity_types(cell_type)), _family(family),
       _lagrange_variant(lvariant), _dpc_variant(dvariant), _degree(degree),
       _interpolation_nderivs(interpolation_nderivs),
@@ -588,8 +595,9 @@ FiniteElement<F>::FiniteElement(
             wcoeffs_ortho_b.begin());
   if (family != element::family::P)
     orthogonalise(wcoeffs_ortho);
-  _dual_matrix = compute_dual_matrix<F>(cell_type, wcoeffs_ortho, x, M,
-                                        highest_degree, interpolation_nderivs);
+  _dual_matrix
+      = compute_dual_matrix<F>(cell_type, poly_type, wcoeffs_ortho, x, M,
+                               highest_degree, interpolation_nderivs);
 
   _wcoeffs
       = {wcoeffs_ortho_b, {wcoeffs_ortho.extent(0), wcoeffs_ortho.extent(1)}};
@@ -755,7 +763,6 @@ FiniteElement<F>::FiniteElement(
   for (const auto& [ctype, trans_data] : _entity_transformations)
   {
     mdspan_t<const F, 3> trans(trans_data.first.data(), trans_data.second);
-
     for (std::size_t i = 0;
          _dof_transformations_are_permutations and i < trans.extent(0); ++i)
     {
@@ -770,15 +777,16 @@ FiniteElement<F>::FiniteElement(
           rtot += r;
         }
 
-        if ((trans.extent(2) != 1 and std::abs(rmin) > 1.0e-8)
-            or std::abs(rmax - 1.0) > 1.0e-8 or std::abs(rtot - 1.0) > 1.0e-8)
+        constexpr F eps = 10.0 * std::numeric_limits<float>::epsilon();
+        if ((trans.extent(2) != 1 and std::abs(rmin) > eps)
+            or std::abs(rmax - 1.0) > eps or std::abs(rtot - 1.0) > eps)
         {
           _dof_transformations_are_permutations = false;
           _dof_transformations_are_identity = false;
           break;
         }
 
-        if (std::abs(trans(i, row, row) - 1) > 1.0e-8)
+        if (std::abs(trans(i, row, row) - 1) > eps)
           _dof_transformations_are_identity = false;
       }
     }
@@ -842,7 +850,6 @@ FiniteElement<F>::FiniteElement(
     }
     else
     {
-
       // Precompute the DOF transformations
       for (const auto& [ctype, trans_data] : _entity_transformations)
       {
@@ -850,7 +857,6 @@ FiniteElement<F>::FiniteElement(
 
         // Buffers for matrices
         std::vector<F> M_b, Minv_b, matint;
-
         auto& etrans = _etrans.try_emplace(ctype).first->second;
         auto& etransT = _etransT.try_emplace(ctype).first->second;
         auto& etrans_invT = _etrans_invT.try_emplace(ctype).first->second;
@@ -868,7 +874,6 @@ FiniteElement<F>::FiniteElement(
           {
             const std::size_t dim = trans.extent(1);
             assert(dim == trans.extent(2));
-
             {
               std::pair<std::vector<F>, std::array<std::size_t, 2>> mat
                   = {std::vector<F>(dim * dim), {dim, dim}};
@@ -907,17 +912,12 @@ FiniteElement<F>::FiniteElement(
               matint.resize(dim * dim);
               mdspan_t<F, 2> mat_int(matint.data(), dim, dim);
               math::dot(M, M, mat_int);
-
               math::dot(mat_int, M, Minv);
             }
             else if (ctype == cell::type::triangle and i == 0)
-            {
               math::dot(M, M, Minv);
-            }
             else
-            {
               Minv_b.assign(M_b.begin(), M_b.end());
-            }
 
             {
               std::pair<std::vector<F>, std::array<std::size_t, 2>> mat_inv
@@ -955,7 +955,8 @@ FiniteElement<F>::FiniteElement(
     for (std::size_t col = 0; col < matM.extent(1); ++col)
     {
       F v = col == row ? 1.0 : 0.0;
-      if (std::abs(matM(row, col) - v) > 1.0e-12)
+      constexpr F eps = 100 * std::numeric_limits<F>::epsilon();
+      if (std::abs(matM(row, col) - v) > eps)
       {
         _interpolation_is_identity = false;
         break;
@@ -1035,12 +1036,13 @@ void FiniteElement<F>::tabulate(int nd, impl::mdspan_t<const F, 2> x,
                              + std::to_string(_cell_tdim) + ").");
   }
 
-  const std::size_t psize = polyset::dim(_cell_type, _highest_degree);
+  const std::size_t psize
+      = polyset::dim(_cell_type, _poly_type, _highest_degree);
   const std::array<std::size_t, 3> bsize
       = {(std::size_t)polyset::nderivs(_cell_type, nd), psize, x.extent(0)};
   std::vector<F> basis_b(bsize[0] * bsize[1] * bsize[2]);
   mdspan_t<F, 3> basis(basis_b.data(), bsize);
-  polyset::tabulate(basis, _cell_type, _highest_degree, nd, x);
+  polyset::tabulate(basis, _cell_type, _poly_type, _highest_degree, nd, x);
   const int vs = std::accumulate(_value_shape.begin(), _value_shape.end(), 1,
                                  std::multiplies{});
 

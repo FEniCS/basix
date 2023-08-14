@@ -68,8 +68,6 @@ def test_tensor_element_hash(inputs):
 def test_convert_ufl_element(e):
     e2 = basix.ufl.convert_ufl_element(e)
     # Check that element is hashable
-    print(type(e2))
-    print(e2)
     hash(e2)
 
 

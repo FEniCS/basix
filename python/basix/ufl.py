@@ -1208,9 +1208,7 @@ class _QuadratureElement(_ElementBase):
         self._points = points
         self._weights = weights
         repr = f"QuadratureElement({cell.name}, {points!r}, {weights!r}, {mapname})"
-        print(repr)
-
-        self._cell = cell
+        self._cell_type = cell
         self._entity_counts = [len(i) for i in _basix.topology(cell)]
 
         super().__init__(repr, "quadrature element", cell.name, value_shape, len(points), mapname=mapname)
@@ -1338,7 +1336,7 @@ class _QuadratureElement(_ElementBase):
     @property
     def cell_type(self) -> _basix.CellType:
         """Basix cell type used to initialise the element."""
-        return self._cell
+        return self._cell_type
 
     @property
     def discontinuous(self) -> bool:
@@ -1370,7 +1368,7 @@ class _RealElement(_ElementBase):
 
     def __init__(self, cell: _basix.CellType, value_shape: _typing.Tuple[int, ...]):
         """Initialise the element."""
-        self._cell = cell
+        self._cell_type = cell
         tdim = len(_basix.topology(cell)) - 1
 
         super().__init__(
@@ -1502,7 +1500,7 @@ class _RealElement(_ElementBase):
     @property
     def cell_type(self) -> _basix.CellType:
         """Basix cell type used to initialise the element."""
-        return self._cell
+        return self._cell_type
 
     @property
     def discontinuous(self) -> bool:

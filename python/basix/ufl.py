@@ -259,7 +259,7 @@ class _ElementBase(_FiniteElementBase):
         """True if the element has a custom quadrature rule."""
         return False
 
-    def custom_quadrature(self) -> _typing.Tuple(_npt.NDArray[_np.float64], _npt.NDArray[_np.float64]):
+    def custom_quadrature(self) -> _typing.Tuple[_npt.NDArray[_np.float64], _npt.NDArray[_np.float64]]:
         """True if the element has a custom quadrature rule."""
         raise ValueError("Element does not have a custom quadrature rule.")
 
@@ -1360,7 +1360,7 @@ class _QuadratureElement(_ElementBase):
         """True if the element has a custom quadrature rule."""
         return True
 
-    def custom_quadrature(self) -> _typing.Tuple(_npt.NDArray[_np.float64], _npt.NDArray[_np.float64]):
+    def custom_quadrature(self) -> _typing.Tuple[_npt.NDArray[_np.float64], _npt.NDArray[_np.float64]]:
         """True if the element has a custom quadrature rule."""
         return self._points, self._weights
 

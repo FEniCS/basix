@@ -85,5 +85,5 @@ def test_create_element(cell, degree, family, variant):
 
 
 def test_create_high_degree_lagrange():
-    element = basix.create_element(
+    basix.create_element(
         basix.ElementFamily.P, basix.CellType.hexahedron, 7, basix.LagrangeVariant.gll_isaac)

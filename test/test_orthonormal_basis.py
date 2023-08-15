@@ -121,6 +121,7 @@ def test_standard(cell_type, order):
 @pytest.mark.parametrize("cell_type", [
     basix.CellType.interval,
     basix.CellType.quadrilateral,
+    basix.CellType.hexahedron,
 ])
 @pytest.mark.parametrize("order", [0, 1, 2, 3, 4])
 def test_macroedge(cell_type, order):
@@ -133,5 +134,4 @@ def test_macroedge(cell_type, order):
     for i in range(ndofs):
         for j in range(ndofs):
             mat[i, j] = sum(basis[i, :] * basis[j, :] * Qwts)
-
     assert np.allclose(mat, np.eye(ndofs))

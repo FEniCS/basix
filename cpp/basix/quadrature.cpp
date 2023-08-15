@@ -4760,6 +4760,52 @@ make_macroedge_quadrature(quadrature::type rule, cell::type celltype, int m)
     }
     return {std::move(x), std::move(w)};
   }
+  case cell::type::hexahedron:
+  {
+    if (m == 0)
+    {
+      return standard_q;
+    }
+    const std::size_t npts = standard_q[0].size() / 3;
+    std::vector<T> x(npts * 24);
+    std::vector<T> w(npts * 8);
+    for (std::size_t i = 0; i < npts; ++i)
+    {
+      x[3 * i] = 0.5 * standard_q[0][3 * i];
+      x[3 * i + 1] = 0.5 * standard_q[0][3 * i + 1];
+      x[3 * i + 2] = 0.5 * standard_q[0][3 * i + 2];
+      x[3 * (npts + i)] = 0.5 + 0.5 * standard_q[0][3 * i];
+      x[3 * (npts + i) + 1] = 0.5 * standard_q[0][3 * i + 1];
+      x[3 * (npts + i) + 2] = 0.5 * standard_q[0][3 * i + 2];
+      x[3 * (2 * npts + i)] = 0.5 * standard_q[0][3 * i];
+      x[3 * (2 * npts + i) + 1] = 0.5 + 0.5 * standard_q[0][3 * i + 1];
+      x[3 * (2 * npts + i) + 2] = 0.5 * standard_q[0][3 * i + 2];
+      x[3 * (3 * npts + i)] = 0.5 + 0.5 * standard_q[0][3 * i];
+      x[3 * (3 * npts + i) + 1] = 0.5 + 0.5 * standard_q[0][3 * i + 1];
+      x[3 * (3 * npts + i) + 2] = 0.5 * standard_q[0][3 * i + 2];
+      x[3 * (4 * npts + i)] = 0.5 * standard_q[0][3 * i];
+      x[3 * (4 * npts + i) + 1] = 0.5 * standard_q[0][3 * i + 1];
+      x[3 * (4 * npts + i) + 2] = 0.5 + 0.5 * standard_q[0][3 * i + 2];
+      x[3 * (5 * npts + i)] = 0.5 + 0.5 * standard_q[0][3 * i];
+      x[3 * (5 * npts + i) + 1] = 0.5 * standard_q[0][3 * i + 1];
+      x[3 * (5 * npts + i) + 2] = 0.5 + 0.5 * standard_q[0][3 * i + 2];
+      x[3 * (6 * npts + i)] = 0.5 * standard_q[0][3 * i];
+      x[3 * (6 * npts + i) + 1] = 0.5 + 0.5 * standard_q[0][3 * i + 1];
+      x[3 * (6 * npts + i) + 2] = 0.5 + 0.5 * standard_q[0][3 * i + 2];
+      x[3 * (7 * npts + i)] = 0.5 + 0.5 * standard_q[0][3 * i];
+      x[3 * (7 * npts + i) + 1] = 0.5 + 0.5 * standard_q[0][3 * i + 1];
+      x[3 * (7 * npts + i) + 2] = 0.5 + 0.5 * standard_q[0][3 * i + 2];
+      w[i] = 0.125 * standard_q[1][i];
+      w[npts + i] = 0.125 * standard_q[1][i];
+      w[2 * npts + i] = 0.125 * standard_q[1][i];
+      w[3 * npts + i] = 0.125 * standard_q[1][i];
+      w[4 * npts + i] = 0.125 * standard_q[1][i];
+      w[5 * npts + i] = 0.125 * standard_q[1][i];
+      w[6 * npts + i] = 0.125 * standard_q[1][i];
+      w[7 * npts + i] = 0.125 * standard_q[1][i];
+    }
+    return {std::move(x), std::move(w)};
+  }
   default:
     throw std::runtime_error("Macro quadrature not supported on this cell.");
   }

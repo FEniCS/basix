@@ -227,8 +227,8 @@ void tabulate_polyset_line_macroedge_derivs(
 //-----------------------------------------------------------------------------
 
 /// Compute the complete set of derivatives from 0 to nderiv, for all
-/// the piecewise polynomials up to order n on a line segment split into two
-/// parts.
+/// the piecewise polynomials up to order n on a quadrilateral split into 4 by
+/// splitting each edge into so parts
 template <typename T>
 void tabulate_polyset_quadrilateral_macroedge_derivs(
     stdex::mdspan<T, stdex::dextents<std::size_t, 3>> P, std::size_t n,
@@ -282,7 +282,7 @@ void tabulate_polyset_quadrilateral_macroedge_derivs(
           value += factorials[k] * x_term;
         }
       }
-      for (std::size_t dy = 0; dy <= nderiv; ++dy)
+      for (std::size_t dy = 0; dy <= nderiv - dx; ++dy)
         for (std::size_t jy = 0; jy < 2 * n + 1; ++jy)
           P(idx(dx, dy), quad_idx(0, jy), p) = value;
     }
@@ -314,7 +314,7 @@ void tabulate_polyset_quadrilateral_macroedge_derivs(
           value *= pow(0.5 - x0[p], n - j - dx);
           for (std::size_t i = n - j; i > n - j - dx; --i)
             value *= -i;
-          for (std::size_t dy = 0; dy <= nderiv; ++dy)
+          for (std::size_t dy = 0; dy <= nderiv - dx; ++dy)
             for (std::size_t jy = 0; jy < 2 * n + 1; ++jy)
               P(idx(dx, dy), quad_idx(j + 1, jy), p) = value;
         }
@@ -331,7 +331,7 @@ void tabulate_polyset_quadrilateral_macroedge_derivs(
           value *= pow(x0[p] - 0.5, n - j - dx);
           for (std::size_t i = n - j; i > n - j - dx; --i)
             value *= i;
-          for (std::size_t dy = 0; dy <= nderiv; ++dy)
+          for (std::size_t dy = 0; dy <= nderiv - dx; ++dy)
             for (std::size_t jy = 0; jy < 2 * n + 1; ++jy)
               P(idx(dx, dy), quad_idx(j + n + 1, jy), p) = value;
         }
@@ -370,7 +370,7 @@ void tabulate_polyset_quadrilateral_macroedge_derivs(
           value += factorials[k] * y_term;
         }
       }
-      for (std::size_t dx = 0; dx <= nderiv; ++dx)
+      for (std::size_t dx = 0; dx <= nderiv - dy; ++dx)
         for (std::size_t jx = 0; jx < 2 * n + 1; ++jx)
           P(idx(dx, dy), quad_idx(jx, 0), p) *= value;
     }
@@ -402,12 +402,14 @@ void tabulate_polyset_quadrilateral_macroedge_derivs(
           value *= pow(0.5 - x1[p], n - j - dy);
           for (std::size_t i = n - j; i > n - j - dy; --i)
             value *= -i;
-          for (std::size_t dx = 0; dx <= nderiv; ++dx)
+          for (std::size_t dx = 0; dx <= nderiv - dy; ++dx)
+          {
             for (std::size_t jx = 0; jx < 2 * n + 1; ++jx)
             {
               P(idx(dx, dy), quad_idx(jx, j + 1), p) *= value;
               P(idx(dx, dy), quad_idx(jx, j + n + 1), p) *= 0.0;
             }
+          }
         }
         else
         {
@@ -422,12 +424,346 @@ void tabulate_polyset_quadrilateral_macroedge_derivs(
           value *= pow(x1[p] - 0.5, n - j - dy);
           for (std::size_t i = n - j; i > n - j - dy; --i)
             value *= i;
-          for (std::size_t dx = 0; dx <= nderiv; ++dx)
+          for (std::size_t dx = 0; dx <= nderiv - dy; ++dx)
           {
             for (std::size_t jx = 0; jx < 2 * n + 1; ++jx)
             {
               P(idx(dx, dy), quad_idx(jx, j + 1), p) *= 0.0;
               P(idx(dx, dy), quad_idx(jx, j + n + 1), p) *= value;
+            }
+          }
+        }
+      }
+    }
+  }
+}
+//-----------------------------------------------------------------------------
+/// Compute the complete set of derivatives from 0 to nderiv, for all
+/// the piecewise polynomials up to order n on a hexahedron split into 4 by
+/// splitting each edge into so parts
+template <typename T>
+void tabulate_polyset_hexahedron_macroedge_derivs(
+    stdex::mdspan<T, stdex::dextents<std::size_t, 3>> P, std::size_t n,
+    std::size_t nderiv,
+    stdex::mdspan<const T, stdex::dextents<std::size_t, 2>> x)
+{
+  assert(x.extent(0) > 0);
+  assert(P.extent(0) == nderiv + 1);
+  assert(P.extent(1) == (2 * n + 1) * (2 * n + 1) * (2 * n + 1));
+  assert(P.extent(2) == x.extent(0));
+
+  // Indexing for hexahedral basis functions
+  auto hex_idx
+      = [n](std::size_t px, std::size_t py, std::size_t pz) -> std::size_t
+  { return (2 * n + 1) * (2 * n + 1) * px + (2 * n + 1) * py + pz; };
+
+  auto x0 = stdex::submdspan(x, stdex::full_extent, 0);
+  auto x1 = stdex::submdspan(x, stdex::full_extent, 1);
+  auto x2 = stdex::submdspan(x, stdex::full_extent, 2);
+
+  std::fill(P.data_handle(), P.data_handle() + P.size(), 0.0);
+
+  std::vector<T> factorials(n + 1, 0.0);
+
+  // Fill with values of polynomials in x
+  for (std::size_t k = 0; k <= n; ++k)
+  {
+    factorials[k] = (k % 2 == 0 ? 1 : -1) * single_choose(2 * n + 1 - k, n - k)
+                    * single_choose(n, k) * pow(2, n - k);
+  }
+  for (std::size_t dx = 0; dx <= nderiv; ++dx)
+  {
+    for (std::size_t p = 0; p < P.extent(2); ++p)
+    {
+      T value = 0.0;
+      if (x0[p] <= 0.5)
+      {
+        for (std::size_t k = 0; k + dx <= n; ++k)
+        {
+          T x_term = pow(x0[p], n - k - dx);
+          for (std::size_t i = n - k; i > n - k - dx; --i)
+            x_term *= i;
+          value += factorials[k] * x_term;
+        }
+      }
+      else
+      {
+        for (std::size_t k = 0; k + dx <= n; ++k)
+        {
+          T x_term = pow(1.0 - x0[p], n - k - dx);
+          for (std::size_t i = n - k; i > n - k - dx; --i)
+            x_term *= -i;
+          value += factorials[k] * x_term;
+        }
+      }
+      for (std::size_t dy = 0; dy <= nderiv - dx; ++dy)
+        for (std::size_t dz = 0; dz <= nderiv - dy - dx; ++dz)
+          for (std::size_t jy = 0; jy < 2 * n + 1; ++jy)
+            for (std::size_t jz = 0; jz < 2 * n + 1; ++jz)
+              P(idx(dx, dy, dz), hex_idx(0, jy, jz), p) = value;
+    }
+  }
+
+  for (std::size_t j = 0; j < n; ++j)
+  {
+    for (std::size_t k = 0; k <= j; ++k)
+    {
+      factorials[k] = (k % 2 == 0 ? 1 : -1)
+                      * single_choose(2 * n + 1 - k, j - k)
+                      * single_choose(j, k) * pow(2, j - k) * pow(2, n - j)
+                      * sqrt(4 * (n - j) + 2);
+    }
+    for (std::size_t dx = 0; dx <= nderiv; ++dx)
+    {
+      for (std::size_t p = 0; p < P.extent(2); ++p)
+      {
+        if (x0[p] <= 0.5)
+        {
+          T value = 0.0;
+          for (std::size_t k = 0; k + dx <= j; ++k)
+          {
+            T x_term = pow(x0[p], j - k - dx);
+            for (std::size_t i = j - k; i > j - k - dx; --i)
+              x_term *= i;
+            value += factorials[k] * x_term;
+          }
+          value *= pow(0.5 - x0[p], n - j - dx);
+          for (std::size_t i = n - j; i > n - j - dx; --i)
+            value *= -i;
+          for (std::size_t dy = 0; dy <= nderiv - dx; ++dy)
+            for (std::size_t dz = 0; dz <= nderiv - dy - dx; ++dz)
+              for (std::size_t jy = 0; jy < 2 * n + 1; ++jy)
+                for (std::size_t jz = 0; jz < 2 * n + 1; ++jz)
+                  P(idx(dx, dy, dz), hex_idx(j + 1, jy, jz), p) = value;
+        }
+        else
+        {
+          T value = 0.0;
+          for (std::size_t k = 0; k + dx <= j; ++k)
+          {
+            T x_term = pow(1.0 - x0[p], j - k - dx);
+            for (std::size_t i = j - k; i > j - k - dx; --i)
+              x_term *= -i;
+            value += factorials[k] * x_term;
+          }
+          value *= pow(x0[p] - 0.5, n - j - dx);
+          for (std::size_t i = n - j; i > n - j - dx; --i)
+            value *= i;
+          for (std::size_t dy = 0; dy <= nderiv - dx; ++dy)
+            for (std::size_t dz = 0; dz <= nderiv - dy - dx; ++dz)
+              for (std::size_t jy = 0; jy < 2 * n + 1; ++jy)
+                for (std::size_t jz = 0; jz < 2 * n + 1; ++jz)
+                  P(idx(dx, dy, dz), hex_idx(j + n + 1, jy, jz), p) = value;
+        }
+      }
+    }
+  }
+
+  // Multiply by values of polynomials in y
+  for (std::size_t k = 0; k <= n; ++k)
+  {
+    factorials[k] = (k % 2 == 0 ? 1 : -1) * single_choose(2 * n + 1 - k, n - k)
+                    * single_choose(n, k) * pow(2, n - k);
+  }
+  for (std::size_t dy = 0; dy <= nderiv; ++dy)
+  {
+    for (std::size_t p = 0; p < P.extent(2); ++p)
+    {
+      T value = 0.0;
+      if (x1[p] <= 0.5)
+      {
+        for (std::size_t k = 0; k + dy <= n; ++k)
+        {
+          T y_term = pow(x1[p], n - k - dy);
+          for (std::size_t i = n - k; i > n - k - dy; --i)
+            y_term *= i;
+          value += factorials[k] * y_term;
+        }
+      }
+      else
+      {
+        for (std::size_t k = 0; k + dy <= n; ++k)
+        {
+          T y_term = pow(1.0 - x1[p], n - k - dy);
+          for (std::size_t i = n - k; i > n - k - dy; --i)
+            y_term *= -i;
+          value += factorials[k] * y_term;
+        }
+      }
+      for (std::size_t dx = 0; dx <= nderiv - dy; ++dx)
+        for (std::size_t dz = 0; dz <= nderiv - dx - dy; ++dz)
+          for (std::size_t jx = 0; jx < 2 * n + 1; ++jx)
+            for (std::size_t jz = 0; jz < 2 * n + 1; ++jz)
+              P(idx(dx, dy, dz), hex_idx(jx, 0, jz), p) *= value;
+    }
+  }
+
+  for (std::size_t j = 0; j < n; ++j)
+  {
+    for (std::size_t k = 0; k <= j; ++k)
+    {
+      factorials[k] = (k % 2 == 0 ? 1 : -1)
+                      * single_choose(2 * n + 1 - k, j - k)
+                      * single_choose(j, k) * pow(2, j - k) * pow(2, n - j)
+                      * sqrt(4 * (n - j) + 2);
+    }
+    for (std::size_t dy = 0; dy <= nderiv; ++dy)
+    {
+      for (std::size_t p = 0; p < P.extent(2); ++p)
+      {
+        if (x1[p] <= 0.5)
+        {
+          T value = 0.0;
+          for (std::size_t k = 0; k + dy <= j; ++k)
+          {
+            T y_term = pow(x1[p], j - k - dy);
+            for (std::size_t i = j - k; i > j - k - dy; --i)
+              y_term *= i;
+            value += factorials[k] * y_term;
+          }
+          value *= pow(0.5 - x1[p], n - j - dy);
+          for (std::size_t i = n - j; i > n - j - dy; --i)
+            value *= -i;
+          for (std::size_t dx = 0; dx <= nderiv - dy; ++dx)
+            for (std::size_t dz = 0; dz <= nderiv - dx - dy; ++dz)
+              for (std::size_t jx = 0; jx < 2 * n + 1; ++jx)
+                for (std::size_t jz = 0; jz < 2 * n + 1; ++jz)
+                {
+                  P(idx(dx, dy, dz), hex_idx(jx, j + 1, jz), p) *= value;
+                  P(idx(dx, dy, dz), hex_idx(jx, j + n + 1, jz), p) *= 0.0;
+                }
+        }
+        else
+        {
+          T value = 0.0;
+          for (std::size_t k = 0; k + dy <= j; ++k)
+          {
+            T y_term = pow(1.0 - x1[p], j - k - dy);
+            for (std::size_t i = j - k; i > j - k - dy; --i)
+              y_term *= -i;
+            value += factorials[k] * y_term;
+          }
+          value *= pow(x1[p] - 0.5, n - j - dy);
+          for (std::size_t i = n - j; i > n - j - dy; --i)
+            value *= i;
+          for (std::size_t dx = 0; dx <= nderiv - dy; ++dx)
+          {
+            for (std::size_t dz = 0; dz <= nderiv - dx - dy; ++dz)
+            {
+              for (std::size_t jx = 0; jx < 2 * n + 1; ++jx)
+              {
+                for (std::size_t jz = 0; jz < 2 * n + 1; ++jz)
+                {
+                  P(idx(dx, dy, dz), hex_idx(jx, j + 1, jz), p) *= 0.0;
+                  P(idx(dx, dy, dz), hex_idx(jx, j + n + 1, jz), p) *= value;
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  // Multiply by values of polynomials in z
+  for (std::size_t k = 0; k <= n; ++k)
+  {
+    factorials[k] = (k % 2 == 0 ? 1 : -1) * single_choose(2 * n + 1 - k, n - k)
+                    * single_choose(n, k) * pow(2, n - k);
+  }
+  for (std::size_t dz = 0; dz <= nderiv; ++dz)
+  {
+    for (std::size_t p = 0; p < P.extent(2); ++p)
+    {
+      T value = 0.0;
+      if (x2[p] <= 0.5)
+      {
+        for (std::size_t k = 0; k + dz <= n; ++k)
+        {
+          T z_term = pow(x2[p], n - k - dz);
+          for (std::size_t i = n - k; i > n - k - dz; --i)
+            z_term *= i;
+          value += factorials[k] * z_term;
+        }
+      }
+      else
+      {
+        for (std::size_t k = 0; k + dz <= n; ++k)
+        {
+          T z_term = pow(1.0 - x2[p], n - k - dz);
+          for (std::size_t i = n - k; i > n - k - dz; --i)
+            z_term *= -i;
+          value += factorials[k] * z_term;
+        }
+      }
+      for (std::size_t dx = 0; dx <= nderiv - dz; ++dx)
+        for (std::size_t dy = 0; dy <= nderiv - dx - dz; ++dy)
+          for (std::size_t jx = 0; jx < 2 * n + 1; ++jx)
+            for (std::size_t jy = 0; jy < 2 * n + 1; ++jy)
+              P(idx(dx, dy, dz), hex_idx(jx, jy, 0), p) *= value;
+    }
+  }
+
+  for (std::size_t j = 0; j < n; ++j)
+  {
+    for (std::size_t k = 0; k <= j; ++k)
+    {
+      factorials[k] = (k % 2 == 0 ? 1 : -1)
+                      * single_choose(2 * n + 1 - k, j - k)
+                      * single_choose(j, k) * pow(2, j - k) * pow(2, n - j)
+                      * sqrt(4 * (n - j) + 2);
+    }
+    for (std::size_t dz = 0; dz <= nderiv; ++dz)
+    {
+      for (std::size_t p = 0; p < P.extent(2); ++p)
+      {
+        if (x2[p] <= 0.5)
+        {
+          T value = 0.0;
+          for (std::size_t k = 0; k + dz <= j; ++k)
+          {
+            T z_term = pow(x2[p], j - k - dz);
+            for (std::size_t i = j - k; i > j - k - dz; --i)
+              z_term *= i;
+            value += factorials[k] * z_term;
+          }
+          value *= pow(0.5 - x2[p], n - j - dz);
+          for (std::size_t i = n - j; i > n - j - dz; --i)
+            value *= -i;
+          for (std::size_t dx = 0; dx <= nderiv - dz; ++dx)
+            for (std::size_t dy = 0; dy <= nderiv - dx - dz; ++dy)
+              for (std::size_t jx = 0; jx < 2 * n + 1; ++jx)
+                for (std::size_t jy = 0; jy < 2 * n + 1; ++jy)
+                {
+                  P(idx(dx, dy, dz), hex_idx(jx, jy, j + 1), p) *= value;
+                  P(idx(dx, dy, dz), hex_idx(jx, jy, j + n + 1), p) *= 0.0;
+                }
+        }
+        else
+        {
+          T value = 0.0;
+          for (std::size_t k = 0; k + dz <= j; ++k)
+          {
+            T z_term = pow(1.0 - x2[p], j - k - dz);
+            for (std::size_t i = j - k; i > j - k - dz; --i)
+              z_term *= -i;
+            value += factorials[k] * z_term;
+          }
+          value *= pow(x2[p] - 0.5, n - j - dz);
+          for (std::size_t i = n - j; i > n - j - dz; --i)
+            value *= i;
+          for (std::size_t dx = 0; dx <= nderiv - dz; ++dx)
+          {
+            for (std::size_t dy = 0; dy <= nderiv - dx - dz; ++dy)
+            {
+              for (std::size_t jx = 0; jx < 2 * n + 1; ++jx)
+              {
+                for (std::size_t jy = 0; jy < 2 * n + 1; ++jy)
+                {
+                  P(idx(dx, dy, dz), hex_idx(jx, jy, j + 1), p) *= 0.0;
+                  P(idx(dx, dy, dz), hex_idx(jx, jy, j + n + 1), p) *= value;
+                }
+              }
             }
           }
         }
@@ -1854,6 +2190,9 @@ void polyset::tabulate(
     case cell::type::quadrilateral:
       tabulate_polyset_quadrilateral_macroedge_derivs(P, d, n, x);
       return;
+    case cell::type::hexahedron:
+      tabulate_polyset_hexahedron_macroedge_derivs(P, d, n, x);
+      return;
     default:
       throw std::runtime_error("Polynomial set: unsupported cell type");
     }
@@ -1926,6 +2265,8 @@ int polyset::dim(cell::type celltype, polyset::type ptype, int d)
       return 2 * d + 1;
     case cell::type::quadrilateral:
       return (2 * d + 1) * (2 * d + 1);
+    case cell::type::hexahedron:
+      return (2 * d + 1) * (2 * d + 1) * (2 * d + 1);
     default:
       return 1;
     }

@@ -4734,6 +4734,32 @@ make_macroedge_quadrature(quadrature::type rule, cell::type celltype, int m)
     }
     return {std::move(x), std::move(w)};
   }
+  case cell::type::triangle:
+  {
+    if (m == 0)
+    {
+      return standard_q;
+    }
+    const std::size_t npts = standard_q[0].size() / 2;
+    std::vector<T> x(npts * 8);
+    std::vector<T> w(npts * 4);
+    for (std::size_t i = 0; i < npts; ++i)
+    {
+      x[2 * i] = 0.5 * standard_q[0][2 * i];
+      x[2 * i + 1] = 0.5 * standard_q[0][2 * i + 1];
+      x[2 * (npts + i)] = 0.5 + 0.5 * standard_q[0][2 * i];
+      x[2 * (npts + i) + 1] = 0.5 * standard_q[0][2 * i + 1];
+      x[2 * (2 * npts + i)] = 0.5 * standard_q[0][2 * i];
+      x[2 * (2 * npts + i) + 1] = 0.5 + 0.5 * standard_q[0][2 * i + 1];
+      x[2 * (3 * npts + i)] = 0.5 - 0.5 * standard_q[0][2 * i];
+      x[2 * (3 * npts + i) + 1] = 0.5 - 0.5 * standard_q[0][2 * i + 1];
+      w[i] = 0.25 * standard_q[1][i];
+      w[npts + i] = 0.25 * standard_q[1][i];
+      w[2 * npts + i] = 0.25 * standard_q[1][i];
+      w[3 * npts + i] = 0.25 * standard_q[1][i];
+    }
+    return {std::move(x), std::move(w)};
+  }
   case cell::type::quadrilateral:
   {
     if (m == 0)

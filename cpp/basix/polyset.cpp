@@ -228,7 +228,7 @@ void tabulate_polyset_line_macroedge_derivs(
 
 /// Compute the complete set of derivatives from 0 to nderiv, for all
 /// the piecewise polynomials up to order n on a quadrilateral split into 4 by
-/// splitting each edge into so parts
+/// splitting each edge into two parts
 template <typename T>
 void tabulate_polyset_quadrilateral_macroedge_derivs(
     stdex::mdspan<T, stdex::dextents<std::size_t, 3>> P, std::size_t n,
@@ -437,10 +437,110 @@ void tabulate_polyset_quadrilateral_macroedge_derivs(
     }
   }
 }
+
+//-----------------------------------------------------------------------------
+/// Compute the complete set of derivatives from 0 to nderiv, for all
+/// the piecewise polynomials up to order n on a triangle split into 4 by
+/// splitting each edge into two parts
+template <typename T>
+void tabulate_polyset_triangle_macroedge_derivs(
+    stdex::mdspan<T, stdex::dextents<std::size_t, 3>> P, std::size_t n,
+    std::size_t nderiv,
+    stdex::mdspan<const T, stdex::dextents<std::size_t, 2>> x)
+{
+  assert(x.extent(0) > 0);
+  assert(P.extent(0) == nderiv + 1);
+  assert(P.extent(1) == (n + 1) * (2 * n + 1));
+  assert(P.extent(2) == x.extent(0));
+
+  auto x0 = stdex::submdspan(x, stdex::full_extent, 0);
+  auto x1 = stdex::submdspan(x, stdex::full_extent, 1);
+
+  std::fill(P.data_handle(), P.data_handle() + P.size(), 0.0);
+
+  if (n == 0)
+  {
+    for (std::size_t p = 0; p < P.extent(2); ++p)
+      P(idx(0, 0), 0, p) = std::sqrt(2);
+  }
+  else if (n == 1)
+  {
+    for (std::size_t p = 0; p < P.extent(2); ++p)
+    {
+      if (x0[p] + x1[p] < 0.5)
+      {
+        P(idx(0, 0), 0, p) = 4 * std::sqrt(3) * (-2 * x0[p] - 2 * x1[p] + 1);
+        P(idx(0, 0), 3, p) = 8 * std::sqrt(5) * (3 * x0[p] + x1[p] - 1 / 2) / 5;
+        P(idx(0, 0), 4, p)
+            = 2 * std::sqrt(30) * (2 * x0[p] / 5 + 14 * x1[p] / 5 - 2 / 5) / 3;
+        P(idx(0, 0), 5, p)
+            = 4 * std::sqrt(2) * (-4 * x0[p] / 3 - 4 * x1[p] / 3 + 1 / 3);
+        if (nderiv > 0)
+        {
+          P(idx(1, 0), 0, p) = -8 * std::sqrt(3);
+          P(idx(1, 0), 3, p) = std::sqrt(5) * 24 / 5;
+          P(idx(1, 0), 4, p) = std::sqrt(30) * 4 / 15;
+          P(idx(1, 0), 5, p) = -16 * std::sqrt(2) / 3;
+          P(idx(0, 1), 0, p) = -8 * std::sqrt(3);
+          P(idx(0, 1), 3, p) = 8 * std::sqrt(5) / 5;
+          P(idx(0, 1), 4, p) = 28 * std::sqrt(30) / 15;
+          P(idx(0, 1), 5, p) = -16 * std::sqrt(2) / 3;
+        }
+      }
+      else if (x0[p] > 0.5)
+      {
+        P(idx(0, 0), 1, p) = 4 * std::sqrt(3) * (2 * x0[p] - 1);
+        P(idx(0, 0), 3, p) = 8 * std::sqrt(5) * (3 - 4 * x0[p]) / 5;
+        P(idx(0, 0), 4, p) = 2 * std::sqrt(30) * (4 * x0[p] / 5 - 3 / 5) / 3;
+        P(idx(0, 0), 5, p) = 4 * std::sqrt(2) * (x0[p] / 3 + 2 * x1[p] - 1 / 2);
+        if (nderiv > 0)
+        {
+          P(idx(1, 0), 1, p) = 8 * std::sqrt(3);
+          P(idx(1, 0), 3, p) = -32 * std::sqrt(5) / 5;
+          P(idx(1, 0), 4, p) = 8 * std::sqrt(30) / 15;
+          P(idx(1, 0), 5, p) = 4 * std::sqrt(2) / 3;
+          P(idx(0, 1), 5, p) = 8 * std::sqrt(2);
+        }
+      }
+      else if (x1[p] > 0.5)
+      {
+        P(idx(0, 0), 4, p) = 2 * std::sqrt(30) * (3 - 4 * x1[p]) / 3;
+        P(idx(0, 0), 5, p) = 4 * std::sqrt(2) * (2 * x0[p] + x1[p] / 3 - 1 / 2);
+        if (nderiv > 0)
+        {
+          P(idx(1, 0), 5, p) = 8 * std::sqrt(2);
+          P(idx(0, 1), 4, p) = -8 * std::sqrt(30) / 3;
+          P(idx(0, 1), 5, p) = 4 * std::sqrt(2) / 3;
+        }
+      }
+      else
+      {
+        P(idx(0, 0), 3, p) = 8 * std::sqrt(5) * (1 - 2 * x1[p]) / 5;
+        P(idx(0, 0), 4, p)
+            = 2 * std::sqrt(30) * (-2 * x0[p] + 2 * x1[p] / 5 + 4 / 5) / 3;
+        P(idx(0, 0), 5, p)
+            = 4 * std::sqrt(2) * (8 * x0[p] / 3 + 8 * x1[p] / 3 - 5 / 3);
+        if (nderiv > 0)
+        {
+          P(idx(1, 0), 4, p) = -4 * std::sqrt(30) / 3;
+          P(idx(1, 0), 5, p) = 32 * std::sqrt(2) / 3;
+          P(idx(0, 1), 3, p) = -16 * std::sqrt(5) / 5;
+          P(idx(0, 1), 4, p) = 4 * std::sqrt(30) / 15;
+          P(idx(0, 1), 5, p) = 32 * std::sqrt(2) / 3;
+        }
+      }
+    }
+  }
+  else
+  {
+    throw std::runtime_error("Only degree 0 and 1 macro polysets are currently "
+                             "implemented on a triangle.");
+  }
+}
 //-----------------------------------------------------------------------------
 /// Compute the complete set of derivatives from 0 to nderiv, for all
 /// the piecewise polynomials up to order n on a hexahedron split into 4 by
-/// splitting each edge into so parts
+/// splitting each edge into two parts
 template <typename T>
 void tabulate_polyset_hexahedron_macroedge_derivs(
     stdex::mdspan<T, stdex::dextents<std::size_t, 3>> P, std::size_t n,
@@ -2187,6 +2287,9 @@ void polyset::tabulate(
     case cell::type::interval:
       tabulate_polyset_line_macroedge_derivs(P, d, n, x);
       return;
+    case cell::type::triangle:
+      tabulate_polyset_triangle_macroedge_derivs(P, d, n, x);
+      return;
     case cell::type::quadrilateral:
       tabulate_polyset_quadrilateral_macroedge_derivs(P, d, n, x);
       return;
@@ -2263,6 +2366,8 @@ int polyset::dim(cell::type celltype, polyset::type ptype, int d)
       return 1;
     case cell::type::interval:
       return 2 * d + 1;
+    case cell::type::triangle:
+      return (d + 1) * (2 * d + 1);
     case cell::type::quadrilateral:
       return (2 * d + 1) * (2 * d + 1);
     case cell::type::hexahedron:

@@ -310,7 +310,7 @@ template <typename U, typename V, typename W>
 void dot(const U& A, const V& B, W&& C)
 {
   assert(A.extent(1) == B.extent(0));
-  assert(C.extent(0) == C.extent(0));
+  assert(C.extent(0) == A.extent(0));
   assert(C.extent(1) == B.extent(1));
   if (A.extent(0) * B.extent(1) * A.extent(1) < 4096)
   {

@@ -851,7 +851,7 @@ create_d_iso(cell::type celltype, int degree, element::lagrange_variant variant,
     _M(i, 0, i, 0) = 1.0;
 
   return FiniteElement(
-      element::family::P, celltype, polyset::type::macroedge, degree, {},
+      element::family::iso, celltype, polyset::type::macroedge, degree, {},
       impl::mdspan_t<const T, 2>(math::eye<T>(ndofs).data(), ndofs, ndofs),
       impl::to_mdspan(x), impl::to_mdspan(M), 0, maps::type::identity,
       sobolev::space::L2, true, degree, degree, variant,
@@ -1576,7 +1576,7 @@ FiniteElement<T> basix::element::create_iso(cell::type celltype, int degree,
   auto tensor_factors
       = create_tensor_product_factors<T>(celltype, degree, variant);
   return FiniteElement<T>(
-      family::P, celltype, polyset::type::macroedge, degree, {},
+      family::iso, celltype, polyset::type::macroedge, degree, {},
       impl::mdspan_t<T, 2>(math::eye<T>(ndofs).data(), ndofs, ndofs), xview,
       Mview, 0, maps::type::identity, space, discontinuous, degree, degree,
       variant, dpc_variant::unset, tensor_factors);

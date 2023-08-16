@@ -470,63 +470,78 @@ void tabulate_polyset_triangle_macroedge_derivs(
       if (x0[p] + x1[p] < 0.5)
       {
         P(idx(0, 0), 0, p) = 4 * std::sqrt(3) * (-2 * x0[p] - 2 * x1[p] + 1);
-        P(idx(0, 0), 3, p) = 8 * std::sqrt(5) * (3 * x0[p] + x1[p] - 1 / 2) / 5;
-        P(idx(0, 0), 4, p)
-            = 2 * std::sqrt(30) * (2 * x0[p] / 5 + 14 * x1[p] / 5 - 2 / 5) / 3;
-        P(idx(0, 0), 5, p)
-            = 4 * std::sqrt(2) * (-4 * x0[p] / 3 - 4 * x1[p] / 3 + 1 / 3);
+        P(idx(0, 0), 3, p)
+            = 4 * std::sqrt(30) * (3 * x0[p] + x1[p] - 1.0 / 2) / 5;
+        P(idx(0, 0), 4, p) = 8 * std::sqrt(2730)
+                             * (x0[p] / 10 + 27 * x1[p] / 10 - 7.0 / 20) / 91;
+        P(idx(0, 0), 5, p) = 2 * std::sqrt(273)
+                             * (-12 * x0[p] / 13 - 12 * x1[p] / 13 + 3.0 / 13)
+                             / 7;
         if (nderiv > 0)
         {
           P(idx(1, 0), 0, p) = -8 * std::sqrt(3);
-          P(idx(1, 0), 3, p) = std::sqrt(5) * 24 / 5;
-          P(idx(1, 0), 4, p) = std::sqrt(30) * 4 / 15;
-          P(idx(1, 0), 5, p) = -16 * std::sqrt(2) / 3;
+          P(idx(1, 0), 3, p) = 12 * std::sqrt(30) / 5;
+          P(idx(1, 0), 4, p) = 4 * std::sqrt(2730) / 455;
+          P(idx(1, 0), 5, p) = -24 * std::sqrt(273) / 91;
           P(idx(0, 1), 0, p) = -8 * std::sqrt(3);
-          P(idx(0, 1), 3, p) = 8 * std::sqrt(5) / 5;
-          P(idx(0, 1), 4, p) = 28 * std::sqrt(30) / 15;
-          P(idx(0, 1), 5, p) = -16 * std::sqrt(2) / 3;
+          P(idx(0, 1), 3, p) = 4 * std::sqrt(30) / 5;
+          P(idx(0, 1), 4, p) = 108 * std::sqrt(2730) / 455;
+          P(idx(0, 1), 5, p) = -24 * std::sqrt(273) / 91;
         }
       }
       else if (x0[p] > 0.5)
       {
         P(idx(0, 0), 1, p) = 4 * std::sqrt(3) * (2 * x0[p] - 1);
-        P(idx(0, 0), 3, p) = 8 * std::sqrt(5) * (3 - 4 * x0[p]) / 5;
-        P(idx(0, 0), 4, p) = 2 * std::sqrt(30) * (4 * x0[p] / 5 - 3 / 5) / 3;
-        P(idx(0, 0), 5, p) = 4 * std::sqrt(2) * (x0[p] / 3 + 2 * x1[p] - 1 / 2);
+        P(idx(0, 0), 3, p)
+            = 4 * std::sqrt(30) * (-3 * x0[p] - 2 * x1[p] + 5.0 / 2) / 5;
+        P(idx(0, 0), 4, p) = 8 * std::sqrt(2730)
+                             * (9 * x0[p] / 10 + 3 * x1[p] / 5 - 3.0 / 4) / 91;
+        P(idx(0, 0), 5, p) = 2 * std::sqrt(273)
+                             * (-4 * x0[p] / 13 + 32 * x1[p] / 13 - 1.0 / 13)
+                             / 7;
         if (nderiv > 0)
         {
           P(idx(1, 0), 1, p) = 8 * std::sqrt(3);
-          P(idx(1, 0), 3, p) = -32 * std::sqrt(5) / 5;
-          P(idx(1, 0), 4, p) = 8 * std::sqrt(30) / 15;
-          P(idx(1, 0), 5, p) = 4 * std::sqrt(2) / 3;
-          P(idx(0, 1), 5, p) = 8 * std::sqrt(2);
+          P(idx(1, 0), 3, p) = -12 * std::sqrt(30) / 5;
+          P(idx(1, 0), 4, p) = 36 * std::sqrt(2730) / 455;
+          P(idx(1, 0), 5, p) = -8 * std::sqrt(273) / 91;
+          P(idx(0, 1), 3, p) = -8 * std::sqrt(30) / 5;
+          P(idx(0, 1), 4, p) = 24 * std::sqrt(2730) / 455;
+          P(idx(0, 1), 5, p) = 64 * std::sqrt(273) / 91;
         }
       }
       else if (x1[p] > 0.5)
       {
-        P(idx(0, 0), 4, p) = 2 * std::sqrt(30) * (3 - 4 * x1[p]) / 3;
-        P(idx(0, 0), 5, p) = 4 * std::sqrt(2) * (2 * x0[p] + x1[p] / 3 - 1 / 2);
+        P(idx(0, 0), 2, p) = 4 * std::sqrt(3) * (2 * x1[p] - 1);
+        P(idx(0, 0), 4, p)
+            = 8 * std::sqrt(2730) * (-2 * x0[p] - 3 * x1[p] + 5.0 / 2) / 91;
+        P(idx(0, 0), 5, p) = 2 * std::sqrt(273)
+                             * (32 * x0[p] / 13 - 4 * x1[p] / 13 - 1.0 / 13)
+                             / 7;
         if (nderiv > 0)
         {
-          P(idx(1, 0), 5, p) = 8 * std::sqrt(2);
-          P(idx(0, 1), 4, p) = -8 * std::sqrt(30) / 3;
-          P(idx(0, 1), 5, p) = 4 * std::sqrt(2) / 3;
+          P(idx(1, 0), 4, p) = -16 * std::sqrt(2730) / 91;
+          P(idx(1, 0), 5, p) = 64 * std::sqrt(273) / 91;
+          P(idx(0, 1), 2, p) = 8 * std::sqrt(3);
+          P(idx(0, 1), 4, p) = -24 * std::sqrt(2730) / 91;
+          P(idx(0, 1), 5, p) = -8 * std::sqrt(273) / 91;
         }
       }
       else
       {
-        P(idx(0, 0), 3, p) = 8 * std::sqrt(5) * (1 - 2 * x1[p]) / 5;
-        P(idx(0, 0), 4, p)
-            = 2 * std::sqrt(30) * (-2 * x0[p] + 2 * x1[p] / 5 + 4 / 5) / 3;
-        P(idx(0, 0), 5, p)
-            = 4 * std::sqrt(2) * (8 * x0[p] / 3 + 8 * x1[p] / 3 - 5 / 3);
+        P(idx(0, 0), 3, p) = 4 * std::sqrt(30) * (1 - 2 * x1[p]) / 5;
+        P(idx(0, 0), 4, p) = 8 * std::sqrt(2730)
+                             * (-2 * x0[p] + 3 * x1[p] / 5 + 7.0 / 10) / 91;
+        P(idx(0, 0), 5, p) = 2 * std::sqrt(273)
+                             * (32 * x0[p] / 13 + 32 * x1[p] / 13 - 19.0 / 13)
+                             / 7;
         if (nderiv > 0)
         {
-          P(idx(1, 0), 4, p) = -4 * std::sqrt(30) / 3;
-          P(idx(1, 0), 5, p) = 32 * std::sqrt(2) / 3;
-          P(idx(0, 1), 3, p) = -16 * std::sqrt(5) / 5;
-          P(idx(0, 1), 4, p) = 4 * std::sqrt(30) / 15;
-          P(idx(0, 1), 5, p) = 32 * std::sqrt(2) / 3;
+          P(idx(1, 0), 4, p) = -16 * std::sqrt(2730) / 91;
+          P(idx(1, 0), 5, p) = 64 * std::sqrt(273) / 91;
+          P(idx(0, 1), 3, p) = -8 * std::sqrt(30) / 5;
+          P(idx(0, 1), 4, p) = 24 * std::sqrt(2730) / 455;
+          P(idx(0, 1), 5, p) = 64 * std::sqrt(273) / 91;
         }
       }
     }

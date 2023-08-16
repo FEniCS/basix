@@ -6,8 +6,11 @@ import pytest
 @pytest.mark.parametrize("degree", range(1, 5))
 @pytest.mark.parametrize("cell", [
     basix.CellType.interval, basix.CellType.quadrilateral,
-    basix.CellType.hexahedron])
+    basix.CellType.hexahedron, basix.CellType.triangle])
 def test_iso_element(degree, cell):
+    if cell == basix.CellType.triangle and degree > 2:
+        pytest.xfail("Degree > 2 edge macro polysets not implemented on triangles.")
+
     e = basix.create_element(basix.ElementFamily.iso, cell, degree, basix.LagrangeVariant.gll_warped)
     e2 = basix.create_element(basix.ElementFamily.P, cell, 2 * degree, basix.LagrangeVariant.gll_warped)
 

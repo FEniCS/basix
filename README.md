@@ -92,6 +92,7 @@ The following elements are supported on a triangle:
   - [Crouzeix-Raviart](https://defelement.com/elements/crouzeix-raviart.html)
   - [Bubble](https://defelement.com/elements/bubble.html)
   - [Hermite](https://defelement.com/elements/hermite.html)
+  - [iso](https://defelement.com/elements/p1-iso-p2.html)
 
 
 ### Quadrilateral
@@ -132,6 +133,7 @@ The following elements are supported on a tetrahedron:
   - [Crouzeix-Raviart](https://defelement.com/elements/crouzeix-raviart.html)
   - [Bubble](https://defelement.com/elements/bubble.html)
   - [Hermite](https://defelement.com/elements/hermite.html)
+  - [iso](https://defelement.com/elements/p1-iso-p2.html)
 
 
 ### Hexahedron

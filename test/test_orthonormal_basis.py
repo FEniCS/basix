@@ -121,6 +121,7 @@ def test_standard(cell_type, order):
 @pytest.mark.parametrize("cell_type", [
     basix.CellType.interval,
     basix.CellType.triangle,
+    basix.CellType.tetrahedron,
     basix.CellType.quadrilateral,
     basix.CellType.hexahedron,
 ])
@@ -128,6 +129,8 @@ def test_standard(cell_type, order):
 def test_macroedge(cell_type, order):
     if cell_type == basix.CellType.triangle and order > 2:
         pytest.xfail("Degree > 2 edge macro polysets not implemented on triangles.")
+    if cell_type == basix.CellType.tetrahedron and order > 1:
+        pytest.xfail("Degree > 1 edge macro polysets not implemented on tetrahedra.")
 
     Qpts, Qwts = basix.make_quadrature(cell_type, 2*order + 1, polyset_type=basix.PolysetType.macroedge)
     basis = basix._basixcpp.tabulate_polynomial_set(

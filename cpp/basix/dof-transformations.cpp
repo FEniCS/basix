@@ -317,7 +317,8 @@ std::pair<std::vector<T>, std::array<std::size_t, 2>> compute_transformation(
     mdspan_t<const T, 2> coeffs, const mdarray_t<T, 2>& J, T detJ,
     const mdarray_t<T, 2>& K,
     const std::function<std::array<T, 3>(std::span<const T>)> map_point,
-    int degree, int tdim, int entity, std::size_t vs, const maps::type map_type)
+    int degree, int tdim, int entity, std::size_t vs, const maps::type map_type,
+    const polyset::type ptype)
 {
   if (x[tdim].size() == 0 or x[tdim][entity].extent(0) == 0)
     return {{}, {0, 0}};
@@ -327,7 +328,7 @@ std::pair<std::vector<T>, std::array<std::size_t, 2>> compute_transformation(
 
   const std::size_t ndofs = imat.extent(0);
   const std::size_t npts = pts.extent(0);
-  const int psize = polyset::dim(cell_type, polyset::type::standard, degree);
+  const int psize = polyset::dim(cell_type, ptype, degree);
 
   std::size_t dofstart = 0;
   for (int d = 0; d < tdim; ++d)
@@ -352,7 +353,7 @@ std::pair<std::vector<T>, std::array<std::size_t, 2>> compute_transformation(
   }
 
   auto [polyset_vals_b, polyset_shape] = polyset::tabulate(
-      cell_type, polyset::type::standard, degree, 0,
+      cell_type, ptype, degree, 0,
       mdspan_t<const T, 2>(mapped_pts.data(), mapped_pts.extents()));
   assert(polyset_shape[0] == 1);
   mdspan_t<const T, 2> polyset_vals(polyset_vals_b.data(), polyset_shape[1],
@@ -424,7 +425,7 @@ doftransforms::compute_entity_transformations(
     std::experimental::mdspan<const T,
                               std::experimental::dextents<std::size_t, 2>>
         coeffs,
-    int degree, std::size_t vs, maps::type map_type)
+    int degree, std::size_t vs, maps::type map_type, polyset::type ptype)
 {
   std::map<cell::type, std::pair<std::vector<T>, std::array<std::size_t, 3>>>
       out;
@@ -441,7 +442,7 @@ doftransforms::compute_entity_transformations(
     {
       auto [t2b, _]
           = compute_transformation(cell_type, x, M, coeffs, J, detJ, K, mapfn,
-                                   degree, tdim, entity, vs, map_type);
+                                   degree, tdim, entity, vs, map_type, ptype);
       transform.insert(transform.end(), t2b.begin(), t2b.end());
     }
 
@@ -468,7 +469,7 @@ doftransforms::compute_entity_transformations(
         4>&,
     std::experimental::mdspan<const float,
                               std::experimental::dextents<std::size_t, 2>>,
-    int, std::size_t, maps::type);
+    int, std::size_t, maps::type, polyset::type);
 
 template std::map<cell::type,
                   std::pair<std::vector<double>, std::array<std::size_t, 3>>>
@@ -484,6 +485,6 @@ doftransforms::compute_entity_transformations(
         4>&,
     std::experimental::mdspan<const double,
                               std::experimental::dextents<std::size_t, 2>>,
-    int, std::size_t, maps::type);
+    int, std::size_t, maps::type, polyset::type);
 /// @endcond
 //-----------------------------------------------------------------------------

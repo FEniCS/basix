@@ -658,7 +658,7 @@ FiniteElement<F>::FiniteElement(
   _entity_transformations = doftransforms::compute_entity_transformations(
       cell_type, x, M,
       mdspan_t<const F, 2>(_coeffs.first.data(), _coeffs.second),
-      highest_degree, value_size, map_type);
+      highest_degree, value_size, map_type, poly_type);
 
   const std::size_t nderivs
       = polyset::nderivs(cell_type, interpolation_nderivs);

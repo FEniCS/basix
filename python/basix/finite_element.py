@@ -20,6 +20,7 @@ def string_to_family(family: str, cell: str) -> _EF:
         "P": _EF.P,
         "Bubble": _EF.bubble,
         "bubble": _EF.bubble,
+        "iso": _EF.iso,
     }
     # Family names that are valid on non-interval cells
     if cell != "interval":
@@ -45,7 +46,6 @@ def string_to_family(family: str, cell: str) -> _EF:
     if cell == "interval":
         families.update({
             "DPC": _EF.P,
-            "iso": _EF.iso,
         })
     # Family names that are valid for tensor product cells
     if cell in ["interval", "quadrilateral", "hexahedron"]:

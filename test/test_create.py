@@ -82,3 +82,8 @@ def test_create_element(cell, degree, family, variant):
     except RuntimeError as e:
         if len(e.args) == 0 or "dgesv" in e.args[0]:
             raise e
+
+
+def test_create_high_degree_lagrange():
+    basix.create_element(
+        basix.ElementFamily.P, basix.CellType.hexahedron, 7, basix.LagrangeVariant.gll_isaac)

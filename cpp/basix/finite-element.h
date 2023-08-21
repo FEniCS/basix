@@ -21,6 +21,7 @@
 #include <tuple>
 #include <utility>
 #include <vector>
+#include <cstdint>
 
 /// Basix: FEniCS runtime basis evaluation library
 namespace basix

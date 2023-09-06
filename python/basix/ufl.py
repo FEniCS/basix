@@ -1203,7 +1203,8 @@ class _QuadratureElement(_ElementBase):
     """A quadrature element."""
 
     def __init__(self, cell: _basix.CellType, value_shape: _typing.Tuple[int, ...],
-                 points: _npt.NDArray[_np.float64], weights: _npt.NDArray[_np.float64], mapname: str):
+                 points: _npt.NDArray[_np.float64], weights: _npt.NDArray[_np.float64],
+                 degree: _typing.Optional[int] = None, mapname: str):
         """Initialise the element."""
         self._points = points
         self._weights = weights
@@ -1211,7 +1212,10 @@ class _QuadratureElement(_ElementBase):
         self._cell_type = cell
         self._entity_counts = [len(i) for i in _basix.topology(cell)]
 
-        super().__init__(repr, "quadrature element", cell.name, value_shape, len(points), mapname=mapname)
+        if degree is None:
+            degree = len(points)
+
+        super().__init__(repr, "quadrature element", cell.name, value_shape, degree, mapname=mapname)
 
     def basix_sobolev_space(self):
         """Return the underlying Sobolev space."""
@@ -1824,7 +1828,7 @@ def quadrature_element(
     assert points is not None
     assert weights is not None
 
-    return _QuadratureElement(cell, value_shape, points, weights, mapname)
+    return _QuadratureElement(cell, value_shape, points, weights, degree, mapname)
 
 
 def real_element(

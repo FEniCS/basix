@@ -1,6 +1,7 @@
 import numpy as np
-import basix
 import pytest
+
+import basix
 
 
 @pytest.mark.parametrize("degree", range(1, 5))

@@ -4,7 +4,8 @@
 """Test utilities."""
 
 import pytest
-from basix import ElementFamily, CellType, LagrangeVariant, DPCVariant
+
+from basix import CellType, DPCVariant, ElementFamily, LagrangeVariant
 
 
 def parametrize_over_elements(degree, reference=None, discontinuous=False):

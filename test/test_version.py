@@ -2,9 +2,11 @@
 # FEniCS Project
 # SPDX-License-Identifier: MIT
 
+import re
+
 import pkg_resources
 import pytest
-import re
+
 import basix
 
 

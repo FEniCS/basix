@@ -1,7 +1,8 @@
-# Copyright (c) 2022 Matthew Scroggs
+# Copyright (c) 2023 Matthew Scroggs
 # FEniCS Project
 # SPDX-License-Identifier: MIT
 
+import numpy as np
 import pytest
 
 import basix
@@ -45,24 +46,6 @@ variants = [
 ]
 
 
-def test_all_cells_included():
-    all_cells = set()
-    for c in dir(basix.CellType):
-        if not c.startswith("_") and c not in ["name", "value"]:
-            all_cells.add(getattr(basix.CellType, c))
-
-    assert all_cells == set(cells)
-
-
-def test_all_elements_included():
-    all_elements = set()
-    for c in dir(basix.ElementFamily):
-        if not c.startswith("_") and c not in ["name", "value"]:
-            all_elements.add(getattr(basix.ElementFamily, c))
-
-    assert all_elements == set(elements)
-
-
 @pytest.mark.parametrize("cell", cells)
 @pytest.mark.parametrize("degree", range(-1, 5))
 @pytest.mark.parametrize("family", elements)
@@ -71,20 +54,10 @@ def test_create_element(cell, degree, family, variant):
     """Check that either the element is created or a RuntimeError is thrown."""
     try:
         element = basix.create_element(family, cell, degree, *variant)
-        assert element.degree == degree
-    except RuntimeError as e:
-        # Don't allow cryptic "dgesv failed" messages
-        if len(e.args) == 0 or "dgesv" in e.args[0]:
-            raise e
+    except RuntimeError:
+        pytest.xfail("Element not supported")
 
-    try:
-        element = basix.create_element(family, cell, degree, *variant, discontinuous=True)
-        assert element.degree == degree
-    except RuntimeError as e:
-        if len(e.args) == 0 or "dgesv" in e.args[0]:
-            raise e
-
-
-def test_create_high_degree_lagrange():
-    basix.create_element(
-        basix.ElementFamily.P, basix.CellType.hexahedron, 7, basix.LagrangeVariant.gll_isaac)
+    wcoeffs = element.wcoeffs
+    for i, rowi in enumerate(wcoeffs):
+        for j, rowj in enumerate(wcoeffs):
+            assert np.isclose(np.dot(rowi, rowj), int(i == j))

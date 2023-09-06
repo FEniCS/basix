@@ -3,8 +3,10 @@
 # SPDX-License-Identifier: MIT
 
 import numpy as np
-import basix
 import pytest
+
+import basix
+
 from .utils import parametrize_over_elements
 
 

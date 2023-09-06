@@ -3,9 +3,11 @@
 # SPDX-License-Identifier: MIT
 
 import random
-import basix
-import pytest
+
 import numpy as np
+import pytest
+
+import basix
 
 elements = [
     (basix.ElementFamily.P, [basix.LagrangeVariant.gll_warped]),  # identity

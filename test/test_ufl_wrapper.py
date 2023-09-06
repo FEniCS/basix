@@ -62,6 +62,8 @@ def test_tensor_element_hash(inputs):
     ufl.MixedElement(ufl.VectorElement("Lagrange", "triangle", 2), ufl.VectorElement("Lagrange", "triangle", 1)),
     ufl.EnrichedElement(ufl.FiniteElement("Lagrange", "triangle", 1), ufl.FiniteElement("Bubble", "triangle", 3)),
     ufl.EnrichedElement(ufl.VectorElement("Lagrange", "triangle", 1), ufl.VectorElement("Bubble", "triangle", 3)),
+    ufl.FiniteElement("Real", "quadrilateral", 0),
+    ufl.FiniteElement("Quadrature", "quadrilateral", 1),
 ])
 def test_convert_ufl_element(e):
     e2 = basix.ufl.convert_ufl_element(e)

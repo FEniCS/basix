@@ -8,6 +8,7 @@
 
 #include "mdspan.hpp"
 #include <array>
+#include <cmath>
 #include <concepts>
 #include <span>
 #include <string>
@@ -343,5 +344,36 @@ std::vector<T> eye(std::size_t n)
     Iview(i, i) = 1;
   return I;
 }
+
+/// Orthogonalise the rows of a matrix (in place)
+/// @param[in] wcoeffs The matrix
+/// @param[in] start The row to start from. The rows before this should already
+/// be orthogonal
+template <std::floating_point T>
+void orthogonalise(
+    std::experimental::mdspan<T, std::experimental::dextents<std::size_t, 2>>
+        wcoeffs,
+    std::size_t start = 0)
+{
+  for (std::size_t i = start; i < wcoeffs.extent(0); ++i)
+  {
+    for (std::size_t j = start; j < i; ++j)
+    {
+      T a = 0;
+      for (std::size_t k = 0; k < wcoeffs.extent(1); ++k)
+        a += wcoeffs(i, k) * wcoeffs(j, k);
+      for (std::size_t k = 0; k < wcoeffs.extent(1); ++k)
+        wcoeffs(i, k) -= a * wcoeffs(j, k);
+    }
+
+    T norm = 0;
+    for (std::size_t k = 0; k < wcoeffs.extent(1); ++k)
+      norm += wcoeffs(i, k) * wcoeffs(i, k);
+
+    for (std::size_t k = 0; k < wcoeffs.extent(1); ++k)
+      wcoeffs(i, k) /= std::sqrt(norm);
+  }
+}
+//-----------------------------------------------------------------------------
 
 } // namespace basix::math

@@ -37,30 +37,6 @@ using mdarray_t = stdex::mdarray<T, stdex::dextents<std::size_t, d>>;
 namespace
 {
 //----------------------------------------------------------------------------
-/// This function orthogonalises and normalises the rows of a matrix in place
-template <std::floating_point T>
-void orthogonalise(mdspan_t<T, 2>& wcoeffs)
-{
-  for (std::size_t i = 0; i < wcoeffs.extent(0); ++i)
-  {
-    for (std::size_t j = 0; j < i; ++j)
-    {
-      T a = 0;
-      for (std::size_t k = 0; k < wcoeffs.extent(1); ++k)
-        a += wcoeffs(i, k) * wcoeffs(j, k);
-      for (std::size_t k = 0; k < wcoeffs.extent(1); ++k)
-        wcoeffs(i, k) -= a * wcoeffs(j, k);
-    }
-
-    T norm = 0;
-    for (std::size_t k = 0; k < wcoeffs.extent(1); ++k)
-      norm += wcoeffs(i, k) * wcoeffs(i, k);
-
-    for (std::size_t k = 0; k < wcoeffs.extent(1); ++k)
-      wcoeffs(i, k) /= std::sqrt(norm);
-  }
-}
-//-----------------------------------------------------------------------------
 constexpr int compute_value_size(maps::type map_type, int dim)
 {
   switch (map_type)
@@ -458,6 +434,17 @@ FiniteElement<T> basix::create_custom_element(
   if (wcoeffs.extent(0) != ndofs)
     throw std::runtime_error("wcoeffs has the wrong number of rows");
 
+  std::vector<T> wcoeffs_ortho_b(wcoeffs.extent(0) * wcoeffs.extent(1));
+  { // scope
+    mdspan_t<T, 2> wcoeffs_ortho(wcoeffs_ortho_b.data(), wcoeffs.extent(0),
+                                 wcoeffs.extent(1));
+    std::copy(wcoeffs.data_handle(), wcoeffs.data_handle() + wcoeffs.size(),
+              wcoeffs_ortho_b.begin());
+    basix::math::orthogonalise(wcoeffs_ortho);
+  }
+  mdspan_t<const T, 2> wcoeffs_ortho(wcoeffs_ortho_b.data(), wcoeffs.extent(0),
+                                     wcoeffs.extent(1));
+
   // Check that x has the right shape
   for (std::size_t i = 0; i < x.size(); ++i)
   {
@@ -505,8 +492,8 @@ FiniteElement<T> basix::create_custom_element(
   }
 
   auto [dualmatrix, dualshape]
-      = compute_dual_matrix(cell_type, poly_type, wcoeffs, x, M, highest_degree,
-                            interpolation_nderivs);
+      = compute_dual_matrix(cell_type, poly_type, wcoeffs_ortho, x, M,
+                            highest_degree, interpolation_nderivs);
   if (math::is_singular(mdspan_t<const T, 2>(dualmatrix.data(), dualshape)))
   {
     throw std::runtime_error(
@@ -515,7 +502,7 @@ FiniteElement<T> basix::create_custom_element(
 
   return basix::FiniteElement<T>(
       element::family::custom, cell_type, poly_type, highest_degree,
-      value_shape, wcoeffs, x, M, interpolation_nderivs, map_type,
+      value_shape, wcoeffs_ortho, x, M, interpolation_nderivs, map_type,
       sobolev_space, discontinuous, highest_complete_degree, highest_degree,
       element::lagrange_variant::unset, element::dpc_variant::unset);
 }
@@ -577,6 +564,14 @@ FiniteElement<F>::FiniteElement(
     }
   }
 
+  std::vector<F> wcoeffs_b(wcoeffs.extent(0) * wcoeffs.extent(1));
+  std::copy(wcoeffs.data_handle(), wcoeffs.data_handle() + wcoeffs.size(),
+            wcoeffs_b.begin());
+
+  _wcoeffs = {wcoeffs_b, {wcoeffs.extent(0), wcoeffs.extent(1)}};
+  _dual_matrix = compute_dual_matrix<F>(cell_type, poly_type, wcoeffs, x, M,
+                                        highest_degree, interpolation_nderivs);
+
   // Copy x
   for (std::size_t i = 0; i < x.size(); ++i)
   {
@@ -587,20 +582,6 @@ FiniteElement<F>::FiniteElement(
           std::array{xi.extent(0), xi.extent(1)});
     }
   }
-
-  std::vector<F> wcoeffs_ortho_b(wcoeffs.extent(0) * wcoeffs.extent(1));
-  mdspan_t<F, 2> wcoeffs_ortho(wcoeffs_ortho_b.data(), wcoeffs.extent(0),
-                               wcoeffs.extent(1));
-  std::copy(wcoeffs.data_handle(), wcoeffs.data_handle() + wcoeffs.size(),
-            wcoeffs_ortho_b.begin());
-  if (family != element::family::P)
-    orthogonalise(wcoeffs_ortho);
-  _dual_matrix
-      = compute_dual_matrix<F>(cell_type, poly_type, wcoeffs_ortho, x, M,
-                               highest_degree, interpolation_nderivs);
-
-  _wcoeffs
-      = {wcoeffs_ortho_b, {wcoeffs_ortho.extent(0), wcoeffs_ortho.extent(1)}};
 
   // Copy M
   for (std::size_t i = 0; i < M.size(); ++i)
@@ -616,8 +597,8 @@ FiniteElement<F>::FiniteElement(
   // Compute C = (BD^T)^{-1} B
   _coeffs.first = math::solve<F>(
       mdspan_t<const F, 2>(_dual_matrix.first.data(), _dual_matrix.second),
-      wcoeffs_ortho);
-  _coeffs.second = {_dual_matrix.second[1], wcoeffs_ortho.extent(1)};
+      wcoeffs);
+  _coeffs.second = {_dual_matrix.second[1], wcoeffs.extent(1)};
 
   std::size_t num_points = 0;
   for (auto& x_dim : x)

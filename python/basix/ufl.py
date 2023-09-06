@@ -1204,7 +1204,7 @@ class _QuadratureElement(_ElementBase):
 
     def __init__(self, cell: _basix.CellType, value_shape: _typing.Tuple[int, ...],
                  points: _npt.NDArray[_np.float64], weights: _npt.NDArray[_np.float64],
-                 degree: _typing.Optional[int] = None, mapname: str):
+                 mapname: str, degree: _typing.Optional[int] = None):
         """Initialise the element."""
         self._points = points
         self._weights = weights
@@ -1828,7 +1828,7 @@ def quadrature_element(
     assert points is not None
     assert weights is not None
 
-    return _QuadratureElement(cell, value_shape, points, weights, degree, mapname)
+    return _QuadratureElement(cell, value_shape, points, weights, mapname, degree)
 
 
 def real_element(

@@ -52,16 +52,12 @@ variants = [
 @pytest.mark.parametrize("variant", variants)
 def test_create_element(cell, degree, family, variant):
     """Check that either the element is created or a RuntimeError is thrown."""
-    print(cell, degree, family, variant)
     try:
         element = basix.create_element(family, cell, degree, *variant)
     except RuntimeError:
         pytest.xfail("Element not supported")
 
     wcoeffs = element.wcoeffs
-    print(wcoeffs)
-    for i, rowi in enumerate(wcoeffs):
-        print([np.dot(rowi, rowj) for j, rowj in enumerate(wcoeffs)])
     for i, rowi in enumerate(wcoeffs):
         for j, rowj in enumerate(wcoeffs):
             assert np.isclose(np.dot(rowi, rowj), int(i == j))

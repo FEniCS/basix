@@ -198,101 +198,32 @@ FiniteElement<T> basix::element::create_nce(cell::type celltype, int degree,
       = polyset::dim(cell::type::interval, polyset::type::standard, degree);
   const int ns_interval
       = polyset::dim(cell::type::interval, polyset::type::standard, degree - 1);
+
   int dof = 0;
   if (tdim == 2)
   {
-    for (std::size_t d = 0; d < tdim; ++d)
-      for (int i = 0; i < ns_interval; ++i)
-        for (int j = 0; j < ns_interval; ++j)
-          wcoeffs(dof++, psize * d + i * nv_interval + j) = 1;
+    for (int i = 0; i < ns_interval; ++i)
+      for (int j = 0; j < nv_interval; ++j)
+      {
+        wcoeffs(dof++, i * nv_interval + j) = 1;
+        wcoeffs(dof++, psize + j * nv_interval + i) = 1;
+      }
   }
   else
   {
-    for (std::size_t d = 0; d < tdim; ++d)
-      for (int i = 0; i < ns_interval; ++i)
-        for (int j = 0; j < ns_interval; ++j)
-          for (int k = 0; k < ns_interval; ++k)
-            wcoeffs(dof++, psize * d + i * nv_interval * nv_interval
-                               + j * nv_interval + k)
-                = 1;
-  }
-
-  // Create coefficients for additional polynomials in the curl space
-  std::vector<T> integrand(pts.extent(0));
-  switch (tdim)
-  {
-  case 2:
-  {
-    for (int i = 0; i < degree; ++i)
-    {
-      for (std::size_t d = 0; d < tdim; ++d)
-      {
-        for (std::size_t k = 0; k < integrand.size(); ++k)
-          integrand[k] = pts(k, 1 - d);
-
-        for (int j = 1; j < degree; ++j)
-          for (std::size_t k = 0; k < integrand.size(); ++k)
-            integrand[k] *= pts(k, 1 - d);
-
-        for (int j = 0; j < i; ++j)
-          for (std::size_t k = 0; k < integrand.size(); ++k)
-            integrand[k] *= pts(k, d);
-
-        for (int k = 0; k < psize; ++k)
+    for (int i = 0; i < ns_interval; ++i)
+      for (int j = 0; j < ns_interval; ++j)
+        for (int k = 0; k < nv_interval; ++k)
         {
-          T w_sum = 0.0;
-          for (std::size_t k1 = 0; k1 < wts.size(); ++k1)
-            w_sum += wts[k1] * integrand[k1] * phi(0, k, k1);
-          wcoeffs(dof, k + psize * d) = w_sum;
+          wcoeffs(dof++, i * nv_interval * nv_interval + j * nv_interval + k)
+              = 1;
+          wcoeffs(dof++,
+                  psize + k * nv_interval * nv_interval + i * nv_interval + j)
+              = 1;
+          wcoeffs(dof++, psize * 2 + j * nv_interval * nv_interval
+                             + k * nv_interval + i)
+              = 1;
         }
-        ++dof;
-      }
-    }
-    break;
-  }
-  default:
-    for (int i = 0; i < degree; ++i)
-    {
-      for (int j = 0; j < degree + 1; ++j)
-      {
-        for (std::size_t c = 0; c < tdim; ++c)
-        {
-          for (std::size_t d = 0; d < tdim; ++d)
-          {
-            if (d != c)
-            {
-              const std::size_t e = 3 - c - d;
-              if (c < e and j == degree)
-                continue;
-
-              for (std::size_t k1 = 0; k1 < integrand.size(); ++k1)
-                integrand[k1] = pts(k1, e);
-
-              for (int k = 1; k < degree; ++k)
-                for (std::size_t k1 = 0; k1 < integrand.size(); ++k1)
-                  integrand[k1] *= pts(k1, e);
-
-              for (int k = 0; k < i; ++k)
-                for (std::size_t k1 = 0; k1 < integrand.size(); ++k1)
-                  integrand[k1] *= pts(k1, d);
-
-              for (int k = 0; k < j; ++k)
-                for (std::size_t k1 = 0; k1 < integrand.size(); ++k1)
-                  integrand[k1] *= pts(k1, c);
-
-              for (int k = 0; k < psize; ++k)
-              {
-                T w_sum = 0.0;
-                for (std::size_t k1 = 0; k1 < wts.size(); ++k1)
-                  w_sum += wts[k1] * integrand[k1] * phi(0, k, k1);
-                wcoeffs(dof, k + psize * d) = w_sum;
-              }
-              ++dof;
-            }
-          }
-        }
-      }
-    }
   }
 
   std::array<std::vector<impl::mdarray_t<T, 2>>, 4> x;

@@ -204,15 +204,20 @@ impl::mdarray_t<T, 2> make_serendipity_div_space_2d(int degree)
       for (int d = 0; d < 2; ++d)
         wcoeffs(row_n++, d * psize + i * (degree + 2) + j) = 1;
 
+  std::vector<std::size_t> nonzero;
+  for (int i = 0; i <= degree + 1; ++i)
+    for (int j = i <= degree ? degree + 1 - i : 0; j <= degree + 1; ++j)
+      nonzero.push_back(i * (degree + 2) + j);
+
   std::vector<T> integrand(wts.size());
-  for (std::size_t k = 0; k < psize; ++k)
+  for (std::size_t k = 0; k < nonzero.size(); ++k)
   {
     for (std::size_t d = 0; d < 2; ++d)
     {
       for (std::size_t a = 0; a < 2; ++a)
       {
         for (std::size_t i = 0; i < integrand.size(); ++i)
-          integrand[i] = wts[i] * Pq(0, k, i);
+          integrand[i] = wts[i] * Pq(0, nonzero[k], i);
 
         if (a == 0 and d == 0)
         {
@@ -239,11 +244,17 @@ impl::mdarray_t<T, 2> make_serendipity_div_space_2d(int degree)
           for (std::size_t j = 0; j < integrand.size(); ++j)
             integrand[j] *= pts(j, a);
 
-        wcoeffs(2 * nv + a, psize * d + k)
+        wcoeffs(2 * nv + a, psize * d + nonzero[k])
             = std::reduce(integrand.begin(), integrand.end(), 0.0);
       }
     }
   }
+
+  basix::math::orthogonalise(
+      impl::mdspan_t<T, 2>(
+          wcoeffs.data(),
+          std::array<std::size_t, 2>({wcoeffs.extent(0), wcoeffs.extent(1)})),
+      2 * nv);
 
   return wcoeffs;
 }
@@ -287,8 +298,22 @@ impl::mdarray_t<T, 2> make_serendipity_div_space_3d(int degree)
     }
   }
 
+  std::vector<std::size_t> nonzero;
+  for (int i = 0; i <= degree + 1; ++i)
+  {
+    for (int j = 0; j <= degree + 1; ++j)
+    {
+      for (int k = i + j <= degree ? degree + 1 - i - j : 0; k <= degree + 1;
+           ++k)
+      {
+        nonzero.push_back(i * (degree + 2) * (degree + 2) + j * (degree + 2)
+                          + k);
+      }
+    }
+  }
+
   std::vector<T> integrand(wts.size());
-  for (std::size_t k = 0; k < psize; ++k)
+  for (std::size_t k = 0; k < nonzero.size(); ++k)
   {
     for (std::size_t d = 0; d < 3; ++d)
     {
@@ -297,7 +322,7 @@ impl::mdarray_t<T, 2> make_serendipity_div_space_3d(int degree)
         for (int index = 0; index <= degree; ++index)
         {
           for (std::size_t i = 0; i < integrand.size(); ++i)
-            integrand[i] = wts[i] * Pq(0, k, i);
+            integrand[i] = wts[i] * Pq(0, nonzero[k], i);
 
           if (a == 0)
           {
@@ -387,12 +412,18 @@ impl::mdarray_t<T, 2> make_serendipity_div_space_3d(int degree)
             }
           }
 
-          wcoeffs(3 * nv + 3 * index + a, psize * d + k)
+          wcoeffs(3 * nv + 3 * index + a, psize * d + nonzero[k])
               = std::reduce(integrand.begin(), integrand.end(), 0.0);
         }
       }
     }
   }
+
+  basix::math::orthogonalise(
+      impl::mdspan_t<T, 2>(
+          wcoeffs.data(),
+          std::array<std::size_t, 2>({wcoeffs.extent(0), wcoeffs.extent(1)})),
+      3 * nv);
 
   return wcoeffs;
 }

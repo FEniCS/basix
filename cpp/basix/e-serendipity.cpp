@@ -42,7 +42,7 @@ impl::mdarray_t<T, 2> make_serendipity_space_2d(int degree)
   impl::mdarray_t<T, 2> wcoeffs(ndofs, psize);
   int row_n = 0;
   for (int i = 0; i <= degree; ++i)
-    for (int j = 0; j <= (i < 2 ? degree : (i == degree ? 1 : degree - i)); ++j)
+    for (int j = 0; j <= degree - i + (i == 1 || i == degree ? 1 : 0); ++j)
       wcoeffs(row_n++, i * (degree + 1) + j) = 1;
 
   assert(std::size_t(row_n) == ndofs);
@@ -114,38 +114,20 @@ impl::mdarray_t<T, 2> make_serendipity_space_3d(int degree)
   // Create coefficients for order (degree) polynomials
   impl::mdarray_t<T, 2> wcoeffs(ndofs, psize);
   int row_n = 0;
+
   for (int i = 0; i <= degree; ++i)
-    for (int j = 0; j <= degree - i; ++j)
-      for (int k = 0; k <= degree - i - j; ++k)
+    for (int j = 0; j <= degree - i + (i == 1 || i == degree ? 1 : 0); ++j)
+      for (int k = 0; k <= degree - i - j + (i == 1 || i == degree ? 1 : 0)
+                               + (j == 1 || j == degree ? 1 : 0)
+                               + (i + j == degree && i != 1 && i != degree
+                                          && j != 1 && j != degree
+                                      ? 1
+                                      : 0);
+           ++k)
         wcoeffs(row_n++, i * (degree + 1) * (degree + 1) + j * (degree + 1) + k)
             = 1;
 
-  std::vector<T> integrand(wts.size());
-  std::vector<std::array<int, 3>> indices;
-  for (std::size_t s = 1; s <= 3; ++s)
-  {
-    indices = serendipity_3d_indices(s + degree, s);
-    for (std::array<int, 3> i : indices)
-    {
-      for (std::size_t k = 0; k < psize; ++k)
-      {
-        for (std::size_t i = 0; i < integrand.size(); ++i)
-          integrand[i] = wts[i] * Ph(0, k, i);
-
-        for (int d = 0; d < 3; ++d)
-        {
-          for (int j = 0; j < i[d]; ++j)
-            for (std::size_t l = 0; l < integrand.size(); ++l)
-              integrand[l] *= pts(l, d);
-        }
-
-        wcoeffs(row_n, k) = 0;
-        for (std::size_t j = 0; j < integrand.size(); ++j)
-          wcoeffs(row_n, k) += integrand[j];
-      }
-      ++row_n;
-    }
-  }
+  assert((std::size_t)row_n == ndofs);
 
   return wcoeffs;
 }

@@ -40,11 +40,39 @@ impl::mdarray_t<T, 2> make_serendipity_space_2d(int degree)
 
   // Create coefficients for order (degree) polynomials
   impl::mdarray_t<T, 2> wcoeffs(ndofs, psize);
-
   int row_n = 0;
   for (int i = 0; i <= degree; ++i)
-    for (int j = 0; j <= (i < 2 ? degree : 2); ++j)
+    for (int j = 0; j <= degree - i; ++j)
       wcoeffs(row_n++, i * (degree + 1) + j) = 1;
+
+  if (degree == 1)
+  {
+    for (std::size_t i = 0; i < psize; ++i)
+    {
+      wcoeffs(row_n, i) = 0.0;
+      for (std::size_t j = 0; j < wts.size(); ++j)
+        wcoeffs(row_n, i) += wts[j] * pts(j, 0) * pts(j, 1) * Pq(0, i, j);
+    }
+    return wcoeffs;
+  }
+
+  std::vector<T> integrand(wts.size());
+  for (std::size_t k = 0; k < psize; ++k)
+  {
+    for (std::size_t a = 0; a < 2; ++a)
+    {
+      for (std::size_t i = 0; i < integrand.size(); ++i)
+        integrand[i] = wts[i] * pts(i, 0) * pts(i, 1) * Pq(0, k, i);
+
+      for (int i = 1; i < degree; ++i)
+        for (std::size_t j = 0; j < integrand.size(); ++j)
+          integrand[j] *= pts(j, a);
+
+      wcoeffs(row_n + a, k) = 0;
+      for (std::size_t i = 0; i < integrand.size(); ++i)
+        wcoeffs(row_n + a, k) += integrand[i];
+    }
+  }
 
   return wcoeffs;
 }

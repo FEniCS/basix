@@ -10,6 +10,7 @@
 #include "polyset.h"
 #include "quadrature.h"
 #include "sobolev-spaces.h"
+#include <cmath>
 
 using namespace basix;
 
@@ -41,7 +42,7 @@ FiniteElement<T> basix::element::create_hhj(cell::type celltype, int degree,
 
       const std::size_t s = basis_size;
       for (std::size_t k = 0; k < s; ++k)
-        wcoeffs(yoff * s + k, xoff * s + k) = 1.0;
+        wcoeffs(yoff * s + k, xoff * s + k) = i == j ? 1.0 : std::sqrt(0.5);
     }
   }
 

@@ -50,42 +50,6 @@ impl::mdarray_t<T, 2> make_serendipity_space_2d(int degree)
   return wcoeffs;
 }
 //----------------------------------------------------------------------------
-std::vector<std::array<int, 3>>
-serendipity_3d_indices(int total, int linear, std::vector<int> done = {})
-{
-  if (done.size() == 3)
-  {
-    int count = 0;
-    for (int i = 0; i < 3; ++i)
-      if (done[i] == 1)
-        ++count;
-
-    if (count >= linear)
-      return {{done[0], done[1], done[2]}};
-    else
-      return {};
-  }
-  else if (done.size() == 2)
-  {
-    return serendipity_3d_indices(
-        total, linear, {done[0], done[1], total - done[0] - done[1]});
-  }
-
-  std::vector<int> new_done(done.size() + 1);
-  std::copy(done.begin(), done.end(), new_done.begin());
-  const int sum_done = std::reduce(done.begin(), done.end());
-
-  std::vector<std::array<int, 3>> out;
-  for (int i = 0; i <= total - sum_done; ++i)
-  {
-    new_done.back() = i;
-    for (std::array<int, 3> j : serendipity_3d_indices(total, linear, new_done))
-      out.push_back(j);
-  }
-
-  return out;
-}
-//----------------------------------------------------------------------------
 template <std::floating_point T>
 impl::mdarray_t<T, 2> make_serendipity_space_3d(int degree)
 {
@@ -383,6 +347,17 @@ impl::mdarray_t<T, 2> make_serendipity_div_space_3d(int degree)
   return wcoeffs;
 }
 //----------------------------------------------------------------------------
+std::vector<std::array<int, 3>> serendipity_3d_indices(int total, int linear)
+{
+  std::vector<std::array<int, 3>> out;
+  for (int i = 0; i <= total; ++i)
+    for (int j = 0; j <= total - i; ++j)
+      if ((i == 1 ? 1 : 0) + (j == 1 ? 1 : 0) + (total == i + j + 1 ? 1 : 0)
+          >= linear)
+        out.push_back({{i, j, total - i - j}});
+  return out;
+}
+//----------------------------------------------------------------------------
 template <std::floating_point T>
 impl::mdarray_t<T, 2> make_serendipity_curl_space_2d(int degree)
 {
@@ -669,6 +644,8 @@ impl::mdarray_t<T, 2> make_serendipity_curl_space_3d(int degree)
       ++c;
     }
   }
+
+  assert((std::size_t)c == ndofs);
 
   basix::math::orthogonalise(
       impl::mdspan_t<T, 2>(

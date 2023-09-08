@@ -31,6 +31,14 @@ def parametrize_over_elements(degree, reference=None, discontinuous=False):
             if discontinuous:
                 elementlist.append((c, ElementFamily.P, k, [LagrangeVariant.legendre]))
 
+        # Iso elements
+        #for c in [CellType.interval, CellType.triangle, CellType.quadrilateral, CellType.hexahedron]:
+        #    if k <= 2 or c != CellType.triangle:
+        #        if k < 4:
+        #            elementlist.append((c, ElementFamily.iso, k, [LagrangeVariant.equispaced]))
+        #        elementlist.append((c, ElementFamily.iso, k, [LagrangeVariant.gll_warped]))
+        #        elementlist.append((c, ElementFamily.iso, k, [LagrangeVariant.gll_isaac]))
+
         # Elements on all cells except prism, pyramid and interval
         for c in [CellType.triangle, CellType.tetrahedron, CellType.quadrilateral, CellType.hexahedron]:
             elementlist.append((c, ElementFamily.N1E, k, [LagrangeVariant.legendre]))

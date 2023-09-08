@@ -7,55 +7,22 @@ import pytest
 
 import basix
 
-cells = [
-    basix.CellType.point,
-    basix.CellType.interval,
-    basix.CellType.triangle,
-    basix.CellType.quadrilateral,
-    basix.CellType.tetrahedron,
-    basix.CellType.hexahedron,
-    basix.CellType.prism,
-    basix.CellType.pyramid,
-]
-
-elements = [
-    basix.ElementFamily.P,
-    basix.ElementFamily.RT,
-    basix.ElementFamily.BDM,
-    basix.ElementFamily.N1E,
-    basix.ElementFamily.N2E,
-    basix.ElementFamily.Regge,
-    basix.ElementFamily.HHJ,
-    basix.ElementFamily.bubble,
-    basix.ElementFamily.serendipity,
-    basix.ElementFamily.DPC,
-    basix.ElementFamily.CR,
-    basix.ElementFamily.Hermite,
-    basix.ElementFamily.iso,
-    basix.ElementFamily.custom,
-]
-
-variants = [
-    [basix.LagrangeVariant.gll_isaac],
-    [basix.LagrangeVariant.gll_warped],
-    [basix.LagrangeVariant.legendre],
-    [basix.LagrangeVariant.bernstein],
-    [basix.LagrangeVariant.unset, basix.DPCVariant.diagonal_gll],
-    [basix.LagrangeVariant.unset, basix.DPCVariant.legendre],
-    [basix.LagrangeVariant.legendre, basix.DPCVariant.legendre],
-]
+from .utils import parametrize_over_elements
 
 
-@pytest.mark.parametrize("cell", cells)
-@pytest.mark.parametrize("degree", range(-1, 5))
-@pytest.mark.parametrize("family", elements)
-@pytest.mark.parametrize("variant", variants)
-def test_create_element(cell, degree, family, variant):
-    """Check that either the element is created or a RuntimeError is thrown."""
-    try:
-        element = basix.create_element(family, cell, degree, *variant)
-    except RuntimeError:
-        pytest.xfail("Element not supported")
+def tensor_product(*data):
+    if len(data) == 1:
+        return data[0]
+    if len(data) > 2:
+        return tensor_product(tensor_product(data[0], data[1]), *data[2:])
+
+    a, b = data
+    return np.outer(a, b).reshape(-1)
+
+
+@parametrize_over_elements(5)
+def test_orthonormal(cell_type, degree, element_type, element_args):
+    element = basix.create_element(element_type, cell_type, degree, *element_args)
 
     wcoeffs = element.wcoeffs
     for i, rowi in enumerate(wcoeffs):

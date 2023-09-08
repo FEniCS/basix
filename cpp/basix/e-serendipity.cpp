@@ -169,7 +169,7 @@ impl::mdarray_t<T, 2> make_serendipity_div_space_2d(int degree)
     }
   }
 
-  basix::math::orthogonalise(
+  math::orthogonalise(
       impl::mdspan_t<T, 2>(
           wcoeffs.data(),
           std::array<std::size_t, 2>({wcoeffs.extent(0), wcoeffs.extent(1)})),
@@ -338,7 +338,7 @@ impl::mdarray_t<T, 2> make_serendipity_div_space_3d(int degree)
     }
   }
 
-  basix::math::orthogonalise(
+  math::orthogonalise(
       impl::mdspan_t<T, 2>(
           wcoeffs.data(),
           std::array<std::size_t, 2>({wcoeffs.extent(0), wcoeffs.extent(1)})),
@@ -422,7 +422,7 @@ impl::mdarray_t<T, 2> make_serendipity_curl_space_2d(int degree)
     }
   }
 
-  basix::math::orthogonalise(
+  math::orthogonalise(
       impl::mdspan_t<T, 2>(
           wcoeffs.data(),
           std::array<std::size_t, 2>({wcoeffs.extent(0), wcoeffs.extent(1)})),
@@ -645,7 +645,7 @@ impl::mdarray_t<T, 2> make_serendipity_curl_space_3d(int degree)
 
   assert((std::size_t)c == ndofs);
 
-  basix::math::orthogonalise(
+  math::orthogonalise(
       impl::mdspan_t<T, 2>(
           wcoeffs.data(),
           std::array<std::size_t, 2>({wcoeffs.extent(0), wcoeffs.extent(1)})),

@@ -81,7 +81,7 @@ FiniteElement<T> basix::element::create_rt(cell::type celltype, int degree,
     }
   }
 
-  basix::math::orthogonalise<T>(B, nv * tdim);
+  math::orthogonalise<T>(B, nv * tdim);
 
   std::array<std::vector<impl::mdarray_t<T, 2>>, 4> x;
   std::array<std::vector<impl::mdarray_t<T, 4>>, 4> M;

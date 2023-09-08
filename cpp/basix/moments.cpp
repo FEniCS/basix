@@ -422,7 +422,7 @@ moments::make_normal_integral_moments(const FiniteElement<T>& V,
         for (std::size_t i = 0; i < _p.extent(1); ++i)
           _p(p, i) = facet_x(0, i) + pts(p, 0) * t0[i] + pts(p, 1) * t1[i];
 
-      normal = basix::math::cross(t0, t1);
+      normal = math::cross(t0, t1);
     }
     else
       throw std::runtime_error("Normal on this cell cannot be computed.");

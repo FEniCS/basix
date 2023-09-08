@@ -70,7 +70,7 @@ impl::mdarray_t<T, 2> create_nedelec_2d_space(int degree)
     }
   }
 
-  basix::math::orthogonalise<T>(wcoeffs, nv * 2);
+  math::orthogonalise<T>(wcoeffs, nv * 2);
 
   return wcoeffs;
 }
@@ -159,7 +159,7 @@ impl::mdarray_t<T, 2> create_nedelec_3d_space(int degree)
     }
   }
 
-  basix::math::orthogonalise<T>(wcoeffs, nv * 3);
+  math::orthogonalise<T>(wcoeffs, nv * 3);
 
   return wcoeffs;
 }

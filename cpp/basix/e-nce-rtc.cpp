@@ -56,35 +56,36 @@ FiniteElement<T> basix::element::create_rtc(cell::type celltype, int degree,
 
   // Create coefficients for order (degree-1) vector polynomials
   impl::mdarray_t<T, 2> wcoeffs(ndofs, psize * tdim);
-  const int nv_interval
+  const int nv
       = polyset::dim(cell::type::interval, polyset::type::standard, degree);
-  const int ns_interval
+  const int ns
       = polyset::dim(cell::type::interval, polyset::type::standard, degree - 1);
   int dof = 0;
   if (tdim == 2)
   {
-    for (int i = 0; i < ns_interval; ++i)
-      for (int j = 0; j < nv_interval; ++j)
+    for (int i = 0; i < ns; ++i)
+    {
+      for (int j = 0; j < nv; ++j)
       {
-        wcoeffs(dof++, j * nv_interval + i) = 1;
-        wcoeffs(dof++, psize + i * nv_interval + j) = 1;
+        wcoeffs(dof++, j * nv + i) = 1;
+        wcoeffs(dof++, psize + i * nv + j) = 1;
       }
+    }
   }
   else
   {
-    for (int i = 0; i < ns_interval; ++i)
-      for (int j = 0; j < ns_interval; ++j)
-        for (int k = 0; k < nv_interval; ++k)
+    for (int i = 0; i < ns; ++i)
+    {
+      for (int j = 0; j < ns; ++j)
+      {
+        for (int k = 0; k < nv; ++k)
         {
-          wcoeffs(dof++, k * nv_interval * nv_interval + j * nv_interval + i)
-              = 1;
-          wcoeffs(dof++,
-                  psize + i * nv_interval * nv_interval + k * nv_interval + j)
-              = 1;
-          wcoeffs(dof++, psize * 2 + j * nv_interval * nv_interval
-                             + i * nv_interval + k)
-              = 1;
+          wcoeffs(dof++, k * nv * nv + j * nv + i) = 1;
+          wcoeffs(dof++, psize + i * nv * nv + k * nv + j) = 1;
+          wcoeffs(dof++, psize * 2 + j * nv * nv + i * nv + k) = 1;
         }
+      }
+    }
   }
 
   assert((std::size_t)dof == ndofs);
@@ -197,36 +198,37 @@ FiniteElement<T> basix::element::create_nce(cell::type celltype, int degree,
   // Create coefficients for order (degree-1) vector polynomials
   impl::mdarray_t<T, 2> wcoeffs(ndofs, psize * tdim);
 
-  const int nv_interval
+  const int nv
       = polyset::dim(cell::type::interval, polyset::type::standard, degree);
-  const int ns_interval
+  const int ns
       = polyset::dim(cell::type::interval, polyset::type::standard, degree - 1);
 
   int dof = 0;
   if (tdim == 2)
   {
-    for (int i = 0; i < ns_interval; ++i)
-      for (int j = 0; j < nv_interval; ++j)
+    for (int i = 0; i < ns; ++i)
+    {
+      for (int j = 0; j < nv; ++j)
       {
-        wcoeffs(dof++, i * nv_interval + j) = 1;
-        wcoeffs(dof++, psize + j * nv_interval + i) = 1;
+        wcoeffs(dof++, i * nv + j) = 1;
+        wcoeffs(dof++, psize + j * nv + i) = 1;
       }
+    }
   }
   else
   {
-    for (int i = 0; i < ns_interval; ++i)
-      for (int j = 0; j < nv_interval; ++j)
-        for (int k = 0; k < nv_interval; ++k)
+    for (int i = 0; i < ns; ++i)
+    {
+      for (int j = 0; j < nv; ++j)
+      {
+        for (int k = 0; k < nv; ++k)
         {
-          wcoeffs(dof++, i * nv_interval * nv_interval + j * nv_interval + k)
-              = 1;
-          wcoeffs(dof++,
-                  psize + k * nv_interval * nv_interval + i * nv_interval + j)
-              = 1;
-          wcoeffs(dof++, psize * 2 + j * nv_interval * nv_interval
-                             + k * nv_interval + i)
-              = 1;
+          wcoeffs(dof++, i * nv * nv + j * nv + k) = 1;
+          wcoeffs(dof++, psize + k * nv * nv + i * nv + j) = 1;
+          wcoeffs(dof++, psize * 2 + j * nv * nv + k * nv + i) = 1;
         }
+      }
+    }
   }
 
   assert((std::size_t)dof == ndofs);

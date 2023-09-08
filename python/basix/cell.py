@@ -3,12 +3,9 @@
 from ._basixcpp import CellType as _CT
 from ._basixcpp import cell_facet_jacobians as facet_jacobians  # noqa: F401
 from ._basixcpp import cell_facet_normals as facet_normals  # noqa: F401
-from ._basixcpp import \
-    cell_facet_orientations as facet_orientations  # noqa: F401
-from ._basixcpp import \
-    cell_facet_outward_normals as facet_outward_normals  # noqa: F401
-from ._basixcpp import \
-    cell_facet_reference_volumes as facet_reference_volumes  # noqa: F401
+from ._basixcpp import cell_facet_orientations as facet_orientations  # noqa: F401
+from ._basixcpp import cell_facet_outward_normals as facet_outward_normals  # noqa: F401
+from ._basixcpp import cell_facet_reference_volumes as facet_reference_volumes  # noqa: F401
 from ._basixcpp import cell_volume as volume  # noqa: F401
 from ._basixcpp import sub_entity_connectivity  # noqa: F401
 

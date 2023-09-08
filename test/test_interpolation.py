@@ -33,6 +33,10 @@ def test_interpolation_matrix(cell_type, degree, element_type, element_args):
                          "Lagrange spaces with equally spaced points are unstable.")
 
     element = basix.create_element(element_type, cell_type, degree, *element_args)
+
+    if element.interpolation_nderivs != 0:
+        pytest.xfail("Interpolation into spaces with derivate DOFs not yet supported.")
+
     i_m = element.interpolation_matrix
     tabulated = element.tabulate(0, element.points)[0]
 

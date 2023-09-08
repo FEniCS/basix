@@ -86,6 +86,9 @@ FiniteElement<T> basix::element::create_rtc(cell::type celltype, int degree,
               = 1;
         }
   }
+
+  assert((std::size_t)dof == ndofs);
+
   std::array<std::vector<impl::mdarray_t<T, 2>>, 4> x;
   std::array<std::vector<impl::mdarray_t<T, 4>>, 4> M;
 
@@ -212,7 +215,7 @@ FiniteElement<T> basix::element::create_nce(cell::type celltype, int degree,
   else
   {
     for (int i = 0; i < ns_interval; ++i)
-      for (int j = 0; j < ns_interval; ++j)
+      for (int j = 0; j < nv_interval; ++j)
         for (int k = 0; k < nv_interval; ++k)
         {
           wcoeffs(dof++, i * nv_interval * nv_interval + j * nv_interval + k)
@@ -225,6 +228,8 @@ FiniteElement<T> basix::element::create_nce(cell::type celltype, int degree,
               = 1;
         }
   }
+
+  assert((std::size_t)dof == ndofs);
 
   std::array<std::vector<impl::mdarray_t<T, 2>>, 4> x;
   std::array<std::vector<impl::mdarray_t<T, 4>>, 4> M;

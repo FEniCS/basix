@@ -183,6 +183,8 @@ FiniteElement<T> basix::element::create_bubble(cell::type celltype, int degree,
       for (std::size_t k = 0; k < wts.size(); ++k)
         wcoeffs(i, j) += wts[k] * phi1(i, k) * bubble[k] * phi(0, j, k);
 
+  basix::math::orthogonalise<T>(wcoeffs);
+
   auto& _M = M[tdim].emplace_back(ndofs, 1, ndofs, 1);
   for (std::size_t i = 0; i < _M.extent(0); ++i)
     _M(i, 0, i, 0) = 1.0;

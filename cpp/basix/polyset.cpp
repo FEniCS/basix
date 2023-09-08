@@ -236,7 +236,7 @@ void tabulate_polyset_quadrilateral_macroedge_derivs(
     stdex::mdspan<const T, stdex::dextents<std::size_t, 2>> x)
 {
   assert(x.extent(0) > 0);
-  assert(P.extent(0) == nderiv + 1);
+  assert(P.extent(0) == (nderiv + 1) * (nderiv + 2) / 2);
   assert(P.extent(1) == (2 * n + 1) * (2 * n + 1));
   assert(P.extent(2) == x.extent(0));
 
@@ -449,7 +449,7 @@ void tabulate_polyset_triangle_macroedge_derivs(
     stdex::mdspan<const T, stdex::dextents<std::size_t, 2>> x)
 {
   assert(x.extent(0) > 0);
-  assert(P.extent(0) == nderiv + 1);
+  assert(P.extent(0) == (nderiv + 1) * (nderiv + 2) / 2);
   assert(P.extent(1) == (n + 1) * (2 * n + 1));
   assert(P.extent(2) == x.extent(0));
 
@@ -940,7 +940,7 @@ void tabulate_polyset_tetrahedron_macroedge_derivs(
     stdex::mdspan<const T, stdex::dextents<std::size_t, 2>> x)
 {
   assert(x.extent(0) > 0);
-  assert(P.extent(0) == nderiv + 1);
+  assert(P.extent(0) == (nderiv + 1) * (nderiv + 2) * (nderiv + 3) / 6);
   assert(P.extent(1) == (n + 1) * (2 * n + 1) * (2 * n + 3) / 3);
   assert(P.extent(2) == x.extent(0));
 
@@ -1274,7 +1274,7 @@ void tabulate_polyset_hexahedron_macroedge_derivs(
     stdex::mdspan<const T, stdex::dextents<std::size_t, 2>> x)
 {
   assert(x.extent(0) > 0);
-  assert(P.extent(0) == nderiv + 1);
+  assert(P.extent(0) == (nderiv + 1) * (nderiv + 2) * (nderiv + 3) / 6);
   assert(P.extent(1) == (2 * n + 1) * (2 * n + 1) * (2 * n + 1));
   assert(P.extent(2) == x.extent(0));
 

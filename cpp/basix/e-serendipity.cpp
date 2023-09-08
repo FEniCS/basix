@@ -169,9 +169,10 @@ impl::mdarray_t<T, 2> make_serendipity_div_space_2d(int degree)
     }
   }
 
-  math::orthogonalise(impl::mdspan_t<T, 2>(wcoeffs.data(), {wcoeffs.extent(0),
-                                                            wcoeffs.extent(1)}),
-                      2 * nv);
+  math::orthogonalise(
+      impl::mdspan_t<T, 2>(wcoeffs.data(),
+                           std::array{wcoeffs.extent(0), wcoeffs.extent(1)}),
+      2 * nv);
 
   return wcoeffs;
 }
@@ -336,9 +337,10 @@ impl::mdarray_t<T, 2> make_serendipity_div_space_3d(int degree)
     }
   }
 
-  math::orthogonalise(impl::mdspan_t<T, 2>(wcoeffs.data(), {wcoeffs.extent(0),
-                                                            wcoeffs.extent(1)}),
-                      3 * nv);
+  math::orthogonalise(
+      impl::mdspan_t<T, 2>(wcoeffs.data(),
+                           std::array{wcoeffs.extent(0), wcoeffs.extent(1)}),
+      3 * nv);
 
   return wcoeffs;
 }
@@ -418,9 +420,10 @@ impl::mdarray_t<T, 2> make_serendipity_curl_space_2d(int degree)
     }
   }
 
-  math::orthogonalise(impl::mdspan_t<T, 2>(wcoeffs.data(), {wcoeffs.extent(0),
-                                                            wcoeffs.extent(1)}),
-                      2 * nv);
+  math::orthogonalise(
+      impl::mdspan_t<T, 2>(wcoeffs.data(),
+                           std::array{wcoeffs.extent(0), wcoeffs.extent(1)}),
+      2 * nv);
 
   return wcoeffs;
 }
@@ -639,9 +642,10 @@ impl::mdarray_t<T, 2> make_serendipity_curl_space_3d(int degree)
 
   assert((std::size_t)c == ndofs);
 
-  math::orthogonalise(impl::mdspan_t<T, 2>(wcoeffs.data(), {wcoeffs.extent(0),
-                                                            wcoeffs.extent(1)}),
-                      3 * nv);
+  math::orthogonalise(
+      impl::mdspan_t<T, 2>(wcoeffs.data(),
+                           std::array{wcoeffs.extent(0), wcoeffs.extent(1)}),
+      3 * nv);
 
   return wcoeffs;
 }

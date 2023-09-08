@@ -1,7 +1,8 @@
 import os
-import pytest
 import subprocess
 import sys
+
+import pytest
 
 # Get all the demos in this folder
 path = os.path.dirname(os.path.realpath(__file__))

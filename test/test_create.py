@@ -2,8 +2,11 @@
 # FEniCS Project
 # SPDX-License-Identifier: MIT
 
-import basix
 import pytest
+
+import basix
+
+from .utils import parametrize_over_elements
 
 cells = [
     basix.CellType.point,
@@ -60,6 +63,27 @@ def test_all_elements_included():
             all_elements.add(getattr(basix.ElementFamily, c))
 
     assert all_elements == set(elements)
+
+
+def test_all_cells_included_in_paramerize():
+    all_cells = set()
+    for c in dir(basix.CellType):
+        if not c.startswith("_") and c not in ["name", "value", "point"]:
+            all_cells.add(getattr(basix.CellType, c))
+
+    assert all_cells == set(i[0] for i in parametrize_over_elements(4).mark.args[1])
+
+
+def test_all_elements_included_in_parametrize():
+    all_elements = set()
+    for c in dir(basix.ElementFamily):
+        if not c.startswith("_") and c not in ["name", "value", "custom"]:
+            all_elements.add(getattr(basix.ElementFamily, c))
+
+    assert all_elements == set([
+        i[1] for i in parametrize_over_elements(4).mark.args[1]
+    ] + [
+        i[1] for i in parametrize_over_elements(4, discontinuous=True).mark.args[1]])
 
 
 @pytest.mark.parametrize("cell", cells)

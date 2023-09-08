@@ -1,6 +1,7 @@
 """Functions for handling Sobolev spaces."""
 
 import typing as _typing
+
 from ._basixcpp import SobolevSpace as _SS
 from ._basixcpp import sobolev_space_intersection as _ssi
 

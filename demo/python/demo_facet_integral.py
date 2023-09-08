@@ -13,9 +13,10 @@
 #
 # We start by importing Basis and Numpy.
 
-import basix
 import numpy as np
-from basix import ElementFamily, CellType, LagrangeVariant
+
+import basix
+from basix import CellType, ElementFamily, LagrangeVariant
 
 # We define a degree 3 Lagrange space on a tetrahedron.
 

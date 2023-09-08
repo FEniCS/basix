@@ -1,12 +1,13 @@
 """Functions to manipulate quadrature types."""
 
 import typing as _typing
+
 import numpy as _np
 import numpy.typing as _npt
 
-from ._basixcpp import QuadratureType as _QT
 from ._basixcpp import CellType as _CT
 from ._basixcpp import PolysetType as _PT
+from ._basixcpp import QuadratureType as _QT
 from ._basixcpp import make_quadrature as _mq
 
 

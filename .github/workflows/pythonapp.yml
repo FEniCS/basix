@@ -51,6 +51,10 @@ jobs:
         run: |
           python3 -m pydocstyle python/basix
 
+      - name: isort checks
+        run: |
+          python3 -m isort --check .
+
       - name: Run units tests
         run: |
           python3 -m pytest -n auto --durations 20 test/

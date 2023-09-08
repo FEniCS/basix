@@ -14,9 +14,10 @@
 #
 # First, we import Basix and Numpy.
 
-import basix
 import numpy as np
-from basix import ElementFamily, CellType, LagrangeVariant
+
+import basix
+from basix import CellType, ElementFamily, LagrangeVariant
 
 # To get a quadrature rule on a triangle, we use the function `make_quadrature`.
 # This function takes two or three three inputs. We want to use the default

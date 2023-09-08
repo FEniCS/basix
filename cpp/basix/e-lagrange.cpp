@@ -1435,11 +1435,12 @@ FiniteElement<T> basix::element::create_iso(cell::type celltype, int degree,
                                             bool discontinuous)
 {
   if (celltype != cell::type::interval && celltype != cell::type::quadrilateral
-      && celltype != cell::type::hexahedron && celltype != cell::type::triangle)
+      && celltype != cell::type::hexahedron && celltype != cell::type::triangle
+      && celltype != cell::type::tetrahedron)
   {
     throw std::runtime_error(
         "Can currently only create iso elements on "
-        "intervals, triangles, quadrilaterals, and hexahedra");
+        "intervals, triangles, tetrahedra, quadrilaterals, and hexahedra");
   }
 
   if (variant == lagrange_variant::unset)
@@ -1574,13 +1575,11 @@ FiniteElement<T> basix::element::create_iso(cell::type celltype, int degree,
 
   sobolev::space space
       = discontinuous ? sobolev::space::L2 : sobolev::space::H1;
-  auto tensor_factors
-      = create_tensor_product_factors<T>(celltype, degree, variant);
   return FiniteElement<T>(
       family::iso, celltype, polyset::type::macroedge, degree, {},
       impl::mdspan_t<T, 2>(math::eye<T>(ndofs).data(), ndofs, ndofs), xview,
       Mview, 0, maps::type::identity, space, discontinuous, degree, degree,
-      variant, dpc_variant::unset, tensor_factors);
+      variant, dpc_variant::unset);
 }
 //-----------------------------------------------------------------------------
 template FiniteElement<float> element::create_lagrange(cell::type, int,

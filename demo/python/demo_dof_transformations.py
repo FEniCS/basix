@@ -22,9 +22,10 @@
 #
 # First, we import Basix and Numpy.
 
-import basix
 import numpy as np
-from basix import ElementFamily, CellType, LagrangeVariant, LatticeType
+
+import basix
+from basix import CellType, ElementFamily, LagrangeVariant, LatticeType
 
 # Degree 5 Lagrange element
 # =========================

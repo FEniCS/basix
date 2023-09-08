@@ -6,10 +6,12 @@
 #include "e-lagrange.h"
 #include "element-families.h"
 #include "maps.h"
+#include "math.h"
 #include "moments.h"
 #include "polyset.h"
 #include "quadrature.h"
 #include "sobolev-spaces.h"
+#include <cmath>
 #include <vector>
 
 using namespace basix;
@@ -65,7 +67,7 @@ FiniteElement<T> basix::element::create_rt(cell::type celltype, int degree,
   // polynomial basis
   for (std::size_t i = 0; i < ns; ++i)
   {
-    for (std::size_t k = 0; k < psize; ++k)
+    for (std::size_t k = nv; k < psize; ++k)
     {
       for (std::size_t j = 0; j < tdim; ++j)
       {
@@ -78,6 +80,8 @@ FiniteElement<T> basix::element::create_rt(cell::type celltype, int degree,
       }
     }
   }
+
+  math::orthogonalise<T>(B, nv * tdim);
 
   std::array<std::vector<impl::mdarray_t<T, 2>>, 4> x;
   std::array<std::vector<impl::mdarray_t<T, 4>>, 4> M;

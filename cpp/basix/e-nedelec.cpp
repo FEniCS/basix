@@ -57,7 +57,7 @@ impl::mdarray_t<T, 2> create_nedelec_2d_space(int degree)
   // Create coefficients for the additional Nedelec polynomials
   for (std::size_t i = 0; i < ns; ++i)
   {
-    for (std::size_t j = 0; j < psize; ++j)
+    for (std::size_t j = nv; j < psize; ++j)
     {
       wcoeffs(2 * nv + i, j) = 0.0;
       wcoeffs(2 * nv + i, j + psize) = 0.0;
@@ -69,6 +69,8 @@ impl::mdarray_t<T, 2> create_nedelec_2d_space(int degree)
       }
     }
   }
+
+  math::orthogonalise<T>(wcoeffs, nv * 2);
 
   return wcoeffs;
 }
@@ -116,7 +118,7 @@ impl::mdarray_t<T, 2> create_nedelec_3d_space(int degree)
   // Create coefficients for additional Nedelec polynomials
   for (std::size_t i = 0; i < ns; ++i)
   {
-    for (std::size_t j = 0; j < psize; ++j)
+    for (std::size_t j = nv; j < psize; ++j)
     {
       T w = 0.0;
       for (std::size_t k = 0; k < wts.size(); ++k)
@@ -131,7 +133,7 @@ impl::mdarray_t<T, 2> create_nedelec_3d_space(int degree)
 
   for (std::size_t i = 0; i < ns; ++i)
   {
-    for (std::size_t j = 0; j < psize; ++j)
+    for (std::size_t j = nv; j < psize; ++j)
     {
       T w = 0.0;
       for (std::size_t k = 0; k < wts.size(); ++k)
@@ -146,7 +148,7 @@ impl::mdarray_t<T, 2> create_nedelec_3d_space(int degree)
 
   for (std::size_t i = 0; i < ns; ++i)
   {
-    for (std::size_t j = 0; j < psize; ++j)
+    for (std::size_t j = nv; j < psize; ++j)
     {
       T w = 0.0;
       for (std::size_t k = 0; k < wts.size(); ++k)
@@ -156,6 +158,8 @@ impl::mdarray_t<T, 2> create_nedelec_3d_space(int degree)
       wcoeffs(tdim * nv + i + ns * 2 - ns_remove, psize + j) = w;
     }
   }
+
+  math::orthogonalise<T>(wcoeffs, nv * 3);
 
   return wcoeffs;
 }

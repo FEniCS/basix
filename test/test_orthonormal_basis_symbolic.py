@@ -2,9 +2,10 @@
 # FEniCS Project
 # SPDX-License-Identifier: MIT
 
-import sympy
-import basix
 import numpy as np
+import sympy
+
+import basix
 
 
 def P_interval(n, x):

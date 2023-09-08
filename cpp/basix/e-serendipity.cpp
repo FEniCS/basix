@@ -347,17 +347,6 @@ impl::mdarray_t<T, 2> make_serendipity_div_space_3d(int degree)
   return wcoeffs;
 }
 //----------------------------------------------------------------------------
-std::vector<std::array<int, 3>> serendipity_3d_indices(int total, int linear)
-{
-  std::vector<std::array<int, 3>> out;
-  for (int i = 0; i <= total; ++i)
-    for (int j = 0; j <= total - i; ++j)
-      if ((i == 1 ? 1 : 0) + (j == 1 ? 1 : 0) + (total == i + j + 1 ? 1 : 0)
-          >= linear)
-        out.push_back({{i, j, total - i - j}});
-  return out;
-}
-//----------------------------------------------------------------------------
 template <std::floating_point T>
 impl::mdarray_t<T, 2> make_serendipity_curl_space_2d(int degree)
 {
@@ -604,44 +593,53 @@ impl::mdarray_t<T, 2> make_serendipity_curl_space_3d(int degree)
 
   int c = 3 * nv + (degree > 1 ? 3 : 2) * degree;
   std::vector<std::array<int, 3>> indices;
-  for (std::size_t s = 1; s <= 3; ++s)
+  for (int s = 1; s <= 3; ++s)
   {
-    indices = serendipity_3d_indices(s + degree + 1, s);
-    for (std::array<int, 3> i : indices)
+    for (int i0 = 0; i0 <= s + degree + 1; ++i0)
     {
-      for (std::size_t k = 0; k < nonzero.size(); ++k)
+      for (int i1 = 0; i1 <= s + degree + 1 - i0; ++i1)
       {
-        for (int d = 0; d < 3; ++d)
+        if ((i0 == 1 ? 1 : 0) + (i1 == 1 ? 1 : 0)
+                + (s + degree == i0 + i1 ? 1 : 0)
+            >= s)
         {
-          for (std::size_t j = 0; j < integrand.size(); ++j)
-            integrand[j] = wts[j] * Pq(0, nonzero[k], j);
-          for (int d2 = 0; d2 < 3; ++d2)
+          std::array<int, 3> i = {i0, i1, s + degree + 1 - i0 - i1};
+
+          for (std::size_t k = 0; k < nonzero.size(); ++k)
           {
-            if (d == d2)
+            for (int d = 0; d < 3; ++d)
             {
               for (std::size_t j = 0; j < integrand.size(); ++j)
-                integrand[j] *= i[d2];
-              for (int j = 0; j < i[d2] - 1; ++j)
+                integrand[j] = wts[j] * Pq(0, nonzero[k], j);
+              for (int d2 = 0; d2 < 3; ++d2)
               {
-                for (std::size_t j = 0; j < integrand.size(); ++j)
-                  integrand[j] *= pts(j, d2);
+                if (d == d2)
+                {
+                  for (std::size_t j = 0; j < integrand.size(); ++j)
+                    integrand[j] *= i[d2];
+                  for (int j = 0; j < i[d2] - 1; ++j)
+                  {
+                    for (std::size_t j = 0; j < integrand.size(); ++j)
+                      integrand[j] *= pts(j, d2);
+                  }
+                }
+                else
+                {
+                  for (int j = 0; j < i[d2]; ++j)
+                  {
+                    for (std::size_t j = 0; j < integrand.size(); ++j)
+                      integrand[j] *= pts(j, d2);
+                  }
+                }
               }
-            }
-            else
-            {
-              for (int j = 0; j < i[d2]; ++j)
-              {
-                for (std::size_t j = 0; j < integrand.size(); ++j)
-                  integrand[j] *= pts(j, d2);
-              }
+
+              wcoeffs(c, psize * d + nonzero[k])
+                  = std::reduce(integrand.begin(), integrand.end(), 0.0);
             }
           }
-
-          wcoeffs(c, psize * d + nonzero[k])
-              = std::reduce(integrand.begin(), integrand.end(), 0.0);
+          ++c;
         }
       }
-      ++c;
     }
   }
 

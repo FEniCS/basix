@@ -369,7 +369,7 @@ void orthogonalise(
     T norm = 0;
     for (std::size_t k = 0; k < wcoeffs.extent(1); ++k)
       norm += wcoeffs(i, k) * wcoeffs(i, k);
-    if (abs(norm) <= 4 * std::numeric_limits<T>::epsilon())
+    if (std::abs(norm) < 4 * std::numeric_limits<T>::epsilon())
     {
       throw std::runtime_error(
           "Cannot orthogonalise the rows of a matrix with incomplete row rank");

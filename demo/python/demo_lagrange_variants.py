@@ -25,9 +25,10 @@
 #
 # We begin by importing Basix and Numpy.
 
-import basix
 import numpy as np
-from basix import ElementFamily, CellType, LagrangeVariant, LatticeType
+
+import basix
+from basix import CellType, ElementFamily, LagrangeVariant, LatticeType
 
 # In this demo, we consider Lagrange elements defined on a triangle. We start
 # by creating a degree 15 Lagrange element that uses equally spaced points.

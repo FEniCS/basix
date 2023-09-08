@@ -7,9 +7,11 @@
 #
 # First, we import Basix and Numpy.
 
-import basix
 import numpy as np
-from basix import CellType, MapType, PolynomialType, LatticeType, SobolevSpace, PolysetType
+
+import basix
+from basix import (CellType, LatticeType, MapType, PolynomialType, PolysetType,
+                   SobolevSpace)
 
 # Lagrange element with bubble
 # ============================

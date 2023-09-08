@@ -1,8 +1,6 @@
-from typing import Any, ClassVar, List, Tuple
+from typing import Any, ClassVar, List, Tuple, overload
 
-from typing import overload
 import numpy
-
 import numpy.typing as npt
 
 __version__: str = ...

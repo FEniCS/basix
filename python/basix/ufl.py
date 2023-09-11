@@ -381,7 +381,8 @@ class _BasixElement(_ElementBase):
         return tab.transpose((0, 1, 3, 2)).reshape((tab.shape[0], tab.shape[1], -1))
 
     def get_component_element(self, flat_component: int) -> _typing.Tuple[_ElementBase, int, int]:
-        """Get element that represents a component of the element, and the offset and stride of the component.
+        """Get element that represents a component of the element, and
+        the offset and stride of the component.
 
         For example, for a mixed element, this will return the
         sub-element that represents the given component, the offset of
@@ -390,14 +391,15 @@ class _BasixElement(_ElementBase):
         number, and a stride equal to the block size. For vector-valued
         element (eg H(curl) and H(div) elements), this returns a
         component element (and as offset of 0 and a stride of 1). When
-        tabulate is called on the component element, only the part of the
-        table for the given component is returned.
+        tabulate is called on the component element, only the part of
+        the table for the given component is returned.
 
         Args:
             flat_component: The component
 
         Returns:
             component element, offset of the component, stride of the component
+
         """
         assert flat_component < self.value_size
         return _ComponentElement(self, flat_component), 0, 1
@@ -544,9 +546,10 @@ class _BasixElement(_ElementBase):
 class _ComponentElement(_ElementBase):
     """An element representing one component of a _BasixElement.
 
-    This element type is used when UFL's `get_component_element` function is called.
-    """
+    This element type is used when UFL's `get_component_element`
+    function is called.
 
+    """
     element: _ElementBase
     component: int
 
@@ -577,10 +580,11 @@ class _ComponentElement(_ElementBase):
 
         Args:
             nderivs: Number of derivatives to tabulate.
-            points: Points to tabulate at
+            points: Points to tabulate at.
 
         Returns:
-            Tabulated basis functions
+            Tabulated basis functions.
+
         """
         tables = self.element.tabulate(nderivs, points)
         output = []
@@ -603,7 +607,8 @@ class _ComponentElement(_ElementBase):
         return _np.asarray(output, dtype=_np.float64)
 
     def get_component_element(self, flat_component: int) -> _typing.Tuple[_ElementBase, int, int]:
-        """Get element that represents a component of the element, and the offset and stride of the component.
+        """Get element that represents a component of the element, and
+        the offset and stride of the component.
 
         Args:
             flat_component: The component
@@ -709,8 +714,10 @@ class _ComponentElement(_ElementBase):
 class _MixedElement(_ElementBase):
     """A mixed element that combines two or more elements.
 
-    This can be used when multiple different elements appear in a form. Users should not directly call this
-    class's initiliser, but should use the `mixed_element` function instead.
+    This can be used when multiple different elements appear in a form.
+    Users should not directly call this class's initilizer, but should
+    use the :func:`mixed_element` function instead.
+
     """
 
     _sub_elements: _typing.List[_ElementBase]
@@ -768,6 +775,7 @@ class _MixedElement(_ElementBase):
 
         Returns:
             Tabulated basis functions
+
         """
         tables = []
         results = [e.tabulate(nderivs, points) for e in self._sub_elements]
@@ -782,13 +790,15 @@ class _MixedElement(_ElementBase):
         return _np.asarray(tables, dtype=_np.float64)
 
     def get_component_element(self, flat_component: int) -> _typing.Tuple[_ElementBase, int, int]:
-        """Get element that represents a component of the element, and the offset and stride of the component.
+        """Get element that represents a component of the element, and
+        the offset and stride of the component.
 
         Args:
             flat_component: The component
 
         Returns:
             component element, offset of the component, stride of the component
+
         """
         sub_dims = [0] + [e.dim for e in self._sub_elements]
         sub_cmps = [0] + [e.value_size for e in self._sub_elements]
@@ -919,10 +929,11 @@ class _MixedElement(_ElementBase):
 class _BlockedElement(_ElementBase):
     """Element with a block size that contains multiple copies of a sub element.
 
-    This can be used to (for example) create vector and tensor Lagrange elements. Users should not
-    directly call this classes initiliser, but should use the `blocked_element` function instead.
-    """
+    This can be used to (for example) create vector and tensor Lagrange
+    elements. Users should not directly call this classes initilizer,
+    but should use the `blocked_element` function instead.
 
+    """
     block_shape: _typing.Tuple[int, ...]
     sub_element: _ElementBase
     _block_size: int
@@ -1018,6 +1029,7 @@ class _BlockedElement(_ElementBase):
 
         Returns:
             Tabulated basis functions
+
         """
         assert len(self.block_shape) == 1  # TODO: block shape
         assert self.value_size == self._block_size  # TODO: remove this assumption
@@ -1029,7 +1041,8 @@ class _BlockedElement(_ElementBase):
         return _np.asarray(output, dtype=_np.float64)
 
     def get_component_element(self, flat_component: int) -> _typing.Tuple[_ElementBase, int, int]:
-        """Get element that represents a component of the element, and the offset and stride of the component.
+        """Get element that represents a component of the element, and
+        the offset and stride of the component.
 
         Args:
             flat_component: The component
@@ -1249,13 +1262,15 @@ class _QuadratureElement(_ElementBase):
         return tables
 
     def get_component_element(self, flat_component: int) -> _typing.Tuple[_ElementBase, int, int]:
-        """Get element that represents a component of the element, and the offset and stride of the component.
+        """Get element that represents a component of the element, and
+        the offset and stride of the component.
 
         Args:
             flat_component: The component
 
         Returns:
             component element, offset of the component, stride of the component
+
         """
         return self, 0, 1
 
@@ -1404,6 +1419,7 @@ class _RealElement(_ElementBase):
 
         Returns:
             Tabulated basis functions
+
         """
         out = _np.zeros((nderivs + 1, len(points), self.value_size**2))
         for v in range(self.value_size):
@@ -1411,7 +1427,8 @@ class _RealElement(_ElementBase):
         return out
 
     def get_component_element(self, flat_component: int) -> _typing.Tuple[_ElementBase, int, int]:
-        """Get element that represents a component of the element, and the offset and stride of the component.
+        """Get element that represents a component of the element, and
+        the offset and stride of the component.
 
         Args:
             flat_component: The component
@@ -1600,22 +1617,26 @@ def element(family: _typing.Union[_basix.ElementFamily, str], cell: _typing.Unio
         degree: Degree of the finite element.
         lagrange_variant: Variant of Lagrange to be used.
         dpc_variant: Variant of DPC to be used.
-        discontinuous: If `True`, the discontinuous version of the
+        discontinuous: If ``True``, the discontinuous version of the
             element is created.
         rank: Rank of the value shape of the element. For scalar-valued
-            families, setting `rank=1` creates a vector element where
+            families, setting ``rank=1`` creates a vector element where
             each component of the vector is represented by the element.
-            Similarly, `rank>2` creates a tensor element. If `shape` is
-            provided, then `rank` is not required .
+            Similarly, ``rank>2`` creates a tensor element. If ``shape``
+            is provided, then ``rank`` is not required .
         shape: Value shape of the element. For scalar-valued families,
             this can be used to create vector and tensor elements. If
-            `rank` is set but `shape` is not, then `shape` will be set
-            to `()` for rank 0, `(tdim, )` for rank 1, and `(tdim, ...,
-            tdim)` for rank 2 or higher.
-        symmetry: Set to `True` if the tensor is symmetric. Valid for
+            ``rank`` is set but ``shape`` is not, then ``shape`` will be
+            set to ``()`` for rank 0, ``(tdim,)`` for rank 1, and
+            ``(tdim, ..., tdim)`` for rank 2 or higher.
+        symmetry: Set to ``True`` if the tensor is symmetric. Valid for
             rank 2 elements only.
         gdim: Geometric dimension. If not set the geometric dimension is
             set equal to the topological dimension of the cell.
+
+    Returns:
+        A finite element.
+
     """
     if rank is not None and shape is not None and len(shape) != rank:
         raise ValueError("Rank and shape are incompatible.")
@@ -1690,6 +1711,10 @@ def enriched_element(elements: _typing.List[_ElementBase],
         map_type: The map type for the enriched element.
         gdim: Geometric dimension. If not set the geometric dimension is
             set equal to the topological dimension of the cell.
+
+    Returns:
+        An enriched finite element.
+
     """
     ct = elements[0].cell_type
     ptype = elements[0].polyset_type
@@ -1760,25 +1785,38 @@ def custom_element(cell_type: _basix.CellType, value_shape: _typing.Union[_typin
     Args:
         cell_type: The cell type
         value_shape: The value shape of the element
-        wcoeffs: Matrices for the kth value index containing the expansion coefficients defining a
-            polynomial basis spanning the polynomial space for this element. Shape is
-            (dim(finite element polyset), dim(Legenre polynomials))
-        x: Interpolation points. Indices are (tdim, entity index, point index, dim)
-        M: The interpolation matrices. Indices are (tdim, entity index, dof, vs, point_index, derivative)
-        interpolation_nderivs: The number of derivatives that need to be used during interpolation
-        map_type: The type of map to be used to map values from the reference to a cell
-        sobolev_space: The underlying Sobolev space for the element
-        discontinuous: Indicates whether or not this is the discontinuous version of the element
-        highest_complete_degree: The highest degree n such that a Lagrange (or vector Lagrange)
-        element of degree n is a subspace of this element
-        highest_degree: The degree of a polynomial in this element's polyset
-        polyset_type: The polyset type for the element
+        wcoeffs: Matrices for the kth value index containing the
+            expansion coefficients defining a polynomial basis spanning
+            the polynomial space for this element. Shape is
+            ``(dim(finite element polyset), dim(Legenre polynomials))``.
+        x: Interpolation points. Indices are ``(tdim, entity index,
+            point index, dim)``
+        M: The interpolation matrices. Indices are ``(tdim, entity
+            index, dof, vs, point_index, derivative)``.
+        interpolation_nderivs: The number of derivatives that need to be
+            used during interpolation.
+        map_type: The type of map to be used to map values from the
+            reference to a cell.
+        sobolev_space: Underlying Sobolev space for the element.
+        discontinuous: Indicates whether or not this is the
+            discontinuous version of the element.
+        highest_complete_degree: The highest degree ``n`` such that a
+            Lagrange (or vector Lagrange) element of degree ``n`` is a
+            subspace of this element.
+        highest_degree: The degree of a polynomial in this element's
+            polyset.
+        polyset_type: Polyset type for the element.
         gdim: Geometric dimension. If not set the geometric dimension is
             set equal to the topological dimension of the cell.
+
+    Returns:
+        A custom finite element.
+
     """
     return _BasixElement(_basix.create_custom_element(
         cell_type, list(value_shape), wcoeffs, x, M, interpolation_nderivs,
-        map_type, sobolev_space, discontinuous, highest_complete_degree, highest_degree, polyset_type), gdim=gdim)
+        map_type, sobolev_space, discontinuous, highest_complete_degree,
+        highest_degree, polyset_type), gdim=gdim)
 
 
 def mixed_element(elements: _typing.List[_ElementBase], gdim: _typing.Optional[int] = None) -> _ElementBase:
@@ -1788,30 +1826,37 @@ def mixed_element(elements: _typing.List[_ElementBase], gdim: _typing.Optional[i
         elements: The list of elements
         gdim: Geometric dimension. If not set the geometric dimension is
             set equal to the topological dimension of the cell.
+
+    Returns:
+        A mixed finite element.
+
     """
     return _MixedElement(elements, gdim=gdim)
 
 
 def quadrature_element(
-    cell: _typing.Union[str, _basix.CellType], value_shape: _typing.Tuple[int, ...],
-    scheme: _typing.Optional[str] = None, degree: _typing.Optional[int] = None,
-    points: _typing.Optional[_npt.NDArray[_np.float64]] = None,
-    weights: _typing.Optional[_npt.NDArray[_np.float64]] = None,
-    mapname: str = "identity"
-) -> _ElementBase:
+        cell: _typing.Union[str, _basix.CellType], value_shape: _typing.Tuple[int, ...],
+        scheme: _typing.Optional[str] = None, degree: _typing.Optional[int] = None,
+        points: _typing.Optional[_npt.NDArray[_np.float64]] = None,
+        weights: _typing.Optional[_npt.NDArray[_np.float64]] = None,
+        mapname: str = "identity") -> _ElementBase:
     """Create a quadrature element.
 
-    When creating this element, either the quadrature scheme and degree must be input
-    or the quadrature points and weights must be.
+    When creating this element, either the quadrature scheme and degree
+    must be input or the quadrature points and weights must be.
 
     Args:
-        cell: The cell to create the element on
-        value_shape: The value shape of the element.
-        scheme: The quadrature scheme
-        degree: The quadrature degree
-        points: The quadrature points
-        weights: The quadrature weights
-        mapname: The map name
+        cell: Cell to create the element on.
+        value_shape: Value shape of the element.
+        scheme: Quadrature scheme.
+        degree: Quadrature degree.
+        points: Quadrature points.
+        weights: Quadrature weights.
+        mapname: Map name.
+
+    Returns:
+        A 'quadrature' finite element.
+
     """
     if isinstance(cell, str):
         cell = _basix.cell.string_to_type(cell)
@@ -1833,13 +1878,16 @@ def quadrature_element(
 
 def real_element(
     cell: _typing.Union[_basix.CellType, str],
-    value_shape: _typing.Tuple[int, ...]
-) -> _ElementBase:
+    value_shape: _typing.Tuple[int, ...]) -> _ElementBase:
     """Create a real element.
 
     Args:
-        cell: The cell to create the element on
-        value_shape: The value shape of the element.
+        cell: Cell to create the element on.
+        value_shape: Value shape of the element.
+
+    Returns:
+        A 'real' finite element.
+
     """
     if isinstance(cell, str):
         cell = _basix.cell.string_to_type(cell)
@@ -1854,21 +1902,25 @@ def blocked_element(sub_element: _ElementBase, rank: _typing.Optional[int] = Non
     """Create a UFL compatible blocked element.
 
     Args:
-        sub_element: The element used for each block.
+        sub_element: Element used for each block.
         rank: Rank of the value shape of the element. For scalar-valued
-            families, setting `rank=1` creates a vector element where
+            families, setting ``rank=1`` creates a vector element where
             each component of the vector is represented by the element.
-            Similarly, `rank>2` creates a tensor element. If `shape` is
-            provided, then `rank` is not required .
+            Similarly, ``rank>2`` creates a tensor element. If ``shape``
+            is provided, then ``rank`` is not required.
         shape: Value shape of the element. For scalar-valued families,
             this can be used to create vector and tensor elements. If
-            `rank` is set but `shape` is not, then `shape` will be set
-            to `()` for rank 0, `(tdim, )` for rank 1, and `(tdim, ...,
-            tdim)` for rank 2 or higher.
-        symmetry: Set to `True` if the tensor is symmetric. Valid for
+            `rank` is set but `shape` is not, then `shape`` will be set
+            to ``()`` for rank 0, ``(tdim,)`` for rank 1, and ``(tdim,
+            ..., tdim)`` for rank 2 or higher.
+        symmetry: Set to ``True`` if the tensor is symmetric. Valid for
             rank 2 elements only.
         gdim: Geometric dimension. If not set the geometric dimension is
             set equal to the topological dimension of the cell.
+
+    Returns:
+        A blocked finite element.
+
     """
     if len(sub_element.value_shape()) != 0:
         raise ValueError("Cannot create a blocked element containing a non-scalar element.")

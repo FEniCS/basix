@@ -15,10 +15,11 @@ def string_to_type(rule: str) -> _QT:
     """Convert a string to a Basix QuadratureType enum.
 
     Args:
-        rule: The quadrature rule as a string.
+        rule: Qquadrature rule as a string.
 
     Returns:
-        The quadrature type
+        The quadrature type.
+
     """
     if rule == "default":
         return _QT.Default
@@ -39,10 +40,11 @@ def type_to_string(quadraturetype: _QT) -> str:
     """Convert a Basix QuadratureType enum to a string.
 
     Args:
-        quadraturetype: The quadrature type
+        quadraturetype: Quadrature type.
 
     Returns:
         The quadrature rule as a string.
+
     """
     return quadraturetype.name
 
@@ -53,12 +55,15 @@ def make_quadrature(
     """Create a quadrature rule.
 
     Args:
-        cell: The cell type
-        degree: The maximum polynomial degree that will be integrated exactly
-        rule: The quadrature rule
-        polyset_type: The type of polynomial that will be integrated exactly
+        cell: Cell type
+        degree: Maximum polynomial degree that will be integrated
+            exactly.
+        rule: Quadrature rule.
+        polyset_type: Type of polynomial that will be integrated
+            exactly.
 
     Returns:
-        The quadrature points and weights
+        The quadrature points and weights.
+
     """
     return _mq(rule, cell, polyset_type, degree)

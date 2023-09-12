@@ -22,12 +22,17 @@ def reshape_coefficients(
         poly_type: The polynomial type.
         cell_type: The cell type
         coefficients: The coefficients
-        value_size: The value size of the polynomials associated with the coefficients
-        input_degree: The maximum degree of polynomials associated with the input coefficients
-        output_degree: The maximum degree of polynomials associated with the output coefficients
+        value_size: The value size of the polynomials associated with
+            the coefficients.
+        input_degree: The maximum degree of polynomials associated with
+            the input coefficients.
+        output_degree: The maximum degree of polynomials associated with
+            the output coefficients.
 
     Returns:
-        Coefficients representing the same coefficients as the input in the set of polynomials of the output degree
+        Coefficients representing the same coefficients as the input in
+        the set of polynomials of the output degree.
+
     """
     if poly_type != _PT.legendre:
         raise NotImplementedError()

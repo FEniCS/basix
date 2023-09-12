@@ -1834,12 +1834,13 @@ def mixed_element(elements: _typing.List[_ElementBase], gdim: _typing.Optional[i
     return _MixedElement(elements, gdim=gdim)
 
 
-def quadrature_element(
-        cell: _typing.Union[str, _basix.CellType], value_shape: _typing.Tuple[int, ...],
-        scheme: _typing.Optional[str] = None, degree: _typing.Optional[int] = None,
-        points: _typing.Optional[_npt.NDArray[_np.float64]] = None,
-        weights: _typing.Optional[_npt.NDArray[_np.float64]] = None,
-        mapname: str = "identity") -> _ElementBase:
+def quadrature_element(cell: _typing.Union[str, _basix.CellType],
+                       value_shape: _typing.Tuple[int, ...],
+                       scheme: _typing.Optional[str] = None,
+                       degree: _typing.Optional[int] = None,
+                       points: _typing.Optional[_npt.NDArray[_np.float64]] = None,
+                       weights: _typing.Optional[_npt.NDArray[_np.float64]] = None,
+                       mapname: str = "identity") -> _ElementBase:
     """Create a quadrature element.
 
     When creating this element, either the quadrature scheme and degree
@@ -1876,9 +1877,8 @@ def quadrature_element(
     return _QuadratureElement(cell, value_shape, points, weights, mapname, degree)
 
 
-def real_element(
-    cell: _typing.Union[_basix.CellType, str],
-    value_shape: _typing.Tuple[int, ...]) -> _ElementBase:
+def real_element(cell: _typing.Union[_basix.CellType, str],
+                 value_shape: _typing.Tuple[int, ...]) -> _ElementBase:
     """Create a real element.
 
     Args:

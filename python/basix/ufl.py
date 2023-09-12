@@ -12,7 +12,7 @@ import ufl as _ufl
 # TODO: remove gdim arguments once UFL handles cells better
 # TODO: remove IrreducibleInt once UFL handles element degrees better
 from ufl.algorithms.estimate_degrees import IrreducibleInt as _IrreducibleInt
-from ufl.finiteelement import FiniteElementBase as _FiniteElementBase
+from ufl.finiteelement import AbstractFiniteElement as _AbstractFiniteElement
 
 import basix as _basix
 
@@ -42,7 +42,7 @@ def _ufl_sobolev_space_from_enum(s: _basix.SobolevSpace):
     return _spacemap[s]
 
 
-class _ElementBase(_FiniteElementBase):
+class _ElementBase(_AbstractFiniteElement):
     """A base wrapper to allow elements to be used with UFL.
 
     This class includes methods and properties needed by UFL and FFCx. This is a base class containing
@@ -53,27 +53,70 @@ class _ElementBase(_FiniteElementBase):
                  degree: _typing.Union[int, _IrreducibleInt] = -1, mapname: _typing.Optional[str] = None,
                  gdim: _typing.Optional[int] = None):
         """Initialise the element."""
-        super().__init__(name, _ufl.cell.Cell(cellname, gdim), degree, None, value_shape, value_shape)
+        self._cellname = cellname
+        self._gdim = gdim
+        # super().__init__(name, _ufl.cell.Cell(cellname, gdim), degree, None, value_shape, value_shape)
         self._repr = repr
         self._map = mapname
         self._degree = degree
         self._value_shape = value_shape
 
     def __repr__(self):
-        """Get the representation of the element."""
+        """Format as string for evaluation as Python object."""
         return self._repr
 
-    def sub_elements(self) -> _typing.List:
-        """Return a list of sub elements."""
-        return []
+    def __str__(self):
+        """Format as string for nice printing."""
+        return self._repr
 
-    def num_sub_elements(self) -> int:
-        """Return a list of sub elements."""
-        return len(self.sub_elements())
+    @property
+    def sobolev_space(self):
+        """Return the underlying Sobolev space."""
+        return _ufl_sobolev_space_from_enum(self.basix_sobolev_space)
 
+    @property
     def mapping(self) -> _typing.Union[str, None]:
         """Return the map type."""
         return self._map
+
+    @property
+    def embedded_degree(self) -> int:
+        """The maximum degree of a polynomial included in the basis for this element."""
+        return self.highest_degree
+
+    @property
+    def cell(self) -> str:
+        """Return the cell type of the finite element."""
+        return _ufl.cell.Cell(self._cellname, self._gdim)
+
+    @property
+    def value_shape(self) -> _typing.Tuple[int, ...]:
+        """Return the shape of the value space on the global domain."""
+        return self._value_shape
+
+    @property
+    def reference_value_shape(self) -> _typing.Tuple[int]:
+        """Return the shape of the value space on the reference cell."""
+        return self._value_shape
+
+    @property
+    def _is_globally_constant(self) -> bool:
+        """Check if the element is a global constant."""
+        return False
+
+    @property
+    def _is_cellwise_constant(self) -> bool:
+        """Check if the basis functions of this element are constant over each cell."""
+        return self.highest_degree == 0
+
+    @property
+    def _is_linear(self) -> bool:
+        """Check if the element is Lagrange degree 1."""
+        return False
+
+    def sub_elements(self) -> _typing.List[_AbstractFiniteElement]:
+        """Return a list of sub elements."""
+        return []
 
     @_abstractmethod
     def __eq__(self, other) -> bool:
@@ -83,30 +126,6 @@ class _ElementBase(_FiniteElementBase):
     def __hash__(self) -> int:
         """Return a hash."""
         return hash("basix" + self._repr)
-
-    @property
-    def value_size(self) -> int:
-        """Value size of the element."""
-        vs = 1
-        for i in self._value_shape:
-            vs *= i
-        return vs
-
-    @property
-    def reference_value_size(self) -> int:
-        """Reference value size of the element."""
-        vs = 1
-        for i in self.reference_value_shape():
-            vs *= i
-        return vs
-
-    def value_shape(self) -> _typing.Tuple[int, ...]:
-        """Value shape of the element basis function."""
-        return self._value_shape
-
-    def reference_value_shape(self) -> _typing.Tuple[int, ...]:
-        """Reference value shape of the element basis function."""
-        return self._value_shape
 
     @property
     def block_size(self) -> int:
@@ -311,10 +330,6 @@ class _ElementBase(_FiniteElementBase):
         """Get the element's tensor product factorisation."""
         return None
 
-    def sobolev_space(self):
-        """Return the underlying Sobolev space."""
-        return _ufl_sobolev_space_from_enum(self.basix_sobolev_space)
-
     @property
     @_abstractmethod
     def basix_sobolev_space(self):
@@ -352,6 +367,11 @@ class _BasixElement(_ElementBase):
                 _IrreducibleInt(element.degree), _map_type_to_string(element.map_type), gdim=gdim)
 
         self.element = element
+
+    @property
+    def _is_linear(self) -> bool:
+        """Check if the element is Lagrange degree 1."""
+        return self.element.family == _basix.ElementFamily.P and self.element.degree == 1
 
     @property
     def basix_sobolev_space(self):
@@ -1395,6 +1415,16 @@ class _RealElement(_ElementBase):
         """Return a hash."""
         return super().__hash__()
 
+    @property
+    def _is_globally_constant(self) -> bool:
+        """Check if the element is a global constant."""
+        return True
+
+    @property
+    def _is_cellwise_constant(self) -> bool:
+        """Check if the basis functions of this element are constant over each cell."""
+        return True
+
     def tabulate(self, nderivs: int, points: _npt.NDArray[_np.float64]) -> _npt.NDArray[_np.float64]:
         """Tabulate the basis functions of the element.
 
@@ -1889,7 +1919,7 @@ def blocked_element(sub_element: _ElementBase, rank: _typing.Optional[int] = Non
     return _BlockedElement(sub_element, shape=shape, symmetry=symmetry, gdim=gdim)
 
 
-def convert_ufl_element(ufl_element: _FiniteElementBase) -> _ElementBase:
+def convert_ufl_element(ufl_element: _AbstractFiniteElement) -> _ElementBase:
     """Convert a UFL element to a UFL compatible Basix element."""
     _warn("Converting elements created in UFL to Basix elements is deprecated. You should create the elements directly "
           "using basix.ufl.element instead", DeprecationWarning, stacklevel=2)
@@ -1922,7 +1952,7 @@ def convert_ufl_element(ufl_element: _FiniteElementBase) -> _ElementBase:
         raise RuntimeError("TensorProductElement not supported.")
     elif hasattr(_ufl, "RestrictedElement") and isinstance(ufl_element, _ufl.RestrictedElement):
         raise RuntimeError("RestricedElement not supported.")
-    elif isinstance(ufl_element, _ufl.FiniteElementBase):
+    elif isinstance(ufl_element, _ufl.AbstractFiniteElement):
         # Create a basix element from family name, cell type and degree
         family_name = ufl_element.family()
         discontinuous = False

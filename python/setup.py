@@ -87,7 +87,7 @@ setup(name='fenics-basix',
       extras_require={
           "docs": ["markdown", "pyyaml", "sphinx==5.0.2", "sphinx_rtd_theme"],
           "lint": ["flake8", "pydocstyle", "isort"],
-          "optional": ["numba", "fenics-ufl@git+https://github.com/fenics/ufl"],
+          "optional": ["numba", "fenics-ufl@git+https://github.com/fenics/ufl@mscroggs/remove-elements"],
           "test": ["pytest", "sympy", "scipy", "matplotlib", "fenics-basix[optional]"],
           "ci": ["mypy", "pytest-xdist", "fenics-basix[docs,lint,test,optional]"],
       },

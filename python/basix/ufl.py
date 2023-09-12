@@ -375,14 +375,14 @@ class _BasixElement(_ElementBase):
 
         Returns:
             Tabulated basis functions
+
         """
         tab = self.element.tabulate(nderivs, points)
         # TODO: update FFCx to remove the need for transposing here
         return tab.transpose((0, 1, 3, 2)).reshape((tab.shape[0], tab.shape[1], -1))
 
     def get_component_element(self, flat_component: int) -> _typing.Tuple[_ElementBase, int, int]:
-        """Get element that represents a component of the element, and
-        the offset and stride of the component.
+        """Get element that represents a component of the element, and the offset and stride of the component.
 
         For example, for a mixed element, this will return the
         sub-element that represents the given component, the offset of
@@ -546,7 +546,7 @@ class _BasixElement(_ElementBase):
 class _ComponentElement(_ElementBase):
     """An element representing one component of a _BasixElement.
 
-    This element type is used when UFL's `get_component_element`
+    This element type is used when UFL's ``get_component_element``
     function is called.
 
     """
@@ -607,8 +607,7 @@ class _ComponentElement(_ElementBase):
         return _np.asarray(output, dtype=_np.float64)
 
     def get_component_element(self, flat_component: int) -> _typing.Tuple[_ElementBase, int, int]:
-        """Get element that represents a component of the element, and
-        the offset and stride of the component.
+        """Get element that represents a component of the element, and the offset and stride of the component.
 
         Args:
             flat_component: The component
@@ -790,8 +789,7 @@ class _MixedElement(_ElementBase):
         return _np.asarray(tables, dtype=_np.float64)
 
     def get_component_element(self, flat_component: int) -> _typing.Tuple[_ElementBase, int, int]:
-        """Get element that represents a component of the element, and
-        the offset and stride of the component.
+        """Get element that represents a component of the element, and the offset and stride of the component.
 
         Args:
             flat_component: The component
@@ -1041,8 +1039,7 @@ class _BlockedElement(_ElementBase):
         return _np.asarray(output, dtype=_np.float64)
 
     def get_component_element(self, flat_component: int) -> _typing.Tuple[_ElementBase, int, int]:
-        """Get element that represents a component of the element, and
-        the offset and stride of the component.
+        """Get element that represents a component of the element, and the offset and stride of the component.
 
         Args:
             flat_component: The component
@@ -1262,8 +1259,7 @@ class _QuadratureElement(_ElementBase):
         return tables
 
     def get_component_element(self, flat_component: int) -> _typing.Tuple[_ElementBase, int, int]:
-        """Get element that represents a component of the element, and
-        the offset and stride of the component.
+        """Get element that represents a component of the element, and the offset and stride of the component.
 
         Args:
             flat_component: The component
@@ -1427,8 +1423,7 @@ class _RealElement(_ElementBase):
         return out
 
     def get_component_element(self, flat_component: int) -> _typing.Tuple[_ElementBase, int, int]:
-        """Get element that represents a component of the element, and
-        the offset and stride of the component.
+        """Get element that represents a component of the element, and the offset and stride of the component.
 
         Args:
             flat_component: The component

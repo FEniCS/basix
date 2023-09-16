@@ -12,11 +12,11 @@ using namespace basix;
 
 namespace
 {
-namespace stdex = MDSPAN_IMPL_STANDARD_NAMESPACE::MDSPAN_IMPL_PROPOSED_NAMESPACE;
+namespace stdex
+    = MDSPAN_IMPL_STANDARD_NAMESPACE::MDSPAN_IMPL_PROPOSED_NAMESPACE;
 template <typename T, std::size_t d>
-using mdspan_t
-    = MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<T,
-                    MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, d>>;
+using mdspan_t = MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<
+    T, MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, d>>;
 template <typename T, std::size_t d>
 using mdarray_t
     = stdex::mdarray<T,

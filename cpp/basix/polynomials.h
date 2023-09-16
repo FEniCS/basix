@@ -32,8 +32,8 @@ enum class type
 template <std::floating_point T>
 std::pair<std::vector<T>, std::array<std::size_t, 2>>
 tabulate(polynomials::type polytype, cell::type celltype, int d,
-         std::experimental::mdspan<const T,
-                                   std::experimental::dextents<std::size_t, 2>>
+         std::experimental::mdspan<
+             const T, MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 2>>
              x);
 
 /// @brief Dimension of a polynomial space.

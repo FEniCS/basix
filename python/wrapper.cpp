@@ -25,9 +25,11 @@
 namespace py = pybind11;
 using namespace basix;
 
-namespace stdex = std::experimental;
+namespace stdex = MDSPAN_IMPL_STANDARD_NAMESPACE::MDSPAN_IMPL_PROPOSED_NAMESPACE;
 template <typename T, std::size_t d>
-using mdspan_t = stdex::mdspan<T, stdex::dextents<std::size_t, d>>;
+using mdspan_t
+    = MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<T,
+                    MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, d>>;
 
 namespace
 {
@@ -107,8 +109,9 @@ Interface to the Basix C++ library.
       {
         if (x.ndim() != 2)
           throw std::runtime_error("x has the wrong number of dimensions");
-        stdex::mdspan<const double, stdex::dextents<std::size_t, 2>> _x(
-            x.data(), x.shape(0), x.shape(1));
+        MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<const double,
+                      MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 2>>
+            _x(x.data(), x.shape(0), x.shape(1));
         auto [p, shape] = polynomials::tabulate(polytype, celltype, d, _x);
         return py::array_t<double>(shape, p.data());
       },
@@ -239,8 +242,10 @@ Interface to the Basix C++ library.
           {
             if (x.ndim() != 2)
               throw std::runtime_error("x has the wrong size");
-            stdex::mdspan<const double, stdex::dextents<std::size_t, 2>> _x(
-                x.data(), x.shape(0), x.shape(1));
+            MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<
+                const double,
+                MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 2>>
+                _x(x.data(), x.shape(0), x.shape(1));
             auto [t, shape] = self.tabulate(n, _x);
             return py::array_t<double>(shape, t.data());
           },
@@ -600,7 +605,9 @@ Interface to the Basix C++ library.
       py::arg("dpc_variant") = element::dpc_variant::unset,
       py::arg("discontinuous") = false,
       py::arg("dof_ordering") = std::vector<int>(),
-      basix::docstring::create_element__family_cell_degree_lvariant_dvariant_discontinuous_dof_ordering.c_str());
+      basix::docstring::
+          create_element__family_cell_degree_lvariant_dvariant_discontinuous_dof_ordering
+              .c_str());
 
   // Interpolate between elements
   m.def(
@@ -622,17 +629,13 @@ Interface to the Basix C++ library.
   m.def(
       "superset",
       [](cell::type cell, polyset::type type1, polyset::type type2)
-      {
-        return polyset::superset(cell, type1, type2);
-      },
+      { return polyset::superset(cell, type1, type2); },
       basix::docstring::superset.c_str());
 
   m.def(
       "restriction",
       [](polyset::type ptype, cell::type cell, cell::type restriction_cell)
-      {
-        return polyset::restriction(ptype, cell, restriction_cell);
-      },
+      { return polyset::restriction(ptype, cell, restriction_cell); },
       basix::docstring::restriction.c_str());
 
   m.def(
@@ -642,8 +645,9 @@ Interface to the Basix C++ library.
       {
         if (x.ndim() != 2)
           throw std::runtime_error("x has the wrong number of dimensions");
-        stdex::mdspan<const double, stdex::dextents<std::size_t, 2>> _x(
-            x.data(), x.shape(0), x.shape(1));
+        MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<const double,
+                      MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 2>>
+            _x(x.data(), x.shape(0), x.shape(1));
         auto [p, shape] = polyset::tabulate(celltype, polytype, d, n, _x);
         return py::array_t<double>(shape, p.data());
       },

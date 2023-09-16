@@ -15,7 +15,8 @@
 #include <concepts>
 
 using namespace basix;
-namespace stdex = std::experimental;
+namespace stdex
+    = MDSPAN_IMPL_STANDARD_NAMESPACE::MDSPAN_IMPL_PROPOSED_NAMESPACE;
 
 namespace
 {
@@ -74,21 +75,26 @@ impl::mdarray_t<T, 2> vtk_triangle_points(std::size_t degree)
 }
 //-----------------------------------------------------------------------------
 template <std::floating_point T>
-stdex::mdarray<T, stdex::extents<std::size_t, stdex::dynamic_extent, 3>>
+stdex::mdarray<
+    T, MDSPAN_IMPL_STANDARD_NAMESPACE::extents<
+           std::size_t, MDSPAN_IMPL_STANDARD_NAMESPACE::dynamic_extent, 3>>
 vtk_tetrahedron_points(std::size_t degree)
 {
   const T d = 1 / static_cast<T>(degree + 4);
   if (degree == 0)
   {
     return stdex::mdarray<
-        T, stdex::extents<std::size_t, stdex::dynamic_extent, 3>>({d, d, d}, 1,
-                                                                  2);
+        T, MDSPAN_IMPL_STANDARD_NAMESPACE::extents<
+               std::size_t, MDSPAN_IMPL_STANDARD_NAMESPACE::dynamic_extent, 3>>(
+        {d, d, d}, 1, 2);
   }
 
   const std::size_t npoints
       = polyset::dim(cell::type::tetrahedron, polyset::type::standard, degree);
-  stdex::mdarray<T, stdex::extents<std::size_t, stdex::dynamic_extent, 3>> out(
-      npoints, 3);
+  stdex::mdarray<
+      T, MDSPAN_IMPL_STANDARD_NAMESPACE::extents<
+             std::size_t, MDSPAN_IMPL_STANDARD_NAMESPACE::dynamic_extent, 3>>
+      out(npoints, 3);
 
   out(0, 0) = d;
   out(0, 1) = d;
@@ -186,8 +192,9 @@ vtk_tetrahedron_points(std::size_t degree)
   {
     const auto pts = vtk_tetrahedron_points<T>(degree - 4);
     auto _out = impl::mdspan_t<T, 2>(out.data(), out.extents());
-    auto out_view = stdex::submdspan(_out, std::pair<int, int>{n, npoints},
-                                     stdex::full_extent);
+    auto out_view
+        = stdex::submdspan(_out, std::pair<int, int>{n, npoints},
+                           MDSPAN_IMPL_STANDARD_NAMESPACE::full_extent);
     for (std::size_t i = 0; i < out_view.extent(0); ++i)
       for (std::size_t j = 0; j < out_view.extent(1); ++j)
         out_view(i, j) = pts(i, j);

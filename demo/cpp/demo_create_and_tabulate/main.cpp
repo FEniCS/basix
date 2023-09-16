@@ -12,7 +12,7 @@
 
 namespace stdex = std::experimental;
 template <typename T, std::size_t d>
-using mdspan_t = stdex::mdspan<T, stdex::dextents<std::size_t, d>>;
+using mdspan_t = MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<T, stdex::dextents<std::size_t, d>>;
 
 using T = double;
 

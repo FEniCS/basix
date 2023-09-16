@@ -184,10 +184,10 @@ std::pair<std::vector<T>, std::vector<T>> eigh(std::span<const T> A,
 /// @return A^{-1} B
 template <std::floating_point T>
 std::vector<T>
-solve(std::experimental::mdspan<
+solve(MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<
           const T, MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 2>>
           A,
-      std::experimental::mdspan<
+      MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<
           const T, MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 2>>
           B)
 {
@@ -195,7 +195,7 @@ solve(std::experimental::mdspan<
 
   // Copy A and B to column-major storage
   stdex::mdarray<T, MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 2>,
-                 stdex::layout_left>
+                 MDSPAN_IMPL_STANDARD_NAMESPACE::layout_left>
       _A(A.extents()), _B(B.extents());
   for (std::size_t i = 0; i < A.extent(0); ++i)
     for (std::size_t j = 0; j < A.extent(1); ++j)
@@ -220,7 +220,7 @@ solve(std::experimental::mdspan<
 
   // Copy result to row-major storage
   std::vector<T> rb(_B.extent(0) * _B.extent(1));
-  stdex::mdspan<T, MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 2>> r(
+  MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<T, MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 2>> r(
       rb.data(), _B.extents());
   for (std::size_t i = 0; i < _B.extent(0); ++i)
     for (std::size_t j = 0; j < _B.extent(1); ++j)
@@ -234,14 +234,14 @@ solve(std::experimental::mdspan<
 /// @return A bool indicating if the matrix is singular
 template <std::floating_point T>
 bool is_singular(
-    std::experimental::mdspan<
+    MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<
         const T, MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 2>>
         A)
 {
   // Copy to column major matrix
   namespace stdex = std::experimental;
   stdex::mdarray<T, MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 2>,
-                 stdex::layout_left>
+                 MDSPAN_IMPL_STANDARD_NAMESPACE::layout_left>
       _A(A.extents());
   for (std::size_t i = 0; i < A.extent(0); ++i)
     for (std::size_t j = 0; j < A.extent(1); ++j)
@@ -342,7 +342,7 @@ std::vector<T> eye(std::size_t n)
 {
   std::vector<T> I(n * n, 0);
   namespace stdex = std::experimental;
-  stdex::mdspan<T, MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 2>>
+  MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<T, MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 2>>
       Iview(I.data(), n, n);
   for (std::size_t i = 0; i < n; ++i)
     Iview(i, i) = 1;
@@ -355,7 +355,7 @@ std::vector<T> eye(std::size_t n)
 /// be orthogonal
 template <std::floating_point T>
 void orthogonalise(
-    std::experimental::mdspan<
+    MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<
         T, MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 2>>
         wcoeffs,
     std::size_t start = 0)

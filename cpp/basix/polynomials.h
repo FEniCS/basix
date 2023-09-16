@@ -32,7 +32,7 @@ enum class type
 template <std::floating_point T>
 std::pair<std::vector<T>, std::array<std::size_t, 2>>
 tabulate(polynomials::type polytype, cell::type celltype, int d,
-         std::experimental::mdspan<
+         MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<
              const T, MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 2>>
              x);
 

@@ -75,24 +75,24 @@ impl::mdarray_t<T, 2> vtk_triangle_points(std::size_t degree)
 //-----------------------------------------------------------------------------
 template <std::floating_point T>
 stdex::mdarray<
-    T, stdex::extents<std::size_t,
-                      MDSPAN_IMPL_STANDARD_NAMESPACE::dynamic_extent, 3>>
+    T, MDSPAN_IMPL_STANDARD_NAMESPACE::extents<
+           std::size_t, MDSPAN_IMPL_STANDARD_NAMESPACE::dynamic_extent, 3>>
 vtk_tetrahedron_points(std::size_t degree)
 {
   const T d = 1 / static_cast<T>(degree + 4);
   if (degree == 0)
   {
     return stdex::mdarray<
-        T, stdex::extents<std::size_t,
-                          MDSPAN_IMPL_STANDARD_NAMESPACE::dynamic_extent, 3>>(
+        T, MDSPAN_IMPL_STANDARD_NAMESPACE::extents<
+               std::size_t, MDSPAN_IMPL_STANDARD_NAMESPACE::dynamic_extent, 3>>(
         {d, d, d}, 1, 2);
   }
 
   const std::size_t npoints
       = polyset::dim(cell::type::tetrahedron, polyset::type::standard, degree);
   stdex::mdarray<
-      T, stdex::extents<std::size_t,
-                        MDSPAN_IMPL_STANDARD_NAMESPACE::dynamic_extent, 3>>
+      T, MDSPAN_IMPL_STANDARD_NAMESPACE::extents<
+             std::size_t, MDSPAN_IMPL_STANDARD_NAMESPACE::dynamic_extent, 3>>
       out(npoints, 3);
 
   out(0, 0) = d;

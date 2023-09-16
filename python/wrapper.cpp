@@ -28,7 +28,7 @@ using namespace basix;
 namespace stdex = std::experimental;
 template <typename T, std::size_t d>
 using mdspan_t
-    = stdex::mdspan<T,
+    = MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<T,
                     MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, d>>;
 
 namespace
@@ -109,7 +109,7 @@ Interface to the Basix C++ library.
       {
         if (x.ndim() != 2)
           throw std::runtime_error("x has the wrong number of dimensions");
-        stdex::mdspan<const double,
+        MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<const double,
                       MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 2>>
             _x(x.data(), x.shape(0), x.shape(1));
         auto [p, shape] = polynomials::tabulate(polytype, celltype, d, _x);
@@ -242,7 +242,7 @@ Interface to the Basix C++ library.
           {
             if (x.ndim() != 2)
               throw std::runtime_error("x has the wrong size");
-            stdex::mdspan<
+            MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<
                 const double,
                 MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 2>>
                 _x(x.data(), x.shape(0), x.shape(1));
@@ -645,7 +645,7 @@ Interface to the Basix C++ library.
       {
         if (x.ndim() != 2)
           throw std::runtime_error("x has the wrong number of dimensions");
-        stdex::mdspan<const double,
+        MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<const double,
                       MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 2>>
             _x(x.data(), x.shape(0), x.shape(1));
         auto [p, shape] = polyset::tabulate(celltype, polytype, d, n, _x);

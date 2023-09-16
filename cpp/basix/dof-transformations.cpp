@@ -21,9 +21,8 @@ using mdarray_t
     = stdex::mdarray<T,
                      MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, d>>;
 template <typename T, std::size_t d>
-using mdspan_t
-    = stdex::mdspan<T,
-                    MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, d>>;
+using mdspan_t = MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<
+    T, MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, d>>;
 
 template <typename T>
 using map_data_t
@@ -421,14 +420,14 @@ std::map<cell::type, std::pair<std::vector<T>, std::array<std::size_t, 3>>>
 doftransforms::compute_entity_transformations(
     cell::type cell_type,
     const std::array<
-        std::vector<std::experimental::mdspan<
+        std::vector<MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<
             const T, MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 2>>>,
         4>& x,
     const std::array<
-        std::vector<std::experimental::mdspan<
+        std::vector<MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<
             const T, MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 4>>>,
         4>& M,
-    std::experimental::mdspan<
+    MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<
         const T, MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 2>>
         coeffs,
     int degree, std::size_t vs, maps::type map_type, polyset::type ptype)
@@ -465,15 +464,15 @@ template std::map<cell::type,
                   std::pair<std::vector<float>, std::array<std::size_t, 3>>>
 doftransforms::compute_entity_transformations(
     cell::type,
-    const std::array<std::vector<std::experimental::mdspan<
+    const std::array<std::vector<MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<
                          const float, MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<
                                           std::size_t, 2>>>,
                      4>&,
-    const std::array<std::vector<std::experimental::mdspan<
+    const std::array<std::vector<MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<
                          const float, MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<
                                           std::size_t, 4>>>,
                      4>&,
-    std::experimental::mdspan<
+    MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<
         const float, MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 2>>,
     int, std::size_t, maps::type, polyset::type);
 
@@ -481,15 +480,15 @@ template std::map<cell::type,
                   std::pair<std::vector<double>, std::array<std::size_t, 3>>>
 doftransforms::compute_entity_transformations(
     cell::type,
-    const std::array<std::vector<std::experimental::mdspan<
+    const std::array<std::vector<MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<
                          const double, MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<
                                            std::size_t, 2>>>,
                      4>&,
-    const std::array<std::vector<std::experimental::mdspan<
+    const std::array<std::vector<MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<
                          const double, MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<
                                            std::size_t, 4>>>,
                      4>&,
-    std::experimental::mdspan<
+    MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<
         const double, MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 2>>,
     int, std::size_t, maps::type, polyset::type);
 /// @endcond

@@ -250,7 +250,7 @@ prepare_matrix(std::pair<std::vector<T>, std::array<std::size_t, 2>>& A)
 template <typename T, typename E>
 void apply_matrix(
     std::span<const std::size_t> v_size_t,
-    std::experimental::mdspan<
+    MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<
         const T, MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 2>>
         M,
     std::span<E> data, std::size_t offset = 0, std::size_t block_size = 1)
@@ -292,7 +292,7 @@ void apply_matrix(
 template <typename T, typename E>
 void apply_matrix_to_transpose(
     std::span<const std::size_t> v_size_t,
-    std::experimental::mdspan<
+    MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<
         const T, MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 2>>
         M,
     std::span<E> data, std::size_t offset = 0, std::size_t block_size = 1)

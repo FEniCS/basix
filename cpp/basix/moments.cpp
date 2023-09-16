@@ -15,7 +15,7 @@ namespace
 namespace stdex = std::experimental;
 template <typename T, std::size_t d>
 using mdspan_t
-    = stdex::mdspan<T,
+    = MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<T,
                     MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, d>>;
 template <typename T, std::size_t d>
 using mdarray_t

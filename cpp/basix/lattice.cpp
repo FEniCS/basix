@@ -170,37 +170,37 @@ tabulate_dlagrange(std::size_t n, std::span<const T> x)
   std::vector<T> equi_pts(n + 1);
   for (std::size_t i = 0; i < equi_pts.size(); ++i)
     equi_pts[i] = static_cast<T>(i) / static_cast<T>(n);
-  stdex::mdspan<const T,
+  MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<const T,
                 MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 2>>
       equi_pts_v(equi_pts.data(), n + 1, 1);
 
   const auto [dual_values_b, dshape] = polyset::tabulate<T>(
       cell::type::interval, polyset::type::standard, n, 0, equi_pts_v);
-  stdex::mdspan<const T,
+  MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<const T,
                 MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 3>>
       dual_values(dual_values_b.data(), dshape);
 
   std::vector<T> dualmat_b(dual_values.extent(1) * dual_values.extent(2));
-  stdex::mdspan<T, MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 2>>
+  MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<T, MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 2>>
       dualmat(dualmat_b.data(), dual_values.extent(1), dual_values.extent(2));
   for (std::size_t i = 0; i < dualmat.extent(0); ++i)
     for (std::size_t j = 0; j < dualmat.extent(1); ++j)
       dualmat(i, j) = dual_values(0, i, j);
 
-  using cmdspan2_t = stdex::mdspan<
+  using cmdspan2_t = MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<
       const T,
-      stdex::extents<std::size_t,
+      MDSPAN_IMPL_STANDARD_NAMESPACE::extents<std::size_t,
                      MDSPAN_IMPL_STANDARD_NAMESPACE::dynamic_extent, 1>>;
   const auto [tabulated_values_b, tshape]
       = polyset::tabulate<T>(cell::type::interval, polyset::type::standard, n,
                              0, cmdspan2_t(x.data(), x.size(), 1));
-  stdex::mdspan<const T,
+  MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<const T,
                 MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 3>>
       tabulated_values(tabulated_values_b.data(), tshape);
 
   std::vector<T> tabulated_b(tabulated_values.extent(1)
                              * tabulated_values.extent(2));
-  stdex::mdspan<T, MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 2>>
+  MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<T, MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 2>>
       tabulated(tabulated_b.data(), tabulated_values.extent(1),
                 tabulated_values.extent(2));
 
@@ -244,8 +244,8 @@ create_quad(std::size_t n, lattice::type lattice_type, bool exterior)
     const std::size_t m = r.size();
     std::array<std::size_t, 2> shape = {m * m, 2};
     std::vector<T> xb(shape[0] * shape[1]);
-    stdex::mdspan<
-        T, stdex::extents<std::size_t,
+    MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<
+        T, MDSPAN_IMPL_STANDARD_NAMESPACE::extents<std::size_t,
                           MDSPAN_IMPL_STANDARD_NAMESPACE::dynamic_extent, 2>>
         x(xb.data(), shape);
     std::size_t c = 0;
@@ -277,8 +277,8 @@ create_hex(int n, lattice::type lattice_type, bool exterior)
     std::array<std::size_t, 2> shape = {m * m * m, 3};
 
     std::vector<T> xb(shape[0] * shape[1]);
-    stdex::mdspan<
-        T, stdex::extents<std::size_t,
+    MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<
+        T, MDSPAN_IMPL_STANDARD_NAMESPACE::extents<std::size_t,
                           MDSPAN_IMPL_STANDARD_NAMESPACE::dynamic_extent,
                           MDSPAN_IMPL_STANDARD_NAMESPACE::dynamic_extent,
                           MDSPAN_IMPL_STANDARD_NAMESPACE::dynamic_extent, 3>>
@@ -309,8 +309,8 @@ create_tri_equispaced(std::size_t n, bool exterior)
 
   std::array<std::size_t, 2> shape = {(n - 3 * b + 1) * (n - 3 * b + 2) / 2, 2};
   std::vector<T> _p(shape[0] * shape[1]);
-  stdex::mdspan<
-      T, stdex::extents<std::size_t,
+  MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<
+      T, MDSPAN_IMPL_STANDARD_NAMESPACE::extents<std::size_t,
                         MDSPAN_IMPL_STANDARD_NAMESPACE::dynamic_extent, 2>>
       p(_p.data(), shape);
 
@@ -343,8 +343,8 @@ create_tri_warped(std::size_t n, lattice::type lattice_type, bool exterior)
   // Points
   std::array<std::size_t, 2> shape = {(n - 3 * b + 1) * (n - 3 * b + 2) / 2, 2};
   std::vector<T> _p(shape[0] * shape[1]);
-  stdex::mdspan<
-      T, stdex::extents<std::size_t,
+  MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<
+      T, MDSPAN_IMPL_STANDARD_NAMESPACE::extents<std::size_t,
                         MDSPAN_IMPL_STANDARD_NAMESPACE::dynamic_extent, 2>>
       p(_p.data(), shape);
 
@@ -417,8 +417,8 @@ create_tri_isaac(std::size_t n, lattice::type lattice_type, bool exterior)
   const std::size_t b = exterior ? 0 : 1;
   std::array<std::size_t, 2> shape = {(n - 3 * b + 1) * (n - 3 * b + 2) / 2, 2};
   std::vector<T> _p(shape[0] * shape[1]);
-  stdex::mdspan<
-      T, stdex::extents<std::size_t,
+  MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<
+      T, MDSPAN_IMPL_STANDARD_NAMESPACE::extents<std::size_t,
                         MDSPAN_IMPL_STANDARD_NAMESPACE::dynamic_extent, 2>>
       p(_p.data(), shape);
 
@@ -453,8 +453,8 @@ create_tri_centroid(std::size_t n, lattice::type lattice_type, bool exterior)
 
   std::array<std::size_t, 2> shape = {(n - 2) * (n - 1) / 2, 2};
   std::vector<T> _p(shape[0] * shape[1]);
-  stdex::mdspan<
-      T, stdex::extents<std::size_t,
+  MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<
+      T, MDSPAN_IMPL_STANDARD_NAMESPACE::extents<std::size_t,
                         MDSPAN_IMPL_STANDARD_NAMESPACE::dynamic_extent, 2>>
       p(_p.data(), shape);
 
@@ -522,8 +522,8 @@ create_tet_equispaced(std::size_t n, bool exterior)
   std::array<std::size_t, 2> shape
       = {(n - 4 * b + 1) * (n - 4 * b + 2) * (n - 4 * b + 3) / 6, 3};
   std::vector<T> xb(shape[0] * shape[1]);
-  stdex::mdspan<
-      T, stdex::extents<std::size_t,
+  MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<
+      T, MDSPAN_IMPL_STANDARD_NAMESPACE::extents<std::size_t,
                         MDSPAN_IMPL_STANDARD_NAMESPACE::dynamic_extent, 3>>
       x(xb.data(), shape);
 
@@ -557,8 +557,8 @@ create_tet_isaac(std::size_t n, lattice::type lattice_type, bool exterior)
   std::array<std::size_t, 2> shape
       = {(n - 4 * b + 1) * (n - 4 * b + 2) * (n - 4 * b + 3) / 6, 3};
   std::vector<T> xb(shape[0] * shape[1]);
-  stdex::mdspan<
-      T, stdex::extents<std::size_t,
+  MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<
+      T, MDSPAN_IMPL_STANDARD_NAMESPACE::extents<std::size_t,
                         MDSPAN_IMPL_STANDARD_NAMESPACE::dynamic_extent, 3>>
       x(xb.data(), shape);
 
@@ -596,8 +596,8 @@ create_tet_warped(std::size_t n, lattice::type lattice_type, bool exterior)
   std::array<std::size_t, 2> shape
       = {(n - 4 * b + 1) * (n - 4 * b + 2) * (n - 4 * b + 3) / 6, 3};
   std::vector<T> xb(shape[0] * shape[1]);
-  stdex::mdspan<
-      T, stdex::extents<std::size_t,
+  MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<
+      T, MDSPAN_IMPL_STANDARD_NAMESPACE::extents<std::size_t,
                         MDSPAN_IMPL_STANDARD_NAMESPACE::dynamic_extent, 3>>
       p(xb.data(), shape);
 
@@ -654,8 +654,8 @@ create_tet_centroid(std::size_t n, lattice::type lattice_type, bool exterior)
 
   std::array<std::size_t, 2> shape = {(n - 3) * (n - 2) * (n - 1) / 6, 3};
   std::vector<T> xb(shape[0] * shape[1]);
-  stdex::mdspan<
-      T, stdex::extents<std::size_t,
+  MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<
+      T, MDSPAN_IMPL_STANDARD_NAMESPACE::extents<std::size_t,
                         MDSPAN_IMPL_STANDARD_NAMESPACE::dynamic_extent, 3>>
       p(xb.data(), shape);
 
@@ -722,12 +722,12 @@ std::pair<std::vector<T>, std::array<std::size_t, 2>>
 create_prism(std::size_t n, lattice::type lattice_type, bool exterior,
              lattice::simplex_method simplex_method)
 {
-  using cmdspan22_t = stdex::mdspan<
+  using cmdspan22_t = MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<
       const T,
-      stdex::extents<std::size_t,
+      MDSPAN_IMPL_STANDARD_NAMESPACE::extents<std::size_t,
                      MDSPAN_IMPL_STANDARD_NAMESPACE::dynamic_extent, 2>>;
-  using mdspan23_t = stdex::mdspan<
-      T, stdex::extents<std::size_t,
+  using mdspan23_t = MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<
+      T, MDSPAN_IMPL_STANDARD_NAMESPACE::extents<std::size_t,
                         MDSPAN_IMPL_STANDARD_NAMESPACE::dynamic_extent, 3>>;
 
   if (n == 0)
@@ -772,8 +772,8 @@ create_pyramid_equispaced(int n, bool exterior)
 
   std::array<std::size_t, 2> shape = {m, 3};
   std::vector<T> xb(shape[0] * shape[1]);
-  stdex::mdspan<
-      T, stdex::extents<std::size_t,
+  MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<
+      T, MDSPAN_IMPL_STANDARD_NAMESPACE::extents<std::size_t,
                         MDSPAN_IMPL_STANDARD_NAMESPACE::dynamic_extent, 3>>
       x(xb.data(), shape);
   int c = 0;

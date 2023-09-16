@@ -198,8 +198,8 @@ int main(int argc, char* argv[])
 
     const auto [pdata, shape] = basix::lattice::create<T>(
         cell_type, 5, basix::lattice::type::equispaced, true);
-    MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<const T,
-                              MDSPAN_IMPL_STANDARD_NAMESPACE::mdspandextents<std::size_t, 2>>
+    MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<
+        const T, MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 2>>
         points(pdata.data(), shape);
     int num_points = points.extent(0);
 

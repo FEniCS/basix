@@ -191,7 +191,7 @@ solve(MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<
           const T, MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 2>>
           B)
 {
-  namespace stdex = std::experimental;
+  namespace stdex = MDSPAN_IMPL_STANDARD_NAMESPACE::MDSPAN_IMPL_PROPOSED_NAMESPACE;
 
   // Copy A and B to column-major storage
   stdex::mdarray<T, MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 2>,
@@ -239,7 +239,7 @@ bool is_singular(
         A)
 {
   // Copy to column major matrix
-  namespace stdex = std::experimental;
+  namespace stdex = MDSPAN_IMPL_STANDARD_NAMESPACE::MDSPAN_IMPL_PROPOSED_NAMESPACE;
   stdex::mdarray<T, MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 2>,
                  MDSPAN_IMPL_STANDARD_NAMESPACE::layout_left>
       _A(A.extents());
@@ -341,7 +341,7 @@ template <std::floating_point T>
 std::vector<T> eye(std::size_t n)
 {
   std::vector<T> I(n * n, 0);
-  namespace stdex = std::experimental;
+  namespace stdex = MDSPAN_IMPL_STANDARD_NAMESPACE::MDSPAN_IMPL_PROPOSED_NAMESPACE;
   MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<T, MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 2>>
       Iview(I.data(), n, n);
   for (std::size_t i = 0; i < n; ++i)

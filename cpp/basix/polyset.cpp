@@ -13,7 +13,8 @@
 using namespace basix;
 using namespace basix::indexing;
 
-namespace stdex = std::experimental;
+namespace stdex
+    = MDSPAN_IMPL_STANDARD_NAMESPACE::MDSPAN_IMPL_PROPOSED_NAMESPACE;
 
 namespace
 {
@@ -45,11 +46,12 @@ constexpr std::array<T, 3> jrc(int a, int n)
 // 1 and derivative 0.
 template <typename T>
 void tabulate_polyset_point_derivs(
-    MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<T, MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 3>>
+    MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<
+        T, MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 3>>
         P,
     std::size_t, std::size_t nderiv,
-    MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<const T,
-                  MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 2>>
+    MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<
+        const T, MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 2>>
         x)
 {
   assert(x.extent(0) > 0);
@@ -70,11 +72,12 @@ void tabulate_polyset_point_derivs(
 /// 1]. The range is rescaled here to [0, 1].
 template <typename T>
 void tabulate_polyset_line_derivs(
-    MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<T, MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 3>>
+    MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<
+        T, MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 3>>
         P,
     std::size_t n, std::size_t nderiv,
-    MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<const T,
-                  MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 2>>
+    MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<
+        const T, MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 2>>
         x)
 {
   assert(x.extent(0) > 0);
@@ -134,11 +137,12 @@ void tabulate_polyset_line_derivs(
 /// parts.
 template <typename T>
 void tabulate_polyset_line_macroedge_derivs(
-    MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<T, MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 3>>
+    MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<
+        T, MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 3>>
         P,
     std::size_t n, std::size_t nderiv,
-    MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<const T,
-                  MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 2>>
+    MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<
+        const T, MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 2>>
         x)
 {
   assert(x.extent(0) > 0);
@@ -240,11 +244,12 @@ void tabulate_polyset_line_macroedge_derivs(
 /// splitting each edge into two parts
 template <typename T>
 void tabulate_polyset_quadrilateral_macroedge_derivs(
-    MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<T, MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 3>>
+    MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<
+        T, MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 3>>
         P,
     std::size_t n, std::size_t nderiv,
-    MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<const T,
-                  MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 2>>
+    MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<
+        const T, MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 2>>
         x)
 {
   assert(x.extent(0) > 0);
@@ -456,11 +461,12 @@ void tabulate_polyset_quadrilateral_macroedge_derivs(
 /// splitting each edge into two parts
 template <typename T>
 void tabulate_polyset_triangle_macroedge_derivs(
-    MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<T, MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 3>>
+    MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<
+        T, MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 3>>
         P,
     std::size_t n, std::size_t nderiv,
-    MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<const T,
-                  MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 2>>
+    MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<
+        const T, MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 2>>
         x)
 {
   assert(x.extent(0) > 0);
@@ -950,11 +956,12 @@ void tabulate_polyset_triangle_macroedge_derivs(
 /// splitting each edge into two parts
 template <typename T>
 void tabulate_polyset_tetrahedron_macroedge_derivs(
-    MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<T, MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 3>>
+    MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<
+        T, MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 3>>
         P,
     std::size_t n, std::size_t nderiv,
-    MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<const T,
-                  MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 2>>
+    MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<
+        const T, MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 2>>
         x)
 {
   assert(x.extent(0) > 0);
@@ -1287,11 +1294,12 @@ void tabulate_polyset_tetrahedron_macroedge_derivs(
 /// splitting each edge into two parts
 template <typename T>
 void tabulate_polyset_hexahedron_macroedge_derivs(
-    MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<T, MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 3>>
+    MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<
+        T, MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 3>>
         P,
     std::size_t n, std::size_t nderiv,
-    MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<const T,
-                  MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 2>>
+    MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<
+        const T, MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 2>>
         x)
 {
   assert(x.extent(0) > 0);
@@ -1629,11 +1637,12 @@ void tabulate_polyset_hexahedron_macroedge_derivs(
 /// Karniadakis 1995 (https://doi.org/10.1016/0045-7825(94)00745-9).
 template <typename T>
 void tabulate_polyset_triangle_derivs(
-    MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<T, MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 3>>
+    MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<
+        T, MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 3>>
         P,
     std::size_t n, std::size_t nderiv,
-    MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<const T,
-                  MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 2>>
+    MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<
+        const T, MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 2>>
         x)
 {
   assert(x.extent(1) == 2);
@@ -1792,11 +1801,12 @@ void tabulate_polyset_triangle_derivs(
 //-----------------------------------------------------------------------------
 template <typename T>
 void tabulate_polyset_tetrahedron_derivs(
-    MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<T, MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 3>>
+    MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<
+        T, MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 3>>
         P,
     std::size_t n, std::size_t nderiv,
-    MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<const T,
-                  MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 2>>
+    MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<
+        const T, MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 2>>
         x)
 {
   assert(x.extent(1) == 3);
@@ -2103,11 +2113,12 @@ void tabulate_polyset_tetrahedron_derivs(
 //-----------------------------------------------------------------------------
 template <typename T>
 void tabulate_polyset_pyramid_derivs(
-    MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<T, MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 3>>
+    MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<
+        T, MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 3>>
         P,
     std::size_t n, std::size_t nderiv,
-    MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<const T,
-                  MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 2>>
+    MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<
+        const T, MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 2>>
         x)
 {
   assert(x.extent(1) == 3);
@@ -2373,11 +2384,12 @@ void tabulate_polyset_pyramid_derivs(
 //-----------------------------------------------------------------------------
 template <typename T>
 void tabulate_polyset_quad_derivs(
-    MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<T, MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 3>>
+    MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<
+        T, MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 3>>
         P,
     std::size_t n, std::size_t nderiv,
-    MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<const T,
-                  MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 2>>
+    MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<
+        const T, MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 2>>
         x)
 {
   assert(x.extent(1) == 2);
@@ -2557,11 +2569,12 @@ void tabulate_polyset_quad_derivs(
 //-----------------------------------------------------------------------------
 template <typename T>
 void tabulate_polyset_hex_derivs(
-    MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<T, MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 3>>
+    MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<
+        T, MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 3>>
         P,
     std::size_t n, std::size_t nderiv,
-    MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<const T,
-                  MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 2>>
+    MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<
+        const T, MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 2>>
         x)
 {
   assert(x.extent(1) == 3);
@@ -2876,11 +2889,12 @@ void tabulate_polyset_hex_derivs(
 //-----------------------------------------------------------------------------
 template <typename T>
 void tabulate_polyset_prism_derivs(
-    MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<T, MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 3>>
+    MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<
+        T, MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 3>>
         P,
     std::size_t n, std::size_t nderiv,
-    MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<const T,
-                  MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 2>>
+    MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<
+        const T, MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 2>>
         x)
 {
   assert(x.extent(1) == 3);
@@ -3186,8 +3200,9 @@ std::pair<std::vector<T>, std::array<std::size_t, 3>> polyset::tabulate(
       = {(std::size_t)polyset::nderivs(celltype, n),
          (std::size_t)polyset::dim(celltype, ptype, d), x.extent(0)};
   std::vector<T> P(shape[0] * shape[1] * shape[2]);
-  MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<T, MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 3>> _P(
-      P.data(), shape);
+  MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<
+      T, MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 3>>
+      _P(P.data(), shape);
   polyset::tabulate(_P, celltype, ptype, d, n, x);
   return {std::move(P), std::move(shape)};
 }

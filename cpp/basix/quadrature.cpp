@@ -13,7 +13,7 @@
 
 using namespace basix;
 
-namespace stdex = std::experimental;
+namespace stdex = MDSPAN_IMPL_STANDARD_NAMESPACE::MDSPAN_IMPL_PROPOSED_NAMESPACE;
 template <typename T, std::size_t d>
 using mdspan_t
     = MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<T,

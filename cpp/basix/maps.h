@@ -102,7 +102,7 @@ template <typename O, typename P, typename Q, typename R>
 void double_covariant_piola(O&& r, const P& U, const Q& J, double /*detJ*/,
                             const R& K)
 {
-  namespace stdex = std::experimental;
+  namespace stdex = MDSPAN_IMPL_STANDARD_NAMESPACE::MDSPAN_IMPL_PROPOSED_NAMESPACE;
   using T = typename std::decay_t<O>::value_type;
   using Z = typename impl::scalar_value_type_t<T>;
   for (std::size_t p = 0; p < U.extent(0); ++p)
@@ -132,7 +132,7 @@ template <typename O, typename P, typename Q, typename R>
 void double_contravariant_piola(O&& r, const P& U, const Q& J, double detJ,
                                 const R& /*K*/)
 {
-  namespace stdex = std::experimental;
+  namespace stdex = MDSPAN_IMPL_STANDARD_NAMESPACE::MDSPAN_IMPL_PROPOSED_NAMESPACE;
   using T = typename std::decay_t<O>::value_type;
   using Z = typename impl::scalar_value_type_t<T>;
   for (std::size_t p = 0; p < U.extent(0); ++p)

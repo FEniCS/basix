@@ -25,7 +25,7 @@ def test_finite_element(inputs):
 def test_vector_element(inputs):
     e = basix.ufl.element(*inputs, rank=1)
     table = e.tabulate(0, [[0, 0]])
-    assert table.shape == (1, 1, e.dim)
+    assert table.shape == (1, 1, e.value_size, e.dim)
 
 
 @pytest.mark.parametrize("inputs", [

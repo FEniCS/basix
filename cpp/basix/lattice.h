@@ -25,7 +25,7 @@ enum class type
   chebyshev = 2,  /*!< Chebyshev points */
   gl = 4,         /*!< Gauss-Legendre (GL) points */
   chebyshev_plus_endpoints
-  = 10,           /*!< Chebyshev points plus the endpoints of the interval */
+  = 10, /*!< Chebyshev points plus the endpoints of the interval */
   gl_plus_endpoints
   = 11, /*!< Gauss-Legendre (GL) points plus the endpoints of the interval */
 };

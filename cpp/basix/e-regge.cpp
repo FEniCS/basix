@@ -13,7 +13,8 @@
 #include <cmath>
 
 using namespace basix;
-namespace stdex = std::experimental;
+namespace stdex
+    = MDSPAN_IMPL_STANDARD_NAMESPACE::MDSPAN_IMPL_PROPOSED_NAMESPACE;
 
 //-----------------------------------------------------------------------------
 template <std::floating_point T>
@@ -89,7 +90,8 @@ FiniteElement<T> element::create_regge(cell::type celltype, int degree,
         const std::size_t ndofs
             = polyset::dim(ct, polyset::type::standard, degree + 1 - d);
         const auto [_pts, wts] = quadrature::make_quadrature<T>(
-            quadrature::type::Default, ct, polyset::type::standard, degree + (degree + 1 - d));
+            quadrature::type::Default, ct, polyset::type::standard,
+            degree + (degree + 1 - d));
         impl::mdspan_t<const T, 2> pts(_pts.data(), wts.size(),
                                        _pts.size() / wts.size());
 
@@ -114,8 +116,9 @@ FiniteElement<T> element::create_regge(cell::type celltype, int degree,
         // Store up outer(t, t) for all tangents
         const std::vector<int>& vert_ids = topology[d][e];
         const std::size_t ntangents = d * (d + 1) / 2;
-        stdex::mdarray<T, stdex::dextents<std::size_t, 3>> vvt(
-            ntangents, geometry.extent(1), geometry.extent(1));
+        stdex::mdarray<T,
+                       MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 3>>
+            vvt(ntangents, geometry.extent(1), geometry.extent(1));
         std::vector<T> edge(geometry.extent(1));
 
         int c = 0;

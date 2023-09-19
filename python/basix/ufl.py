@@ -4,6 +4,7 @@ import functools as _functools
 import hashlib as _hashlib
 import typing as _typing
 from abc import abstractmethod as _abstractmethod
+from abc import abstractproperty as _abstractproperty
 from warnings import warn as _warn
 
 import numpy as _np
@@ -173,92 +174,77 @@ class _ElementBase(_AbstractFiniteElement):
         """
         pass
 
-    @property
-    @_abstractmethod
+    @_abstractproperty
     def ufcx_element_type(self) -> str:
         """Element type."""
         pass
 
-    @property
-    @_abstractmethod
+    @_abstractproperty
     def dim(self) -> int:
         """Number of DOFs the element has."""
         pass
 
-    @property
-    @_abstractmethod
+    @_abstractproperty
     def num_entity_dofs(self) -> _typing.List[_typing.List[int]]:
         """Number of DOFs associated with each entity."""
         pass
 
-    @property
-    @_abstractmethod
+    @_abstractproperty
     def entity_dofs(self) -> _typing.List[_typing.List[_typing.List[int]]]:
         """DOF numbers associated with each entity."""
         pass
 
-    @property
-    @_abstractmethod
+    @_abstractproperty
     def num_entity_closure_dofs(self) -> _typing.List[_typing.List[int]]:
         """Number of DOFs associated with the closure of each entity."""
         pass
 
-    @property
-    @_abstractmethod
+    @_abstractproperty
     def entity_closure_dofs(self) -> _typing.List[_typing.List[_typing.List[int]]]:
         """DOF numbers associated with the closure of each entity."""
         pass
 
-    @property
-    @_abstractmethod
+    @_abstractproperty
     def num_global_support_dofs(self) -> int:
         """Get the number of global support DOFs."""
         pass
 
-    @property
-    @_abstractmethod
+    @_abstractproperty
     def reference_topology(self) -> _typing.List[_typing.List[_typing.List[int]]]:
         """Topology of the reference element."""
         pass
 
-    @property
-    @_abstractmethod
+    @_abstractproperty
     def reference_geometry(self) -> _npt.NDArray[_np.float64]:
         """Geometry of the reference element."""
         pass
 
-    @property
-    @_abstractmethod
+    @_abstractproperty
     def family_name(self) -> str:
         """Family name of the element."""
         pass
 
-    @property
-    @_abstractmethod
+    @_abstractproperty
     def element_family(self) -> _typing.Union[_basix.ElementFamily, None]:
         """Basix element family used to initialise the element."""
         pass
 
-    @property
-    @_abstractmethod
+    @_abstractproperty
     def lagrange_variant(self) -> _typing.Union[_basix.LagrangeVariant, None]:
         """Basix Lagrange variant used to initialise the element."""
         pass
 
-    @property
-    @_abstractmethod
+    @_abstractproperty
     def dpc_variant(self) -> _typing.Union[_basix.DPCVariant, None]:
         """Basix DPC variant used to initialise the element."""
         pass
 
-    @property
-    @_abstractmethod
+    @_abstractproperty
     def cell_type(self) -> _basix.CellType:
         """Basix cell type used to initialise the element."""
         pass
 
-    @property
-    @_abstractmethod
+    @_abstractproperty
     def discontinuous(self) -> bool:
         """True if the discontinuous version of the element is used."""
         pass
@@ -282,8 +268,7 @@ class _ElementBase(_AbstractFiniteElement):
         """True if the element has a custom quadrature rule."""
         raise ValueError("Element does not have a custom quadrature rule.")
 
-    @property
-    @_abstractmethod
+    @_abstractproperty
     def map_type(self) -> _basix.MapType:
         """The Basix map type."""
         pass
@@ -298,8 +283,7 @@ class _ElementBase(_AbstractFiniteElement):
         """The highest degree of the element."""
         raise NotImplementedError()
 
-    @property
-    @_abstractmethod
+    @_abstractproperty
     def polyset_type(self) -> _basix.PolysetType:
         """The polyset type of the element."""
 
@@ -330,8 +314,7 @@ class _ElementBase(_AbstractFiniteElement):
         """Get the element's tensor product factorisation."""
         return None
 
-    @property
-    @_abstractmethod
+    @_abstractproperty
     def basix_sobolev_space(self):
         """Return a Basix enum representing the underlying Sobolev space."""
         pass
@@ -761,6 +744,7 @@ class _MixedElement(_ElementBase):
         """Basix Sobolev space that the element belongs to."""
         return _basix.sobolev_spaces.intersection([e.basix_sobolev_space for e in self._sub_elements])
 
+    @property
     def sub_elements(self) -> _typing.List[_ElementBase]:
         """List of sub elements."""
         return self._sub_elements
@@ -1002,6 +986,7 @@ class _BlockedElement(_ElementBase):
         """Basix enum representing the underlying Sobolev space."""
         return self.sub_element.basix_sobolev_space
 
+    @property
     def sub_elements(self) -> _typing.List[_ElementBase]:
         """List of sub elements."""
         return [self.sub_element for _ in range(self._block_size)]

@@ -113,6 +113,7 @@ class _ElementBase(_AbstractFiniteElement):
         """Check if the element is Lagrange degree 1."""
         return False
 
+    @property
     def sub_elements(self) -> _typing.List[_AbstractFiniteElement]:
         """Return a list of sub elements."""
         return []

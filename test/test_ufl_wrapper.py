@@ -1,5 +1,4 @@
 import pytest
-import ufl
 
 import basix
 import basix.ufl

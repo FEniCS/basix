@@ -710,6 +710,11 @@ class _ComponentElement(_ElementBase):
         """The Basix map type."""
         raise NotImplementedError()
 
+    def __mul__(self, other):
+        _warn("Use of * to create mixed elements is deprecated and will be removed after December 2023. "
+              "Please, use basix.ufl.mixed_element.", FutureWarning)
+        return mixed_element([self, other])
+
 
 class _MixedElement(_ElementBase):
     """A mixed element that combines two or more elements.

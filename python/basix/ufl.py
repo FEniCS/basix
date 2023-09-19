@@ -49,17 +49,16 @@ class _ElementBase(_AbstractFiniteElement):
     functions common to all the element types defined in this file.
     """
 
-    def __init__(self, repr: str, name: str, cellname: str, value_shape: _typing.Tuple[int, ...],
+    def __init__(self, repr: str, cellname: str, value_shape: _typing.Tuple[int, ...],
                  degree: _typing.Union[int, _IrreducibleInt] = -1, mapname: _typing.Optional[str] = None,
                  gdim: _typing.Optional[int] = None):
         """Initialise the element."""
-        self._cellname = cellname
-        self._gdim = gdim
-        # super().__init__(name, _ufl.cell.Cell(cellname, gdim), degree, None, value_shape, value_shape)
         self._repr = repr
-        self._map = mapname
-        self._degree = degree
+        self._cellname = cellname
         self._value_shape = value_shape
+        self._degree = degree
+        self._map = mapname
+        self._gdim = gdim
 
     def __repr__(self):
         """Format as string for evaluation as Python object."""
@@ -358,12 +357,12 @@ class _BasixElement(_ElementBase):
 
         if element.cell_type.name in ["interval", "triangle", "tetrahedron"]:
             super().__init__(
-                repr, element.family.name, element.cell_type.name, tuple(element.value_shape), element.degree,
+                repr, element.cell_type.name, tuple(element.value_shape), element.degree,
                 _map_type_to_string(element.map_type), gdim=gdim)
         else:
             # TODO: remove IrreducibleInt once UFL handles element degrees better
             super().__init__(
-                repr, element.family.name, element.cell_type.name, tuple(element.value_shape),
+                repr, element.cell_type.name, tuple(element.value_shape),
                 _IrreducibleInt(element.degree), _map_type_to_string(element.map_type), gdim=gdim)
 
         self.element = element
@@ -575,7 +574,6 @@ class _ComponentElement(_ElementBase):
         self.element = element
         self.component = component
         super().__init__(f"component element ({element._repr}, {component})",
-                         f"Component of {element.family_name}",
                          element.cell_type.name, (1, ), element._degree, gdim=gdim)
 
     @property
@@ -739,13 +737,13 @@ class _MixedElement(_ElementBase):
         """Initialise the element."""
         assert len(sub_elements) > 0
         self._sub_elements = sub_elements
-        if all(e.mapping() == "identity" for e in sub_elements):
+        if all(e.mapping == "identity" for e in sub_elements):
             mapname = "identity"
         else:
             mapname = "undefined"
 
         super().__init__("mixed element (" + ", ".join(i._repr for i in sub_elements) + ")",
-                         "mixed element", sub_elements[0].cell_type.name,
+                         sub_elements[0].cell_type.name,
                          (sum(i.value_size for i in sub_elements), ), mapname=mapname, gdim=gdim)
 
     def degree(self) -> int:
@@ -981,7 +979,7 @@ class _BlockedElement(_ElementBase):
                 repr += ", False"
         repr += ")"
 
-        super().__init__(repr, sub_element.family(), sub_element.cell_type.name, shape,
+        super().__init__(repr, sub_element.cell_type.name, shape,
                          sub_element._degree, sub_element._map, gdim=gdim)
 
         if symmetry:
@@ -1235,7 +1233,7 @@ class _QuadratureElement(_ElementBase):
         if degree is None:
             degree = len(points)
 
-        super().__init__(repr, "quadrature element", cell.name, value_shape, degree, mapname=mapname)
+        super().__init__(repr, cell.name, value_shape, degree, mapname=mapname)
 
     def basix_sobolev_space(self):
         """Return the underlying Sobolev space."""
@@ -1396,7 +1394,7 @@ class _RealElement(_ElementBase):
         tdim = len(_basix.topology(cell)) - 1
 
         super().__init__(
-            f"RealElement({element})", "real element", cell.name, value_shape, 0)
+            f"RealElement({element})", cell.name, value_shape, 0)
 
         self._entity_counts = []
         if tdim >= 1:
@@ -1723,7 +1721,7 @@ def enriched_element(elements: _typing.List[_ElementBase],
     """
     ct = elements[0].cell_type
     ptype = elements[0].polyset_type
-    vshape = elements[0].value_shape()
+    vshape = elements[0].value_shape
     vsize = elements[0].value_size
     if map_type is None:
         map_type = elements[0].map_type
@@ -1742,7 +1740,7 @@ def enriched_element(elements: _typing.List[_ElementBase],
             raise ValueError("Enriched elements on different cell types not supported.")
         if e.polyset_type != ptype:
             raise ValueError("Enriched elements on different polyset types not supported.")
-        if e.value_shape() != vshape or e.value_size != vsize:
+        if e.value_shape != vshape or e.value_size != vsize:
             raise ValueError("Enriched elements on different value shapes not supported.")
     nderivs = max(e.interpolation_nderivs for e in elements)
 
@@ -1900,14 +1898,14 @@ def blocked_element(sub_element: _ElementBase, rank: _typing.Optional[int] = Non
         gdim: Geometric dimension. If not set the geometric dimension is
             set equal to the topological dimension of the cell.
     """
-    if len(sub_element.value_shape()) != 0:
+    if len(sub_element.value_shape) != 0:
         raise ValueError("Cannot create a blocked element containing a non-scalar element.")
     if rank is None and shape is None:
         raise ValueError("At least one of rank and shape must be set.")
 
     if shape is None:
         if rank is None:
-            shape = tuple(sub_element.value_shape())
+            shape = tuple(sub_element.value_shape)
         else:
             tdim = len(_basix.topology(sub_element.cell_type)) - 1
             shape = tuple(tdim for _ in range(rank))

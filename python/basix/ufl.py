@@ -11,8 +11,6 @@ import numpy as _np
 import numpy.typing as _npt
 import ufl as _ufl
 # TODO: remove gdim arguments once UFL handles cells better
-# TODO: remove IrreducibleInt once UFL handles element degrees better
-from ufl.algorithms.estimate_degrees import IrreducibleInt as _IrreducibleInt
 from ufl.finiteelement import FiniteElementBase as _FiniteElementBase
 
 import basix as _basix
@@ -51,7 +49,7 @@ class _ElementBase(_FiniteElementBase):
     """
 
     def __init__(self, repr: str, name: str, cellname: str, value_shape: _typing.Tuple[int, ...],
-                 degree: _typing.Union[int, _IrreducibleInt] = -1, mapname: _typing.Optional[str] = None,
+                 degree: int = -1, mapname: _typing.Optional[str] = None,
                  gdim: _typing.Optional[int] = None):
         """Initialise the element."""
         super().__init__(name, _ufl.cell.Cell(cellname, gdim), degree, None, value_shape, value_shape)
@@ -342,15 +340,9 @@ class _BasixElement(_ElementBase):
             repr = (f"Basix element ({element.family.name}, {element.cell_type.name}, {element.degree}, "
                     f"{element.lagrange_variant.name}, {element.dpc_variant.name}, {element.discontinuous})")
 
-        if element.cell_type.name in ["interval", "triangle", "tetrahedron"]:
-            super().__init__(
-                repr, element.family.name, element.cell_type.name, tuple(element.value_shape), element.degree,
-                _map_type_to_string(element.map_type), gdim=gdim)
-        else:
-            # TODO: remove IrreducibleInt once UFL handles element degrees better
-            super().__init__(
-                repr, element.family.name, element.cell_type.name, tuple(element.value_shape),
-                _IrreducibleInt(element.degree), _map_type_to_string(element.map_type), gdim=gdim)
+        super().__init__(
+            repr, element.family.name, element.cell_type.name, tuple(element.value_shape), element.degree,
+            _map_type_to_string(element.map_type), gdim=gdim)
 
         self.element = element
 

@@ -747,6 +747,11 @@ class _MixedElement(_ElementBase):
         return max((e.degree() for e in self._sub_elements), default=-1)
 
     @property
+    def highest_degree(self) -> int:
+        """The highest degree of the element."""
+        return max(e.highest_degree for e in self._sub_elements)
+
+    @property
     def map_type(self) -> _basix.MapType:
         """Basix map type."""
         raise NotImplementedError()

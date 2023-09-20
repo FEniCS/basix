@@ -8,10 +8,11 @@ def string_to_type(lattice: str) -> _LT:
     """Convert a string to a Basix LatticeType enum.
 
     Args:
-        lattice: The lattice type as a string.
+        lattice: Lattice type as a string.
 
     Returns:
-        The lattice type
+        The lattice type.
+
     """
     if not hasattr(_LT, lattice):
         raise ValueError(f"Unknown lattice: {lattice}")
@@ -22,10 +23,11 @@ def type_to_string(latticetype: _LT) -> str:
     """Convert a Basix LatticeType enum to a string.
 
     Args:
-        latticetype: The lattice type
+        latticetype: Lattice type
 
     Returns:
         The lattice type as a string.
+
     """
     return latticetype.name
 
@@ -37,7 +39,8 @@ def string_to_simplex_method(method: str) -> _LSM:
         method: The simplex method as a string.
 
     Returns:
-        The simplex method
+        The simplex method.
+
     """
     if not hasattr(_LSM, method):
         raise ValueError(f"Unknown simplex method: {method}")
@@ -48,9 +51,10 @@ def simplex_method_to_string(simplex_method: _LSM) -> str:
     """Convert a Basix LatticeSimplexMethod enum to a string.
 
     Args:
-        simplex_method: The simplex method
+        simplex_method: Simplex method.
 
     Returns:
         The simplex method as a string.
+
     """
     return simplex_method.name

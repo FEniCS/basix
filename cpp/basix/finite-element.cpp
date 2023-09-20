@@ -28,11 +28,15 @@
 
 using namespace basix;
 
-namespace stdex = std::experimental;
+namespace stdex
+    = MDSPAN_IMPL_STANDARD_NAMESPACE::MDSPAN_IMPL_PROPOSED_NAMESPACE;
 template <typename T, std::size_t d>
-using mdspan_t = stdex::mdspan<T, stdex::dextents<std::size_t, d>>;
+using mdspan_t = MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<
+    T, MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, d>>;
 template <typename T, std::size_t d>
-using mdarray_t = stdex::mdarray<T, stdex::dextents<std::size_t, d>>;
+using mdarray_t
+    = stdex::mdarray<T,
+                     MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, d>>;
 
 namespace
 {
@@ -354,10 +358,14 @@ element::make_discontinuous(
 
   std::array<std::size_t, 2> xshape = {npoints, tdim};
   std::vector<T> xb(xshape[0] * xshape[1]);
-  stdex::mdspan<T, stdex::dextents<std::size_t, 2>> new_x(xb.data(), xshape);
+  MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<
+      T, MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 2>>
+      new_x(xb.data(), xshape);
   std::array<std::size_t, 4> Mshape = {Mshape0, value_size, npoints, nderivs};
   std::vector<T> Mb(Mshape[0] * Mshape[1] * Mshape[2] * Mshape[3]);
-  stdex::mdspan<T, stdex::dextents<std::size_t, 4>> new_M(Mb.data(), Mshape);
+  MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<
+      T, MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 4>>
+      new_M(Mb.data(), Mshape);
   int x_n = 0;
   int M_n = 0;
   for (int i = 0; i < 4; ++i)
@@ -1159,10 +1167,14 @@ FiniteElement<F>::push_forward(impl::mdspan_t<const F, 3> U,
   std::vector<F> ub(shape[0] * shape[1] * shape[2]);
   mdspan_t<F, 3> u(ub.data(), shape);
 
-  using u_t = stdex::mdspan<F, stdex::dextents<std::size_t, 2>>;
-  using U_t = stdex::mdspan<const F, stdex::dextents<std::size_t, 2>>;
-  using J_t = stdex::mdspan<const F, stdex::dextents<std::size_t, 2>>;
-  using K_t = stdex::mdspan<const F, stdex::dextents<std::size_t, 2>>;
+  using u_t = MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<
+      F, MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 2>>;
+  using U_t = MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<
+      const F, MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 2>>;
+  using J_t = MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<
+      const F, MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 2>>;
+  using K_t = MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<
+      const F, MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 2>>;
   auto map = this->map_fn<u_t, U_t, J_t, K_t>();
   for (std::size_t i = 0; i < u.extent(0); ++i)
   {
@@ -1195,10 +1207,14 @@ FiniteElement<F>::pull_back(impl::mdspan_t<const F, 3> u,
   std::vector<F> Ub(shape[0] * shape[1] * shape[2]);
   mdspan_t<F, 3> U(Ub.data(), shape);
 
-  using u_t = stdex::mdspan<const F, stdex::dextents<std::size_t, 2>>;
-  using U_t = stdex::mdspan<F, stdex::dextents<std::size_t, 2>>;
-  using J_t = stdex::mdspan<const F, stdex::dextents<std::size_t, 2>>;
-  using K_t = stdex::mdspan<const F, stdex::dextents<std::size_t, 2>>;
+  using u_t = MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<
+      const F, MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 2>>;
+  using U_t = MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<
+      F, MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 2>>;
+  using J_t = MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<
+      const F, MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 2>>;
+  using K_t = MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<
+      const F, MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 2>>;
   auto map = this->map_fn<U_t, u_t, K_t, J_t>();
   for (std::size_t i = 0; i < u.extent(0); ++i)
   {

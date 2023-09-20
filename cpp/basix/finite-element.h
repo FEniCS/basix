@@ -13,6 +13,7 @@
 #include "sobolev-spaces.h"
 #include <array>
 #include <concepts>
+#include <cstdint>
 #include <functional>
 #include <map>
 #include <numeric>
@@ -21,7 +22,6 @@
 #include <tuple>
 #include <utility>
 #include <vector>
-#include <cstdint>
 
 /// Basix: FEniCS runtime basis evaluation library
 namespace basix
@@ -30,12 +30,12 @@ namespace basix
 namespace impl
 {
 template <typename T, std::size_t d>
-using mdspan_t
-    = std::experimental::mdspan<T, std::experimental::dextents<std::size_t, d>>;
+using mdspan_t = MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<
+    T, MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, d>>;
 template <typename T, std::size_t d>
 using mdarray_t
-    = std::experimental::mdarray<T,
-                                 std::experimental::dextents<std::size_t, d>>;
+    = MDSPAN_IMPL_STANDARD_NAMESPACE::MDSPAN_IMPL_PROPOSED_NAMESPACE::mdarray<
+        T, MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, d>>;
 
 /// Create a container of cmdspan2_t objects from a container of
 /// mdarray2_t objects
@@ -138,9 +138,8 @@ template <std::floating_point F>
 class FiniteElement
 {
   template <typename T, std::size_t d>
-  using mdspan_t
-      = std::experimental::mdspan<T,
-                                  std::experimental::dextents<std::size_t, d>>;
+  using mdspan_t = MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<
+      T, MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, d>>;
 
 public:
   /// @brief Construct a finite element.

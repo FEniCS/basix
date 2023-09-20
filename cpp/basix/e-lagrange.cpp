@@ -15,7 +15,8 @@
 #include <concepts>
 
 using namespace basix;
-namespace stdex = std::experimental;
+namespace stdex
+    = MDSPAN_IMPL_STANDARD_NAMESPACE::MDSPAN_IMPL_PROPOSED_NAMESPACE;
 
 namespace
 {
@@ -74,21 +75,26 @@ impl::mdarray_t<T, 2> vtk_triangle_points(std::size_t degree)
 }
 //-----------------------------------------------------------------------------
 template <std::floating_point T>
-stdex::mdarray<T, stdex::extents<std::size_t, stdex::dynamic_extent, 3>>
+stdex::mdarray<
+    T, MDSPAN_IMPL_STANDARD_NAMESPACE::extents<
+           std::size_t, MDSPAN_IMPL_STANDARD_NAMESPACE::dynamic_extent, 3>>
 vtk_tetrahedron_points(std::size_t degree)
 {
   const T d = 1 / static_cast<T>(degree + 4);
   if (degree == 0)
   {
     return stdex::mdarray<
-        T, stdex::extents<std::size_t, stdex::dynamic_extent, 3>>({d, d, d}, 1,
-                                                                  2);
+        T, MDSPAN_IMPL_STANDARD_NAMESPACE::extents<
+               std::size_t, MDSPAN_IMPL_STANDARD_NAMESPACE::dynamic_extent, 3>>(
+        {d, d, d}, 1, 2);
   }
 
   const std::size_t npoints
       = polyset::dim(cell::type::tetrahedron, polyset::type::standard, degree);
-  stdex::mdarray<T, stdex::extents<std::size_t, stdex::dynamic_extent, 3>> out(
-      npoints, 3);
+  stdex::mdarray<
+      T, MDSPAN_IMPL_STANDARD_NAMESPACE::extents<
+             std::size_t, MDSPAN_IMPL_STANDARD_NAMESPACE::dynamic_extent, 3>>
+      out(npoints, 3);
 
   out(0, 0) = d;
   out(0, 1) = d;
@@ -186,8 +192,9 @@ vtk_tetrahedron_points(std::size_t degree)
   {
     const auto pts = vtk_tetrahedron_points<T>(degree - 4);
     auto _out = impl::mdspan_t<T, 2>(out.data(), out.extents());
-    auto out_view = stdex::submdspan(_out, std::pair<int, int>{n, npoints},
-                                     stdex::full_extent);
+    auto out_view
+        = stdex::submdspan(_out, std::pair<int, int>{n, npoints},
+                           MDSPAN_IMPL_STANDARD_NAMESPACE::full_extent);
     for (std::size_t i = 0; i < out_view.extent(0); ++i)
       for (std::size_t j = 0; j < out_view.extent(1); ++j)
         out_view(i, j) = pts(i, j);
@@ -861,8 +868,20 @@ create_d_iso(cell::type celltype, int degree, element::lagrange_variant variant,
 template <std::floating_point T>
 std::vector<std::tuple<std::vector<FiniteElement<T>>, std::vector<int>>>
 create_tensor_product_factors(cell::type celltype, int degree,
-                              element::lagrange_variant variant)
+                              element::lagrange_variant variant,
+                              std::vector<int> dof_ordering)
 {
+
+  if (dof_ordering.size() == 0)
+  {
+    std::size_t ndofs = celltype == cell::type::quadrilateral
+                            ? (degree + 1) * (degree + 1)
+                            : (degree + 1) * (degree + 1) * (degree + 1);
+    std::vector<int> d(ndofs);
+    std::iota(d.begin(), d.end(), 0);
+    return create_tensor_product_factors<T>(celltype, degree, variant, d);
+  }
+
   switch (celltype)
   {
   case cell::type::quadrilateral:
@@ -871,25 +890,25 @@ create_tensor_product_factors(cell::type celltype, int degree,
         cell::type::interval, degree, variant, true);
     std::vector<int> perm((degree + 1) * (degree + 1));
     if (degree == 0)
-      perm[0] = 0;
+      perm[dof_ordering[0]] = 0;
     else
     {
       int p = 0;
       int n = degree - 1;
-      perm[p++] = 0;
-      perm[p++] = 2;
+      perm[dof_ordering[p++]] = 0;
+      perm[dof_ordering[p++]] = 2;
       for (int i = 0; i < n; ++i)
-        perm[p++] = 4 + n + i;
-      perm[p++] = 1;
-      perm[p++] = 3;
+        perm[dof_ordering[p++]] = 4 + n + i;
+      perm[dof_ordering[p++]] = 1;
+      perm[dof_ordering[p++]] = 3;
       for (int i = 0; i < n; ++i)
-        perm[p++] = 4 + 2 * n + i;
+        perm[dof_ordering[p++]] = 4 + 2 * n + i;
       for (int i = 0; i < n; ++i)
       {
-        perm[p++] = 4 + i;
-        perm[p++] = 4 + 3 * n + i;
+        perm[dof_ordering[p++]] = 4 + i;
+        perm[dof_ordering[p++]] = 4 + 3 * n + i;
         for (int j = 0; j < n; ++j)
-          perm[p++] = 4 + i + (4 + j) * n;
+          perm[dof_ordering[p++]] = 4 + i + (4 + j) * n;
       }
     }
     return {{{sub_element, sub_element}, std::move(perm)}};
@@ -900,57 +919,58 @@ create_tensor_product_factors(cell::type celltype, int degree,
         cell::type::interval, degree, variant, true);
     std::vector<int> perm((degree + 1) * (degree + 1) * (degree + 1));
     if (degree == 0)
-      perm[0] = 0;
+      perm[dof_ordering[0]] = 0;
     else
     {
       int p = 0;
       int n = degree - 1;
-      perm[p++] = 0;
-      perm[p++] = 4;
+      perm[dof_ordering[p++]] = 0;
+      perm[dof_ordering[p++]] = 4;
       for (int i = 0; i < n; ++i)
-        perm[p++] = 8 + 2 * n + i;
-      perm[p++] = 2;
-      perm[p++] = 6;
+        perm[dof_ordering[p++]] = 8 + 2 * n + i;
+      perm[dof_ordering[p++]] = 2;
+      perm[dof_ordering[p++]] = 6;
       for (int i = 0; i < n; ++i)
-        perm[p++] = 8 + 6 * n + i;
+        perm[dof_ordering[p++]] = 8 + 6 * n + i;
       for (int i = 0; i < n; ++i)
       {
-        perm[p++] = 8 + n + i;
-        perm[p++] = 8 + 9 * n + i;
+        perm[dof_ordering[p++]] = 8 + n + i;
+        perm[dof_ordering[p++]] = 8 + 9 * n + i;
         for (int j = 0; j < n; ++j)
-          perm[p++] = 8 + 12 * n + 2 * n * n + i + n * j;
+          perm[dof_ordering[p++]] = 8 + 12 * n + 2 * n * n + i + n * j;
       }
-      perm[p++] = 1;
-      perm[p++] = 5;
+      perm[dof_ordering[p++]] = 1;
+      perm[dof_ordering[p++]] = 5;
       for (int i = 0; i < n; ++i)
-        perm[p++] = 8 + 4 * n + i;
-      perm[p++] = 3;
-      perm[p++] = 7;
+        perm[dof_ordering[p++]] = 8 + 4 * n + i;
+      perm[dof_ordering[p++]] = 3;
+      perm[dof_ordering[p++]] = 7;
       for (int i = 0; i < n; ++i)
-        perm[p++] = 8 + 7 * n + i;
+        perm[dof_ordering[p++]] = 8 + 7 * n + i;
       for (int i = 0; i < n; ++i)
       {
-        perm[p++] = 8 + 3 * n + i;
-        perm[p++] = 8 + 10 * n + i;
+        perm[dof_ordering[p++]] = 8 + 3 * n + i;
+        perm[dof_ordering[p++]] = 8 + 10 * n + i;
         for (int j = 0; j < n; ++j)
-          perm[p++] = 8 + 12 * n + 3 * n * n + i + n * j;
+          perm[dof_ordering[p++]] = 8 + 12 * n + 3 * n * n + i + n * j;
       }
       for (int i = 0; i < n; ++i)
       {
-        perm[p++] = 8 + i;
-        perm[p++] = 8 + 8 * n + i;
+        perm[dof_ordering[p++]] = 8 + i;
+        perm[dof_ordering[p++]] = 8 + 8 * n + i;
         for (int j = 0; j < n; ++j)
-          perm[p++] = 8 + 12 * n + n * n + i + n * j;
-        perm[p++] = 8 + 5 * n + i;
-        perm[p++] = 8 + 11 * n + i;
+          perm[dof_ordering[p++]] = 8 + 12 * n + n * n + i + n * j;
+        perm[dof_ordering[p++]] = 8 + 5 * n + i;
+        perm[dof_ordering[p++]] = 8 + 11 * n + i;
         for (int j = 0; j < n; ++j)
-          perm[p++] = 8 + 12 * n + 4 * n * n + i + n * j;
+          perm[dof_ordering[p++]] = 8 + 12 * n + 4 * n * n + i + n * j;
         for (int j = 0; j < n; ++j)
         {
-          perm[p++] = 8 + 12 * n + i + n * j;
-          perm[p++] = 8 + 12 * n + 5 * n * n + i + n * j;
+          perm[dof_ordering[p++]] = 8 + 12 * n + i + n * j;
+          perm[dof_ordering[p++]] = 8 + 12 * n + 5 * n * n + i + n * j;
           for (int k = 0; k < n; ++k)
-            perm[p++] = 8 + 12 * n + 6 * n * n + i + n * j + n * n * k;
+            perm[dof_ordering[p++]]
+                = 8 + 12 * n + 6 * n * n + i + n * j + n * n * k;
         }
       }
     }
@@ -1420,8 +1440,8 @@ basix::element::create_lagrange(cell::type celltype, int degree,
 
   sobolev::space space
       = discontinuous ? sobolev::space::L2 : sobolev::space::H1;
-  auto tensor_factors
-      = create_tensor_product_factors<T>(celltype, degree, variant);
+  auto tensor_factors = create_tensor_product_factors<T>(celltype, degree,
+                                                         variant, dof_ordering);
   return FiniteElement<T>(
       family::P, celltype, polyset::type::standard, degree, {},
       impl::mdspan_t<T, 2>(math::eye<T>(ndofs).data(), ndofs, ndofs), xview,

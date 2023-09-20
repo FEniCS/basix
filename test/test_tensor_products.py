@@ -200,3 +200,20 @@ def test_tensor_product_factorisation_hexahedron(degree):
 
     dphi_tensor = dphi_tensor.reshape([Nq*Nq*Nq, Nd*Nd*Nd])
     assert numpy.allclose(dphi_z, dphi_tensor)
+
+
+@pytest.mark.parametrize("cell_type", [
+    basix.CellType.quadrilateral,
+    basix.CellType.hexahedron,
+])
+@pytest.mark.parametrize("family, args", [
+    (basix.ElementFamily.P, (basix.LagrangeVariant.equispaced, )),
+    (basix.ElementFamily.P, (basix.LagrangeVariant.gll_warped, )),
+])
+@pytest.mark.parametrize("degree", range(1, 5))
+def test_dof_ordering(cell_type, family, args, degree):
+    e = basix.create_element(family, cell_type, degree, *args)
+    perm = e.get_tensor_product_representation()[0][1]
+    e2 = basix.create_element(family, cell_type, degree, *args, dof_ordering=perm)
+    for i, j in enumerate(e2.get_tensor_product_representation()[0][1]):
+        assert i == j

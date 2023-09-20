@@ -1021,6 +1021,7 @@ class _BlockedElement(_ElementBase):
         """Block size of the element."""
         return self._block_size
 
+    @property
     def reference_value_shape(self) -> _typing.Tuple[int, ...]:
         """Reference value shape of the element basis function."""
         if self._has_symmetry:
@@ -1859,7 +1860,7 @@ def mixed_element(elements: _typing.List[_ElementBase], gdim: _typing.Optional[i
 
 
 def quadrature_element(cell: _typing.Union[str, _basix.CellType],
-                       value_shape: _typing.Tuple[int, ...],
+                       value_shape: _typing.Tuple[int, ...] = (),
                        scheme: _typing.Optional[str] = None,
                        degree: _typing.Optional[int] = None,
                        points: _typing.Optional[_npt.NDArray[_np.float64]] = None,

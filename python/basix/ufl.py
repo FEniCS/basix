@@ -999,6 +999,11 @@ class _BlockedElement(_ElementBase):
         return self.sub_element.basix_sobolev_space
 
     @property
+    def _is_linear(self) -> bool:
+        """Check if the element is Lagrange degree 1."""
+        return self.sub_element._is_linear
+
+    @property
     def sub_elements(self) -> _typing.List[_ElementBase]:
         """List of sub elements."""
         return [self.sub_element for _ in range(self._block_size)]

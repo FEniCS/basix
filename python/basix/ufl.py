@@ -85,7 +85,7 @@ class _ElementBase(_AbstractFiniteElement):
 
     @property
     def cell(self) -> str:
-        """Return the cell type of the finite element."""
+        """Return the cell of the finite element."""
         return _ufl.cell.Cell(self._cellname, self._gdim)
 
     @property
@@ -94,7 +94,7 @@ class _ElementBase(_AbstractFiniteElement):
         return self._value_shape
 
     @property
-    def reference_value_shape(self) -> _typing.Tuple[int]:
+    def reference_value_shape(self) -> _typing.Tuple[int, ...]:
         """Return the shape of the value space on the reference cell."""
         return self._value_shape
 
@@ -1413,11 +1413,11 @@ class _RealElement(_ElementBase):
 
         self._entity_counts = []
         if tdim >= 1:
-            self._entity_counts.append(self.cell().num_vertices())
+            self._entity_counts.append(self.cell.num_vertices())
         if tdim >= 2:
-            self._entity_counts.append(self.cell().num_edges())
+            self._entity_counts.append(self.cell.num_edges())
         if tdim >= 3:
-            self._entity_counts.append(self.cell().num_facets())
+            self._entity_counts.append(self.cell.num_facets())
         self._entity_counts.append(1)
 
     def __eq__(self, other) -> bool:

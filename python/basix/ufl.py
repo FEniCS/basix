@@ -84,7 +84,7 @@ class _ElementBase(_AbstractFiniteElement):
         return self.highest_degree
 
     @property
-    def cell(self) -> str:
+    def cell(self) -> _ufl.Cell:
         """Return the cell of the finite element."""
         return _ufl.cell.Cell(self._cellname, self._gdim)
 

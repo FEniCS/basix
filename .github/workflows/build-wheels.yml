@@ -68,7 +68,7 @@ jobs:
       - uses: actions/checkout@v3
         with:
           ref: ${{ github.event.inputs.basix_ref }}
-      
+
       - name: Upgrade pip
         run: python -m pip install --upgrade pip setuptools
 

@@ -443,36 +443,46 @@ NB_MODULE(_basixcpp, m)
                    &FiniteElement<double>::interpolation_is_identity)
       .def_prop_ro("map_type", &FiniteElement<double>::map_type)
       .def_prop_ro("sobolev_space", &FiniteElement<double>::sobolev_space)
-      .def_prop_ro("points",
-                   [](const FiniteElement<double>& self)
-                   {
-                     auto& [x, shape] = self.points();
-                     return as_nbndarray(x, shape);
-                   })
-      .def_prop_ro("interpolation_matrix",
-                   [](const FiniteElement<double>& self)
-                   {
-                     auto& [P, shape] = self.interpolation_matrix();
-                     return as_nbndarray(P, shape);
-                   })
-      .def_prop_ro("dual_matrix",
-                   [](const FiniteElement<double>& self)
-                   {
-                     auto& [D, shape] = self.dual_matrix();
-                     return as_nbndarray(D, shape);
-                   })
-      .def_prop_ro("coefficient_matrix",
-                   [](const FiniteElement<double>& self)
-                   {
-                     auto& [P, shape] = self.coefficient_matrix();
-                     return as_nbndarray(P, shape);
-                   })
-      .def_prop_ro("wcoeffs",
-                   [](const FiniteElement<double>& self)
-                   {
-                     auto& [P, shape] = self.wcoeffs();
-                     return as_nbndarray(P, shape);
-                   })
+      .def_prop_ro(
+          "points",
+          [](const FiniteElement<double>& self)
+          {
+            auto& [x, shape] = self.points();
+            return nb::ndarray<nb::numpy, double, nb::shape<nb::any, nb::any>>(
+                const_cast<double*>(x.data()), 2, shape.data());
+          })
+      .def_prop_ro(
+          "interpolation_matrix",
+          [](const FiniteElement<double>& self)
+          {
+            auto& [P, shape] = self.interpolation_matrix();
+            return nb::ndarray<nb::numpy, double, nb::shape<nb::any, nb::any>>(
+                const_cast<double*>(P.data()), 2, shape.data());
+          })
+      .def_prop_ro(
+          "dual_matrix",
+          [](const FiniteElement<double>& self)
+          {
+            auto& [D, shape] = self.dual_matrix();
+            return nb::ndarray<nb::numpy, double, nb::shape<nb::any, nb::any>>(
+                const_cast<double*>(D.data()), 2, shape.data());
+          })
+      .def_prop_ro(
+          "coefficient_matrix",
+          [](const FiniteElement<double>& self)
+          {
+            auto& [P, shape] = self.coefficient_matrix();
+            return nb::ndarray<nb::numpy, double, nb::shape<nb::any, nb::any>>(
+                const_cast<double*>(P.data()), 2, shape.data());
+          })
+      .def_prop_ro(
+          "wcoeffs",
+          [](const FiniteElement<double>& self)
+          {
+            auto& [w, shape] = self.wcoeffs();
+            return nb::ndarray<nb::numpy, double, nb::shape<nb::any, nb::any>>(
+                const_cast<double*>(w.data()), 2, shape.data());
+          })
       .def_prop_ro(
           "M",
           [](const FiniteElement<double>& self)

@@ -37,83 +37,58 @@ FiniteElement<T> basix::element::create_rtc(cell::type celltype, int degree,
 
   // Evaluate the expansion polynomials at the quadrature points
   const auto [_pts, qwts] = quadrature::make_quadrature<T>(
-      quadrature::type::Default, celltype, 2 * degree);
+      quadrature::type::Default, celltype, polyset::type::standard, 2 * degree);
   impl::mdspan_t<const T, 2> pts(_pts.data(), qwts.size(),
                                  _pts.size() / qwts.size());
-  const auto [_phi, shape] = polyset::tabulate(celltype, degree, 0, pts);
+  const auto [_phi, shape]
+      = polyset::tabulate(celltype, polyset::type::standard, degree, 0, pts);
   impl::mdspan_t<const T, 3> phi(_phi.data(), shape);
 
   // The number of order (degree) polynomials
   const std::size_t psize = phi.extent(1);
 
   const int facet_count = tdim == 2 ? 4 : 6;
-  const int facet_dofs = polyset::dim(facettype, degree - 1);
+  const int facet_dofs
+      = polyset::dim(facettype, polyset::type::standard, degree - 1);
   const int internal_dofs = tdim == 2 ? 2 * degree * (degree - 1)
                                       : 3 * degree * degree * (degree - 1);
   const std::size_t ndofs = facet_count * facet_dofs + internal_dofs;
 
   // Create coefficients for order (degree-1) vector polynomials
   impl::mdarray_t<T, 2> wcoeffs(ndofs, psize * tdim);
-  const int nv_interval = polyset::dim(cell::type::interval, degree);
-  const int ns_interval = polyset::dim(cell::type::interval, degree - 1);
+  const int nv
+      = polyset::dim(cell::type::interval, polyset::type::standard, degree);
+  const int ns
+      = polyset::dim(cell::type::interval, polyset::type::standard, degree - 1);
   int dof = 0;
   if (tdim == 2)
   {
-    for (std::size_t d = 0; d < tdim; ++d)
-      for (int i = 0; i < ns_interval; ++i)
-        for (int j = 0; j < ns_interval; ++j)
-          wcoeffs(dof++, psize * d + i * nv_interval + j) = 1;
+    for (int i = 0; i < ns; ++i)
+    {
+      for (int j = 0; j < nv; ++j)
+      {
+        wcoeffs(dof++, j * nv + i) = 1;
+        wcoeffs(dof++, psize + i * nv + j) = 1;
+      }
+    }
   }
   else
   {
-    for (std::size_t d = 0; d < tdim; ++d)
-      for (int i = 0; i < ns_interval; ++i)
-        for (int j = 0; j < ns_interval; ++j)
-          for (int k = 0; k < ns_interval; ++k)
-            wcoeffs(dof++, psize * d + i * nv_interval * nv_interval
-                               + j * nv_interval + k)
-                = 1;
-  }
-
-  // Create coefficients for additional polynomials in the div space
-  for (int i = 0; i < pow(degree, tdim - 1); ++i)
-  {
-    std::vector<int> indices(tdim - 1);
-    if (tdim == 2)
-      indices[0] = i;
-    else
+    for (int i = 0; i < ns; ++i)
     {
-      indices[0] = i / degree;
-      indices[1] = i % degree;
-    }
-
-    for (std::size_t d = 0; d < tdim; ++d)
-    {
-      int n = 0;
-      std::vector<T> integrand(pts.extent(0));
-      for (std::size_t j = 0; j < integrand.size(); ++j)
-        integrand[j] = std::pow(pts(j, d), degree);
-      for (std::size_t c = 0; c < tdim; ++c)
+      for (int j = 0; j < ns; ++j)
       {
-        if (c != d)
+        for (int k = 0; k < nv; ++k)
         {
-          for (std::size_t j = 0; j < integrand.size(); ++j)
-            integrand[j] *= std::pow(pts(j, c), indices[n]);
-          ++n;
+          wcoeffs(dof++, k * nv * nv + j * nv + i) = 1;
+          wcoeffs(dof++, psize + i * nv * nv + k * nv + j) = 1;
+          wcoeffs(dof++, psize * 2 + j * nv * nv + i * nv + k) = 1;
         }
       }
-
-      for (std::size_t k = 0; k < psize; ++k)
-      {
-        T w_sum = 0.0;
-        for (std::size_t j = 0; j < qwts.size(); ++j)
-          w_sum += qwts[j] * integrand[j] * phi(0, k, j);
-
-        wcoeffs(dof, k + psize * d) = w_sum;
-      }
-      ++dof;
     }
   }
+
+  assert((std::size_t)dof == ndofs);
 
   std::array<std::vector<impl::mdarray_t<T, 2>>, 4> x;
   std::array<std::vector<impl::mdarray_t<T, 4>>, 4> M;
@@ -129,7 +104,7 @@ FiniteElement<T> basix::element::create_rtc(cell::type celltype, int degree,
     FiniteElement<T> moment_space
         = element::create_lagrange<T>(facettype, degree - 1, lvariant, true);
     auto [_x, xshape, _M, Mshape] = moments::make_normal_integral_moments<T>(
-        moment_space, celltype, tdim, 2 * degree - 1);
+        moment_space, celltype, polyset::type::standard, tdim, 2 * degree - 1);
     assert(_x.size() == _M.size());
     for (std::size_t i = 0; i < _x.size(); ++i)
     {
@@ -144,7 +119,7 @@ FiniteElement<T> basix::element::create_rtc(cell::type celltype, int degree,
   {
     auto [_x, xshape, _M, Mshape] = moments::make_dot_integral_moments<T>(
         element::create_nce<T>(celltype, degree - 1, lvariant, true), celltype,
-        tdim, 2 * degree - 1);
+        polyset::type::standard, tdim, 2 * degree - 1);
     assert(_x.size() == _M.size());
     for (std::size_t i = 0; i < _x.size(); ++i)
     {
@@ -176,7 +151,7 @@ FiniteElement<T> basix::element::create_rtc(cell::type celltype, int degree,
   sobolev::space space
       = discontinuous ? sobolev::space::L2 : sobolev::space::HCurl;
   return FiniteElement<T>(
-      element::family::RT, celltype, degree, {tdim},
+      element::family::RT, celltype, polyset::type::standard, degree, {tdim},
       impl::mdspan_t<T, 2>(wcoeffs.data(), wcoeffs.extents()), xview, Mview, 0,
       maps::type::contravariantPiola, space, discontinuous, degree - 1, degree,
       lvariant, element::dpc_variant::unset);
@@ -200,17 +175,19 @@ FiniteElement<T> basix::element::create_nce(cell::type celltype, int degree,
 
   // Evaluate the expansion polynomials at the quadrature points
   const auto [_pts, wts] = quadrature::make_quadrature<T>(
-      quadrature::type::Default, celltype, 2 * degree);
+      quadrature::type::Default, celltype, polyset::type::standard, 2 * degree);
   impl::mdspan_t<const T, 2> pts(_pts.data(), wts.size(),
                                  _pts.size() / wts.size());
-  const auto [_phi, shape] = polyset::tabulate(celltype, degree, 0, pts);
+  const auto [_phi, shape]
+      = polyset::tabulate(celltype, polyset::type::standard, degree, 0, pts);
   impl::mdspan_t<const T, 3> phi(_phi.data(), shape);
 
   // The number of order (degree) polynomials
   const int psize = phi.extent(1);
 
   const int edge_count = tdim == 2 ? 4 : 12;
-  const int edge_dofs = polyset::dim(cell::type::interval, degree - 1);
+  const int edge_dofs
+      = polyset::dim(cell::type::interval, polyset::type::standard, degree - 1);
   const int face_count = tdim == 2 ? 1 : 6;
   const int face_dofs = 2 * degree * (degree - 1);
   const int volume_count = tdim == 2 ? 0 : 1;
@@ -221,104 +198,40 @@ FiniteElement<T> basix::element::create_nce(cell::type celltype, int degree,
   // Create coefficients for order (degree-1) vector polynomials
   impl::mdarray_t<T, 2> wcoeffs(ndofs, psize * tdim);
 
-  const int nv_interval = polyset::dim(cell::type::interval, degree);
-  const int ns_interval = polyset::dim(cell::type::interval, degree - 1);
+  const int nv
+      = polyset::dim(cell::type::interval, polyset::type::standard, degree);
+  const int ns
+      = polyset::dim(cell::type::interval, polyset::type::standard, degree - 1);
+
   int dof = 0;
   if (tdim == 2)
   {
-    for (std::size_t d = 0; d < tdim; ++d)
-      for (int i = 0; i < ns_interval; ++i)
-        for (int j = 0; j < ns_interval; ++j)
-          wcoeffs(dof++, psize * d + i * nv_interval + j) = 1;
+    for (int i = 0; i < ns; ++i)
+    {
+      for (int j = 0; j < nv; ++j)
+      {
+        wcoeffs(dof++, i * nv + j) = 1;
+        wcoeffs(dof++, psize + j * nv + i) = 1;
+      }
+    }
   }
   else
   {
-    for (std::size_t d = 0; d < tdim; ++d)
-      for (int i = 0; i < ns_interval; ++i)
-        for (int j = 0; j < ns_interval; ++j)
-          for (int k = 0; k < ns_interval; ++k)
-            wcoeffs(dof++, psize * d + i * nv_interval * nv_interval
-                               + j * nv_interval + k)
-                = 1;
-  }
-
-  // Create coefficients for additional polynomials in the curl space
-  std::vector<T> integrand(pts.extent(0));
-  switch (tdim)
-  {
-  case 2:
-  {
-    for (int i = 0; i < degree; ++i)
+    for (int i = 0; i < ns; ++i)
     {
-      for (std::size_t d = 0; d < tdim; ++d)
+      for (int j = 0; j < nv; ++j)
       {
-        for (std::size_t k = 0; k < integrand.size(); ++k)
-          integrand[k] = pts(k, 1 - d);
-
-        for (int j = 1; j < degree; ++j)
-          for (std::size_t k = 0; k < integrand.size(); ++k)
-            integrand[k] *= pts(k, 1 - d);
-
-        for (int j = 0; j < i; ++j)
-          for (std::size_t k = 0; k < integrand.size(); ++k)
-            integrand[k] *= pts(k, d);
-
-        for (int k = 0; k < psize; ++k)
+        for (int k = 0; k < nv; ++k)
         {
-          T w_sum = 0.0;
-          for (std::size_t k1 = 0; k1 < wts.size(); ++k1)
-            w_sum += wts[k1] * integrand[k1] * phi(0, k, k1);
-          wcoeffs(dof, k + psize * d) = w_sum;
-        }
-        ++dof;
-      }
-    }
-    break;
-  }
-  default:
-    for (int i = 0; i < degree; ++i)
-    {
-      for (int j = 0; j < degree + 1; ++j)
-      {
-        for (std::size_t c = 0; c < tdim; ++c)
-        {
-          for (std::size_t d = 0; d < tdim; ++d)
-          {
-            if (d != c)
-            {
-              const std::size_t e = 3 - c - d;
-              if (c < e and j == degree)
-                continue;
-
-              for (std::size_t k1 = 0; k1 < integrand.size(); ++k1)
-                integrand[k1] = pts(k1, e);
-
-              for (int k = 1; k < degree; ++k)
-                for (std::size_t k1 = 0; k1 < integrand.size(); ++k1)
-                  integrand[k1] *= pts(k1, e);
-
-              for (int k = 0; k < i; ++k)
-                for (std::size_t k1 = 0; k1 < integrand.size(); ++k1)
-                  integrand[k1] *= pts(k1, d);
-
-              for (int k = 0; k < j; ++k)
-                for (std::size_t k1 = 0; k1 < integrand.size(); ++k1)
-                  integrand[k1] *= pts(k1, c);
-
-              for (int k = 0; k < psize; ++k)
-              {
-                T w_sum = 0.0;
-                for (std::size_t k1 = 0; k1 < wts.size(); ++k1)
-                  w_sum += wts[k1] * integrand[k1] * phi(0, k, k1);
-                wcoeffs(dof, k + psize * d) = w_sum;
-              }
-              ++dof;
-            }
-          }
+          wcoeffs(dof++, i * nv * nv + j * nv + k) = 1;
+          wcoeffs(dof++, psize + k * nv * nv + i * nv + j) = 1;
+          wcoeffs(dof++, psize * 2 + j * nv * nv + k * nv + i) = 1;
         }
       }
     }
   }
+
+  assert((std::size_t)dof == ndofs);
 
   std::array<std::vector<impl::mdarray_t<T, 2>>, 4> x;
   std::array<std::vector<impl::mdarray_t<T, 4>>, 4> M;
@@ -332,7 +245,8 @@ FiniteElement<T> basix::element::create_nce(cell::type celltype, int degree,
     FiniteElement<T> edge_moment_space = element::create_lagrange<T>(
         cell::type::interval, degree - 1, lvariant, true);
     auto [_x, xshape, _M, Mshape] = moments::make_tangent_integral_moments<T>(
-        edge_moment_space, celltype, tdim, 2 * degree - 1);
+        edge_moment_space, celltype, polyset::type::standard, tdim,
+        2 * degree - 1);
     assert(_x.size() == _M.size());
     for (std::size_t i = 0; i < _x.size(); ++i)
     {
@@ -348,7 +262,7 @@ FiniteElement<T> basix::element::create_nce(cell::type celltype, int degree,
     FiniteElement<T> moment_space = element::create_rtc<T>(
         cell::type::quadrilateral, degree - 1, lvariant, true);
     auto [_x, xshape, _M, Mshape] = moments::make_dot_integral_moments<T>(
-        moment_space, celltype, tdim, 2 * degree - 1);
+        moment_space, celltype, polyset::type::standard, tdim, 2 * degree - 1);
     assert(_x.size() == _M.size());
     for (std::size_t i = 0; i < _x.size(); ++i)
     {
@@ -369,7 +283,8 @@ FiniteElement<T> basix::element::create_nce(cell::type celltype, int degree,
       FiniteElement<T> moment_space = element::create_rtc<T>(
           cell::type::hexahedron, degree - 1, lvariant, true);
       auto [_x, xshape, _M, Mshape] = moments::make_dot_integral_moments<T>(
-          moment_space, celltype, tdim, 2 * degree - 1);
+          moment_space, celltype, polyset::type::standard, tdim,
+          2 * degree - 1);
       assert(_x.size() == _M.size());
       for (std::size_t i = 0; i < _x.size(); ++i)
       {
@@ -402,7 +317,7 @@ FiniteElement<T> basix::element::create_nce(cell::type celltype, int degree,
   sobolev::space space
       = discontinuous ? sobolev::space::L2 : sobolev::space::HCurl;
   return FiniteElement<T>(
-      element::family::N1E, celltype, degree, {tdim},
+      element::family::N1E, celltype, polyset::type::standard, degree, {tdim},
       impl::mdspan_t<T, 2>(wcoeffs.data(), wcoeffs.extents()), xview, Mview, 0,
       maps::type::covariantPiola, space, discontinuous, degree - 1, degree,
       lvariant, element::dpc_variant::unset);

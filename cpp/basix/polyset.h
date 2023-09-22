@@ -130,6 +130,14 @@
 /// quadratic terms, and cross-terms in two and three dimensions.
 namespace basix::polyset
 {
+
+/// Cell type
+enum class type
+{
+  standard = 0,
+  macroedge = 1,
+};
+
 /// @brief Tabulate the orthonormal polynomial basis, and derivatives,
 /// at points on the reference cell.
 ///
@@ -145,6 +153,7 @@ namespace basix::polyset
 /// 'triangular' with the lower derivatives appearing first.
 ///
 /// @param[in] celltype Cell type
+/// @param[in] ptype The polynomial type
 /// @param[in] d Polynomial degree
 /// @param[in] n Maximum derivative order. Use n = 0 for the basis only.
 /// @param[in] x Points at which to evaluate the basis. The shape is
@@ -169,9 +178,9 @@ namespace basix::polyset
 /// @todo Does the order for the third index need to be documented?
 template <std::floating_point T>
 std::pair<std::vector<T>, std::array<std::size_t, 3>>
-tabulate(cell::type celltype, int d, int n,
-         std::experimental::mdspan<const T,
-                                   std::experimental::dextents<std::size_t, 2>>
+tabulate(cell::type celltype, polyset::type ptype, int d, int n,
+         MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<
+             const T, MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 2>>
              x);
 
 /// @brief Tabulate the orthonormal polynomial basis, and derivatives,
@@ -210,24 +219,28 @@ tabulate(cell::type celltype, int d, int n,
 /// - The third index is the basis function index.
 /// @todo Does the order for the third index need to be documented?
 /// @param[in] celltype Cell type
+/// @param[in] ptype The polynomial type
 /// @param[in] d Polynomial degree
 /// @param[in] n Maximum derivative order. Use n = 0 for the basis only.
 /// @param[in] x Points at which to evaluate the basis. The shape is
 /// (number of points, geometric dimension).
 template <std::floating_point T>
 void tabulate(
-    std::experimental::mdspan<T, std::experimental::dextents<std::size_t, 3>> P,
-    cell::type celltype, int d, int n,
-    std::experimental::mdspan<const T,
-                              std::experimental::dextents<std::size_t, 2>>
+    MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<
+        T, MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 3>>
+        P,
+    cell::type celltype, polyset::type ptype, int d, int n,
+    MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<
+        const T, MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 2>>
         x);
 
 /// @brief Dimension of a polynomial space
 /// @param[in] cell The cell type
+/// @param[in] ptype The polynomial type
 /// @param[in] d The polynomial degree
 /// @return The number of terms in the basis spanning a space of
 /// polynomial degree @p d
-int dim(cell::type cell, int d);
+int dim(cell::type cell, polyset::type ptype, int d);
 
 /// @brief Number of derivatives that the orthonormal basis will have on
 /// the given cell.
@@ -236,5 +249,23 @@ int dim(cell::type cell, int d);
 /// @return The number of derivatives
 /// polynomial degree @p d
 int nderivs(cell::type cell, int d);
+
+/// @brief Get the polyset types that is a superset of two types on the given
+/// cell
+/// @param[in] cell The cell type
+/// @param[in] type1 The first polyset type
+/// @param[in] type2 The second polyset type
+/// @return The superset type
+polyset::type superset(cell::type cell, polyset::type type1,
+                       polyset::type type2);
+
+/// @brief Get the polyset type that represents the restrictions of a type on a
+/// subentity
+/// @param[in] ptype The polyset type
+/// @param[in] cell The cell type
+/// @param[in] restriction_cell The cell type of the subentity
+/// @return The restricted polyset type
+polyset::type restriction(polyset::type ptype, cell::type cell,
+                          cell::type restriction_cell);
 
 } // namespace basix::polyset

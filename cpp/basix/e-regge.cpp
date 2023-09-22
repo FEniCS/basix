@@ -10,9 +10,11 @@
 #include "polyset.h"
 #include "quadrature.h"
 #include "sobolev-spaces.h"
+#include <cmath>
 
 using namespace basix;
-namespace stdex = std::experimental;
+namespace stdex
+    = MDSPAN_IMPL_STANDARD_NAMESPACE::MDSPAN_IMPL_PROPOSED_NAMESPACE;
 
 //-----------------------------------------------------------------------------
 template <std::floating_point T>
@@ -25,7 +27,8 @@ FiniteElement<T> element::create_regge(cell::type celltype, int degree,
   const std::size_t tdim = cell::topological_dimension(celltype);
 
   const int nc = tdim * (tdim + 1) / 2;
-  const int basis_size = polyset::dim(celltype, degree);
+  const int basis_size
+      = polyset::dim(celltype, polyset::type::standard, degree);
   const std::size_t ndofs = basis_size * nc;
   const std::size_t psize = basis_size * tdim * tdim;
 
@@ -41,7 +44,7 @@ FiniteElement<T> element::create_regge(cell::type celltype, int degree,
 
       std::size_t s = basis_size;
       for (std::size_t k = 0; k < s; ++k)
-        wcoeffs(yoff * s + k, xoff * s + k) = 1.0;
+        wcoeffs(yoff * s + k, xoff * s + k) = i == j ? 1.0 : std::sqrt(0.5);
     }
   }
 
@@ -84,9 +87,11 @@ FiniteElement<T> element::create_regge(cell::type celltype, int degree,
         // Tabulate points in lattice
         cell::type ct = cell::sub_entity_type(celltype, d, e);
 
-        const std::size_t ndofs = polyset::dim(ct, degree + 1 - d);
-        const auto [_pts, wts]
-            = quadrature::make_quadrature<T>(ct, degree + (degree + 1 - d));
+        const std::size_t ndofs
+            = polyset::dim(ct, polyset::type::standard, degree + 1 - d);
+        const auto [_pts, wts] = quadrature::make_quadrature<T>(
+            quadrature::type::Default, ct, polyset::type::standard,
+            degree + (degree + 1 - d));
         impl::mdspan_t<const T, 2> pts(_pts.data(), wts.size(),
                                        _pts.size() / wts.size());
 
@@ -111,8 +116,9 @@ FiniteElement<T> element::create_regge(cell::type celltype, int degree,
         // Store up outer(t, t) for all tangents
         const std::vector<int>& vert_ids = topology[d][e];
         const std::size_t ntangents = d * (d + 1) / 2;
-        stdex::mdarray<T, stdex::dextents<std::size_t, 3>> vvt(
-            ntangents, geometry.extent(1), geometry.extent(1));
+        stdex::mdarray<T,
+                       MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 3>>
+            vvt(ntangents, geometry.extent(1), geometry.extent(1));
         std::vector<T> edge(geometry.extent(1));
 
         int c = 0;
@@ -178,10 +184,11 @@ FiniteElement<T> element::create_regge(cell::type celltype, int degree,
   sobolev::space space
       = discontinuous ? sobolev::space::L2 : sobolev::space::HEin;
   return FiniteElement<T>(
-      element::family::Regge, celltype, degree, {tdim, tdim},
-      impl::mdspan_t<T, 2>(wcoeffs.data(), wcoeffs.extents()), xview, Mview, 0,
-      maps::type::doubleCovariantPiola, space, discontinuous, -1, degree,
-      element::lagrange_variant::unset, element::dpc_variant::unset);
+      element::family::Regge, celltype, polyset::type::standard, degree,
+      {tdim, tdim}, impl::mdspan_t<T, 2>(wcoeffs.data(), wcoeffs.extents()),
+      xview, Mview, 0, maps::type::doubleCovariantPiola, space, discontinuous,
+      -1, degree, element::lagrange_variant::unset,
+      element::dpc_variant::unset);
 }
 //-----------------------------------------------------------------------------
 template FiniteElement<float> element::create_regge(cell::type, int, bool);

@@ -8,9 +8,10 @@
 #
 # First, we import Basix and Numpy.
 
-import basix
 import numpy as np
-from basix import ElementFamily, CellType, LagrangeVariant
+
+import basix
+from basix import CellType, ElementFamily, LagrangeVariant
 
 # Next, we create a degree 4 Lagrange element on a quadrilateral using the function
 # `create_element`. The first input is the element family: for Lagrange elements,

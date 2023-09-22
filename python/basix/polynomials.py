@@ -1,12 +1,13 @@
 """Functions for working with polynomials."""
 
+import typing as _typing
+
+import numpy as _numpy
+import numpy.typing as _numpy_typing
+
 from ._basixcpp import CellType as _CT
 from ._basixcpp import PolynomialType as _PT
 from ._basixcpp import index as _index
-import numpy as _numpy
-import numpy.typing as _numpy_typing
-import typing as _typing
-
 from ._basixcpp import polynomials_dim as dim  # noqa: F401
 
 _nda_f64 = _numpy_typing.NDArray[_numpy.float64]
@@ -21,12 +22,17 @@ def reshape_coefficients(
         poly_type: The polynomial type.
         cell_type: The cell type
         coefficients: The coefficients
-        value_size: The value size of the polynomials associated with the coefficients
-        input_degree: The maximum degree of polynomials associated with the input coefficients
-        output_degree: The maximum degree of polynomials associated with the output coefficients
+        value_size: The value size of the polynomials associated with
+            the coefficients.
+        input_degree: The maximum degree of polynomials associated with
+            the input coefficients.
+        output_degree: The maximum degree of polynomials associated with
+            the output coefficients.
 
     Returns:
-        Coefficients representing the same coefficients as the input in the set of polynomials of the output degree
+        Coefficients representing the same coefficients as the input in
+        the set of polynomials of the output degree.
+
     """
     if poly_type != _PT.legendre:
         raise NotImplementedError()

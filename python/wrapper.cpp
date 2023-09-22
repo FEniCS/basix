@@ -31,9 +31,9 @@
 namespace nb = nanobind;
 using namespace basix;
 
-namespace stdex = std::experimental;
 template <typename T, std::size_t d>
-using mdspan_t = stdex::mdspan<T, stdex::dextents<std::size_t, d>>;
+using mdspan_t = MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<
+    T, MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, d>>;
 
 namespace
 {
@@ -131,8 +131,10 @@ NB_MODULE(_basixcpp, m)
       {
         if (x.ndim() != 2)
           throw std::runtime_error("x has the wrong number of dimensions");
-        stdex::mdspan<const double, stdex::dextents<std::size_t, 2>> _x(
-            (double*)x.data(), x.shape(0), x.shape(1));
+        MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<
+            const double,
+            MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 2>>
+            _x((double*)x.data(), x.shape(0), x.shape(1));
         auto [p, shape] = polynomials::tabulate(polytype, celltype, d, _x);
         return as_nbndarray(p, shape);
       },
@@ -268,8 +270,7 @@ NB_MODULE(_basixcpp, m)
       .value("DPC", element::family::DPC)
       .value("CR", element::family::CR)
       .value("Hermite", element::family::Hermite)
-      .def_prop_ro("name",
-                   [](nb::object obj) { return nb::getattr(obj, "__name__"); });
+      .value("iso", element::family::iso);
 
   nb::class_<FiniteElement<double>>(m, "FiniteElement")
       .def(
@@ -280,8 +281,10 @@ NB_MODULE(_basixcpp, m)
           {
             if (x.ndim() != 2)
               throw std::runtime_error("x has the wrong size");
-            stdex::mdspan<const double, stdex::dextents<std::size_t, 2>> _x(
-                (const double*)x.data(), x.shape(0), x.shape(1));
+            MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<
+                const double,
+                MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 2>>
+                _x(x.data(), x.shape(0), x.shape(1));
             auto [t, shape] = self.tabulate(n, _x);
             return as_nbndarray(t, shape);
           },
@@ -385,6 +388,7 @@ NB_MODULE(_basixcpp, m)
       .def_prop_ro("highest_complete_degree",
                    &FiniteElement<double>::highest_complete_degree)
       .def_prop_ro("cell_type", &FiniteElement<double>::cell_type)
+      .def_prop_ro("polyset_type", &FiniteElement<double>::polyset_type)
       .def_prop_ro("dim", &FiniteElement<double>::dim)
       .def_prop_ro("num_entity_dofs",
                    [](const FiniteElement<double>& self)
@@ -554,8 +558,8 @@ NB_MODULE(_basixcpp, m)
          const std::vector<std::vector<nb::ndarray<double>>>& M,
          int interpolation_nderivs, maps::type map_type,
          sobolev::space sobolev_space, bool discontinuous,
-         int highest_complete_degree,
-         int highest_degree) -> FiniteElement<double>
+         int highest_complete_degree, int highest_degree,
+         polyset::type poly_type) -> FiniteElement<double>
       {
         if (x.size() != 4)
           throw std::runtime_error("x has the wrong size");
@@ -595,7 +599,7 @@ NB_MODULE(_basixcpp, m)
             mdspan_t<const double, 2>((double*)wcoeffs.data(), wcoeffs.shape(0),
                                       wcoeffs.shape(1)),
             _x, _M, interpolation_nderivs, map_type, sobolev_space,
-            discontinuous, highest_complete_degree, highest_degree);
+            discontinuous, highest_complete_degree, highest_degree, poly_type);
       },
       basix::docstring::create_custom_element.c_str());
 
@@ -631,41 +635,50 @@ NB_MODULE(_basixcpp, m)
       },
       basix::docstring::compute_interpolation_operator.c_str());
 
+  nb::enum_<polyset::type>(m, "PolysetType")
+      .value("standard", polyset::type::standard)
+      .value("macroedge", polyset::type::macroedge);
+
+  m.def(
+      "superset",
+      [](cell::type cell, polyset::type type1, polyset::type type2)
+      { return polyset::superset(cell, type1, type2); },
+      basix::docstring::superset.c_str());
+
+  m.def(
+      "restriction",
+      [](polyset::type ptype, cell::type cell, cell::type restriction_cell)
+      { return polyset::restriction(ptype, cell, restriction_cell); },
+      basix::docstring::restriction.c_str());
+
   m.def(
       "tabulate_polynomial_set",
-      [](cell::type celltype, int d, int n,
+      [](cell::type celltype, polyset::type polytype, int d, int n,
          const nb::ndarray<nb::numpy, double, nb::shape<nb::any, nb::any>>& x)
       {
         if (x.ndim() != 2)
           throw std::runtime_error("x has the wrong number of dimensions");
-        stdex::mdspan<const double, stdex::dextents<std::size_t, 2>> _x(
-            (double*)x.data(), x.shape(0), x.shape(1));
-        auto [p, shape] = polyset::tabulate(celltype, d, n, _x);
+        MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<
+            const double,
+            MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 2>>
+            _x((double*)x.data(), x.shape(0), x.shape(1));
+        auto [p, shape] = polyset::tabulate(celltype, polytype, d, n, _x);
         return as_nbndarray(p, shape);
       },
       basix::docstring::tabulate_polynomial_set.c_str());
 
   m.def(
       "make_quadrature",
-      [](quadrature::type rule, cell::type celltype, int m)
+      [](quadrature::type rule, cell::type celltype, polyset::type polytype,
+         int m)
       {
-        auto [pts, w] = quadrature::make_quadrature<double>(rule, celltype, m);
-        const std::array<std::size_t, 1> wshape = {w.size()};
+        auto [pts, w]
+            = quadrature::make_quadrature<double>(rule, celltype, polytype, m);
+        std::array<std::size_t, 1> wshape = {w.size()};
         std::array<std::size_t, 2> shape = {w.size(), pts.size() / w.size()};
         return std::pair(as_nbndarray(pts, shape), as_nbndarray(w, wshape));
       },
-      basix::docstring::make_quadrature__rule_celltype_m.c_str());
-
-  m.def(
-      "make_quadrature",
-      [](cell::type celltype, int m)
-      {
-        auto [pts, w] = quadrature::make_quadrature<double>(celltype, m);
-        const std::array<std::size_t, 1> wshape = {w.size()};
-        std::array<std::size_t, 2> shape = {w.size(), pts.size() / w.size()};
-        return std::pair(as_nbndarray(pts, shape), as_nbndarray(w, wshape));
-      },
-      basix::docstring::make_quadrature__celltype_m.c_str());
+      basix::docstring::make_quadrature__rule_celltype_polytype_m.c_str());
 
   m.def("index", nb::overload_cast<int>(&basix::indexing::idx),
         basix::docstring::index__p.c_str())

@@ -10,6 +10,7 @@
 #include "polyset.h"
 #include "quadrature.h"
 #include "sobolev-spaces.h"
+#include <cmath>
 
 using namespace basix;
 
@@ -24,7 +25,8 @@ FiniteElement<T> basix::element::create_hhj(cell::type celltype, int degree,
   const std::size_t tdim = cell::topological_dimension(celltype);
 
   const int nc = tdim * (tdim + 1) / 2;
-  const int basis_size = polyset::dim(celltype, degree);
+  const int basis_size
+      = polyset::dim(celltype, polyset::type::standard, degree);
   const std::size_t ndofs = basis_size * nc;
   const std::size_t psize = basis_size * tdim * tdim;
 
@@ -40,7 +42,7 @@ FiniteElement<T> basix::element::create_hhj(cell::type celltype, int degree,
 
       const std::size_t s = basis_size;
       for (std::size_t k = 0; k < s; ++k)
-        wcoeffs(yoff * s + k, xoff * s + k) = 1.0;
+        wcoeffs(yoff * s + k, xoff * s + k) = i == j ? 1.0 : std::sqrt(0.5);
     }
   }
 
@@ -84,9 +86,11 @@ FiniteElement<T> basix::element::create_hhj(cell::type celltype, int degree,
         // Tabulate points in lattice
         cell::type ct = cell::sub_entity_type(celltype, d, e);
 
-        const std::size_t ndofs = polyset::dim(ct, degree + 1 - d);
-        const auto [ptsbuffer, wts]
-            = quadrature::make_quadrature<T>(ct, degree + (degree + 1 - d));
+        const std::size_t ndofs
+            = polyset::dim(ct, polyset::type::standard, degree + 1 - d);
+        const auto [ptsbuffer, wts] = quadrature::make_quadrature<T>(
+            quadrature::type::Default, ct, polyset::type::standard,
+            degree + (degree + 1 - d));
         impl::mdspan_t<const T, 2> pts(ptsbuffer.data(), wts.size(),
                                        ptsbuffer.size() / wts.size());
 
@@ -125,7 +129,7 @@ FiniteElement<T> basix::element::create_hhj(cell::type celltype, int degree,
             edge_t[1] = geometry(vert_ids[r], 0) - geometry(vert_ids[s], 0);
 
             // outer product v.v^T
-            const auto [result, shape] = basix::math::outer(edge_t, edge_t);
+            const auto [result, shape] = math::outer(edge_t, edge_t);
             for (std::size_t k0 = 0; k0 < shape[0]; ++k0)
               for (std::size_t k1 = 0; k1 < shape[1]; ++k1)
                 vvt(c, k0, k1) = result[k0 * shape[1] + k1];
@@ -177,10 +181,11 @@ FiniteElement<T> basix::element::create_hhj(cell::type celltype, int degree,
   sobolev::space space
       = discontinuous ? sobolev::space::L2 : sobolev::space::HDivDiv;
   return FiniteElement<T>(
-      element::family::HHJ, celltype, degree, {tdim, tdim},
-      impl::mdspan_t<T, 2>(wcoeffs.data(), wcoeffs.extents()), xview, Mview, 0,
-      maps::type::doubleContravariantPiola, space, discontinuous, -1, degree,
-      element::lagrange_variant::unset, element::dpc_variant::unset);
+      element::family::HHJ, celltype, polyset::type::standard, degree,
+      {tdim, tdim}, impl::mdspan_t<T, 2>(wcoeffs.data(), wcoeffs.extents()),
+      xview, Mview, 0, maps::type::doubleContravariantPiola, space,
+      discontinuous, -1, degree, element::lagrange_variant::unset,
+      element::dpc_variant::unset);
 }
 //-----------------------------------------------------------------------------
 template FiniteElement<float> element::create_hhj(cell::type, int, bool);

@@ -36,11 +36,12 @@ impl::mdarray_t<T, 2> create_nedelec_2d_space(int degree)
 
   // Tabulate polynomial set at quadrature points
   const auto [_pts, wts] = quadrature::make_quadrature<T>(
-      quadrature::type::Default, cell::type::triangle, 2 * degree);
+      quadrature::type::Default, cell::type::triangle, polyset::type::standard,
+      2 * degree);
   impl::mdspan_t<const T, 2> pts(_pts.data(), wts.size(),
                                  _pts.size() / wts.size());
-  const auto [_phi, shape]
-      = polyset::tabulate(cell::type::triangle, degree, 0, pts);
+  const auto [_phi, shape] = polyset::tabulate(
+      cell::type::triangle, polyset::type::standard, degree, 0, pts);
   impl::mdspan_t<const T, 3> phi(_phi.data(), shape);
 
   const std::size_t psize = phi.extent(1);
@@ -56,7 +57,7 @@ impl::mdarray_t<T, 2> create_nedelec_2d_space(int degree)
   // Create coefficients for the additional Nedelec polynomials
   for (std::size_t i = 0; i < ns; ++i)
   {
-    for (std::size_t j = 0; j < psize; ++j)
+    for (std::size_t j = nv; j < psize; ++j)
     {
       wcoeffs(2 * nv + i, j) = 0.0;
       wcoeffs(2 * nv + i, j + psize) = 0.0;
@@ -68,6 +69,8 @@ impl::mdarray_t<T, 2> create_nedelec_2d_space(int degree)
       }
     }
   }
+
+  math::orthogonalise<T>(wcoeffs, nv * 2);
 
   return wcoeffs;
 }
@@ -97,11 +100,12 @@ impl::mdarray_t<T, 2> create_nedelec_3d_space(int degree)
 
   // Tabulate polynomial basis at quadrature points
   const auto [_pts, wts] = quadrature::make_quadrature<T>(
-      quadrature::type::Default, cell::type::tetrahedron, 2 * degree);
+      quadrature::type::Default, cell::type::tetrahedron,
+      polyset::type::standard, 2 * degree);
   impl::mdspan_t<const T, 2> pts(_pts.data(), wts.size(),
                                  _pts.size() / wts.size());
-  const auto [_phi, shape]
-      = polyset::tabulate(cell::type::tetrahedron, degree, 0, pts);
+  const auto [_phi, shape] = polyset::tabulate(
+      cell::type::tetrahedron, polyset::type::standard, degree, 0, pts);
   impl::mdspan_t<const T, 3> phi(_phi.data(), shape);
   const std::size_t psize = phi.extent(1);
 
@@ -114,7 +118,7 @@ impl::mdarray_t<T, 2> create_nedelec_3d_space(int degree)
   // Create coefficients for additional Nedelec polynomials
   for (std::size_t i = 0; i < ns; ++i)
   {
-    for (std::size_t j = 0; j < psize; ++j)
+    for (std::size_t j = nv; j < psize; ++j)
     {
       T w = 0.0;
       for (std::size_t k = 0; k < wts.size(); ++k)
@@ -129,7 +133,7 @@ impl::mdarray_t<T, 2> create_nedelec_3d_space(int degree)
 
   for (std::size_t i = 0; i < ns; ++i)
   {
-    for (std::size_t j = 0; j < psize; ++j)
+    for (std::size_t j = nv; j < psize; ++j)
     {
       T w = 0.0;
       for (std::size_t k = 0; k < wts.size(); ++k)
@@ -144,7 +148,7 @@ impl::mdarray_t<T, 2> create_nedelec_3d_space(int degree)
 
   for (std::size_t i = 0; i < ns; ++i)
   {
-    for (std::size_t j = 0; j < psize; ++j)
+    for (std::size_t j = nv; j < psize; ++j)
     {
       T w = 0.0;
       for (std::size_t k = 0; k < wts.size(); ++k)
@@ -154,6 +158,8 @@ impl::mdarray_t<T, 2> create_nedelec_3d_space(int degree)
       wcoeffs(tdim * nv + i + ns * 2 - ns_remove, psize + j) = w;
     }
   }
+
+  math::orthogonalise<T>(wcoeffs, nv * 3);
 
   return wcoeffs;
 }
@@ -209,7 +215,7 @@ FiniteElement<T> element::create_nedelec(cell::type celltype, int degree,
     FiniteElement edge_space = element::create_lagrange<T>(
         cell::type::interval, degree - 1, lvariant, true);
     auto [_x, xshape, _M, Mshape] = moments::make_tangent_integral_moments<T>(
-        edge_space, celltype, tdim, 2 * degree - 1);
+        edge_space, celltype, polyset::type::standard, tdim, 2 * degree - 1);
     assert(_x.size() == _M.size());
     for (std::size_t i = 0; i < _x.size(); ++i)
     {
@@ -224,7 +230,7 @@ FiniteElement<T> element::create_nedelec(cell::type celltype, int degree,
     FiniteElement face_space = element::create_lagrange<T>(
         cell::type::triangle, degree - 2, lvariant, true);
     auto [_x, xshape, _M, Mshape] = moments::make_integral_moments<T>(
-        face_space, celltype, tdim, 2 * degree - 2);
+        face_space, celltype, polyset::type::standard, tdim, 2 * degree - 2);
     assert(_x.size() == _M.size());
     for (std::size_t i = 0; i < _x.size(); ++i)
     {
@@ -247,7 +253,7 @@ FiniteElement<T> element::create_nedelec(cell::type celltype, int degree,
       auto [_x, xshape, _M, Mshape] = moments::make_integral_moments<T>(
           element::create_lagrange<T>(cell::type::tetrahedron, degree - 3,
                                       lvariant, true),
-          cell::type::tetrahedron, 3, 2 * degree - 3);
+          cell::type::tetrahedron, polyset::type::standard, 3, 2 * degree - 3);
       assert(_x.size() == _M.size());
       for (std::size_t i = 0; i < _x.size(); ++i)
       {
@@ -280,11 +286,11 @@ FiniteElement<T> element::create_nedelec(cell::type celltype, int degree,
 
   sobolev::space space
       = discontinuous ? sobolev::space::L2 : sobolev::space::HCurl;
-  return FiniteElement<T>(element::family::N1E, celltype, degree, {tdim},
-                          impl::mdspan_t<T, 2>(wcoeffs.data(), wshape), xview,
-                          Mview, 0, maps::type::covariantPiola, space,
-                          discontinuous, degree - 1, degree, lvariant,
-                          element::dpc_variant::unset);
+  return FiniteElement<T>(
+      element::family::N1E, celltype, polyset::type::standard, degree, {tdim},
+      impl::mdspan_t<T, 2>(wcoeffs.data(), wshape), xview, Mview, 0,
+      maps::type::covariantPiola, space, discontinuous, degree - 1, degree,
+      lvariant, element::dpc_variant::unset);
 }
 //-----------------------------------------------------------------------------
 template <std::floating_point T>
@@ -314,7 +320,7 @@ FiniteElement<T> element::create_nedelec2(cell::type celltype, int degree,
     FiniteElement edge_space = element::create_lagrange<T>(
         cell::type::interval, degree, lvariant, true);
     auto [_x, xshape, _M, Mshape] = moments::make_tangent_integral_moments<T>(
-        edge_space, celltype, tdim, 2 * degree);
+        edge_space, celltype, polyset::type::standard, tdim, 2 * degree);
     assert(_x.size() == _M.size());
     for (std::size_t i = 0; i < _x.size(); ++i)
     {
@@ -329,7 +335,7 @@ FiniteElement<T> element::create_nedelec2(cell::type celltype, int degree,
     FiniteElement face_space = element::create_rt<T>(
         cell::type::triangle, degree - 1, lvariant, true);
     auto [_x, xshape, _M, Mshape] = moments::make_dot_integral_moments<T>(
-        face_space, celltype, tdim, 2 * degree - 1);
+        face_space, celltype, polyset::type::standard, tdim, 2 * degree - 1);
     assert(_x.size() == _M.size());
     for (std::size_t i = 0; i < _x.size(); ++i)
     {
@@ -351,7 +357,7 @@ FiniteElement<T> element::create_nedelec2(cell::type celltype, int degree,
       auto [_x, xshape, _M, Mshape] = moments::make_dot_integral_moments<T>(
           element::create_rt<T>(cell::type::tetrahedron, degree - 2, lvariant,
                                 true),
-          celltype, tdim, 2 * degree - 2);
+          celltype, polyset::type::standard, tdim, 2 * degree - 2);
       assert(_x.size() == _M.size());
       for (std::size_t i = 0; i < _x.size(); ++i)
       {
@@ -381,9 +387,10 @@ FiniteElement<T> element::create_nedelec2(cell::type celltype, int degree,
     Mview = impl::to_mdspan(Mbuffer, Mshape);
   }
 
-  const std::size_t psize = polyset::dim(celltype, degree);
+  const std::size_t psize
+      = polyset::dim(celltype, polyset::type::standard, degree);
   return FiniteElement<T>(
-      element::family::N2E, celltype, degree, {tdim},
+      element::family::N2E, celltype, polyset::type::standard, degree, {tdim},
       impl::mdspan_t<T, 2>(math::eye<T>(tdim * psize).data(), tdim * psize,
                            tdim * psize),
       xview, Mview, 0, maps::type::covariantPiola, sobolev::space::HCurl,

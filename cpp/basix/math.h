@@ -8,6 +8,7 @@
 
 #include "mdspan.hpp"
 #include <array>
+#include <cmath>
 #include <concepts>
 #include <span>
 #include <string>
@@ -183,19 +184,20 @@ std::pair<std::vector<T>, std::vector<T>> eigh(std::span<const T> A,
 /// @return A^{-1} B
 template <std::floating_point T>
 std::vector<T>
-solve(std::experimental::mdspan<const T,
-                                std::experimental::dextents<std::size_t, 2>>
+solve(MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<
+          const T, MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 2>>
           A,
-      std::experimental::mdspan<const T,
-                                std::experimental::dextents<std::size_t, 2>>
+      MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<
+          const T, MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 2>>
           B)
 {
-  namespace stdex = std::experimental;
+  namespace stdex
+      = MDSPAN_IMPL_STANDARD_NAMESPACE::MDSPAN_IMPL_PROPOSED_NAMESPACE;
 
   // Copy A and B to column-major storage
-  stdex::mdarray<T, stdex::dextents<std::size_t, 2>, stdex::layout_left> _A(
-      A.extents()),
-      _B(B.extents());
+  stdex::mdarray<T, MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 2>,
+                 MDSPAN_IMPL_STANDARD_NAMESPACE::layout_left>
+      _A(A.extents()), _B(B.extents());
   for (std::size_t i = 0; i < A.extent(0); ++i)
     for (std::size_t j = 0; j < A.extent(1); ++j)
       _A(i, j) = A(i, j);
@@ -219,7 +221,9 @@ solve(std::experimental::mdspan<const T,
 
   // Copy result to row-major storage
   std::vector<T> rb(_B.extent(0) * _B.extent(1));
-  stdex::mdspan<T, stdex::dextents<std::size_t, 2>> r(rb.data(), _B.extents());
+  MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<
+      T, MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 2>>
+      r(rb.data(), _B.extents());
   for (std::size_t i = 0; i < _B.extent(0); ++i)
     for (std::size_t j = 0; j < _B.extent(1); ++j)
       r(i, j) = _B(i, j);
@@ -231,14 +235,17 @@ solve(std::experimental::mdspan<const T,
 /// @param[in] A The matrix
 /// @return A bool indicating if the matrix is singular
 template <std::floating_point T>
-bool is_singular(std::experimental::mdspan<
-                 const T, std::experimental::dextents<std::size_t, 2>>
-                     A)
+bool is_singular(
+    MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<
+        const T, MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 2>>
+        A)
 {
   // Copy to column major matrix
-  namespace stdex = std::experimental;
-  stdex::mdarray<T, stdex::dextents<std::size_t, 2>, stdex::layout_left> _A(
-      A.extents());
+  namespace stdex
+      = MDSPAN_IMPL_STANDARD_NAMESPACE::MDSPAN_IMPL_PROPOSED_NAMESPACE;
+  stdex::mdarray<T, MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 2>,
+                 MDSPAN_IMPL_STANDARD_NAMESPACE::layout_left>
+      _A(A.extents());
   for (std::size_t i = 0; i < A.extent(0); ++i)
     for (std::size_t j = 0; j < A.extent(1); ++j)
       _A(i, j) = A(i, j);
@@ -310,9 +317,9 @@ template <typename U, typename V, typename W>
 void dot(const U& A, const V& B, W&& C)
 {
   assert(A.extent(1) == B.extent(0));
-  assert(C.extent(0) == C.extent(0));
+  assert(C.extent(0) == A.extent(0));
   assert(C.extent(1) == B.extent(1));
-  if (A.extent(0) * B.extent(1) * A.extent(1) < 4096)
+  if (A.extent(0) * B.extent(1) * A.extent(1) < 512)
   {
     std::fill_n(C.data_handle(), C.extent(0) * C.extent(1), 0);
     for (std::size_t i = 0; i < A.extent(0); ++i)
@@ -337,11 +344,51 @@ template <std::floating_point T>
 std::vector<T> eye(std::size_t n)
 {
   std::vector<T> I(n * n, 0);
-  namespace stdex = std::experimental;
-  stdex::mdspan<T, stdex::dextents<std::size_t, 2>> Iview(I.data(), n, n);
+  namespace stdex
+      = MDSPAN_IMPL_STANDARD_NAMESPACE::MDSPAN_IMPL_PROPOSED_NAMESPACE;
+  MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<
+      T, MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 2>>
+      Iview(I.data(), n, n);
   for (std::size_t i = 0; i < n; ++i)
     Iview(i, i) = 1;
   return I;
 }
+
+/// Orthogonalise the rows of a matrix (in place)
+/// @param[in] wcoeffs The matrix
+/// @param[in] start The row to start from. The rows before this should already
+/// be orthogonal
+template <std::floating_point T>
+void orthogonalise(
+    MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<
+        T, MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 2>>
+        wcoeffs,
+    std::size_t start = 0)
+{
+  for (std::size_t i = start; i < wcoeffs.extent(0); ++i)
+  {
+    for (std::size_t j = start; j < i; ++j)
+    {
+      T a = 0;
+      for (std::size_t k = 0; k < wcoeffs.extent(1); ++k)
+        a += wcoeffs(i, k) * wcoeffs(j, k);
+      for (std::size_t k = 0; k < wcoeffs.extent(1); ++k)
+        wcoeffs(i, k) -= a * wcoeffs(j, k);
+    }
+
+    T norm = 0;
+    for (std::size_t k = 0; k < wcoeffs.extent(1); ++k)
+      norm += wcoeffs(i, k) * wcoeffs(i, k);
+    if (std::abs(norm) < 4 * std::numeric_limits<T>::epsilon())
+    {
+      throw std::runtime_error(
+          "Cannot orthogonalise the rows of a matrix with incomplete row rank");
+    }
+
+    for (std::size_t k = 0; k < wcoeffs.extent(1); ++k)
+      wcoeffs(i, k) /= std::sqrt(norm);
+  }
+}
+//-----------------------------------------------------------------------------
 
 } // namespace basix::math

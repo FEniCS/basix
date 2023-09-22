@@ -2,6 +2,7 @@
 
 import functools as _functools
 import hashlib as _hashlib
+import itertools as _itertools
 import typing as _typing
 from abc import abstractmethod as _abstractmethod
 from warnings import warn as _warn
@@ -10,8 +11,6 @@ import numpy as _np
 import numpy.typing as _npt
 import ufl as _ufl
 # TODO: remove gdim arguments once UFL handles cells better
-# TODO: remove IrreducibleInt once UFL handles element degrees better
-from ufl.algorithms.estimate_degrees import IrreducibleInt as _IrreducibleInt
 from ufl.finiteelement import FiniteElementBase as _FiniteElementBase
 
 import basix as _basix
@@ -50,7 +49,7 @@ class _ElementBase(_FiniteElementBase):
     """
 
     def __init__(self, repr: str, name: str, cellname: str, value_shape: _typing.Tuple[int, ...],
-                 degree: _typing.Union[int, _IrreducibleInt] = -1, mapname: _typing.Optional[str] = None,
+                 degree: int = -1, mapname: _typing.Optional[str] = None,
                  gdim: _typing.Optional[int] = None):
         """Initialise the element."""
         super().__init__(name, _ufl.cell.Cell(cellname, gdim), degree, None, value_shape, value_shape)
@@ -255,6 +254,15 @@ class _ElementBase(_FiniteElementBase):
         return False
 
     @property
+    def has_custom_quadrature(self) -> bool:
+        """True if the element has a custom quadrature rule."""
+        return False
+
+    def custom_quadrature(self) -> _typing.Tuple[_npt.NDArray[_np.float64], _npt.NDArray[_np.float64]]:
+        """True if the element has a custom quadrature rule."""
+        raise ValueError("Element does not have a custom quadrature rule.")
+
+    @property
     @_abstractmethod
     def map_type(self) -> _basix.MapType:
         """The Basix map type."""
@@ -269,6 +277,11 @@ class _ElementBase(_FiniteElementBase):
     def highest_degree(self) -> int:
         """The highest degree of the element."""
         raise NotImplementedError()
+
+    @property
+    @_abstractmethod
+    def polyset_type(self) -> _basix.PolysetType:
+        """The polyset type of the element."""
 
     @property
     def _wcoeffs(self) -> _npt.NDArray[_np.float64]:
@@ -327,15 +340,9 @@ class _BasixElement(_ElementBase):
             repr = (f"Basix element ({element.family.__name__}, {element.cell_type.__name__}, {element.degree}, "
                     f"{element.lagrange_variant.__name__}, {element.dpc_variant.__name__}, {element.discontinuous})")
 
-        if element.cell_type.__name__ in ["interval", "triangle", "tetrahedron"]:
-            super().__init__(
-                repr, element.family.__name__, element.cell_type.__name__, tuple(element.value_shape), element.degree,
-                _map_type_to_string(element.map_type), gdim=gdim)
-        else:
-            # TODO: remove IrreducibleInt once UFL handles element degrees better
-            super().__init__(
-                repr, element.family.__name__, element.cell_type.__name__, tuple(element.value_shape),
-                _IrreducibleInt(element.degree), _map_type_to_string(element.map_type), gdim=gdim)
+        super().__init__(
+            repr, element.family.__name__, element.cell_type.__name__, tuple(element.value_shape), element.degree,
+            _map_type_to_string(element.map_type), gdim=gdim)
 
         self.element = element
 
@@ -361,6 +368,7 @@ class _BasixElement(_ElementBase):
 
         Returns:
             Tabulated basis functions
+
         """
         tab = self.element.tabulate(nderivs, points)
         # TODO: update FFCx to remove the need for transposing here
@@ -376,14 +384,15 @@ class _BasixElement(_ElementBase):
         number, and a stride equal to the block size. For vector-valued
         element (eg H(curl) and H(div) elements), this returns a
         component element (and as offset of 0 and a stride of 1). When
-        tabulate is called on the component element, only the part of the
-        table for the given component is returned.
+        tabulate is called on the component element, only the part of
+        the table for the given component is returned.
 
         Args:
             flat_component: The component
 
         Returns:
             component element, offset of the component, stride of the component
+
         """
         assert flat_component < self.value_size
         return _ComponentElement(self, flat_component), 0, 1
@@ -492,6 +501,10 @@ class _BasixElement(_ElementBase):
         return self.element.highest_degree
 
     @property
+    def polyset_type(self) -> _basix.PolysetType:
+        return self.element.polyset_type
+
+    @property
     def _wcoeffs(self) -> _npt.NDArray[_np.float64]:
         """The coefficients used to define the polynomial set."""
         return self.element.wcoeffs
@@ -526,9 +539,10 @@ class _BasixElement(_ElementBase):
 class _ComponentElement(_ElementBase):
     """An element representing one component of a _BasixElement.
 
-    This element type is used when UFL's `get_component_element` function is called.
-    """
+    This element type is used when UFL's ``get_component_element``
+    function is called.
 
+    """
     element: _ElementBase
     component: int
 
@@ -559,10 +573,11 @@ class _ComponentElement(_ElementBase):
 
         Args:
             nderivs: Number of derivatives to tabulate.
-            points: Points to tabulate at
+            points: Points to tabulate at.
 
         Returns:
-            Tabulated basis functions
+            Tabulated basis functions.
+
         """
         tables = self.element.tabulate(nderivs, points)
         output = []
@@ -664,6 +679,10 @@ class _ComponentElement(_ElementBase):
         return self.element.cell_type
 
     @property
+    def polyset_type(self) -> _basix.PolysetType:
+        return self.element.polyset_type
+
+    @property
     def discontinuous(self) -> bool:
         """True if the discontinuous version of the element is used."""
         return self.element.discontinuous
@@ -683,12 +702,19 @@ class _ComponentElement(_ElementBase):
         """The Basix map type."""
         raise NotImplementedError()
 
+    def __mul__(self, other):
+        _warn("Use of * to create mixed elements is deprecated and will be removed after December 2023. "
+              "Please, use basix.ufl.mixed_element.", FutureWarning)
+        return mixed_element([self, other])
+
 
 class _MixedElement(_ElementBase):
     """A mixed element that combines two or more elements.
 
-    This can be used when multiple different elements appear in a form. Users should not directly call this
-    class's initiliser, but should use the `mixed_element` function instead.
+    This can be used when multiple different elements appear in a form.
+    Users should not directly call this class's initilizer, but should
+    use the :func:`mixed_element` function instead.
+
     """
 
     _sub_elements: _typing.List[_ElementBase]
@@ -746,6 +772,7 @@ class _MixedElement(_ElementBase):
 
         Returns:
             Tabulated basis functions
+
         """
         tables = []
         results = [e.tabulate(nderivs, points) for e in self._sub_elements]
@@ -767,6 +794,7 @@ class _MixedElement(_ElementBase):
 
         Returns:
             component element, offset of the component, stride of the component
+
         """
         sub_dims = [0] + [e.dim for e in self._sub_elements]
         sub_cmps = [0] + [e.value_size for e in self._sub_elements]
@@ -886,14 +914,22 @@ class _MixedElement(_ElementBase):
         """Number of derivatives needed when interpolating."""
         return max([e.interpolation_nderivs for e in self._sub_elements])
 
+    @property
+    def polyset_type(self) -> _basix.PolysetType:
+        pt = _basix.PolysetType.standard
+        for e in self._sub_elements:
+            pt = _basix.polyset_superset(self.cell_type, pt, e.polyset_type)
+        return pt
+
 
 class _BlockedElement(_ElementBase):
     """Element with a block size that contains multiple copies of a sub element.
 
-    This can be used to (for example) create vector and tensor Lagrange elements. Users should not
-    directly call this classes initiliser, but should use the `blocked_element` function instead.
-    """
+    This can be used to (for example) create vector and tensor Lagrange
+    elements. Users should not directly call this classes initilizer,
+    but should use the `blocked_element` function instead.
 
+    """
     block_shape: _typing.Tuple[int, ...]
     sub_element: _ElementBase
     _block_size: int
@@ -989,13 +1025,23 @@ class _BlockedElement(_ElementBase):
 
         Returns:
             Tabulated basis functions
+
         """
         assert len(self.block_shape) == 1  # TODO: block shape
         assert self.value_size == self._block_size  # TODO: remove this assumption
         output = []
         for table in self.sub_element.tabulate(nderivs, points):
             # Repeat sub element horizontally
-            new_table = _np.repeat(table, self._block_size, axis=-1)
+            assert len(table.shape) == 2
+            new_table = _np.zeros((table.shape[0], *self.block_shape,
+                                   self._block_size * table.shape[1]))
+            for i, j in enumerate(_itertools.product(*[range(s) for s in self.block_shape])):
+                if len(j) == 1:
+                    new_table[:, j[0], i::self._block_size] = table
+                elif len(j) == 2:
+                    new_table[:, j[0], j[1], i::self._block_size] = table
+                else:
+                    raise NotImplementedError()
             output.append(new_table)
         return _np.asarray(output, dtype=_np.float64)
 
@@ -1113,6 +1159,10 @@ class _BlockedElement(_ElementBase):
         return self.sub_element.highest_degree
 
     @property
+    def polyset_type(self) -> _basix.PolysetType:
+        return self.sub_element.polyset_type
+
+    @property
     def _wcoeffs(self) -> _npt.NDArray[_np.float64]:
         """Coefficients used to define the polynomial set."""
         sub_wc = self.sub_element._wcoeffs
@@ -1164,6 +1214,335 @@ class _BlockedElement(_ElementBase):
         if not self._has_symmetry:
             raise ValueError("Cannot get flattened map for non-symmetric element.")
         return self._flattened_sub_element_mapping
+
+
+class _QuadratureElement(_ElementBase):
+    """A quadrature element."""
+
+    def __init__(self, cell: _basix.CellType, value_shape: _typing.Tuple[int, ...],
+                 points: _npt.NDArray[_np.float64], weights: _npt.NDArray[_np.float64],
+                 mapname: str, degree: _typing.Optional[int] = None):
+        """Initialise the element."""
+        self._points = points
+        self._weights = weights
+        repr = f"QuadratureElement({cell.name}, {points!r}, {weights!r}, {mapname})".replace("\n", "")
+        self._cell_type = cell
+        self._entity_counts = [len(i) for i in _basix.topology(cell)]
+
+        if degree is None:
+            degree = len(points)
+
+        super().__init__(repr, "quadrature element", cell.name, value_shape, degree, mapname=mapname)
+
+    def basix_sobolev_space(self):
+        """Return the underlying Sobolev space."""
+        return _basix.sobolev_spaces.L2
+
+    def __eq__(self, other) -> bool:
+        """Check if two elements are equal."""
+        return isinstance(other, _QuadratureElement) and _np.allclose(self._points, other._points) and \
+            _np.allclose(self._weights, other._weights)
+
+    def __hash__(self) -> int:
+        """Return a hash."""
+        return super().__hash__()
+
+    def tabulate(self, nderivs: int, points: _npt.NDArray[_np.float64]) -> _npt.NDArray[_np.float64]:
+        """Tabulate the basis functions of the element.
+
+        Args:
+            nderivs: Number of derivatives to tabulate.
+            points: Points to tabulate at
+
+        Returns:
+            Tabulated basis functions
+        """
+        if nderivs > 0:
+            raise ValueError("Cannot take derivatives of Quadrature element.")
+
+        if points.shape != self._points.shape:
+            raise ValueError("Mismatch of tabulation points and element points.")
+        tables = _np.asarray([_np.eye(points.shape[0], points.shape[0])])
+        return tables
+
+    def get_component_element(self, flat_component: int) -> _typing.Tuple[_ElementBase, int, int]:
+        """Get element that represents a component of the element, and the offset and stride of the component.
+
+        Args:
+            flat_component: The component
+
+        Returns:
+            component element, offset of the component, stride of the component
+
+        """
+        return self, 0, 1
+
+    @property
+    def ufcx_element_type(self) -> str:
+        """Element type."""
+        return "ufcx_quadrature_element"
+
+    @property
+    def dim(self) -> int:
+        """Number of DOFs the element has."""
+        return self._points.shape[0]
+
+    @property
+    def num_entity_dofs(self) -> _typing.List[_typing.List[int]]:
+        """Number of DOFs associated with each entity."""
+        dofs = []
+        for d in self._entity_counts[:-1]:
+            dofs += [[0] * d]
+
+        dofs += [[self.dim]]
+        return dofs
+
+    @property
+    def entity_dofs(self) -> _typing.List[_typing.List[_typing.List[int]]]:
+        """DOF numbers associated with each entity."""
+        start_dof = 0
+        entity_dofs = []
+        for i in self.num_entity_dofs:
+            dofs_list = []
+            for j in i:
+                dofs_list.append([start_dof + k for k in range(j)])
+                start_dof += j
+            entity_dofs.append(dofs_list)
+        return entity_dofs
+
+    @property
+    def num_entity_closure_dofs(self) -> _typing.List[_typing.List[int]]:
+        """Number of DOFs associated with the closure of each entity."""
+        return self.num_entity_dofs
+
+    @property
+    def entity_closure_dofs(self) -> _typing.List[_typing.List[_typing.List[int]]]:
+        """DOF numbers associated with the closure of each entity."""
+        return self.entity_dofs
+
+    @property
+    def num_global_support_dofs(self) -> int:
+        """Get the number of global support DOFs."""
+        return 0
+
+    @property
+    def reference_topology(self) -> _typing.List[_typing.List[_typing.List[int]]]:
+        """Topology of the reference element."""
+        raise NotImplementedError()
+
+    @property
+    def reference_geometry(self) -> _npt.NDArray[_np.float64]:
+        """Geometry of the reference element."""
+        raise NotImplementedError()
+
+    @property
+    def family_name(self) -> str:
+        """Family name of the element."""
+        return "quadrature"
+
+    @property
+    def lagrange_variant(self) -> _typing.Union[_basix.LagrangeVariant, None]:
+        """Basix Lagrange variant used to initialise the element."""
+        return None
+
+    @property
+    def dpc_variant(self) -> _typing.Union[_basix.DPCVariant, None]:
+        """Basix DPC variant used to initialise the element."""
+        return None
+
+    @property
+    def element_family(self) -> _typing.Union[_basix.ElementFamily, None]:
+        """Basix element family used to initialise the element."""
+        return None
+
+    @property
+    def cell_type(self) -> _basix.CellType:
+        """Basix cell type used to initialise the element."""
+        return self._cell_type
+
+    @property
+    def discontinuous(self) -> bool:
+        """True if the discontinuous version of the element is used."""
+        return False
+
+    @property
+    def map_type(self) -> _basix.MapType:
+        """The Basix map type."""
+        return _basix.MapType.identity
+
+    @property
+    def polyset_type(self) -> _basix.PolysetType:
+        """The polyset type of the element."""
+        raise NotImplementedError()
+
+    @property
+    def has_custom_quadrature(self) -> bool:
+        """True if the element has a custom quadrature rule."""
+        return True
+
+    def custom_quadrature(self) -> _typing.Tuple[_npt.NDArray[_np.float64], _npt.NDArray[_np.float64]]:
+        """True if the element has a custom quadrature rule."""
+        return self._points, self._weights
+
+
+class _RealElement(_ElementBase):
+    """A real element."""
+
+    def __init__(self, cell: _basix.CellType, value_shape: _typing.Tuple[int, ...]):
+        """Initialise the element."""
+        self._cell_type = cell
+        tdim = len(_basix.topology(cell)) - 1
+
+        super().__init__(
+            f"RealElement({element})", "real element", cell.name, value_shape, 0)
+
+        self._entity_counts = []
+        if tdim >= 1:
+            self._entity_counts.append(self.cell().num_vertices())
+        if tdim >= 2:
+            self._entity_counts.append(self.cell().num_edges())
+        if tdim >= 3:
+            self._entity_counts.append(self.cell().num_facets())
+        self._entity_counts.append(1)
+
+    def __eq__(self, other) -> bool:
+        """Check if two elements are equal."""
+        return isinstance(other, _RealElement)
+
+    def __hash__(self) -> int:
+        """Return a hash."""
+        return super().__hash__()
+
+    def tabulate(self, nderivs: int, points: _npt.NDArray[_np.float64]) -> _npt.NDArray[_np.float64]:
+        """Tabulate the basis functions of the element.
+
+        Args:
+            nderivs: Number of derivatives to tabulate.
+            points: Points to tabulate at
+
+        Returns:
+            Tabulated basis functions
+
+        """
+        out = _np.zeros((nderivs + 1, len(points), self.value_size**2))
+        for v in range(self.value_size):
+            out[0, :, self.value_size * v + v] = 1.
+        return out
+
+    def get_component_element(self, flat_component: int) -> _typing.Tuple[_ElementBase, int, int]:
+        """Get element that represents a component of the element, and the offset and stride of the component.
+
+        Args:
+            flat_component: The component
+
+        Returns:
+            component element, offset of the component, stride of the component
+
+        """
+        assert flat_component < self.value_size
+        return self, 0, 1
+
+    @property
+    def ufcx_element_type(self) -> str:
+        """Element type."""
+        return "ufcx_real_element"
+
+    @property
+    def dim(self) -> int:
+        """Number of DOFs the element has."""
+        return 0
+
+    @property
+    def num_entity_dofs(self) -> _typing.List[_typing.List[int]]:
+        """Number of DOFs associated with each entity."""
+        dofs = []
+        for d in self._entity_counts[:-1]:
+            dofs += [[0] * d]
+
+        dofs += [[self.dim]]
+        return dofs
+
+    @property
+    def entity_dofs(self) -> _typing.List[_typing.List[_typing.List[int]]]:
+        """DOF numbers associated with each entity."""
+        start_dof = 0
+        entity_dofs = []
+        for i in self.num_entity_dofs:
+            dofs_list = []
+            for j in i:
+                dofs_list.append([start_dof + k for k in range(j)])
+                start_dof += j
+            entity_dofs.append(dofs_list)
+        return entity_dofs
+
+    @property
+    def num_entity_closure_dofs(self) -> _typing.List[_typing.List[int]]:
+        """Number of DOFs associated with the closure of each entity."""
+        return self.num_entity_dofs
+
+    @property
+    def entity_closure_dofs(self) -> _typing.List[_typing.List[_typing.List[int]]]:
+        """DOF numbers associated with the closure of each entity."""
+        return self.entity_dofs
+
+    @property
+    def num_global_support_dofs(self) -> int:
+        """Get the number of global support DOFs."""
+        return 1
+
+    @property
+    def reference_topology(self) -> _typing.List[_typing.List[_typing.List[int]]]:
+        """Topology of the reference element."""
+        raise NotImplementedError()
+
+    @property
+    def reference_geometry(self) -> _npt.NDArray[_np.float64]:
+        """Geometry of the reference element."""
+        raise NotImplementedError()
+
+    @property
+    def family_name(self) -> str:
+        """Family name of the element."""
+        return "real"
+
+    @property
+    def lagrange_variant(self) -> _typing.Union[_basix.LagrangeVariant, None]:
+        """Basix Lagrange variant used to initialise the element."""
+        return None
+
+    @property
+    def dpc_variant(self) -> _typing.Union[_basix.DPCVariant, None]:
+        """Basix DPC variant used to initialise the element."""
+        return None
+
+    @property
+    def element_family(self) -> _typing.Union[_basix.ElementFamily, None]:
+        """Basix element family used to initialise the element."""
+        return None
+
+    @property
+    def cell_type(self) -> _basix.CellType:
+        """Basix cell type used to initialise the element."""
+        return self._cell_type
+
+    @property
+    def discontinuous(self) -> bool:
+        """True if the discontinuous version of the element is used."""
+        return False
+
+    def basix_sobolev_space(self):
+        """Return the underlying Sobolev space."""
+        return _basix.sobolev_spaces.Hinf
+
+    @property
+    def map_type(self) -> _basix.MapType:
+        """The Basix map type."""
+        return _basix.MapType.identity
+
+    @property
+    def polyset_type(self) -> _basix.PolysetType:
+        """The polyset type of the element."""
+        raise NotImplementedError()
 
 
 def _map_type_to_string(map_type: _basix.MapType) -> str:
@@ -1240,22 +1619,26 @@ def element(family: _typing.Union[_basix.ElementFamily, str], cell: _typing.Unio
         degree: Degree of the finite element.
         lagrange_variant: Variant of Lagrange to be used.
         dpc_variant: Variant of DPC to be used.
-        discontinuous: If `True`, the discontinuous version of the
+        discontinuous: If ``True``, the discontinuous version of the
             element is created.
         rank: Rank of the value shape of the element. For scalar-valued
-            families, setting `rank=1` creates a vector element where
+            families, setting ``rank=1`` creates a vector element where
             each component of the vector is represented by the element.
-            Similarly, `rank>2` creates a tensor element. If `shape` is
-            provided, then `rank` is not required .
+            Similarly, ``rank>2`` creates a tensor element. If ``shape``
+            is provided, then ``rank`` is not required .
         shape: Value shape of the element. For scalar-valued families,
             this can be used to create vector and tensor elements. If
-            `rank` is set but `shape` is not, then `shape` will be set
-            to `()` for rank 0, `(tdim, )` for rank 1, and `(tdim, ...,
-            tdim)` for rank 2 or higher.
-        symmetry: Set to `True` if the tensor is symmetric. Valid for
+            ``rank`` is set but ``shape`` is not, then ``shape`` will be
+            set to ``()`` for rank 0, ``(tdim,)`` for rank 1, and
+            ``(tdim, ..., tdim)`` for rank 2 or higher.
+        symmetry: Set to ``True`` if the tensor is symmetric. Valid for
             rank 2 elements only.
         gdim: Geometric dimension. If not set the geometric dimension is
             set equal to the topological dimension of the cell.
+
+    Returns:
+        A finite element.
+
     """
     if rank is not None and shape is not None and len(shape) != rank:
         raise ValueError("Rank and shape are incompatible.")
@@ -1330,8 +1713,13 @@ def enriched_element(elements: _typing.List[_ElementBase],
         map_type: The map type for the enriched element.
         gdim: Geometric dimension. If not set the geometric dimension is
             set equal to the topological dimension of the cell.
+
+    Returns:
+        An enriched finite element.
+
     """
     ct = elements[0].cell_type
+    ptype = elements[0].polyset_type
     vshape = elements[0].value_shape()
     vsize = elements[0].value_size
     if map_type is None:
@@ -1349,6 +1737,8 @@ def enriched_element(elements: _typing.List[_ElementBase],
             discontinuous = False
         if e.cell_type != ct:
             raise ValueError("Enriched elements on different cell types not supported.")
+        if e.polyset_type != ptype:
+            raise ValueError("Enriched elements on different polyset types not supported.")
         if e.value_shape() != vshape or e.value_size != vsize:
             raise ValueError("Enriched elements on different value shapes not supported.")
     nderivs = max(e.interpolation_nderivs for e in elements)
@@ -1382,7 +1772,7 @@ def enriched_element(elements: _typing.List[_ElementBase],
         row += e.dim
 
     return custom_element(ct, list(vshape), wcoeffs, x, M, nderivs,
-                          map_type, ss, discontinuous, hcd, hd, gdim=gdim)
+                          map_type, ss, discontinuous, hcd, hd, ptype, gdim=gdim)
 
 
 def custom_element(cell_type: _basix.CellType, value_shape: _typing.Union[_typing.List[int], _typing.Tuple[int, ...]],
@@ -1390,30 +1780,45 @@ def custom_element(cell_type: _basix.CellType, value_shape: _typing.Union[_typin
                    M: _typing.List[_typing.List[_npt.NDArray[_np.float64]]], interpolation_nderivs: int,
                    map_type: _basix.MapType, sobolev_space: _basix.SobolevSpace, discontinuous: bool,
                    highest_complete_degree: int, highest_degree: int,
+                   polyset_type: _basix.PolysetType = _basix.PolysetType.standard,
                    gdim: _typing.Optional[int] = None) -> _ElementBase:
     """Create a UFL compatible custom Basix element.
 
     Args:
         cell_type: The cell type
         value_shape: The value shape of the element
-        wcoeffs: Matrices for the kth value index containing the expansion coefficients defining a
-            polynomial basis spanning the polynomial space for this element. Shape is
-            (dim(finite element polyset), dim(Legenre polynomials))
-        x: Interpolation points. Indices are (tdim, entity index, point index, dim)
-        M: The interpolation matrices. Indices are (tdim, entity index, dof, vs, point_index, derivative)
-        interpolation_nderivs: The number of derivatives that need to be used during interpolation
-        map_type: The type of map to be used to map values from the reference to a cell
-        sobolev_space: The underlying Sobolev space for the element
-        discontinuous: Indicates whether or not this is the discontinuous version of the element
-        highest_complete_degree: The highest degree n such that a Lagrange (or vector Lagrange)
-        element of degree n is a subspace of this element
-        highest_degree: The degree of a polynomial in this element's polyset
+        wcoeffs: Matrices for the kth value index containing the
+            expansion coefficients defining a polynomial basis spanning
+            the polynomial space for this element. Shape is
+            ``(dim(finite element polyset), dim(Legenre polynomials))``.
+        x: Interpolation points. Indices are ``(tdim, entity index,
+            point index, dim)``
+        M: The interpolation matrices. Indices are ``(tdim, entity
+            index, dof, vs, point_index, derivative)``.
+        interpolation_nderivs: The number of derivatives that need to be
+            used during interpolation.
+        map_type: The type of map to be used to map values from the
+            reference to a cell.
+        sobolev_space: Underlying Sobolev space for the element.
+        discontinuous: Indicates whether or not this is the
+            discontinuous version of the element.
+        highest_complete_degree: The highest degree ``n`` such that a
+            Lagrange (or vector Lagrange) element of degree ``n`` is a
+            subspace of this element.
+        highest_degree: The degree of a polynomial in this element's
+            polyset.
+        polyset_type: Polyset type for the element.
         gdim: Geometric dimension. If not set the geometric dimension is
             set equal to the topological dimension of the cell.
+
+    Returns:
+        A custom finite element.
+
     """
     return _BasixElement(_basix.create_custom_element(
         cell_type, list(value_shape), wcoeffs, x, M, interpolation_nderivs,
-        map_type, sobolev_space, discontinuous, highest_complete_degree, highest_degree), gdim=gdim)
+        map_type, sobolev_space, discontinuous, highest_complete_degree,
+        highest_degree, polyset_type), gdim=gdim)
 
 
 def mixed_element(elements: _typing.List[_ElementBase], gdim: _typing.Optional[int] = None) -> _ElementBase:
@@ -1423,8 +1828,73 @@ def mixed_element(elements: _typing.List[_ElementBase], gdim: _typing.Optional[i
         elements: The list of elements
         gdim: Geometric dimension. If not set the geometric dimension is
             set equal to the topological dimension of the cell.
+
+    Returns:
+        A mixed finite element.
+
     """
     return _MixedElement(elements, gdim=gdim)
+
+
+def quadrature_element(cell: _typing.Union[str, _basix.CellType],
+                       value_shape: _typing.Tuple[int, ...],
+                       scheme: _typing.Optional[str] = None,
+                       degree: _typing.Optional[int] = None,
+                       points: _typing.Optional[_npt.NDArray[_np.float64]] = None,
+                       weights: _typing.Optional[_npt.NDArray[_np.float64]] = None,
+                       mapname: str = "identity") -> _ElementBase:
+    """Create a quadrature element.
+
+    When creating this element, either the quadrature scheme and degree
+    must be input or the quadrature points and weights must be.
+
+    Args:
+        cell: Cell to create the element on.
+        value_shape: Value shape of the element.
+        scheme: Quadrature scheme.
+        degree: Quadrature degree.
+        points: Quadrature points.
+        weights: Quadrature weights.
+        mapname: Map name.
+
+    Returns:
+        A 'quadrature' finite element.
+
+    """
+    if isinstance(cell, str):
+        cell = _basix.cell.string_to_type(cell)
+
+    if points is None:
+        assert weights is None
+        assert degree is not None
+        if scheme is None:
+            points, weights = _basix.make_quadrature(cell, degree)
+        else:
+            points, weights = _basix.make_quadrature(
+                cell, degree, rule=_basix.quadrature.string_to_type(scheme))
+
+    assert points is not None
+    assert weights is not None
+
+    return _QuadratureElement(cell, value_shape, points, weights, mapname, degree)
+
+
+def real_element(cell: _typing.Union[_basix.CellType, str],
+                 value_shape: _typing.Tuple[int, ...]) -> _ElementBase:
+    """Create a real element.
+
+    Args:
+        cell: Cell to create the element on.
+        value_shape: Value shape of the element.
+
+    Returns:
+        A 'real' finite element.
+
+    """
+    if isinstance(cell, str):
+        cell = _basix.cell.string_to_type(cell)
+
+    return _RealElement(cell, value_shape)
 
 
 @_functools.lru_cache()
@@ -1434,21 +1904,25 @@ def blocked_element(sub_element: _ElementBase, rank: _typing.Optional[int] = Non
     """Create a UFL compatible blocked element.
 
     Args:
-        sub_element: The element used for each block.
+        sub_element: Element used for each block.
         rank: Rank of the value shape of the element. For scalar-valued
-            families, setting `rank=1` creates a vector element where
+            families, setting ``rank=1`` creates a vector element where
             each component of the vector is represented by the element.
-            Similarly, `rank>2` creates a tensor element. If `shape` is
-            provided, then `rank` is not required .
+            Similarly, ``rank>2`` creates a tensor element. If ``shape``
+            is provided, then ``rank`` is not required.
         shape: Value shape of the element. For scalar-valued families,
             this can be used to create vector and tensor elements. If
-            `rank` is set but `shape` is not, then `shape` will be set
-            to `()` for rank 0, `(tdim, )` for rank 1, and `(tdim, ...,
-            tdim)` for rank 2 or higher.
-        symmetry: Set to `True` if the tensor is symmetric. Valid for
+            `rank` is set but `shape` is not, then `shape`` will be set
+            to ``()`` for rank 0, ``(tdim,)`` for rank 1, and ``(tdim,
+            ..., tdim)`` for rank 2 or higher.
+        symmetry: Set to ``True`` if the tensor is symmetric. Valid for
             rank 2 elements only.
         gdim: Geometric dimension. If not set the geometric dimension is
             set equal to the topological dimension of the cell.
+
+    Returns:
+        A blocked finite element.
+
     """
     if len(sub_element.value_shape()) != 0:
         raise ValueError("Cannot create a blocked element containing a non-scalar element.")
@@ -1484,6 +1958,11 @@ def convert_ufl_element(ufl_element: _FiniteElementBase) -> _ElementBase:
         return _MixedElement([convert_ufl_element(e) for e in ufl_element.sub_elements()])
     elif hasattr(_ufl, "EnrichedElement") and isinstance(ufl_element, _ufl.EnrichedElement):
         return enriched_element([convert_ufl_element(e) for e in ufl_element._elements])
+    elif hasattr(ufl_element, "family") and callable(ufl_element.family) and ufl_element.family() == "Quadrature":
+        return quadrature_element(ufl_element.cell().cellname(), ufl_element.value_shape(),
+                                  scheme=ufl_element.quadrature_scheme(), degree=ufl_element.degree())
+    elif hasattr(ufl_element, "family") and callable(ufl_element.family) and ufl_element.family() == "Real":
+        return real_element(ufl_element.cell().cellname(), ufl_element.value_shape())
     # Elements that will not be supported
     elif hasattr(_ufl, "NodalEnrichedElement") and isinstance(ufl_element, _ufl.NodalEnrichedElement):
         raise RuntimeError("NodalEnrichedElement is not supported. Use EnrichedElement instead.")

@@ -13,11 +13,15 @@
 
 using namespace basix;
 
-namespace stdex = std::experimental;
+namespace stdex
+    = MDSPAN_IMPL_STANDARD_NAMESPACE::MDSPAN_IMPL_PROPOSED_NAMESPACE;
 template <typename T, std::size_t d>
-using mdspan_t = stdex::mdspan<T, stdex::dextents<std::size_t, d>>;
+using mdspan_t = MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<
+    T, MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, d>>;
 template <typename T, std::size_t d>
-using mdarray_t = stdex::mdarray<T, stdex::dextents<std::size_t, d>>;
+using mdarray_t
+    = stdex::mdarray<T,
+                     MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, d>>;
 
 namespace
 {
@@ -4706,7 +4710,184 @@ std::array<std::vector<T>, 2> make_xiao_gimbutas_quadrature(cell::type celltype,
     throw std::runtime_error(
         "Xiao-Gimbutas is only implemented for triangles.");
   }
-} // namespace
+}
+//-----------------------------------------------------------------------------
+template <std::floating_point T>
+std::array<std::vector<T>, 2>
+make_macroedge_quadrature(quadrature::type rule, cell::type celltype, int m)
+{
+  auto standard_q = quadrature::make_quadrature<T>(rule, celltype,
+                                                   polyset::type::standard, m);
+  if (m == 0)
+  {
+    return standard_q;
+  }
+  switch (celltype)
+  {
+  case cell::type::interval:
+  {
+    const std::size_t npts = standard_q[0].size();
+    std::vector<T> x(npts * 2);
+    std::vector<T> w(npts * 2);
+    for (std::size_t i = 0; i < npts; ++i)
+    {
+      x[i] = 0.5 * standard_q[0][i];
+      x[npts + i] = 0.5 + 0.5 * standard_q[0][i];
+      w[i] = 0.5 * standard_q[1][i];
+      w[npts + i] = 0.5 * standard_q[1][i];
+    }
+    return {std::move(x), std::move(w)};
+  }
+  case cell::type::triangle:
+  {
+    const std::size_t npts = standard_q[0].size() / 2;
+    std::vector<T> x(npts * 8);
+    std::vector<T> w(npts * 4);
+    for (std::size_t i = 0; i < npts; ++i)
+    {
+      x[2 * i] = 0.5 * standard_q[0][2 * i];
+      x[2 * i + 1] = 0.5 * standard_q[0][2 * i + 1];
+      x[2 * (npts + i)] = 0.5 + 0.5 * standard_q[0][2 * i];
+      x[2 * (npts + i) + 1] = 0.5 * standard_q[0][2 * i + 1];
+      x[2 * (2 * npts + i)] = 0.5 * standard_q[0][2 * i];
+      x[2 * (2 * npts + i) + 1] = 0.5 + 0.5 * standard_q[0][2 * i + 1];
+      x[2 * (3 * npts + i)] = 0.5 - 0.5 * standard_q[0][2 * i];
+      x[2 * (3 * npts + i) + 1] = 0.5 - 0.5 * standard_q[0][2 * i + 1];
+      w[i] = 0.25 * standard_q[1][i];
+      w[npts + i] = 0.25 * standard_q[1][i];
+      w[2 * npts + i] = 0.25 * standard_q[1][i];
+      w[3 * npts + i] = 0.25 * standard_q[1][i];
+    }
+    return {std::move(x), std::move(w)};
+  }
+  case cell::type::tetrahedron:
+  {
+    const std::size_t npts = standard_q[0].size() / 3;
+    std::vector<T> x(npts * 24);
+    std::vector<T> w(npts * 8);
+    for (std::size_t i = 0; i < npts; ++i)
+    {
+      x[3 * i] = 0.5 * standard_q[0][3 * i];
+      x[3 * i + 1] = 0.5 * standard_q[0][3 * i + 1];
+      x[3 * i + 2] = 0.5 * standard_q[0][3 * i + 2];
+      x[3 * (i + npts)] = 1.0 - 0.5 * standard_q[0][3 * i]
+                          - 0.5 * standard_q[0][3 * i + 1]
+                          - 0.5 * standard_q[0][3 * i + 2];
+      x[3 * (i + npts) + 1] = 0.5 * standard_q[0][3 * i];
+      x[3 * (i + npts) + 2] = 0.5 * standard_q[0][3 * i + 2];
+      x[3 * (i + 2 * npts)] = 0.5 * standard_q[0][3 * i];
+      x[3 * (i + 2 * npts) + 1] = 1.0 - 0.5 * standard_q[0][3 * i]
+                                  - 0.5 * standard_q[0][3 * i + 1]
+                                  - 0.5 * standard_q[0][3 * i + 2];
+      x[3 * (i + 2 * npts) + 2] = 0.5 * standard_q[0][3 * i + 1];
+      x[3 * (i + 3 * npts)] = 0.5 * standard_q[0][3 * i + 1];
+      x[3 * (i + 3 * npts) + 1] = 0.5 * standard_q[0][3 * i];
+      x[3 * (i + 3 * npts) + 2] = 1.0 - 0.5 * standard_q[0][3 * i]
+                                  - 0.5 * standard_q[0][3 * i + 1]
+                                  - 0.5 * standard_q[0][3 * i + 2];
+      x[3 * (i + 4 * npts)] = 0.5 - 0.5 * standard_q[0][3 * i + 1]
+                              - 0.5 * standard_q[0][3 * i + 2];
+      x[3 * (i + 4 * npts) + 1] = 0.5 * standard_q[0][3 * i + 2];
+      x[3 * (i + 4 * npts) + 2]
+          = 0.5 - 0.5 * standard_q[0][3 * i] - 0.5 * standard_q[0][3 * i + 2];
+      x[3 * (i + 5 * npts)] = 0.5 * standard_q[0][3 * i]
+                              + 0.5 * standard_q[0][3 * i + 1]
+                              + 0.5 * standard_q[0][3 * i + 2];
+      x[3 * (i + 5 * npts) + 1] = 0.5 - 0.5 * standard_q[0][3 * i + 1]
+                                  - 0.5 * standard_q[0][3 * i + 2];
+      x[3 * (i + 5 * npts) + 2] = 0.5 * standard_q[0][3 * i + 1];
+      x[3 * (i + 6 * npts)] = 0.5 - 0.5 * standard_q[0][3 * i + 1]
+                              - 0.5 * standard_q[0][3 * i + 2];
+      x[3 * (i + 6 * npts) + 1] = 0.5 * standard_q[0][3 * i]
+                                  + 0.5 * standard_q[0][3 * i + 1]
+                                  + 0.5 * standard_q[0][3 * i + 2];
+      x[3 * (i + 6 * npts) + 2]
+          = 0.5 - 0.5 * standard_q[0][3 * i] - 0.5 * standard_q[0][3 * i + 1];
+      x[3 * (i + 7 * npts)] = 0.5 * standard_q[0][3 * i + 2];
+      x[3 * (i + 7 * npts) + 1] = 0.5 - 0.5 * standard_q[0][3 * i + 1]
+                                  - 0.5 * standard_q[0][3 * i + 2];
+      x[3 * (i + 7 * npts) + 2] = 0.5 * standard_q[0][3 * i]
+                                  + 0.5 * standard_q[0][3 * i + 1]
+                                  + 0.5 * standard_q[0][3 * i + 2];
+      w[i] = 0.125 * standard_q[1][i];
+      w[npts + i] = 0.125 * standard_q[1][i];
+      w[2 * npts + i] = 0.125 * standard_q[1][i];
+      w[3 * npts + i] = 0.125 * standard_q[1][i];
+      w[4 * npts + i] = 0.125 * standard_q[1][i];
+      w[5 * npts + i] = 0.125 * standard_q[1][i];
+      w[6 * npts + i] = 0.125 * standard_q[1][i];
+      w[7 * npts + i] = 0.125 * standard_q[1][i];
+    }
+    return {std::move(x), std::move(w)};
+  }
+  case cell::type::quadrilateral:
+  {
+    const std::size_t npts = standard_q[0].size() / 2;
+    std::vector<T> x(npts * 8);
+    std::vector<T> w(npts * 4);
+    for (std::size_t i = 0; i < npts; ++i)
+    {
+      x[2 * i] = 0.5 * standard_q[0][2 * i];
+      x[2 * i + 1] = 0.5 * standard_q[0][2 * i + 1];
+      x[2 * (npts + i)] = 0.5 + 0.5 * standard_q[0][2 * i];
+      x[2 * (npts + i) + 1] = 0.5 * standard_q[0][2 * i + 1];
+      x[2 * (2 * npts + i)] = 0.5 * standard_q[0][2 * i];
+      x[2 * (2 * npts + i) + 1] = 0.5 + 0.5 * standard_q[0][2 * i + 1];
+      x[2 * (3 * npts + i)] = 0.5 + 0.5 * standard_q[0][2 * i];
+      x[2 * (3 * npts + i) + 1] = 0.5 + 0.5 * standard_q[0][2 * i + 1];
+      w[i] = 0.25 * standard_q[1][i];
+      w[npts + i] = 0.25 * standard_q[1][i];
+      w[2 * npts + i] = 0.25 * standard_q[1][i];
+      w[3 * npts + i] = 0.25 * standard_q[1][i];
+    }
+    return {std::move(x), std::move(w)};
+  }
+  case cell::type::hexahedron:
+  {
+    const std::size_t npts = standard_q[0].size() / 3;
+    std::vector<T> x(npts * 24);
+    std::vector<T> w(npts * 8);
+    for (std::size_t i = 0; i < npts; ++i)
+    {
+      x[3 * i] = 0.5 * standard_q[0][3 * i];
+      x[3 * i + 1] = 0.5 * standard_q[0][3 * i + 1];
+      x[3 * i + 2] = 0.5 * standard_q[0][3 * i + 2];
+      x[3 * (npts + i)] = 0.5 + 0.5 * standard_q[0][3 * i];
+      x[3 * (npts + i) + 1] = 0.5 * standard_q[0][3 * i + 1];
+      x[3 * (npts + i) + 2] = 0.5 * standard_q[0][3 * i + 2];
+      x[3 * (2 * npts + i)] = 0.5 * standard_q[0][3 * i];
+      x[3 * (2 * npts + i) + 1] = 0.5 + 0.5 * standard_q[0][3 * i + 1];
+      x[3 * (2 * npts + i) + 2] = 0.5 * standard_q[0][3 * i + 2];
+      x[3 * (3 * npts + i)] = 0.5 + 0.5 * standard_q[0][3 * i];
+      x[3 * (3 * npts + i) + 1] = 0.5 + 0.5 * standard_q[0][3 * i + 1];
+      x[3 * (3 * npts + i) + 2] = 0.5 * standard_q[0][3 * i + 2];
+      x[3 * (4 * npts + i)] = 0.5 * standard_q[0][3 * i];
+      x[3 * (4 * npts + i) + 1] = 0.5 * standard_q[0][3 * i + 1];
+      x[3 * (4 * npts + i) + 2] = 0.5 + 0.5 * standard_q[0][3 * i + 2];
+      x[3 * (5 * npts + i)] = 0.5 + 0.5 * standard_q[0][3 * i];
+      x[3 * (5 * npts + i) + 1] = 0.5 * standard_q[0][3 * i + 1];
+      x[3 * (5 * npts + i) + 2] = 0.5 + 0.5 * standard_q[0][3 * i + 2];
+      x[3 * (6 * npts + i)] = 0.5 * standard_q[0][3 * i];
+      x[3 * (6 * npts + i) + 1] = 0.5 + 0.5 * standard_q[0][3 * i + 1];
+      x[3 * (6 * npts + i) + 2] = 0.5 + 0.5 * standard_q[0][3 * i + 2];
+      x[3 * (7 * npts + i)] = 0.5 + 0.5 * standard_q[0][3 * i];
+      x[3 * (7 * npts + i) + 1] = 0.5 + 0.5 * standard_q[0][3 * i + 1];
+      x[3 * (7 * npts + i) + 2] = 0.5 + 0.5 * standard_q[0][3 * i + 2];
+      w[i] = 0.125 * standard_q[1][i];
+      w[npts + i] = 0.125 * standard_q[1][i];
+      w[2 * npts + i] = 0.125 * standard_q[1][i];
+      w[3 * npts + i] = 0.125 * standard_q[1][i];
+      w[4 * npts + i] = 0.125 * standard_q[1][i];
+      w[5 * npts + i] = 0.125 * standard_q[1][i];
+      w[6 * npts + i] = 0.125 * standard_q[1][i];
+      w[7 * npts + i] = 0.125 * standard_q[1][i];
+    }
+    return {std::move(x), std::move(w)};
+  }
+  default:
+    throw std::runtime_error("Macro quadrature not supported on this cell.");
+  }
+}
 //-----------------------------------------------------------------------------
 } // namespace
 //-----------------------------------------------------------------------------
@@ -4740,34 +4921,37 @@ quadrature::type quadrature::get_default_rule(cell::type celltype, int m)
 //-----------------------------------------------------------------------------
 template <std::floating_point T>
 std::array<std::vector<T>, 2>
-quadrature::make_quadrature(quadrature::type rule, cell::type celltype, int m)
+quadrature::make_quadrature(quadrature::type rule, cell::type celltype,
+                            polyset::type polytype, int m)
 {
-  switch (rule)
+  switch (polytype)
   {
-  case quadrature::type::Default:
-    return make_quadrature<T>(get_default_rule(celltype, m), celltype, m);
-  case quadrature::type::gauss_jacobi:
-    return make_gauss_jacobi_quadrature<T>(celltype, m);
-  case quadrature::type::gll:
-    return make_gll_quadrature<T>(celltype, m);
-  case quadrature::type::xiao_gimbutas:
-    return make_xiao_gimbutas_quadrature<T>(celltype, m);
-  case quadrature::type::zienkiewicz_taylor:
-    return make_zienkiewicz_taylor_quadrature<T>(celltype, m);
-  case quadrature::type::keast:
-    return make_keast_quadrature<T>(celltype, m);
-  case quadrature::type::strang_fix:
-    return make_strang_fix_quadrature<T>(celltype, m);
+  case polyset::type::standard:
+    switch (rule)
+    {
+    case quadrature::type::Default:
+      return make_quadrature<T>(get_default_rule(celltype, m), celltype,
+                                polytype, m);
+    case quadrature::type::gauss_jacobi:
+      return make_gauss_jacobi_quadrature<T>(celltype, m);
+    case quadrature::type::gll:
+      return make_gll_quadrature<T>(celltype, m);
+    case quadrature::type::xiao_gimbutas:
+      return make_xiao_gimbutas_quadrature<T>(celltype, m);
+    case quadrature::type::zienkiewicz_taylor:
+      return make_zienkiewicz_taylor_quadrature<T>(celltype, m);
+    case quadrature::type::keast:
+      return make_keast_quadrature<T>(celltype, m);
+    case quadrature::type::strang_fix:
+      return make_strang_fix_quadrature<T>(celltype, m);
+    default:
+      throw std::runtime_error("Unknown quadrature rule");
+    }
+  case polyset::type::macroedge:
+    return make_macroedge_quadrature<T>(rule, celltype, m);
   default:
-    throw std::runtime_error("Unknown quadrature rule");
+    throw std::runtime_error("Unsupported polyset type");
   }
-}
-//-----------------------------------------------------------------------------
-template <std::floating_point T>
-std::array<std::vector<T>, 2> quadrature::make_quadrature(cell::type celltype,
-                                                          int m)
-{
-  return make_quadrature<T>(quadrature::type::Default, celltype, m);
 }
 //-----------------------------------------------------------------------------
 template <std::floating_point T>
@@ -4787,14 +4971,9 @@ std::vector<T> quadrature::get_gll_points(int m)
 }
 //-----------------------------------------------------------------------------
 template std::array<std::vector<float>, 2>
-quadrature::make_quadrature(quadrature::type, cell::type, int);
+quadrature::make_quadrature(quadrature::type, cell::type, polyset::type, int);
 template std::array<std::vector<double>, 2>
-quadrature::make_quadrature(quadrature::type, cell::type, int);
-
-template std::array<std::vector<float>, 2>
-quadrature::make_quadrature(cell::type, int);
-template std::array<std::vector<double>, 2>
-quadrature::make_quadrature(cell::type, int);
+quadrature::make_quadrature(quadrature::type, cell::type, polyset::type, int);
 
 template std::vector<float> quadrature::get_gl_points(int);
 template std::vector<double> quadrature::get_gl_points(int);

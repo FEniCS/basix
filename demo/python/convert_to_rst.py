@@ -1,4 +1,5 @@
 import os
+
 import pylit
 
 pylit.defaults.text_extensions = [".rst"]

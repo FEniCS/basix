@@ -15,7 +15,8 @@
 #include <concepts>
 
 using namespace basix;
-namespace stdex = std::experimental;
+namespace stdex
+    = MDSPAN_IMPL_STANDARD_NAMESPACE::MDSPAN_IMPL_PROPOSED_NAMESPACE;
 
 namespace
 {
@@ -27,7 +28,8 @@ impl::mdarray_t<T, 2> vtk_triangle_points(std::size_t degree)
   if (degree == 0)
     return basix::impl::mdarray_t<T, 2>({d, d}, 1, 2);
 
-  const std::size_t npoints = polyset::dim(cell::type::triangle, degree);
+  const std::size_t npoints
+      = polyset::dim(cell::type::triangle, polyset::type::standard, degree);
   impl::mdarray_t<T, 2> out(npoints, 2);
 
   out(0, 0) = d;
@@ -73,20 +75,26 @@ impl::mdarray_t<T, 2> vtk_triangle_points(std::size_t degree)
 }
 //-----------------------------------------------------------------------------
 template <std::floating_point T>
-stdex::mdarray<T, stdex::extents<std::size_t, stdex::dynamic_extent, 3>>
+stdex::mdarray<
+    T, MDSPAN_IMPL_STANDARD_NAMESPACE::extents<
+           std::size_t, MDSPAN_IMPL_STANDARD_NAMESPACE::dynamic_extent, 3>>
 vtk_tetrahedron_points(std::size_t degree)
 {
   const T d = 1 / static_cast<T>(degree + 4);
   if (degree == 0)
   {
     return stdex::mdarray<
-        T, stdex::extents<std::size_t, stdex::dynamic_extent, 3>>({d, d, d}, 1,
-                                                                  2);
+        T, MDSPAN_IMPL_STANDARD_NAMESPACE::extents<
+               std::size_t, MDSPAN_IMPL_STANDARD_NAMESPACE::dynamic_extent, 3>>(
+        {d, d, d}, 1, 2);
   }
 
-  const std::size_t npoints = polyset::dim(cell::type::tetrahedron, degree);
-  stdex::mdarray<T, stdex::extents<std::size_t, stdex::dynamic_extent, 3>> out(
-      npoints, 3);
+  const std::size_t npoints
+      = polyset::dim(cell::type::tetrahedron, polyset::type::standard, degree);
+  stdex::mdarray<
+      T, MDSPAN_IMPL_STANDARD_NAMESPACE::extents<
+             std::size_t, MDSPAN_IMPL_STANDARD_NAMESPACE::dynamic_extent, 3>>
+      out(npoints, 3);
 
   out(0, 0) = d;
   out(0, 1) = d;
@@ -184,8 +192,9 @@ vtk_tetrahedron_points(std::size_t degree)
   {
     const auto pts = vtk_tetrahedron_points<T>(degree - 4);
     auto _out = impl::mdspan_t<T, 2>(out.data(), out.extents());
-    auto out_view = stdex::submdspan(_out, std::pair<int, int>{n, npoints},
-                                     stdex::full_extent);
+    auto out_view
+        = stdex::submdspan(_out, std::pair<int, int>{n, npoints},
+                           MDSPAN_IMPL_STANDARD_NAMESPACE::full_extent);
     for (std::size_t i = 0; i < out_view.extent(0); ++i)
       for (std::size_t j = 0; j < out_view.extent(1); ++j)
         out_view(i, j) = pts(i, j);
@@ -765,7 +774,8 @@ FiniteElement<T> create_d_lagrange(cell::type celltype, int degree,
   }
 
   const std::size_t tdim = cell::topological_dimension(celltype);
-  const std::size_t ndofs = polyset::dim(celltype, degree);
+  const std::size_t ndofs
+      = polyset::dim(celltype, polyset::type::standard, degree);
   const std::vector<std::vector<std::vector<int>>> topology
       = cell::topology(celltype);
 
@@ -796,7 +806,59 @@ FiniteElement<T> create_d_lagrange(cell::type celltype, int degree,
     _M(i, 0, i, 0) = 1.0;
 
   return FiniteElement(
-      element::family::P, celltype, degree, {},
+      element::family::P, celltype, polyset::type::standard, degree, {},
+      impl::mdspan_t<const T, 2>(math::eye<T>(ndofs).data(), ndofs, ndofs),
+      impl::to_mdspan(x), impl::to_mdspan(M), 0, maps::type::identity,
+      sobolev::space::L2, true, degree, degree, variant,
+      element::dpc_variant::unset);
+}
+//----------------------------------------------------------------------------
+template <std::floating_point T>
+FiniteElement<T>
+create_d_iso(cell::type celltype, int degree, element::lagrange_variant variant,
+             lattice::type lattice_type, lattice::simplex_method simplex_method)
+{
+  if (celltype == cell::type::prism or celltype == cell::type::pyramid)
+  {
+    throw std::runtime_error(
+        "This variant is not yet supported on prisms and pyramids.");
+  }
+
+  const std::size_t tdim = cell::topological_dimension(celltype);
+  const std::size_t ndofs
+      = polyset::dim(celltype, polyset::type::macroedge, degree);
+  const std::vector<std::vector<std::vector<int>>> topology
+      = cell::topology(celltype);
+
+  std::array<std::vector<impl::mdarray_t<T, 2>>, 4> x;
+  std::array<std::vector<impl::mdarray_t<T, 4>>, 4> M;
+  for (std::size_t i = 0; i < tdim; ++i)
+  {
+    std::size_t num_ent = cell::num_sub_entities(celltype, i);
+    x[i] = std::vector<impl::mdarray_t<T, 2>>(num_ent,
+                                              impl::mdarray_t<T, 2>(0, tdim));
+    M[i] = std::vector<impl::mdarray_t<T, 4>>(
+        num_ent, impl::mdarray_t<T, 4>(0, 1, 0, 1));
+  }
+
+  const int lattice_degree
+      = celltype == cell::type::triangle
+            ? 2 * degree + 3
+            : (celltype == cell::type::tetrahedron ? 2 * degree + 4
+                                                   : 2 * degree + 2);
+
+  // Create points in interior
+  const auto [pt, shape] = lattice::create<T>(
+      celltype, lattice_degree, lattice_type, false, simplex_method);
+  x[tdim].emplace_back(pt, shape);
+
+  const std::size_t num_dofs = shape[0];
+  auto& _M = M[tdim].emplace_back(num_dofs, 1, num_dofs, 1);
+  for (std::size_t i = 0; i < _M.extent(0); ++i)
+    _M(i, 0, i, 0) = 1.0;
+
+  return FiniteElement(
+      element::family::iso, celltype, polyset::type::macroedge, degree, {},
       impl::mdspan_t<const T, 2>(math::eye<T>(ndofs).data(), ndofs, ndofs),
       impl::to_mdspan(x), impl::to_mdspan(M), 0, maps::type::identity,
       sobolev::space::L2, true, degree, degree, variant,
@@ -806,8 +868,20 @@ FiniteElement<T> create_d_lagrange(cell::type celltype, int degree,
 template <std::floating_point T>
 std::vector<std::tuple<std::vector<FiniteElement<T>>, std::vector<int>>>
 create_tensor_product_factors(cell::type celltype, int degree,
-                              element::lagrange_variant variant)
+                              element::lagrange_variant variant,
+                              std::vector<int> dof_ordering)
 {
+
+  if (dof_ordering.size() == 0)
+  {
+    std::size_t ndofs = celltype == cell::type::quadrilateral
+                            ? (degree + 1) * (degree + 1)
+                            : (degree + 1) * (degree + 1) * (degree + 1);
+    std::vector<int> d(ndofs);
+    std::iota(d.begin(), d.end(), 0);
+    return create_tensor_product_factors<T>(celltype, degree, variant, d);
+  }
+
   switch (celltype)
   {
   case cell::type::quadrilateral:
@@ -816,25 +890,25 @@ create_tensor_product_factors(cell::type celltype, int degree,
         cell::type::interval, degree, variant, true);
     std::vector<int> perm((degree + 1) * (degree + 1));
     if (degree == 0)
-      perm[0] = 0;
+      perm[dof_ordering[0]] = 0;
     else
     {
       int p = 0;
       int n = degree - 1;
-      perm[p++] = 0;
-      perm[p++] = 2;
+      perm[dof_ordering[p++]] = 0;
+      perm[dof_ordering[p++]] = 2;
       for (int i = 0; i < n; ++i)
-        perm[p++] = 4 + n + i;
-      perm[p++] = 1;
-      perm[p++] = 3;
+        perm[dof_ordering[p++]] = 4 + n + i;
+      perm[dof_ordering[p++]] = 1;
+      perm[dof_ordering[p++]] = 3;
       for (int i = 0; i < n; ++i)
-        perm[p++] = 4 + 2 * n + i;
+        perm[dof_ordering[p++]] = 4 + 2 * n + i;
       for (int i = 0; i < n; ++i)
       {
-        perm[p++] = 4 + i;
-        perm[p++] = 4 + 3 * n + i;
+        perm[dof_ordering[p++]] = 4 + i;
+        perm[dof_ordering[p++]] = 4 + 3 * n + i;
         for (int j = 0; j < n; ++j)
-          perm[p++] = 4 + i + (4 + j) * n;
+          perm[dof_ordering[p++]] = 4 + i + (4 + j) * n;
       }
     }
     return {{{sub_element, sub_element}, std::move(perm)}};
@@ -845,57 +919,58 @@ create_tensor_product_factors(cell::type celltype, int degree,
         cell::type::interval, degree, variant, true);
     std::vector<int> perm((degree + 1) * (degree + 1) * (degree + 1));
     if (degree == 0)
-      perm[0] = 0;
+      perm[dof_ordering[0]] = 0;
     else
     {
       int p = 0;
       int n = degree - 1;
-      perm[p++] = 0;
-      perm[p++] = 4;
+      perm[dof_ordering[p++]] = 0;
+      perm[dof_ordering[p++]] = 4;
       for (int i = 0; i < n; ++i)
-        perm[p++] = 8 + 2 * n + i;
-      perm[p++] = 2;
-      perm[p++] = 6;
+        perm[dof_ordering[p++]] = 8 + 2 * n + i;
+      perm[dof_ordering[p++]] = 2;
+      perm[dof_ordering[p++]] = 6;
       for (int i = 0; i < n; ++i)
-        perm[p++] = 8 + 6 * n + i;
+        perm[dof_ordering[p++]] = 8 + 6 * n + i;
       for (int i = 0; i < n; ++i)
       {
-        perm[p++] = 8 + n + i;
-        perm[p++] = 8 + 9 * n + i;
+        perm[dof_ordering[p++]] = 8 + n + i;
+        perm[dof_ordering[p++]] = 8 + 9 * n + i;
         for (int j = 0; j < n; ++j)
-          perm[p++] = 8 + 12 * n + 2 * n * n + i + n * j;
+          perm[dof_ordering[p++]] = 8 + 12 * n + 2 * n * n + i + n * j;
       }
-      perm[p++] = 1;
-      perm[p++] = 5;
+      perm[dof_ordering[p++]] = 1;
+      perm[dof_ordering[p++]] = 5;
       for (int i = 0; i < n; ++i)
-        perm[p++] = 8 + 4 * n + i;
-      perm[p++] = 3;
-      perm[p++] = 7;
+        perm[dof_ordering[p++]] = 8 + 4 * n + i;
+      perm[dof_ordering[p++]] = 3;
+      perm[dof_ordering[p++]] = 7;
       for (int i = 0; i < n; ++i)
-        perm[p++] = 8 + 7 * n + i;
+        perm[dof_ordering[p++]] = 8 + 7 * n + i;
       for (int i = 0; i < n; ++i)
       {
-        perm[p++] = 8 + 3 * n + i;
-        perm[p++] = 8 + 10 * n + i;
+        perm[dof_ordering[p++]] = 8 + 3 * n + i;
+        perm[dof_ordering[p++]] = 8 + 10 * n + i;
         for (int j = 0; j < n; ++j)
-          perm[p++] = 8 + 12 * n + 3 * n * n + i + n * j;
+          perm[dof_ordering[p++]] = 8 + 12 * n + 3 * n * n + i + n * j;
       }
       for (int i = 0; i < n; ++i)
       {
-        perm[p++] = 8 + i;
-        perm[p++] = 8 + 8 * n + i;
+        perm[dof_ordering[p++]] = 8 + i;
+        perm[dof_ordering[p++]] = 8 + 8 * n + i;
         for (int j = 0; j < n; ++j)
-          perm[p++] = 8 + 12 * n + n * n + i + n * j;
-        perm[p++] = 8 + 5 * n + i;
-        perm[p++] = 8 + 11 * n + i;
+          perm[dof_ordering[p++]] = 8 + 12 * n + n * n + i + n * j;
+        perm[dof_ordering[p++]] = 8 + 5 * n + i;
+        perm[dof_ordering[p++]] = 8 + 11 * n + i;
         for (int j = 0; j < n; ++j)
-          perm[p++] = 8 + 12 * n + 4 * n * n + i + n * j;
+          perm[dof_ordering[p++]] = 8 + 12 * n + 4 * n * n + i + n * j;
         for (int j = 0; j < n; ++j)
         {
-          perm[p++] = 8 + 12 * n + i + n * j;
-          perm[p++] = 8 + 12 * n + 5 * n * n + i + n * j;
+          perm[dof_ordering[p++]] = 8 + 12 * n + i + n * j;
+          perm[dof_ordering[p++]] = 8 + 12 * n + 5 * n * n + i + n * j;
           for (int k = 0; k < n; ++k)
-            perm[p++] = 8 + 12 * n + 6 * n * n + i + n * j + n * n * k;
+            perm[dof_ordering[p++]]
+                = 8 + 12 * n + 6 * n * n + i + n * j + n * n * k;
         }
       }
     }
@@ -945,13 +1020,14 @@ FiniteElement<T> create_vtk_element(cell::type celltype, std::size_t degree,
   }
 
   const std::size_t tdim = cell::topological_dimension(celltype);
-  const std::size_t ndofs = polyset::dim(celltype, degree);
+  const std::size_t ndofs
+      = polyset::dim(celltype, polyset::type::standard, degree);
   if (discontinuous)
   {
     auto [_x, _xshape, _M, _Mshape] = element::make_discontinuous(
         impl::to_mdspan(x), impl::to_mdspan(M), tdim, 1);
     return FiniteElement(
-        element::family::P, celltype, degree, {},
+        element::family::P, celltype, polyset::type::standard, degree, {},
         impl::mdspan_t<const T, 2>(math::eye<T>(ndofs).data(), ndofs, ndofs),
         impl::to_mdspan(_x, _xshape), impl::to_mdspan(_M, _Mshape), 0,
         maps::type::identity, sobolev::space::L2, discontinuous, degree, degree,
@@ -960,7 +1036,7 @@ FiniteElement<T> create_vtk_element(cell::type celltype, std::size_t degree,
   else
   {
     return FiniteElement(
-        element::family::P, celltype, degree, {},
+        element::family::P, celltype, polyset::type::standard, degree, {},
         impl::mdspan_t<const T, 2>(math::eye<T>(ndofs).data(), ndofs, ndofs),
         impl::to_mdspan(x), impl::to_mdspan(M), 0, maps::type::identity,
         sobolev::space::H1, discontinuous, degree, degree,
@@ -976,7 +1052,8 @@ FiniteElement<T> create_legendre(cell::type celltype, int degree,
     throw std::runtime_error("Legendre variant must be discontinuous");
 
   const std::size_t tdim = cell::topological_dimension(celltype);
-  const std::size_t ndofs = polyset::dim(celltype, degree);
+  const std::size_t ndofs
+      = polyset::dim(celltype, polyset::type::standard, degree);
   const std::vector<std::vector<std::vector<int>>> topology
       = cell::topology(celltype);
 
@@ -985,7 +1062,7 @@ FiniteElement<T> create_legendre(cell::type celltype, int degree,
 
   // Evaluate moment space at quadrature points
   const auto [_pts, wts] = quadrature::make_quadrature<T>(
-      quadrature::type::Default, celltype, degree * 2);
+      quadrature::type::Default, celltype, polyset::type::standard, degree * 2);
   assert(!wts.empty());
   impl::mdspan_t<const T, 2> pts(_pts.data(), wts.size(),
                                  _pts.size() / wts.size());
@@ -1011,7 +1088,7 @@ FiniteElement<T> create_legendre(cell::type celltype, int degree,
   sobolev::space space
       = discontinuous ? sobolev::space::L2 : sobolev::space::H1;
   return FiniteElement<T>(
-      element::family::P, celltype, degree, {},
+      element::family::P, celltype, polyset::type::standard, degree, {},
       impl::mdspan_t<T, 2>(math::eye<T>(ndofs).data(), ndofs, ndofs),
       impl::to_mdspan(x), impl::to_mdspan(M), 0, maps::type::identity, space,
       discontinuous, degree, degree, element::lagrange_variant::legendre,
@@ -1114,8 +1191,9 @@ FiniteElement<T> create_bernstein(cell::type celltype, int degree,
     }
     else
     {
-      const auto [_pts, wts] = quadrature::make_quadrature<T>(
-          quadrature::type::Default, ct[d], degree * 2);
+      const auto [_pts, wts]
+          = quadrature::make_quadrature<T>(quadrature::type::Default, ct[d],
+                                           polyset::type::standard, degree * 2);
       assert(!wts.empty());
       impl::mdspan_t<const T, 2> pts(_pts.data(), wts.size(),
                                      _pts.size() / wts.size());
@@ -1180,9 +1258,10 @@ FiniteElement<T> create_bernstein(cell::type celltype, int degree,
 
   sobolev::space space
       = discontinuous ? sobolev::space::L2 : sobolev::space::H1;
-  const std::size_t ndofs = polyset::dim(celltype, degree);
+  const std::size_t ndofs
+      = polyset::dim(celltype, polyset::type::standard, degree);
   return FiniteElement<T>(
-      element::family::P, celltype, degree, {},
+      element::family::P, celltype, polyset::type::standard, degree, {},
       impl::mdspan_t<T, 2>(math::eye<T>(ndofs).data(), ndofs, ndofs),
       impl::to_mdspan(x), impl::to_mdspan(M), 0, maps::type::identity, space,
       discontinuous, degree, degree, element::lagrange_variant::bernstein,
@@ -1208,7 +1287,7 @@ basix::element::create_lagrange(cell::type celltype, int degree,
     x[0].emplace_back(1, 0);
     M[0].emplace_back(std::vector<T>{1.0}, 1, 1, 1, 1);
     return FiniteElement<T>(
-        family::P, cell::type::point, 0, {},
+        family::P, cell::type::point, polyset::type::standard, 0, {},
         impl::mdspan_t<T, 2>(math::eye<T>(1).data(), 1, 1), impl::to_mdspan(x),
         impl::to_mdspan(M), 0, maps::type::identity, sobolev::space::H1,
         discontinuous, degree, degree, element::lagrange_variant::unset,
@@ -1257,7 +1336,8 @@ basix::element::create_lagrange(cell::type celltype, int degree,
   }
 
   const std::size_t tdim = cell::topological_dimension(celltype);
-  const std::size_t ndofs = polyset::dim(celltype, degree);
+  const std::size_t ndofs
+      = polyset::dim(celltype, polyset::type::standard, degree);
   const std::vector<std::vector<std::vector<int>>> topology
       = cell::topology(celltype);
 
@@ -1360,13 +1440,166 @@ basix::element::create_lagrange(cell::type celltype, int degree,
 
   sobolev::space space
       = discontinuous ? sobolev::space::L2 : sobolev::space::H1;
-  auto tensor_factors
-      = create_tensor_product_factors<T>(celltype, degree, variant);
+  auto tensor_factors = create_tensor_product_factors<T>(celltype, degree,
+                                                         variant, dof_ordering);
   return FiniteElement<T>(
-      family::P, celltype, degree, {},
+      family::P, celltype, polyset::type::standard, degree, {},
       impl::mdspan_t<T, 2>(math::eye<T>(ndofs).data(), ndofs, ndofs), xview,
       Mview, 0, maps::type::identity, space, discontinuous, degree, degree,
       variant, dpc_variant::unset, tensor_factors, dof_ordering);
+}
+//-----------------------------------------------------------------------------
+template <std::floating_point T>
+FiniteElement<T> basix::element::create_iso(cell::type celltype, int degree,
+                                            lagrange_variant variant,
+                                            bool discontinuous)
+{
+  if (celltype != cell::type::interval && celltype != cell::type::quadrilateral
+      && celltype != cell::type::hexahedron && celltype != cell::type::triangle
+      && celltype != cell::type::tetrahedron)
+  {
+    throw std::runtime_error(
+        "Can currently only create iso elements on "
+        "intervals, triangles, tetrahedra, quadrilaterals, and hexahedra");
+  }
+
+  if (variant == lagrange_variant::unset)
+  {
+    if (degree < 3)
+      variant = element::lagrange_variant::gll_warped;
+    else
+    {
+      throw std::runtime_error(
+          "Lagrange elements of degree > 2 need to be given a variant.");
+    }
+  }
+
+  auto [lattice_type, simplex_method, exterior]
+      = variant_to_lattice(celltype, variant);
+
+  if (!exterior)
+  {
+    // Points used to define this variant are all interior to the cell,
+    // so this variant requires that the element is discontinuous
+    if (!discontinuous)
+    {
+      throw std::runtime_error("This variant of Lagrange is only supported for "
+                               "discontinuous elements");
+    }
+    return create_d_iso<T>(celltype, degree, variant, lattice_type,
+                           simplex_method);
+  }
+
+  const std::size_t tdim = cell::topological_dimension(celltype);
+  const std::size_t ndofs
+      = polyset::dim(celltype, polyset::type::macroedge, degree);
+  const std::vector<std::vector<std::vector<int>>> topology
+      = cell::topology(celltype);
+
+  std::array<std::vector<impl::mdarray_t<T, 2>>, 4> x;
+  std::array<std::vector<impl::mdarray_t<T, 4>>, 4> M;
+  if (degree == 0)
+  {
+    if (!discontinuous)
+    {
+      throw std::runtime_error(
+          "Cannot create a continuous order 0 Lagrange basis function");
+    }
+
+    for (std::size_t i = 0; i < tdim; ++i)
+    {
+      std::size_t num_entities = cell::num_sub_entities(celltype, i);
+      x[i] = std::vector(num_entities, impl::mdarray_t<T, 2>(0, tdim));
+      M[i] = std::vector(num_entities, impl::mdarray_t<T, 4>(0, 1, 0, 1));
+    }
+
+    const auto [pt, shape]
+        = lattice::create<T>(celltype, 0, lattice_type, true, simplex_method);
+    x[tdim].emplace_back(pt, shape[0], shape[1]);
+    auto& _M = M[tdim].emplace_back(shape[0], 1, shape[0], 1);
+    std::fill(_M.data(), _M.data() + _M.size(), 0);
+    for (std::size_t i = 0; i < shape[0]; ++i)
+      _M(i, 0, i, 0) = 1;
+  }
+  else
+  {
+    // Create points at nodes, ordered by topology (vertices first)
+    for (std::size_t dim = 0; dim <= tdim; ++dim)
+    {
+      // Loop over entities of dimension 'dim'
+      for (std::size_t e = 0; e < topology[dim].size(); ++e)
+      {
+        const auto [entity_x, entity_x_shape]
+            = cell::sub_entity_geometry<T>(celltype, dim, e);
+        if (dim == 0)
+        {
+          x[dim].emplace_back(entity_x, entity_x_shape[0], entity_x_shape[1]);
+          auto& _M
+              = M[dim].emplace_back(entity_x_shape[0], 1, entity_x_shape[0], 1);
+          std::fill(_M.data(), _M.data() + _M.size(), 0);
+          for (std::size_t i = 0; i < entity_x_shape[0]; ++i)
+            _M(i, 0, i, 0) = 1;
+        }
+        else if (dim == tdim)
+        {
+          const auto [pt, shape] = lattice::create<T>(
+              celltype, 2 * degree, lattice_type, false, simplex_method);
+          x[dim].emplace_back(pt, shape[0], shape[1]);
+          auto& _M = M[dim].emplace_back(shape[0], 1, shape[0], 1);
+          std::fill(_M.data(), _M.data() + _M.size(), 0);
+          for (std::size_t i = 0; i < shape[0]; ++i)
+            _M(i, 0, i, 0) = 1;
+        }
+        else
+        {
+          cell::type ct = cell::sub_entity_type(celltype, dim, e);
+          const auto [pt, shape] = lattice::create<T>(
+              ct, 2 * degree, lattice_type, false, simplex_method);
+          impl::mdspan_t<const T, 2> lattice(pt.data(), shape);
+          std::span<const T> x0(entity_x.data(), entity_x_shape[1]);
+          impl::mdspan_t<const T, 2> entity_x_view(entity_x.data(),
+                                                   entity_x_shape);
+
+          auto& _x = x[dim].emplace_back(shape[0], entity_x_shape[1]);
+          for (std::size_t i = 0; i < shape[0]; ++i)
+            for (std::size_t j = 0; j < entity_x_shape[1]; ++j)
+              _x(i, j) = x0[j];
+
+          for (std::size_t j = 0; j < shape[0]; ++j)
+            for (std::size_t k = 0; k < shape[1]; ++k)
+              for (std::size_t q = 0; q < tdim; ++q)
+                _x(j, q) += (entity_x_view(k + 1, q) - x0[q]) * lattice(j, k);
+
+          auto& _M = M[dim].emplace_back(shape[0], 1, shape[0], 1);
+          std::fill(_M.data(), _M.data() + _M.size(), 0);
+          for (std::size_t i = 0; i < shape[0]; ++i)
+            _M(i, 0, i, 0) = 1;
+        }
+      }
+    }
+  }
+
+  std::array<std::vector<mdspan_t<const T, 2>>, 4> xview = impl::to_mdspan(x);
+  std::array<std::vector<mdspan_t<const T, 4>>, 4> Mview = impl::to_mdspan(M);
+  std::array<std::vector<std::vector<T>>, 4> xbuffer;
+  std::array<std::vector<std::vector<T>>, 4> Mbuffer;
+  if (discontinuous)
+  {
+    std::array<std::vector<std::array<std::size_t, 2>>, 4> xshape;
+    std::array<std::vector<std::array<std::size_t, 4>>, 4> Mshape;
+    std::tie(xbuffer, xshape, Mbuffer, Mshape)
+        = make_discontinuous(xview, Mview, tdim, 1);
+    xview = impl::to_mdspan(xbuffer, xshape);
+    Mview = impl::to_mdspan(Mbuffer, Mshape);
+  }
+
+  sobolev::space space
+      = discontinuous ? sobolev::space::L2 : sobolev::space::H1;
+  return FiniteElement<T>(
+      family::iso, celltype, polyset::type::macroedge, degree, {},
+      impl::mdspan_t<T, 2>(math::eye<T>(ndofs).data(), ndofs, ndofs), xview,
+      Mview, 0, maps::type::identity, space, discontinuous, degree, degree,
+      variant, dpc_variant::unset);
 }
 //-----------------------------------------------------------------------------
 template FiniteElement<float> element::create_lagrange(cell::type, int,
@@ -1375,4 +1608,8 @@ template FiniteElement<float> element::create_lagrange(cell::type, int,
 template FiniteElement<double> element::create_lagrange(cell::type, int,
                                                         lagrange_variant, bool,
                                                         std::vector<int>);
+template FiniteElement<float> element::create_iso(cell::type, int,
+                                                  lagrange_variant, bool);
+template FiniteElement<double> element::create_iso(cell::type, int,
+                                                   lagrange_variant, bool);
 //-----------------------------------------------------------------------------

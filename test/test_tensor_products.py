@@ -2,11 +2,14 @@
 # FEniCS Project
 # SPDX-License-Identifier: MIT
 
-import numpy as np
-import basix
-import pytest
 from itertools import product
+
 import numpy
+import numpy as np
+import pytest
+
+import basix
+
 from .utils import parametrize_over_elements
 
 
@@ -70,7 +73,7 @@ def test_tensor_product_factorisation_quadrilateral(degree):
 
     # Quadrature degree
     Q = 2 * P + 2
-    points, w = basix.make_quadrature(basix.QuadratureType.Default, cell_type, Q)
+    points, w = basix.make_quadrature(cell_type, Q)
 
     # FIXME: This test assumes all factors formed by a single element
     perm = factors[1]
@@ -88,7 +91,7 @@ def test_tensor_product_factorisation_quadrilateral(degree):
     assert points.shape[0] == (P+2) * (P+2)
 
     cell1d = element0.cell_type
-    points, _ = basix.make_quadrature(basix.QuadratureType.Default, cell1d, Q)
+    points, _ = basix.make_quadrature(cell1d, Q)
     data = element0.tabulate(1, points)
     phi0 = data[0, :, :, 0]
     dphi0 = data[1, :, :, 0]
@@ -129,7 +132,8 @@ def test_tensor_product_factorisation_hexahedron(degree):
 
     # Quadrature degree
     Q = 2 * P + 2
-    points, _ = basix.make_quadrature(basix.QuadratureType.Default, basix.CellType.hexahedron, Q)
+    points, _ = basix.make_quadrature(
+        basix.CellType.hexahedron, Q)
 
     # FIXME: This test assumes all factors formed by a single element
     perm = factors[1]
@@ -148,7 +152,7 @@ def test_tensor_product_factorisation_hexahedron(degree):
     assert points.shape[0] == (P+2) * (P+2) * (P+2)
 
     cell1d = element0.cell_type
-    points, w = basix.make_quadrature(basix.QuadratureType.Default, cell1d, Q)
+    points, w = basix.make_quadrature(cell1d, Q)
     data = element0.tabulate(1, points)
     phi0 = data[0, :, :, 0]
     dphi0 = data[1, :, :, 0]
@@ -196,3 +200,20 @@ def test_tensor_product_factorisation_hexahedron(degree):
 
     dphi_tensor = dphi_tensor.reshape([Nq*Nq*Nq, Nd*Nd*Nd])
     assert numpy.allclose(dphi_z, dphi_tensor)
+
+
+@pytest.mark.parametrize("cell_type", [
+    basix.CellType.quadrilateral,
+    basix.CellType.hexahedron,
+])
+@pytest.mark.parametrize("family, args", [
+    (basix.ElementFamily.P, (basix.LagrangeVariant.equispaced, )),
+    (basix.ElementFamily.P, (basix.LagrangeVariant.gll_warped, )),
+])
+@pytest.mark.parametrize("degree", range(1, 5))
+def test_dof_ordering(cell_type, family, args, degree):
+    e = basix.create_element(family, cell_type, degree, *args)
+    perm = e.get_tensor_product_representation()[0][1]
+    e2 = basix.create_element(family, cell_type, degree, *args, dof_ordering=perm)
+    for i, j in enumerate(e2.get_tensor_product_representation()[0][1]):
+        assert i == j

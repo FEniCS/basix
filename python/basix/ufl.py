@@ -104,16 +104,6 @@ class _ElementBase(_AbstractFiniteElement):
         return False
 
     @property
-    def _is_cellwise_constant(self) -> bool:
-        """Check if the basis functions of this element are constant over each cell."""
-        return self.highest_degree == 0
-
-    @property
-    def _is_linear(self) -> bool:
-        """Check if the element is Lagrange degree 1."""
-        return False
-
-    @property
     def sub_elements(self) -> _typing.List[_AbstractFiniteElement]:
         """Return a list of sub elements."""
         return []
@@ -343,11 +333,6 @@ class _BasixElement(_ElementBase):
             _map_type_to_string(element.map_type), gdim=gdim)
 
         self.element = element
-
-    @property
-    def _is_linear(self) -> bool:
-        """Check if the element is Lagrange degree 1."""
-        return self.element.family == _basix.ElementFamily.P and self.element.degree == 1
 
     @property
     def basix_sobolev_space(self):
@@ -999,11 +984,6 @@ class _BlockedElement(_ElementBase):
         return self.sub_element.basix_sobolev_space
 
     @property
-    def _is_linear(self) -> bool:
-        """Check if the element is Lagrange degree 1."""
-        return self.sub_element._is_linear
-
-    @property
     def sub_elements(self) -> _typing.List[_ElementBase]:
         """List of sub elements."""
         return [self.sub_element for _ in range(self._block_size)]
@@ -1431,11 +1411,6 @@ class _RealElement(_ElementBase):
     @property
     def _is_globally_constant(self) -> bool:
         """Check if the element is a global constant."""
-        return True
-
-    @property
-    def _is_cellwise_constant(self) -> bool:
-        """Check if the basis functions of this element are constant over each cell."""
         return True
 
     def tabulate(self, nderivs: int, points: _npt.NDArray[_np.float64]) -> _npt.NDArray[_np.float64]:

@@ -1,5 +1,5 @@
 [build-system]
 # We require that the user installs cmake
-requires = ["setuptools>=42", "wheel", "nanobind>=0.3.1", "cmake"]
+requires = ["setuptools>=42", "wheel", "nanobind>=1.5.1", "cmake"]
 
 build-backend = "setuptools.build_meta"

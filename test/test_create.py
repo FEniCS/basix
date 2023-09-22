@@ -6,7 +6,7 @@ import pytest
 
 import basix
 
-from .utils import parametrize_over_elements
+# from .utils import parametrize_over_elements
 
 cells = [
     basix.CellType.point,

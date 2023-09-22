@@ -15,15 +15,13 @@
 #include <basix/polyset.h>
 #include <basix/quadrature.h>
 #include <basix/sobolev-spaces.h>
-
+#include <memory>
 #include <nanobind/nanobind.h>
 #include <nanobind/ndarray.h>
 #include <nanobind/stl/pair.h>
 #include <nanobind/stl/string.h>
 #include <nanobind/stl/tuple.h>
 #include <nanobind/stl/vector.h>
-
-#include <memory>
 #include <span>
 #include <string>
 #include <vector>
@@ -37,7 +35,7 @@ using mdspan_t = MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<
 
 namespace
 {
-const std::string& cell_type_to_str(cell::type type)
+std::string cell_type_to_str(cell::type type)
 {
   static const std::map<cell::type, std::string> type_to_name
       = {{cell::type::point, "point"},

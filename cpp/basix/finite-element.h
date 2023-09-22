@@ -1079,7 +1079,7 @@ public:
   ///
   /// This is the matrix @f$C@f$, as described in the documentation of
   /// the `FiniteElement()` constructor.
-  /// @return The coefficient matrix. Shape is (ndofs, ndofs)
+  /// @return The coefficient matrix. Shape is `(ndofs, ndofs)`.
   const std::pair<std::vector<F>, std::array<std::size_t, 2>>&
   coefficient_matrix() const
   {

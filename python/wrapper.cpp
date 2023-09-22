@@ -268,8 +268,7 @@ NB_MODULE(_basixcpp, m)
       .def(
           "tabulate",
           [](const FiniteElement<double>& self, int n,
-             const nb::ndarray<nb::numpy, double, nb::shape<nb::any, nb::any>>&
-                 x)
+             nb::ndarray<nb::numpy, double, nb::shape<nb::any, nb::any>> x)
           {
             if (x.ndim() != 2)
               throw std::runtime_error("x has the wrong size");
@@ -284,9 +283,9 @@ NB_MODULE(_basixcpp, m)
       .def("__eq__", &FiniteElement<double>::operator==)
       .def(
           "push_forward",
-          [](const FiniteElement<double>& self, const nb::ndarray<double>& U,
-             const nb::ndarray<double>& J, const nb::ndarray<double>& detJ,
-             const nb::ndarray<double>& K)
+          [](const FiniteElement<double>& self, nb::ndarray<double> U,
+             nb::ndarray<double> J, nb::ndarray<double> detJ,
+             nb::ndarray<double> K)
           {
             auto [u, shape] = self.push_forward(
                 mdspan_t<const double, 3>(U.data(), U.shape(0), U.shape(1),
@@ -301,9 +300,9 @@ NB_MODULE(_basixcpp, m)
           basix::docstring::FiniteElement__push_forward.c_str())
       .def(
           "pull_back",
-          [](const FiniteElement<double>& self, const nb::ndarray<double>& u,
-             const nb::ndarray<double>& J, const nb::ndarray<double>& detJ,
-             const nb::ndarray<double>& K)
+          [](const FiniteElement<double>& self, nb::ndarray<double> u,
+             nb::ndarray<double> J, nb::ndarray<double> detJ,
+             nb::ndarray<double> K)
           {
             auto [U, shape] = self.pull_back(
                 mdspan_t<const double, 3>(u.data(), u.shape(0), u.shape(1),
@@ -318,7 +317,7 @@ NB_MODULE(_basixcpp, m)
           basix::docstring::FiniteElement__pull_back.c_str())
       .def(
           "apply_dof_transformation",
-          [](const FiniteElement<double>& self, nb::ndarray<double>& data,
+          [](const FiniteElement<double>& self, nb::ndarray<double> data,
              int block_size, std::uint32_t cell_info)
           {
             std::span<double> data_span(data.data(), data.shape(0));
@@ -327,7 +326,7 @@ NB_MODULE(_basixcpp, m)
           basix::docstring::FiniteElement__apply_dof_transformation.c_str())
       .def(
           "apply_dof_transformation_to_transpose",
-          [](const FiniteElement<double>& self, nb::ndarray<double>& data,
+          [](const FiniteElement<double>& self, nb::ndarray<double> data,
              int block_size, std::uint32_t cell_info)
           {
             std::span<double> data_span(data.data(), data.shape(0));
@@ -338,7 +337,7 @@ NB_MODULE(_basixcpp, m)
               .c_str())
       .def(
           "apply_inverse_transpose_dof_transformation",
-          [](const FiniteElement<double>& self, nb::ndarray<double>& data,
+          [](const FiniteElement<double>& self, nb::ndarray<double> data,
              int block_size, std::uint32_t cell_info)
           {
             // FIXME: This is odd because the application is in-place
@@ -556,8 +555,8 @@ NB_MODULE(_basixcpp, m)
   m.def(
       "create_custom_element",
       [](cell::type cell_type, const std::vector<int>& value_shape,
-         const nb::ndarray<double>& wcoeffs,
-         const std::vector<std::vector<nb::ndarray<double>>>& x,
+         nb::ndarray<double> wcoeffs,
+         std::vector<std::vector<nb::ndarray<double>>> x,
          const std::vector<std::vector<nb::ndarray<double>>>& M,
          int interpolation_nderivs, maps::type map_type,
          sobolev::space sobolev_space, bool discontinuous,
@@ -656,7 +655,7 @@ NB_MODULE(_basixcpp, m)
   m.def(
       "tabulate_polynomial_set",
       [](cell::type celltype, polyset::type polytype, int d, int n,
-         const nb::ndarray<nb::numpy, double, nb::shape<nb::any, nb::any>>& x)
+         nb::ndarray<nb::numpy, double, nb::shape<nb::any, nb::any>> x)
       {
         if (x.ndim() != 2)
           throw std::runtime_error("x has the wrong number of dimensions");
@@ -677,10 +676,7 @@ NB_MODULE(_basixcpp, m)
             = quadrature::make_quadrature<double>(rule, celltype, polytype, m);
         std::array<std::size_t, 1> wshape = {w.size()};
         std::array<std::size_t, 2> shape = {w.size(), pts.size() / w.size()};
-        return std::pair(nb::ndarray<nb::numpy, double>(
-                             pts.data(), shape.size(), shape.data()),
-                         nb::ndarray<nb::numpy, double>(w.data(), wshape.size(),
-                                                        wshape.data()));
+        return std::pair(as_nbndarray(pts, shape), as_nbndarray(w, wshape));
       },
       basix::docstring::make_quadrature__rule_celltype_polytype_m.c_str());
 

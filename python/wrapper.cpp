@@ -438,7 +438,8 @@ NB_MODULE(_basixcpp, m)
             auto& [x, shape] = self.points();
             return nb::ndarray<nb::numpy, double, nb::shape<nb::any, nb::any>>(
                 const_cast<double*>(x.data()), shape.size(), shape.data());
-          })
+          },
+          "TODO")
       .def_prop_ro(
           "interpolation_matrix",
           [](const FiniteElement<double>& self)
@@ -446,7 +447,8 @@ NB_MODULE(_basixcpp, m)
             auto& [P, shape] = self.interpolation_matrix();
             return nb::ndarray<nb::numpy, double, nb::shape<nb::any, nb::any>>(
                 const_cast<double*>(P.data()), shape.size(), shape.data());
-          })
+          },
+          "TODO")
       .def_prop_ro(
           "dual_matrix",
           [](const FiniteElement<double>& self)
@@ -454,7 +456,8 @@ NB_MODULE(_basixcpp, m)
             auto& [D, shape] = self.dual_matrix();
             return nb::ndarray<nb::numpy, double, nb::shape<nb::any, nb::any>>(
                 const_cast<double*>(D.data()), shape.size(), shape.data());
-          })
+          },
+          "TODO")
       .def_prop_ro(
           "coefficient_matrix",
           [](const FiniteElement<double>& self)
@@ -462,7 +465,8 @@ NB_MODULE(_basixcpp, m)
             auto& [P, shape] = self.coefficient_matrix();
             return nb::ndarray<nb::numpy, double, nb::shape<nb::any, nb::any>>(
                 const_cast<double*>(P.data()), shape.size(), shape.data());
-          })
+          },
+          "Coefficient matrix.")
       .def_prop_ro(
           "wcoeffs",
           [](const FiniteElement<double>& self)
@@ -470,7 +474,8 @@ NB_MODULE(_basixcpp, m)
             auto& [w, shape] = self.wcoeffs();
             return nb::ndarray<nb::numpy, double, nb::shape<nb::any, nb::any>>(
                 const_cast<double*>(w.data()), shape.size(), shape.data());
-          })
+          },
+          "TODO")
       .def_prop_ro(
           "M",
           [](const FiniteElement<double>& self)
@@ -490,7 +495,8 @@ NB_MODULE(_basixcpp, m)
               }
             }
             return M;
-          })
+          },
+          "TODO")
       .def_prop_ro(
           "x",
           [](const FiniteElement<double>& self)
@@ -512,10 +518,12 @@ NB_MODULE(_basixcpp, m)
             return x;
           })
       .def_prop_ro("has_tensor_product_factorisation",
-                   &FiniteElement<double>::has_tensor_product_factorisation)
+                   &FiniteElement<double>::has_tensor_product_factorisation,
+                   "TODO")
       .def_prop_ro("interpolation_nderivs",
-                   &FiniteElement<double>::interpolation_nderivs)
-      .def_prop_ro("dof_ordering", &FiniteElement<double>::dof_ordering);
+                   &FiniteElement<double>::interpolation_nderivs, "TODO")
+      .def_prop_ro("dof_ordering", &FiniteElement<double>::dof_ordering,
+                   "TODO");
 
   nb::enum_<element::lagrange_variant>(m, "LagrangeVariant")
       .value("unset", element::lagrange_variant::unset)

@@ -1225,14 +1225,14 @@ class _QuadratureElement(_ElementBase):
         """Initialise the element."""
         self._points = points
         self._weights = weights
-        repr = f"QuadratureElement({cell.name}, {points!r}, {weights!r}, {mapname})".replace("\n", "")
+        repr = f"QuadratureElement({cell.__name__}, {points!r}, {weights!r}, {mapname})".replace("\n", "")
         self._cell_type = cell
         self._entity_counts = [len(i) for i in _basix.topology(cell)]
 
         if degree is None:
             degree = len(points)
 
-        super().__init__(repr, "quadrature element", cell.name, value_shape, degree, mapname=mapname)
+        super().__init__(repr, "quadrature element", cell.__name__, value_shape, degree, mapname=mapname)
 
     def basix_sobolev_space(self):
         """Return the underlying Sobolev space."""
@@ -1393,8 +1393,7 @@ class _RealElement(_ElementBase):
         self._cell_type = cell
         tdim = len(_basix.topology(cell)) - 1
 
-        super().__init__(
-            f"RealElement({element})", "real element", cell.name, value_shape, 0)
+        super().__init__(f"RealElement({element})", "real element", cell.__name__, value_shape, 0)
 
         self._entity_counts = []
         if tdim >= 1:

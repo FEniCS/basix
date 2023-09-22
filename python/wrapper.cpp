@@ -497,7 +497,9 @@ NB_MODULE(_basixcpp, m)
               for (std::size_t j = 0; j < _M[i].size(); ++j)
               {
                 auto& mat = _M[i][j];
-                M[i].push_back(as_nbndarray(mat.first, mat.second));
+                // M[i].push_back(as_nbndarray(mat.first, mat.second));
+                M[i].emplace_back(const_cast<double*>(mat.first.data()),
+                                  mat.second.size(), mat.second.data());
               }
             }
             return M;

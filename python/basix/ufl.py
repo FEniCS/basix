@@ -13,6 +13,9 @@ import numpy.typing as _npt
 import ufl as _ufl
 # TODO: remove gdim arguments once UFL handles cells better
 from ufl.finiteelement import AbstractFiniteElement as _AbstractFiniteElement
+from ufl.pull_back import AbstractPullBack as _AbstractPullBack
+from ufl.pull_back import IdentityPullBack as _IdentityPullBack
+from ufl.pull_back import UndefinedPullBack as _UndefinedPullBack
 
 import basix as _basix
 
@@ -25,6 +28,15 @@ _spacemap = {
     _basix.SobolevSpace.HCurl: _ufl.sobolevspace.HCurl,
     _basix.SobolevSpace.HEin: _ufl.sobolevspace.HEin,
     _basix.SobolevSpace.HDivDiv: _ufl.sobolevspace.HDivDiv,
+}
+
+_pullbackmap = {
+    _basix.MapType.identity: _ufl.identity_pull_back,
+    _basix.MapType.L2Piola: _ufl.l2_piola,
+    _basix.MapType.contravariantPiola: _ufl.contravariant_piola,
+    _basix.MapType.covariantPiola: _ufl.covariant_piola,
+    _basix.MapType.doubleContravariantPiola: _ufl.double_contravariant_piola,
+    _basix.MapType.doubleCovariantPiola: _ufl.double_covariant_piola,
 }
 
 
@@ -42,6 +54,21 @@ def _ufl_sobolev_space_from_enum(s: _basix.SobolevSpace):
     return _spacemap[s]
 
 
+def _ufl_pull_back_from_enum(m: _basix.MapType) -> _AbstractPullBack:
+    """Convert map type to a UFL pull back.
+
+    Args:
+        map_type: A map type.
+
+    Returns:
+        UFL pull back.
+
+    """
+    if m not in _pullbackmap:
+        raise ValueError(f"Could not convert to UFL pull back: {m.name}")
+    return _pullbackmap[m]
+
+
 class _ElementBase(_AbstractFiniteElement):
     """A base wrapper to allow elements to be used with UFL.
 
@@ -50,14 +77,14 @@ class _ElementBase(_AbstractFiniteElement):
     """
 
     def __init__(self, repr: str, cellname: str, value_shape: _typing.Tuple[int, ...],
-                 degree: int = -1, mapname: _typing.Optional[str] = None,
+                 degree: int = -1, pull_back: _AbstractPullBack = _UndefinedPullBack(),
                  gdim: _typing.Optional[int] = None):
         """Initialise the element."""
         self._repr = repr
         self._cellname = cellname
         self._value_shape = value_shape
         self._degree = degree
-        self._map = mapname
+        self._pull_back = pull_back
         self._gdim = gdim
 
     def __repr__(self):
@@ -74,9 +101,9 @@ class _ElementBase(_AbstractFiniteElement):
         return _ufl_sobolev_space_from_enum(self.basix_sobolev_space)
 
     @property
-    def mapping(self) -> _typing.Union[str, None]:
+    def pull_back(self) -> _AbstractPullBack:
         """Return the map type."""
-        return self._map
+        return self._pull_back
 
     @property
     def embedded_degree(self) -> int:
@@ -97,11 +124,6 @@ class _ElementBase(_AbstractFiniteElement):
     def reference_value_shape(self) -> _typing.Tuple[int, ...]:
         """Return the shape of the value space on the reference cell."""
         return self._value_shape
-
-    @property
-    def _is_globally_constant(self) -> bool:
-        """Check if the element is a global constant."""
-        return False
 
     @property
     def sub_elements(self) -> _typing.List[_AbstractFiniteElement]:
@@ -330,7 +352,7 @@ class _BasixElement(_ElementBase):
 
         super().__init__(
             repr, element.cell_type.name, tuple(element.value_shape), element.degree,
-            _map_type_to_string(element.map_type), gdim=gdim)
+            _ufl_pull_back_from_enum(element.map_type), gdim=gdim)
 
         self.element = element
 
@@ -710,14 +732,14 @@ class _MixedElement(_ElementBase):
         """Initialise the element."""
         assert len(sub_elements) > 0
         self._sub_elements = sub_elements
-        if all(e.mapping == "identity" for e in sub_elements):
-            mapname = "identity"
+        if all(isinstance(e.pull_back, _IdentityPullBack) for e in sub_elements):
+            pull_back = _ufl.identity_pull_back
         else:
-            mapname = "undefined"
+            pull_back = _UndefinedPullBack()
 
         super().__init__("mixed element (" + ", ".join(i._repr for i in sub_elements) + ")",
                          sub_elements[0].cell_type.name,
-                         (sum(i.value_size for i in sub_elements), ), mapname=mapname, gdim=gdim)
+                         (sum(i.value_size for i in sub_elements), ), pull_back=pull_back, gdim=gdim)
 
     def degree(self) -> int:
         """Degree of the element."""
@@ -962,7 +984,7 @@ class _BlockedElement(_ElementBase):
         repr += ")"
 
         super().__init__(repr, sub_element.cell_type.name, shape,
-                         sub_element._degree, sub_element._map, gdim=gdim)
+                         sub_element._degree, sub_element._pull_back, gdim=gdim)
 
         if symmetry:
             n = 0
@@ -973,7 +995,7 @@ class _BlockedElement(_ElementBase):
                     sub_element_mapping[(j, i)] = n
                     n += 1
 
-            self._map = "symmetries"
+            self._pull_back = "symmetries"
             self._symmetry = {(i, j): (j, i) for i in range(shape[0]) for j in range(i)}
             self._flattened_sub_element_mapping = [
                 sub_element_mapping[(i, j)] for i in range(shape[0]) for j in range(shape[1])]
@@ -1216,18 +1238,18 @@ class _QuadratureElement(_ElementBase):
 
     def __init__(self, cell: _basix.CellType, value_shape: _typing.Tuple[int, ...],
                  points: _npt.NDArray[_np.float64], weights: _npt.NDArray[_np.float64],
-                 mapname: str, degree: _typing.Optional[int] = None):
+                 pull_back: _AbstractPullBack, degree: _typing.Optional[int] = None):
         """Initialise the element."""
         self._points = points
         self._weights = weights
-        repr = f"QuadratureElement({cell.name}, {points!r}, {weights!r}, {mapname})".replace("\n", "")
+        repr = f"QuadratureElement({cell.name}, {points!r}, {weights!r}, {pull_back})".replace("\n", "")
         self._cell_type = cell
         self._entity_counts = [len(i) for i in _basix.topology(cell)]
 
         if degree is None:
             degree = len(points)
 
-        super().__init__(repr, cell.name, value_shape, degree, mapname=mapname)
+        super().__init__(repr, cell.name, value_shape, degree, pull_back=pull_back)
 
     def basix_sobolev_space(self):
         """Return the underlying Sobolev space."""
@@ -1408,11 +1430,6 @@ class _RealElement(_ElementBase):
         """Return a hash."""
         return super().__hash__()
 
-    @property
-    def _is_globally_constant(self) -> bool:
-        """Check if the element is a global constant."""
-        return True
-
     def tabulate(self, nderivs: int, points: _npt.NDArray[_np.float64]) -> _npt.NDArray[_np.float64]:
         """Tabulate the basis functions of the element.
 
@@ -1450,6 +1467,11 @@ class _RealElement(_ElementBase):
     @property
     def dim(self) -> int:
         """Number of DOFs the element has."""
+        return 0
+
+    @property
+    def highest_degree(self) -> int:
+        """The highest degree of the element."""
         return 0
 
     @property
@@ -1543,31 +1565,6 @@ class _RealElement(_ElementBase):
     def polyset_type(self) -> _basix.PolysetType:
         """The polyset type of the element."""
         raise NotImplementedError()
-
-
-def _map_type_to_string(map_type: _basix.MapType) -> str:
-    """Convert map type to a UFL string.
-
-    Args:
-        map_type: A map type.
-
-    Returns:
-        A string representing this map type.
-
-    """
-    if map_type == _basix.MapType.identity:
-        return "identity"
-    if map_type == _basix.MapType.L2Piola:
-        return "L2 Piola"
-    if map_type == _basix.MapType.contravariantPiola:
-        return "contravariant Piola"
-    if map_type == _basix.MapType.covariantPiola:
-        return "covariant Piola"
-    if map_type == _basix.MapType.doubleContravariantPiola:
-        return "double contravariant Piola"
-    if map_type == _basix.MapType.doubleCovariantPiola:
-        return "double covariant Piola"
-    raise ValueError(f"Unsupported map type: {map_type}")
 
 
 def _compute_signature(element: _basix.finite_element.FiniteElement) -> str:
@@ -1842,7 +1839,7 @@ def quadrature_element(cell: _typing.Union[str, _basix.CellType],
                        degree: _typing.Optional[int] = None,
                        points: _typing.Optional[_npt.NDArray[_np.float64]] = None,
                        weights: _typing.Optional[_npt.NDArray[_np.float64]] = None,
-                       mapname: str = "identity") -> _ElementBase:
+                       pull_back: _AbstractPullBack = _ufl.identity_pull_back) -> _ElementBase:
     """Create a quadrature element.
 
     When creating this element, either the quadrature scheme and degree
@@ -1855,7 +1852,7 @@ def quadrature_element(cell: _typing.Union[str, _basix.CellType],
         degree: Quadrature degree.
         points: Quadrature points.
         weights: Quadrature weights.
-        mapname: Map name.
+        pull_back: Map name.
 
     Returns:
         A 'quadrature' finite element.
@@ -1876,7 +1873,7 @@ def quadrature_element(cell: _typing.Union[str, _basix.CellType],
     assert points is not None
     assert weights is not None
 
-    return _QuadratureElement(cell, value_shape, points, weights, mapname, degree)
+    return _QuadratureElement(cell, value_shape, points, weights, pull_back, degree)
 
 
 def real_element(cell: _typing.Union[_basix.CellType, str],

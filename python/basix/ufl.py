@@ -16,6 +16,7 @@ from ufl.finiteelement import AbstractFiniteElement as _AbstractFiniteElement
 from ufl.pull_back import AbstractPullBack as _AbstractPullBack
 from ufl.pull_back import IdentityPullBack as _IdentityPullBack
 from ufl.pull_back import UndefinedPullBack as _UndefinedPullBack
+from ufl.pull_back import MixedPullBack as _MixedPullBack
 
 import basix as _basix
 
@@ -735,7 +736,7 @@ class _MixedElement(_ElementBase):
         if all(isinstance(e.pull_back, _IdentityPullBack) for e in sub_elements):
             pull_back = _ufl.identity_pull_back
         else:
-            pull_back = _UndefinedPullBack()
+            pull_back = _MixedPullBack(self)
 
         super().__init__("mixed element (" + ", ".join(i._repr for i in sub_elements) + ")",
                          sub_elements[0].cell_type.name,

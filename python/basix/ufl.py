@@ -997,8 +997,7 @@ class _BlockedElement(_ElementBase):
                     symmetry_mapping[(j, i)] = n
                     n += 1
 
-            self._pull_back = SymmetricPullBack(
-                self, symmetry_mapping)
+            self._pull_back = _SymmetricPullBack(self, symmetry_mapping)
 
     @property
     def basix_sobolev_space(self):

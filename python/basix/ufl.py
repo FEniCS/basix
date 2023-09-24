@@ -103,7 +103,7 @@ class _ElementBase(_AbstractFiniteElement):
 
     @property
     def pull_back(self) -> _AbstractPullBack:
-        """Return the map type."""
+        """Return the pull back."""
         return self._pull_back
 
     @property

@@ -108,9 +108,14 @@ class _ElementBase(_AbstractFiniteElement):
         return self._pull_back
 
     @property
-    def embedded_degree(self) -> int:
+    def embedded_superdegree(self) -> int:
         """The maximum degree of a polynomial included in the basis for this element."""
         return self.highest_degree
+
+    @property
+    def embedded_subdegree(self) -> int:
+        """The maximum degree Lagrange space that is a subset of this element."""
+        return self.highest_complete_degree
 
     @property
     def cell(self) -> _ufl.Cell:

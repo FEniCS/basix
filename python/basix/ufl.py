@@ -17,6 +17,7 @@ from ufl.pull_back import AbstractPullBack as _AbstractPullBack
 from ufl.pull_back import IdentityPullBack as _IdentityPullBack
 from ufl.pull_back import UndefinedPullBack as _UndefinedPullBack
 from ufl.pull_back import MixedPullBack as _MixedPullBack
+from ufl.pull_back import SymmetricPullBack as _SymmetricPullBack
 
 import basix as _basix
 
@@ -989,17 +990,15 @@ class _BlockedElement(_ElementBase):
 
         if symmetry:
             n = 0
-            sub_element_mapping = {}
+            symmetry_mapping = {}
             for i in range(shape[0]):
                 for j in range(i + 1):
-                    sub_element_mapping[(i, j)] = n
-                    sub_element_mapping[(j, i)] = n
+                    symmetry_mapping[(i, j)] = n
+                    symmetry_mapping[(j, i)] = n
                     n += 1
 
-            self._pull_back = "symmetries"
-            self._symmetry = {(i, j): (j, i) for i in range(shape[0]) for j in range(i)}
-            self._flattened_sub_element_mapping = [
-                sub_element_mapping[(i, j)] for i in range(shape[0]) for j in range(shape[1])]
+            self._pull_back = SymmetricPullBack(
+                self, symmetry_mapping)
 
     @property
     def basix_sobolev_space(self):
@@ -1226,12 +1225,6 @@ class _BlockedElement(_ElementBase):
         if not self.has_tensor_product_factorisation:
             return None
         return self.sub_element.get_tensor_product_representation()
-
-    def flattened_sub_element_mapping(self) -> _typing.List[int]:
-        """Return the flattened sub element mapping."""
-        if not self._has_symmetry:
-            raise ValueError("Cannot get flattened map for non-symmetric element.")
-        return self._flattened_sub_element_mapping
 
 
 class _QuadratureElement(_ElementBase):

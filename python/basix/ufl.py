@@ -118,11 +118,6 @@ class _ElementBase(_AbstractFiniteElement):
         return _ufl.cell.Cell(self._cellname, self._gdim)
 
     @property
-    def value_shape(self) -> _typing.Tuple[int, ...]:
-        """Return the shape of the value space on the global domain."""
-        return self._value_shape
-
-    @property
     def reference_value_shape(self) -> _typing.Tuple[int, ...]:
         """Return the shape of the value space on the reference cell."""
         return self._value_shape

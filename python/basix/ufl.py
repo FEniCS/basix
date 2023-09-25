@@ -15,9 +15,9 @@ import ufl as _ufl
 from ufl.finiteelement import AbstractFiniteElement as _AbstractFiniteElement
 from ufl.pull_back import AbstractPullBack as _AbstractPullBack
 from ufl.pull_back import IdentityPullBack as _IdentityPullBack
-from ufl.pull_back import UndefinedPullBack as _UndefinedPullBack
 from ufl.pull_back import MixedPullBack as _MixedPullBack
 from ufl.pull_back import SymmetricPullBack as _SymmetricPullBack
+from ufl.pull_back import UndefinedPullBack as _UndefinedPullBack
 
 import basix as _basix
 

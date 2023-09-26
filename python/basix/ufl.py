@@ -89,6 +89,7 @@ class _ElementBase(_AbstractFiniteElement):
         self._pullback = pullback
         self._gdim = gdim
 
+    # Implementation of methods for UFL AbstractFiniteElement
     def __repr__(self):
         """Format as string for evaluation as Python object."""
         return self._repr
@@ -97,6 +98,14 @@ class _ElementBase(_AbstractFiniteElement):
         """Format as string for nice printing."""
         return self._repr
 
+    def __hash__(self) -> int:
+        """Return a hash."""
+        return hash("basix" + self._repr)
+
+    @_abstractmethod
+    def __eq__(self, other) -> bool:
+        """Check if two elements are equal."""
+
     @property
     def sobolev_space(self):
         """Return the underlying Sobolev space."""
@@ -104,17 +113,37 @@ class _ElementBase(_AbstractFiniteElement):
 
     @property
     def pullback(self) -> _AbstractPullback:
-        """Return the pull back."""
+        """Return the pullback for this element."""
         return self._pullback
 
     @property
     def embedded_superdegree(self) -> int:
-        """The maximum degree of a polynomial included in the basis for this element."""
+        """Return the degree of the minimum degree Lagrange space that spans this element.
+
+        This returns the degree of the lowest degree Lagrange space such that the polynomial
+        space of the Lagrange space is a superspace of this element's polynomial space. If this
+        element contains basis functions that are not in any Lagrange space, this function should
+        return None.
+
+        Note that on a simplex cells, the polynomial space of Lagrange space is a complete polynomial
+        space, but on other cells this is not true. For example, on quadrilateral cells, the degree 1
+        Lagrange space includes the degree 2 polynomial xy.
+        """
         return self.highest_degree
 
     @property
     def embedded_subdegree(self) -> int:
-        """The maximum degree Lagrange space that is a subset of this element."""
+        """Return the degree of the maximum degree Lagrange space that is spanned by this element.
+
+        This returns the degree of the highest degree Lagrange space such that the polynomial
+        space of the Lagrange space is a subspace of this element's polynomial space. If this
+        element's polynomial space does not include the constant function, this function should
+        return -1.
+
+        Note that on a simplex cells, the polynomial space of Lagrange space is a complete polynomial
+        space, but on other cells this is not true. For example, on quadrilateral cells, the degree 1
+        Lagrange space includes the degree 2 polynomial xy.
+        """
         return self.highest_complete_degree
 
     @property
@@ -129,27 +158,14 @@ class _ElementBase(_AbstractFiniteElement):
 
     @property
     def sub_elements(self) -> _typing.List[_AbstractFiniteElement]:
-        """Return a list of sub elements."""
+        """Return a list of sub elements.
+
+        This function does not recurse: ie it does not extract the sub-elements
+        of sub-elements.
+        """
         return []
 
-    @_abstractmethod
-    def __eq__(self, other) -> bool:
-        """Check if two elements are equal."""
-        pass
-
-    def __hash__(self) -> int:
-        """Return a hash."""
-        return hash("basix" + self._repr)
-
-    @property
-    def block_size(self) -> int:
-        """The block size of the element."""
-        return 1
-
-    def degree(self) -> int:
-        """The degree of the element."""
-        return self._degree
-
+    # Basix specific functions
     @_abstractmethod
     def tabulate(self, nderivs: int, points: _npt.NDArray[_np.float64]) -> _npt.NDArray[_np.float64]:
         """Tabulate the basis functions of the element.
@@ -160,9 +176,7 @@ class _ElementBase(_AbstractFiniteElement):
 
         Returns:
             Tabulated basis functions
-
         """
-        pass
 
     @_abstractmethod
     def get_component_element(self, flat_component: int) -> _typing.Tuple[_typing.Any, int, int]:
@@ -183,122 +197,113 @@ class _ElementBase(_AbstractFiniteElement):
 
         Returns:
             component element, offset of the component, stride of the component
-
         """
-        pass
 
     @_abstractproperty
     def ufcx_element_type(self) -> str:
         """Element type."""
-        pass
 
     @_abstractproperty
     def dim(self) -> int:
         """Number of DOFs the element has."""
-        pass
 
     @_abstractproperty
     def num_entity_dofs(self) -> _typing.List[_typing.List[int]]:
         """Number of DOFs associated with each entity."""
-        pass
 
     @_abstractproperty
     def entity_dofs(self) -> _typing.List[_typing.List[_typing.List[int]]]:
         """DOF numbers associated with each entity."""
-        pass
 
     @_abstractproperty
     def num_entity_closure_dofs(self) -> _typing.List[_typing.List[int]]:
         """Number of DOFs associated with the closure of each entity."""
-        pass
 
     @_abstractproperty
     def entity_closure_dofs(self) -> _typing.List[_typing.List[_typing.List[int]]]:
         """DOF numbers associated with the closure of each entity."""
-        pass
 
     @_abstractproperty
     def num_global_support_dofs(self) -> int:
         """Get the number of global support DOFs."""
-        pass
 
     @_abstractproperty
     def reference_topology(self) -> _typing.List[_typing.List[_typing.List[int]]]:
         """Topology of the reference element."""
-        pass
 
     @_abstractproperty
     def reference_geometry(self) -> _npt.NDArray[_np.float64]:
         """Geometry of the reference element."""
-        pass
 
     @_abstractproperty
     def family_name(self) -> str:
         """Family name of the element."""
-        pass
 
     @_abstractproperty
     def element_family(self) -> _typing.Union[_basix.ElementFamily, None]:
         """Basix element family used to initialise the element."""
-        pass
 
     @_abstractproperty
     def lagrange_variant(self) -> _typing.Union[_basix.LagrangeVariant, None]:
         """Basix Lagrange variant used to initialise the element."""
-        pass
 
     @_abstractproperty
     def dpc_variant(self) -> _typing.Union[_basix.DPCVariant, None]:
         """Basix DPC variant used to initialise the element."""
-        pass
 
     @_abstractproperty
     def cell_type(self) -> _basix.CellType:
         """Basix cell type used to initialise the element."""
-        pass
 
     @_abstractproperty
     def discontinuous(self) -> bool:
         """True if the discontinuous version of the element is used."""
-        pass
-
-    @property
-    def interpolation_nderivs(self) -> int:
-        """The number of derivatives needed when interpolating."""
-        raise NotImplementedError()
-
-    @property
-    def is_custom_element(self) -> bool:
-        """True if the element is a custom Basix element."""
-        return False
-
-    @property
-    def has_custom_quadrature(self) -> bool:
-        """True if the element has a custom quadrature rule."""
-        return False
-
-    def custom_quadrature(self) -> _typing.Tuple[_npt.NDArray[_np.float64], _npt.NDArray[_np.float64]]:
-        """True if the element has a custom quadrature rule."""
-        raise ValueError("Element does not have a custom quadrature rule.")
 
     @_abstractproperty
     def map_type(self) -> _basix.MapType:
         """The Basix map type."""
-        pass
 
-    @property
+    @_abstractproperty
     def highest_complete_degree(self) -> int:
         """The highest complete degree of the element."""
-        raise NotImplementedError()
 
-    @property
+    @_abstractproperty
     def highest_degree(self) -> int:
         """The highest degree of the element."""
-        raise NotImplementedError()
 
     @_abstractproperty
     def polyset_type(self) -> _basix.PolysetType:
         """The polyset type of the element."""
+
+    @_abstractproperty
+    def basix_sobolev_space(self):
+        """Return a Basix enum representing the underlying Sobolev space."""
+
+    def get_tensor_product_representation(self):
+        """Get the element's tensor product factorisation."""
+        return None
+
+    def degree(self) -> int:
+        """The degree of the element."""
+        return self._degree
+
+    def custom_quadrature(self) -> _typing.Tuple[_npt.NDArray[_np.float64], _npt.NDArray[_np.float64]]:
+        """Return custom quadrature rule or raise a ValueError."""
+        raise ValueError("Element does not have a custom quadrature rule.")
+
+    @property
+    def has_tensor_product_factorisation(self) -> bool:
+        """Indicates whether or not this element has a tensor product factorisation.
+
+        If this value is true, this element's basis functions can be computed
+        as a tensor product of the basis elements of the elements in the factoriaation.
+        """
+        return False
+
+    @property
+    def block_size(self) -> int:
+        """The block size of the element."""
+        return 1
 
     @property
     def _wcoeffs(self) -> _npt.NDArray[_np.float64]:
@@ -315,22 +320,20 @@ class _ElementBase(_AbstractFiniteElement):
         """The matrices used to define interpolation."""
         raise NotImplementedError()
 
-    def has_tensor_product_factorisation(self) -> bool:
-        """Indicates whether or not this element has a tensor product factorisation.
+    @property
+    def interpolation_nderivs(self) -> int:
+        """The number of derivatives needed when interpolating."""
+        raise NotImplementedError()
 
-        If this value is true, this element's basis functions can be computed
-        as a tensor product of the basis elements of the elements in the factoriaation.
-        """
+    @property
+    def is_custom_element(self) -> bool:
+        """True if the element is a custom Basix element."""
         return False
 
-    def get_tensor_product_representation(self):
-        """Get the element's tensor product factorisation."""
-        return None
-
-    @_abstractproperty
-    def basix_sobolev_space(self):
-        """Return a Basix enum representing the underlying Sobolev space."""
-        pass
+    @property
+    def has_custom_quadrature(self) -> bool:
+        """True if the element has a custom quadrature rule."""
+        return False
 
 
 class _BasixElement(_ElementBase):
@@ -357,11 +360,6 @@ class _BasixElement(_ElementBase):
             _ufl_pullback_from_enum(element.map_type), gdim=gdim)
 
         self.element = element
-
-    @property
-    def basix_sobolev_space(self):
-        """Return a Basix enum representing the underlying Sobolev space."""
-        return self.element.sobolev_space
 
     def __eq__(self, other) -> bool:
         """Check if two elements are equal."""
@@ -408,6 +406,17 @@ class _BasixElement(_ElementBase):
         """
         assert flat_component < self.value_size
         return _ComponentElement(self, flat_component), 0, 1
+
+    def get_tensor_product_representation(self):
+        """Get the element's tensor product factorisation."""
+        if not self.has_tensor_product_factorisation:
+            return None
+        return self.element.get_tensor_product_representation()
+
+    @property
+    def basix_sobolev_space(self):
+        """Return a Basix enum representing the underlying Sobolev space."""
+        return self.element.sobolev_space
 
     @property
     def ufcx_element_type(self) -> str:
@@ -531,6 +540,7 @@ class _BasixElement(_ElementBase):
         """The matrices used to define interpolation."""
         return self.element.M
 
+    @property
     def has_tensor_product_factorisation(self) -> bool:
         """Indicates whether or not this element has a tensor product factorisation.
 
@@ -540,12 +550,6 @@ class _BasixElement(_ElementBase):
 
         """
         return self.element.has_tensor_product_factorisation
-
-    def get_tensor_product_representation(self):
-        """Get the element's tensor product factorisation."""
-        if not self.has_tensor_product_factorisation:
-            return None
-        return self.element.get_tensor_product_representation()
 
 
 class _ComponentElement(_ElementBase):
@@ -565,11 +569,6 @@ class _ComponentElement(_ElementBase):
         super().__init__(f"component element ({element._repr}, {component})",
                          element.cell_type.name, (1, ), element._degree, gdim=gdim)
 
-    @property
-    def basix_sobolev_space(self):
-        """Return a Basix enum representing the underlying Sobolev space."""
-        return self.element.basix_sobolev_space
-
     def __eq__(self, other) -> bool:
         """Check if two elements are equal."""
         return (isinstance(other, _ComponentElement) and self.element == other.element
@@ -578,6 +577,11 @@ class _ComponentElement(_ElementBase):
     def __hash__(self) -> int:
         """Return a hash."""
         return super().__hash__()
+
+    def __mul__(self, other):
+        _warn("Use of * to create mixed elements is deprecated and will be removed after December 2023. "
+              "Please, use basix.ufl.mixed_element.", FutureWarning)
+        return mixed_element([self, other])
 
     def tabulate(self, nderivs: int, points: _npt.NDArray[_np.float64]) -> _npt.NDArray[_np.float64]:
         """Tabulate the basis functions of the element.
@@ -623,6 +627,11 @@ class _ComponentElement(_ElementBase):
         if flat_component == 0:
             return self, 0, 1
         raise NotImplementedError()
+
+    @property
+    def basix_sobolev_space(self):
+        """Return a Basix enum representing the underlying Sobolev space."""
+        return self.element.basix_sobolev_space
 
     @property
     def dim(self) -> int:
@@ -713,10 +722,15 @@ class _ComponentElement(_ElementBase):
         """The Basix map type."""
         raise NotImplementedError()
 
-    def __mul__(self, other):
-        _warn("Use of * to create mixed elements is deprecated and will be removed after December 2023. "
-              "Please, use basix.ufl.mixed_element.", FutureWarning)
-        return mixed_element([self, other])
+    @property
+    def highest_complete_degree(self) -> int:
+        """The highest complete degree of the element."""
+        return self.element.highest_complete_degree
+
+    @property
+    def highest_degree(self) -> int:
+        """The highest degree of the element."""
+        return self.element.highest_degree
 
 
 class _MixedElement(_ElementBase):
@@ -743,30 +757,6 @@ class _MixedElement(_ElementBase):
                          sub_elements[0].cell_type.name,
                          (sum(i.value_size for i in sub_elements), ), pullback=pullback, gdim=gdim)
 
-    def degree(self) -> int:
-        """Degree of the element."""
-        return max((e.degree() for e in self._sub_elements), default=-1)
-
-    @property
-    def highest_degree(self) -> int:
-        """The highest degree of the element."""
-        return max(e.highest_degree for e in self._sub_elements)
-
-    @property
-    def map_type(self) -> _basix.MapType:
-        """Basix map type."""
-        raise NotImplementedError()
-
-    @property
-    def basix_sobolev_space(self):
-        """Basix Sobolev space that the element belongs to."""
-        return _basix.sobolev_spaces.intersection([e.basix_sobolev_space for e in self._sub_elements])
-
-    @property
-    def sub_elements(self) -> _typing.List[_ElementBase]:
-        """List of sub elements."""
-        return self._sub_elements
-
     def __eq__(self, other) -> bool:
         """Check if two elements are equal."""
         if isinstance(other, _MixedElement) and len(self._sub_elements) == len(other._sub_elements):
@@ -779,6 +769,10 @@ class _MixedElement(_ElementBase):
     def __hash__(self) -> int:
         """Return a hash."""
         return super().__hash__()
+
+    def degree(self) -> int:
+        """Degree of the element."""
+        return max((e.degree() for e in self._sub_elements), default=-1)
 
     def tabulate(self, nderivs: int, points: _npt.NDArray[_np.float64]) -> _npt.NDArray[_np.float64]:
         """Tabulate the basis functions of the element.
@@ -828,6 +822,31 @@ class _MixedElement(_ElementBase):
         e, offset, stride = sub_e.get_component_element(flat_component - crange[component_element_index])
         # TODO: is this offset correct?
         return e, irange[component_element_index] + offset, stride
+
+    @property
+    def highest_degree(self) -> int:
+        """The highest degree of the element."""
+        return max(e.highest_degree for e in self._sub_elements)
+
+    @property
+    def highest_complete_degree(self) -> int:
+        """The highest degree of the element."""
+        raise NotImplementedError()
+
+    @property
+    def map_type(self) -> _basix.MapType:
+        """Basix map type."""
+        raise NotImplementedError()
+
+    @property
+    def basix_sobolev_space(self):
+        """Basix Sobolev space that the element belongs to."""
+        return _basix.sobolev_spaces.intersection([e.basix_sobolev_space for e in self._sub_elements])
+
+    @property
+    def sub_elements(self) -> _typing.List[_ElementBase]:
+        """List of sub elements."""
+        return self._sub_elements
 
     @property
     def ufcx_element_type(self) -> str:
@@ -1001,16 +1020,6 @@ class _BlockedElement(_ElementBase):
 
             self._pullback = _SymmetricPullback(self, symmetry_mapping)
 
-    @property
-    def basix_sobolev_space(self):
-        """Basix enum representing the underlying Sobolev space."""
-        return self.sub_element.basix_sobolev_space
-
-    @property
-    def sub_elements(self) -> _typing.List[_ElementBase]:
-        """List of sub elements."""
-        return [self.sub_element for _ in range(self._block_size)]
-
     def __eq__(self, other) -> bool:
         """Check if two elements are equal."""
         return (
@@ -1020,19 +1029,6 @@ class _BlockedElement(_ElementBase):
     def __hash__(self) -> int:
         """Return a hash."""
         return super().__hash__()
-
-    @property
-    def block_size(self) -> int:
-        """Block size of the element."""
-        return self._block_size
-
-    @property
-    def reference_value_shape(self) -> _typing.Tuple[int, ...]:
-        """Reference value shape of the element basis function."""
-        if self._has_symmetry:
-            assert len(self.block_shape) == 2 and self.block_shape[0] == self.block_shape[1]
-            return (self.block_shape[0] * (self.block_shape[0] + 1) // 2, )
-        return self._value_shape
 
     def tabulate(self, nderivs: int, points: _npt.NDArray[_np.float64]) -> _npt.NDArray[_np.float64]:
         """Tabulate the basis functions of the element.
@@ -1074,6 +1070,35 @@ class _BlockedElement(_ElementBase):
 
         """
         return self.sub_element, flat_component, self._block_size
+
+    def get_tensor_product_representation(self):
+        """Get the element's tensor product factorisation."""
+        if not self.has_tensor_product_factorisation:
+            return None
+        return self.sub_element.get_tensor_product_representation()
+
+    @property
+    def block_size(self) -> int:
+        """Block size of the element."""
+        return self._block_size
+
+    @property
+    def reference_value_shape(self) -> _typing.Tuple[int, ...]:
+        """Reference value shape of the element basis function."""
+        if self._has_symmetry:
+            assert len(self.block_shape) == 2 and self.block_shape[0] == self.block_shape[1]
+            return (self.block_shape[0] * (self.block_shape[0] + 1) // 2, )
+        return self._value_shape
+
+    @property
+    def basix_sobolev_space(self):
+        """Basix enum representing the underlying Sobolev space."""
+        return self.sub_element.basix_sobolev_space
+
+    @property
+    def sub_elements(self) -> _typing.List[_ElementBase]:
+        """List of sub elements."""
+        return [self.sub_element for _ in range(self._block_size)]
 
     @property
     def ufcx_element_type(self) -> str:
@@ -1211,6 +1236,7 @@ class _BlockedElement(_ElementBase):
             M.append(M_row)
         return M
 
+    @property
     def has_tensor_product_factorisation(self) -> bool:
         """Indicates whether or not this element has a tensor product factorisation.
 
@@ -1220,12 +1246,6 @@ class _BlockedElement(_ElementBase):
 
         """
         return self.sub_element.has_tensor_product_factorisation()
-
-    def get_tensor_product_representation(self):
-        """Get the element's tensor product factorisation."""
-        if not self.has_tensor_product_factorisation:
-            return None
-        return self.sub_element.get_tensor_product_representation()
 
 
 class _QuadratureElement(_ElementBase):
@@ -1288,6 +1308,10 @@ class _QuadratureElement(_ElementBase):
 
         """
         return self, 0, 1
+
+    def custom_quadrature(self) -> _typing.Tuple[_npt.NDArray[_np.float64], _npt.NDArray[_np.float64]]:
+        """Return custom quadrature rule or raise a ValueError."""
+        return self._points, self._weights
 
     @property
     def ufcx_element_type(self) -> str:
@@ -1392,9 +1416,15 @@ class _QuadratureElement(_ElementBase):
         """True if the element has a custom quadrature rule."""
         return True
 
-    def custom_quadrature(self) -> _typing.Tuple[_npt.NDArray[_np.float64], _npt.NDArray[_np.float64]]:
-        """True if the element has a custom quadrature rule."""
-        return self._points, self._weights
+    @property
+    def highest_complete_degree(self) -> int:
+        """The highest complete degree of the element."""
+        raise NotImplementedError()
+
+    @property
+    def highest_degree(self) -> int:
+        """The highest degree of the element."""
+        raise NotImplementedError()
 
 
 class _RealElement(_ElementBase):
@@ -1467,6 +1497,11 @@ class _RealElement(_ElementBase):
     @property
     def highest_degree(self) -> int:
         """The highest degree of the element."""
+        return 0
+
+    @property
+    def highest_complete_degree(self) -> int:
+        """The highest complete degree of the element."""
         return 0
 
     @property
@@ -1547,6 +1582,7 @@ class _RealElement(_ElementBase):
         """True if the discontinuous version of the element is used."""
         return False
 
+    @property
     def basix_sobolev_space(self):
         """Return the underlying Sobolev space."""
         return _basix.sobolev_spaces.Hinf

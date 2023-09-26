@@ -283,6 +283,7 @@ class _ElementBase(_AbstractFiniteElement):
         """Get the element's tensor product factorisation."""
         return None
 
+    @property
     def degree(self) -> int:
         """The degree of the element."""
         return self._degree
@@ -770,6 +771,7 @@ class _MixedElement(_ElementBase):
         """Return a hash."""
         return super().__hash__()
 
+    @property
     def degree(self) -> int:
         """Degree of the element."""
         return max((e.degree() for e in self._sub_elements), default=-1)

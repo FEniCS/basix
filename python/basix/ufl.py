@@ -983,6 +983,8 @@ class _BlockedElement(_ElementBase):
                 repr += ", True"
             else:
                 repr += ", False"
+        if gdim is not None:
+            repr += f", gdim={gdim}"
         repr += ")"
 
         super().__init__(repr, sub_element.cell_type.name, shape,
@@ -1823,6 +1825,11 @@ def mixed_element(elements: _typing.List[_ElementBase], gdim: _typing.Optional[i
         A mixed finite element.
 
     """
+    if gdim is None:
+        gdim = elements[0]._gdim
+        for e in elements:
+            if e._gdim != gdim:
+                raise ValueError("Incompatible gdim in sub-elements.")
     return _MixedElement(elements, gdim=gdim)
 
 
@@ -1922,6 +1929,8 @@ def blocked_element(sub_element: _ElementBase, rank: _typing.Optional[int] = Non
     if shape is None:
         if rank is None:
             shape = tuple(sub_element.value_shape)
+        elif gdim is not None:
+            shape = tuple(gdim for _ in range(rank))
         else:
             tdim = len(_basix.topology(sub_element.cell_type)) - 1
             shape = tuple(tdim for _ in range(rank))

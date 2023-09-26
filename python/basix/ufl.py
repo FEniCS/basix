@@ -774,7 +774,7 @@ class _MixedElement(_ElementBase):
     @property
     def degree(self) -> int:
         """Degree of the element."""
-        return max((e.degree() for e in self._sub_elements), default=-1)
+        return max((e.degree for e in self._sub_elements), default=-1)
 
     def tabulate(self, nderivs: int, points: _npt.NDArray[_np.float64]) -> _npt.NDArray[_np.float64]:
         """Tabulate the basis functions of the element.

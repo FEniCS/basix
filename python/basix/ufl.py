@@ -593,7 +593,7 @@ class _ComponentElement(_ElementBase):
         tables = self.element.tabulate(nderivs, points)
         output = []
         for tbl in tables:
-            shape = (tbl.shape[0],) + self.element._value_shape + (-1,)
+            shape = (points.shape[0],) + self.element._value_shape + (-1,)
             tbl = tbl.reshape(shape)
             if len(self.element._value_shape) == 0:
                 output.append(tbl)
@@ -814,7 +814,7 @@ class _MixedElement(_ElementBase):
 
         """
         sub_dims = [0] + [e.dim for e in self._sub_elements]
-        sub_cmps = [0] + [e.value_size for e in self._sub_elements]
+        sub_cmps = [0] + [e.reference_value_size for e in self._sub_elements]
 
         irange = _np.cumsum(sub_dims)
         crange = _np.cumsum(sub_cmps)

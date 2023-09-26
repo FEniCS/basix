@@ -1245,7 +1245,7 @@ class _BlockedElement(_ElementBase):
         elements in the factoriaation.
 
         """
-        return self.sub_element.has_tensor_product_factorisation()
+        return self.sub_element.has_tensor_product_factorisation
 
 
 class _QuadratureElement(_ElementBase):

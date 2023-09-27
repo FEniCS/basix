@@ -10,10 +10,10 @@ def intersection(spaces: _typing.List[_SS]) -> _SS:
     """Compute the intersection of a list of Sobolev spaces.
 
     Args:
-      spaces: A list of Sobolev spaces.
+        spaces: A list of Sobolev spaces.
 
     Returns:
-      The intersection of the Sobolev spaces.
+        The intersection of the Sobolev spaces.
 
     """
     space = spaces[0]

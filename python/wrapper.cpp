@@ -129,7 +129,7 @@ NB_MODULE(_basixcpp, m)
   m.def(
       "tabulate_polynomials",
       [](polynomials::type polytype, cell::type celltype, int d,
-         nb::ndarray<double> x)
+         nb::ndarray<const double> x)
       {
         if (x.ndim() != 2)
           throw std::runtime_error("x has the wrong number of dimensions");
@@ -266,7 +266,8 @@ NB_MODULE(_basixcpp, m)
       .def(
           "tabulate",
           [](const FiniteElement<double>& self, int n,
-             nb::ndarray<nb::numpy, double, nb::shape<nb::any, nb::any>> x)
+             nb::ndarray<nb::numpy, const double, nb::shape<nb::any, nb::any>>
+                 x)
           {
             if (x.ndim() != 2)
               throw std::runtime_error("x has the wrong size");
@@ -281,9 +282,9 @@ NB_MODULE(_basixcpp, m)
       .def("__eq__", &FiniteElement<double>::operator==)
       .def(
           "push_forward",
-          [](const FiniteElement<double>& self, nb::ndarray<double> U,
-             nb::ndarray<double> J, nb::ndarray<double> detJ,
-             nb::ndarray<double> K)
+          [](const FiniteElement<double>& self, nb::ndarray<const double> U,
+             nb::ndarray<const double> J, nb::ndarray<const double> detJ,
+             nb::ndarray<const double> K)
           {
             auto [u, shape] = self.push_forward(
                 mdspan_t<const double, 3>(U.data(), U.shape(0), U.shape(1),
@@ -298,9 +299,9 @@ NB_MODULE(_basixcpp, m)
           basix::docstring::FiniteElement__push_forward.c_str())
       .def(
           "pull_back",
-          [](const FiniteElement<double>& self, nb::ndarray<double> u,
-             nb::ndarray<double> J, nb::ndarray<double> detJ,
-             nb::ndarray<double> K)
+          [](const FiniteElement<double>& self, nb::ndarray<const double> u,
+             nb::ndarray<const double> J, nb::ndarray<const double> detJ,
+             nb::ndarray<const double> K)
           {
             auto [U, shape] = self.pull_back(
                 mdspan_t<const double, 3>(u.data(), u.shape(0), u.shape(1),
@@ -344,8 +345,8 @@ NB_MODULE(_basixcpp, m)
             self.apply_inverse_transpose_dof_transformation(
                 data_span, block_size, cell_info);
             std::array<std::size_t, 1> shape{data.shape(0)};
-            return nb::ndarray<nb::numpy, double>(data_span.data(),
-                                                  shape.size(), shape.data());
+            return nb::ndarray<nb::numpy, const double>(
+                data_span.data(), shape.size(), shape.data());
           },
           basix::docstring::
               FiniteElement__apply_inverse_transpose_dof_transformation.c_str())

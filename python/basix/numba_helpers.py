@@ -291,25 +291,27 @@ def apply_dof_transformation_to_transpose_quadrilateral(
         entity_transformations: The DOF transformations for each entity.
         entity_dofs: The number of DOFs on each entity.
         data: The data. This will be changed by this function.
-        cell_info: An integer representing the orientations of the subentities of the cell.
+        cell_info: An integer representing the orientations of the
+            subentities of the cell.
+
     """
     apply_dof_transformation_to_transpose(2, 4, 1, entity_transformations, entity_dofs,
                                           data, cell_info, _numba.typed.List.empty_list(_numba.core.types.string))
 
 
 @_numba.jit(nopython=True)
-def apply_dof_transformation_to_transpose_tetrahedron(
-    entity_transformations: _Dict[str, _nda_f64],
-    entity_dofs: _Dict[str, _nda_i32],
-    data: _nda, cell_info: int
-):
+def apply_dof_transformation_to_transpose_tetrahedron(entity_transformations: _Dict[str, _nda_f64],
+                                                      entity_dofs: _Dict[str, _nda_i32],
+                                                      data: _nda, cell_info: int):
     """Apply dof transformations to some transposed data on a tetrahedron.
 
     Args:
         entity_transformations: The DOF transformations for each entity.
         entity_dofs: The number of DOFs on each entity.
         data: The data. This will be changed by this function.
-        cell_info: An integer representing the orientations of the subentities of the cell.
+        cell_info: An integer representing the orientations of the
+        subentities of the cell.
+
     """
     apply_dof_transformation_to_transpose(3, 6, 4, entity_transformations, entity_dofs,
                                           data, cell_info, _numba.typed.List(["triangle"] * 4))
@@ -327,18 +329,18 @@ def apply_dof_transformation_to_transpose_hexahedron(
         entity_transformations: The DOF transformations for each entity.
         entity_dofs: The number of DOFs on each entity.
         data: The data. This will be changed by this function.
-        cell_info: An integer representing the orientations of the subentities of the cell.
+        cell_info: An integer representing the orientations of the
+            subentities of the cell.
+
     """
     apply_dof_transformation_to_transpose(3, 12, 6, entity_transformations, entity_dofs,
                                           data, cell_info, _numba.typed.List(["quadrilateral"] * 6))
 
 
 @_numba.jit(nopython=True)
-def apply_dof_transformation_to_transpose_prism(
-    entity_transformations: _Dict[str, _nda_f64],
-    entity_dofs: _Dict[str, _nda_i32],
-    data: _nda, cell_info: int
-):
+def apply_dof_transformation_to_transpose_prism(entity_transformations: _Dict[str, _nda_f64],
+                                                entity_dofs: _Dict[str, _nda_i32],
+                                                data: _nda, cell_info: int):
     """Apply dof transformations to some transposed data on an prism.
 
     Args:
@@ -355,11 +357,9 @@ def apply_dof_transformation_to_transpose_prism(
 
 
 @_numba.jit(nopython=True)
-def apply_dof_transformation_to_transpose_pyramid(
-    entity_transformations: _Dict[str, _nda_f64],
-    entity_dofs: _Dict[str, _nda_i32],
-    data: _nda, cell_info: int
-):
+def apply_dof_transformation_to_transpose_pyramid(entity_transformations: _Dict[str, _nda_f64],
+                                                  entity_dofs: _Dict[str, _nda_i32],
+                                                  data: _nda, cell_info: int):
     """Apply dof transformations to some transposed data on an prism.
 
     Args:
@@ -371,4 +371,5 @@ def apply_dof_transformation_to_transpose_pyramid(
 
     """
     apply_dof_transformation_to_transpose(3, 8, 5, entity_transformations, entity_dofs,
-                                          data, cell_info, _numba.typed.List(["quadrilateral"] + ["triangle"] * 4))
+                                          data, cell_info, _
+                                          numba.typed.List(["quadrilateral"] + ["triangle"] * 4))

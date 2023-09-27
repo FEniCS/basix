@@ -136,7 +136,7 @@ NB_MODULE(_basixcpp, m)
         MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<
             const double,
             MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 2>>
-            _x((double*)x.data(), x.shape(0), x.shape(1));
+            _x(x.data(), x.shape(0), x.shape(1));
         return as_nbndarray(polynomials::tabulate(polytype, celltype, d, _x));
       },
       basix::docstring::tabulate_polynomials.c_str());
@@ -563,7 +563,7 @@ NB_MODULE(_basixcpp, m)
       [](cell::type cell_type, const std::vector<int>& value_shape,
          nb::ndarray<double> wcoeffs,
          std::vector<std::vector<nb::ndarray<double>>> x,
-         const std::vector<std::vector<nb::ndarray<double>>>& M,
+         std::vector<std::vector<nb::ndarray<double>>> M,
          int interpolation_nderivs, maps::type map_type,
          sobolev::space sobolev_space, bool discontinuous,
          int highest_complete_degree, int highest_degree,
@@ -580,8 +580,8 @@ NB_MODULE(_basixcpp, m)
           {
             if (x[i][j].ndim() != 2)
               throw std::runtime_error("x has the wrong number of dimensions");
-            _x[i].emplace_back((double*)x[i][j].data(), x[i][j].shape(0),
-                               x[i][j].shape(1));
+            _x[i].emplace_back(static_cast<double*>(x[i][j].data()),
+                               x[i][j].shape(0), x[i][j].shape(1));
           }
         }
 
@@ -592,9 +592,9 @@ NB_MODULE(_basixcpp, m)
           {
             if (M[i][j].ndim() != 4)
               throw std::runtime_error("M has the wrong number of dimensions");
-            _M[i].emplace_back((double*)M[i][j].data(), M[i][j].shape(0),
-                               M[i][j].shape(1), M[i][j].shape(2),
-                               M[i][j].shape(3));
+            _M[i].emplace_back(static_cast<double*>(M[i][j].data()),
+                               M[i][j].shape(0), M[i][j].shape(1),
+                               M[i][j].shape(2), M[i][j].shape(3));
           }
         }
 
@@ -604,7 +604,7 @@ NB_MODULE(_basixcpp, m)
 
         return basix::create_custom_element<double>(
             cell_type, _vs,
-            mdspan_t<const double, 2>((double*)wcoeffs.data(), wcoeffs.shape(0),
+            mdspan_t<const double, 2>(wcoeffs.data(), wcoeffs.shape(0),
                                       wcoeffs.shape(1)),
             _x, _M, interpolation_nderivs, map_type, sobolev_space,
             discontinuous, highest_complete_degree, highest_degree, poly_type);
@@ -668,7 +668,7 @@ NB_MODULE(_basixcpp, m)
         MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<
             const double,
             MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 2>>
-            _x((double*)x.data(), x.shape(0), x.shape(1));
+            _x(static_cast<double*>(x.data()), x.shape(0), x.shape(1));
         return as_nbndarray(polyset::tabulate(celltype, polytype, d, n, _x));
       },
       basix::docstring::tabulate_polynomial_set.c_str());

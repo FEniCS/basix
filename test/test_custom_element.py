@@ -165,9 +165,10 @@ def create_lagrange1_quad(cell_type=basix.CellType.quadrilateral, degree=1, wcoe
              [z, z, z, z], [z], []]
     if value_shape is None:
         value_shape = []
-    basix.create_custom_element(
-        cell_type, value_shape, wcoeffs, x, M, interpolation_nderivs, basix.MapType.identity,
-        basix.SobolevSpace.H1, discontinuous, 1, degree, basix.PolysetType.standard)
+    basix.create_custom_element(cell_type, value_shape, wcoeffs, x, M,
+                                interpolation_nderivs, basix.MapType.identity,
+                                basix.SobolevSpace.H1, discontinuous, 1,
+                                degree, basix.PolysetType.standard)
 
 
 def test_create_lagrange1_quad():

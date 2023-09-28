@@ -23,7 +23,7 @@ def test_finite_element(inputs):
     (basix.ElementFamily.P, "triangle", 2),
 ])
 def test_vector_element(inputs):
-    e = basix.ufl.element(*inputs, rank=1)
+    e = basix.ufl.element(*inputs, shape=(2, ))
     table = e.tabulate(0, [[0, 0]])
     assert table.shape == (1, 1, e.value_size, e.dim)
 
@@ -35,7 +35,7 @@ def test_vector_element(inputs):
     (basix.ElementFamily.P, "triangle", 2),
 ])
 def test_element(inputs):
-    basix.ufl.element(*inputs, rank=2)
+    basix.ufl.element(*inputs, shape=(2, 2))
 
 
 @pytest.mark.parametrize("inputs", [
@@ -82,7 +82,7 @@ def test_converted_elements(celltype, family, degree, variants):
     assert e1 == basix.ufl.convert_ufl_element(e1)
     assert e1 == basix.ufl.convert_ufl_element(e2)
 
-    e1 = basix.ufl.element(celltype, family, degree, *variants, rank=1)
+    e1 = basix.ufl.element(celltype, family, degree, *variants, shape=(3, ))
     e2 = ufl.VectorElement(celltype, family, degree)
     assert e1 == basix.ufl.convert_ufl_element(e1)
     assert e1 == basix.ufl.convert_ufl_element(e2)
@@ -92,9 +92,9 @@ def test_converted_elements(celltype, family, degree, variants):
     [ufl.FiniteElement("Lagrange", "triangle", 1), ufl.FiniteElement("Bubble", "triangle", 3)],
     [ufl.FiniteElement("Lagrange", "quadrilateral", 1), basix.ufl.element("Bubble", "quadrilateral", 2)],
     [ufl.VectorElement("Lagrange", "quadrilateral", 1),
-     basix.ufl.element("Bubble", "quadrilateral", 2, rank=1)],
+     basix.ufl.element("Bubble", "quadrilateral", 2, shape=(2, ))],
     [ufl.TensorElement("Lagrange", "quadrilateral", 1),
-     basix.ufl.element("Bubble", "quadrilateral", 2, rank=2)],
+     basix.ufl.element("Bubble", "quadrilateral", 2, shape=(2, 2))],
 ])
 def test_enriched_element(elements):
     e = basix.ufl.enriched_element([basix.ufl.convert_ufl_element(e) for e in elements])

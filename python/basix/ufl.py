@@ -1609,7 +1609,7 @@ def _compute_signature(element: _basix.finite_element.FiniteElement) -> str:
 def element(family: _typing.Union[_basix.ElementFamily, str], cell: _typing.Union[_basix.CellType, str], degree: int,
             lagrange_variant: _basix.LagrangeVariant = _basix.LagrangeVariant.unset,
             dpc_variant: _basix.DPCVariant = _basix.DPCVariant.unset, discontinuous: bool = False,
-            rank: _typing.Optional[int] = None, shape: _typing.Optional[_typing.Tuple[int, ...]] = None,
+            shape: _typing.Optional[_typing.Tuple[int, ...]] = None,
             symmetry: _typing.Optional[bool] = None, gdim: _typing.Optional[int] = None) -> _ElementBase:
     """Create a UFL compatible element using Basix.
 
@@ -1621,16 +1621,8 @@ def element(family: _typing.Union[_basix.ElementFamily, str], cell: _typing.Unio
         dpc_variant: Variant of DPC to be used.
         discontinuous: If ``True``, the discontinuous version of the
             element is created.
-        rank: Rank of the value shape of the element. For scalar-valued
-            families, setting ``rank=1`` creates a vector element where
-            each component of the vector is represented by the element.
-            Similarly, ``rank>2`` creates a tensor element. If ``shape``
-            is provided, then ``rank`` is not required .
         shape: Value shape of the element. For scalar-valued families,
-            this can be used to create vector and tensor elements. If
-            ``rank`` is set but ``shape`` is not, then ``shape`` will be
-            set to ``()`` for rank 0, ``(tdim,)`` for rank 1, and
-            ``(tdim, ..., tdim)`` for rank 2 or higher.
+            this can be used to create vector and tensor elements.
         symmetry: Set to ``True`` if the tensor is symmetric. Valid for
             rank 2 elements only.
         gdim: Geometric dimension. If not set the geometric dimension is
@@ -1640,9 +1632,6 @@ def element(family: _typing.Union[_basix.ElementFamily, str], cell: _typing.Unio
         A finite element.
 
     """
-    if rank is not None and shape is not None and len(shape) != rank:
-        raise ValueError("Rank and shape are incompatible.")
-
     # Conversion of string arguments to types
     if isinstance(cell, str):
         cell = _basix.cell.string_to_type(cell)
@@ -1685,19 +1674,9 @@ def element(family: _typing.Union[_basix.ElementFamily, str], cell: _typing.Unio
     vs = tuple(e.value_shape)
     tdim = len(_basix.topology(cell)) - 1
 
-    blocked = True
-    if shape is None and rank is None:
-        blocked = False
-    elif shape is not None and shape == vs:
-        blocked = False
-    elif rank is not None and tuple(tdim for _ in range(rank)) == vs:
-        blocked = False
-
-    if blocked:
-        return blocked_element(ufl_e, shape=shape, rank=rank, gdim=gdim, symmetry=symmetry)
+    if shape is None or shape == vs:
+        return blocked_element(ufl_e, shape=shape, gdim=gdim, symmetry=symmetry)
     else:
-        if rank is not None and shape is not None and len(shape) != rank:
-            raise ValueError("Incompatible shape and rank.")
         if symmetry is not None:
             raise ValueError("Cannot pass a symmetry argument to this element.")
         return ufl_e
@@ -1898,23 +1877,16 @@ def real_element(cell: _typing.Union[_basix.CellType, str],
 
 
 @_functools.lru_cache()
-def blocked_element(sub_element: _ElementBase, rank: _typing.Optional[int] = None,
-                    shape: _typing.Optional[_typing.Tuple[int, ...]] = None,
-                    symmetry: _typing.Optional[bool] = None, gdim: _typing.Optional[int] = None) -> _ElementBase:
+def blocked_element(
+    sub_element: _ElementBase, shape: _typing.Tuple[int, ...],
+    symmetry: _typing.Optional[bool] = None, gdim: _typing.Optional[int] = None
+) -> _ElementBase:
     """Create a UFL compatible blocked element.
 
     Args:
         sub_element: Element used for each block.
-        rank: Rank of the value shape of the element. For scalar-valued
-            families, setting ``rank=1`` creates a vector element where
-            each component of the vector is represented by the element.
-            Similarly, ``rank>2`` creates a tensor element. If ``shape``
-            is provided, then ``rank`` is not required.
         shape: Value shape of the element. For scalar-valued families,
-            this can be used to create vector and tensor elements. If
-            `rank` is set but `shape` is not, then `shape`` will be set
-            to ``()`` for rank 0, ``(tdim,)`` for rank 1, and ``(tdim,
-            ..., tdim)`` for rank 2 or higher.
+            this can be used to create vector and tensor elements.
         symmetry: Set to ``True`` if the tensor is symmetric. Valid for
             rank 2 elements only.
         gdim: Geometric dimension. If not set the geometric dimension is
@@ -1926,22 +1898,6 @@ def blocked_element(sub_element: _ElementBase, rank: _typing.Optional[int] = Non
     """
     if len(sub_element.value_shape()) != 0:
         raise ValueError("Cannot create a blocked element containing a non-scalar element.")
-    if rank is None and shape is None:
-        raise ValueError("At least one of rank and shape must be set.")
-
-    if shape is None:
-        if rank is None:
-            shape = tuple(sub_element.value_shape())
-        else:
-            if gdim is None:
-                tdim = len(_basix.topology(sub_element.cell_type)) - 1
-                shape = tuple(tdim for _ in range(rank))
-            else:
-                shape = tuple(gdim for _ in range(rank))
-    if rank is None:
-        rank = len(shape)
-    if rank != len(shape):
-        raise ValueError("Incompatible rank and shape.")
 
     return _BlockedElement(sub_element, shape=shape, symmetry=symmetry, gdim=gdim)
 

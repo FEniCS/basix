@@ -575,8 +575,12 @@ NB_MODULE(_basixcpp, m)
       "create_custom_element",
       [](cell::type cell_type, const std::vector<int>& value_shape,
          nb::ndarray<const double> wcoeffs,
-         std::vector<std::vector<nb::ndarray<const double>>> x,
-         std::vector<std::vector<nb::ndarray<const double>>> M,
+         std::vector<std::vector<
+             nb::ndarray<const double, nb::shape<nb::any, nb::any>>>>
+             x,
+         std::vector<std::vector<nb::ndarray<
+             const double, nb::shape<nb::any, nb::any, nb::any, nb::any>>>>
+             M,
          int interpolation_nderivs, maps::type map_type,
          sobolev::space sobolev_space, bool discontinuous,
          int highest_complete_degree, int highest_degree,
@@ -592,8 +596,6 @@ NB_MODULE(_basixcpp, m)
         {
           for (std::size_t j = 0; j < x[i].size(); ++j)
           {
-            if (x[i][j].ndim() != 2)
-              throw std::runtime_error("x has the wrong number of dimensions");
             _x[i].emplace_back(x[i][j].data(), x[i][j].shape(0),
                                x[i][j].shape(1));
           }
@@ -604,8 +606,6 @@ NB_MODULE(_basixcpp, m)
         {
           for (std::size_t j = 0; j < M[i].size(); ++j)
           {
-            if (M[i][j].ndim() != 4)
-              throw std::runtime_error("M has the wrong number of dimensions");
             _M[i].emplace_back(M[i][j].data(), M[i][j].shape(0),
                                M[i][j].shape(1), M[i][j].shape(2),
                                M[i][j].shape(3));

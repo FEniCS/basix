@@ -568,10 +568,14 @@ NB_MODULE(_basixcpp, m)
   // Create FiniteElement
   m.def(
       "create_custom_element",
-      [](cell::type cell_type, const std::vector<int>& value_shape,
-         nb::ndarray<const double> wcoeffs,
-         std::vector<std::vector<nb::ndarray<const double>>> x,
-         std::vector<std::vector<nb::ndarray<const double>>> M,
+      [](cell::type cell_type, const std::vector<std::size_t>& value_shape,
+         nb::ndarray<const double, nb::shape<nb::any, nb::any>> wcoeffs,
+         std::vector<std::vector<
+             nb::ndarray<const double, nb::shape<nb::any, nb::any>>>>
+             x,
+         std::vector<std::vector<nb::ndarray<
+             const double, nb::shape<nb::any, nb::any, nb::any, nb::any>>>>
+             M,
          int interpolation_nderivs, maps::type map_type,
          sobolev::space sobolev_space, bool discontinuous,
          int highest_complete_degree, int highest_degree,
@@ -587,8 +591,6 @@ NB_MODULE(_basixcpp, m)
         {
           for (std::size_t j = 0; j < x[i].size(); ++j)
           {
-            if (x[i][j].ndim() != 2)
-              throw std::runtime_error("x has the wrong number of dimensions");
             _x[i].emplace_back(x[i][j].data(), x[i][j].shape(0),
                                x[i][j].shape(1));
           }
@@ -599,20 +601,14 @@ NB_MODULE(_basixcpp, m)
         {
           for (std::size_t j = 0; j < M[i].size(); ++j)
           {
-            if (M[i][j].ndim() != 4)
-              throw std::runtime_error("M has the wrong number of dimensions");
             _M[i].emplace_back(M[i][j].data(), M[i][j].shape(0),
                                M[i][j].shape(1), M[i][j].shape(2),
                                M[i][j].shape(3));
           }
         }
 
-        std::vector<std::size_t> _vs(value_shape.size());
-        for (std::size_t i = 0; i < value_shape.size(); ++i)
-          _vs[i] = static_cast<std::size_t>(value_shape[i]);
-
         return basix::create_custom_element<double>(
-            cell_type, _vs,
+            cell_type, value_shape,
             mdspan_t<const double, 2>(wcoeffs.data(), wcoeffs.shape(0),
                                       wcoeffs.shape(1)),
             _x, _M, interpolation_nderivs, map_type, sobolev_space,

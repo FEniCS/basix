@@ -266,8 +266,8 @@ def test_M_too_many_derivs():
 def test_M_zero_row():
     """Test that a runtime error is thrown when M has a zero row."""
     z = np.zeros((0, 1, 0, 1))
-    M = [[np.array([[[[1.]]]]), np.array([[[[1.]]]]), np.array([[[[1.]]]]), np.array([[[[0.]]]])],
-         [z, z, z, z], [z], []]
+    M = [[np.array([[[[1.]]]]), np.array([[[[1.]]]]), np.array(
+        [[[[1.]]]]), np.array([[[[0.]]]])], [z, z, z, z], [z], []]
     assert_failure(M=M)
 
 

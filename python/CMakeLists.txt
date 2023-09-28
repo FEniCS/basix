@@ -46,12 +46,6 @@ if (HAVE_PEDANTIC)
   target_compile_options(_basixcpp PRIVATE -Wall;-Wextra;-Werror;-Wno-comment)
 endif()
 
-# In Debug mode override pybind11 symbols visibility. Symbols must be
-# visible to backtrace_symbols() to produce nice logs
-if (CMAKE_BUILD_TYPE STREQUAL "Debug")
-  target_compile_options(_basixcpp PRIVATE "-fvisibility=default")
-endif()
-
 # scikit-build specific steps
 if (SKBUILD)
   # Add relative rpath so _basixcpp can find the Basix::basix library

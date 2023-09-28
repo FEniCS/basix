@@ -1933,8 +1933,11 @@ def blocked_element(sub_element: _ElementBase, rank: _typing.Optional[int] = Non
         if rank is None:
             shape = tuple(sub_element.value_shape())
         else:
-            tdim = len(_basix.topology(sub_element.cell_type)) - 1
-            shape = tuple(tdim for _ in range(rank))
+            if gdim is None:
+                tdim = len(_basix.topology(sub_element.cell_type)) - 1
+                shape = tuple(tdim for _ in range(rank))
+            else:
+                shape = tuple(gdim for _ in range(rank))
     if rank is None:
         rank = len(shape)
     if rank != len(shape):

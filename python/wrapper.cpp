@@ -346,14 +346,9 @@ NB_MODULE(_basixcpp, m)
              nb::ndarray<double, nb::shape<nb::any>> data, int block_size,
              std::uint32_t cell_info)
           {
-            // FIXME: This is odd because the application is in-place
-            // but the function returns an object
             std::span<double> data_span(data.data(), data.shape(0));
             self.apply_inverse_transpose_dof_transformation(
                 data_span, block_size, cell_info);
-            std::array<std::size_t, 1> shape{data.shape(0)};
-            return nb::ndarray<nb::numpy, const double>(
-                data_span.data(), shape.size(), shape.data());
           },
           basix::docstring::
               FiniteElement__apply_inverse_transpose_dof_transformation.c_str())

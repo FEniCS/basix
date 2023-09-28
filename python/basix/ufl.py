@@ -1671,15 +1671,12 @@ def element(family: _typing.Union[_basix.ElementFamily, str], cell: _typing.Unio
     e = _basix.create_element(family, cell, degree, lagrange_variant, dpc_variant, discontinuous)
     ufl_e = _BasixElement(e, gdim=gdim)
 
-    vs = tuple(e.value_shape)
-    tdim = len(_basix.topology(cell)) - 1
-
-    if shape is None or shape == vs:
-        return blocked_element(ufl_e, shape=shape, gdim=gdim, symmetry=symmetry)
-    else:
+    if shape is None or shape == tuple(e.value_shape):
         if symmetry is not None:
             raise ValueError("Cannot pass a symmetry argument to this element.")
         return ufl_e
+    else:
+        return blocked_element(ufl_e, shape=shape, gdim=gdim, symmetry=symmetry)
 
 
 def enriched_element(elements: _typing.List[_ElementBase],

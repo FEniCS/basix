@@ -107,7 +107,7 @@ def apply_dof_transformation_triangle(
         entity_dofs: The number of DOFs on each entity.
         data: The data. This will be changed by this function.
         cell_info: An integer representing the orientations of the
-            subentities of the cell.
+            sub-entities of the cell.
 
     """
     apply_dof_transformation(2, 3, 1, entity_transformations, entity_dofs,
@@ -127,7 +127,7 @@ def apply_dof_transformation_quadrilateral(
         entity_dofs: The number of DOFs on each entity.
         data: The data. This will be changed by this function.
         cell_info: An integer representing the orientations of the
-            subentities of the cell.
+            sub-entities of the cell.
 
     """
     apply_dof_transformation(2, 4, 1, entity_transformations, entity_dofs,
@@ -371,5 +371,5 @@ def apply_dof_transformation_to_transpose_pyramid(entity_transformations: _Dict[
 
     """
     apply_dof_transformation_to_transpose(3, 8, 5, entity_transformations, entity_dofs,
-                                          data, cell_info, _
-                                          numba.typed.List(["quadrilateral"] + ["triangle"] * 4))
+                                          data, cell_info,
+                                          _numba.typed.List(["quadrilateral"] + ["triangle"] * 4))

@@ -65,8 +65,8 @@ auto as_nbndarray(V&& array, U&& shape)
       = nb::capsule(x_ptr.get(), [](void* p) noexcept
                     { std::unique_ptr<_V>(reinterpret_cast<_V*>(p)); });
   x_ptr.release();
-  return nb::ndarray<nb::numpy, typename _V::value_type>(
-      const_cast<typename _V::value_type*>(data), dim, shape.data(), capsule);
+  return nb::ndarray<nb::numpy, typename _V::value_type>(data, dim,
+                                                         shape.data(), capsule);
 }
 
 template <typename V>
@@ -282,9 +282,11 @@ NB_MODULE(_basixcpp, m)
       .def("__eq__", &FiniteElement<double>::operator==)
       .def(
           "push_forward",
-          [](const FiniteElement<double>& self, nb::ndarray<const double> U,
-             nb::ndarray<const double> J, nb::ndarray<const double> detJ,
-             nb::ndarray<const double> K)
+          [](const FiniteElement<double>& self,
+             nb::ndarray<const double, nb::shape<nb::any, nb::any, nb::any>> U,
+             nb::ndarray<const double, nb::shape<nb::any, nb::any, nb::any>> J,
+             nb::ndarray<const double, nb::shape<nb::any>> detJ,
+             nb::ndarray<const double, nb::shape<nb::any, nb::any, nb::any>> K)
           {
             auto [u, shape] = self.push_forward(
                 mdspan_t<const double, 3>(U.data(), U.shape(0), U.shape(1),
@@ -299,9 +301,11 @@ NB_MODULE(_basixcpp, m)
           basix::docstring::FiniteElement__push_forward.c_str())
       .def(
           "pull_back",
-          [](const FiniteElement<double>& self, nb::ndarray<const double> u,
-             nb::ndarray<const double> J, nb::ndarray<const double> detJ,
-             nb::ndarray<const double> K)
+          [](const FiniteElement<double>& self,
+             nb::ndarray<const double, nb::shape<nb::any, nb::any, nb::any>> u,
+             nb::ndarray<const double, nb::shape<nb::any, nb::any, nb::any>> J,
+             nb::ndarray<const double, nb::shape<nb::any>> detJ,
+             nb::ndarray<const double, nb::shape<nb::any, nb::any, nb::any>> K)
           {
             auto [U, shape] = self.pull_back(
                 mdspan_t<const double, 3>(u.data(), u.shape(0), u.shape(1),
@@ -316,8 +320,9 @@ NB_MODULE(_basixcpp, m)
           basix::docstring::FiniteElement__pull_back.c_str())
       .def(
           "apply_dof_transformation",
-          [](const FiniteElement<double>& self, nb::ndarray<double> data,
-             int block_size, std::uint32_t cell_info)
+          [](const FiniteElement<double>& self,
+             nb::ndarray<double, nb::shape<nb::any>> data, int block_size,
+             std::uint32_t cell_info)
           {
             std::span<double> data_span(data.data(), data.shape(0));
             self.apply_dof_transformation(data_span, block_size, cell_info);
@@ -325,8 +330,9 @@ NB_MODULE(_basixcpp, m)
           basix::docstring::FiniteElement__apply_dof_transformation.c_str())
       .def(
           "apply_dof_transformation_to_transpose",
-          [](const FiniteElement<double>& self, nb::ndarray<double> data,
-             int block_size, std::uint32_t cell_info)
+          [](const FiniteElement<double>& self,
+             nb::ndarray<double, nb::shape<nb::any>> data, int block_size,
+             std::uint32_t cell_info)
           {
             std::span<double> data_span(data.data(), data.shape(0));
             self.apply_dof_transformation_to_transpose(data_span, block_size,
@@ -336,8 +342,9 @@ NB_MODULE(_basixcpp, m)
               .c_str())
       .def(
           "apply_inverse_transpose_dof_transformation",
-          [](const FiniteElement<double>& self, nb::ndarray<double> data,
-             int block_size, std::uint32_t cell_info)
+          [](const FiniteElement<double>& self,
+             nb::ndarray<double, nb::shape<nb::any>> data, int block_size,
+             std::uint32_t cell_info)
           {
             // FIXME: This is odd because the application is in-place
             // but the function returns an object
@@ -437,8 +444,9 @@ NB_MODULE(_basixcpp, m)
           [](const FiniteElement<double>& self)
           {
             auto& [x, shape] = self.points();
-            return nb::ndarray<nb::numpy, double, nb::shape<nb::any, nb::any>>(
-                const_cast<double*>(x.data()), shape.size(), shape.data());
+            return nb::ndarray<nb::numpy, const double,
+                               nb::shape<nb::any, nb::any>>(
+                x.data(), shape.size(), shape.data());
           },
           "TODO")
       .def_prop_ro(
@@ -446,8 +454,9 @@ NB_MODULE(_basixcpp, m)
           [](const FiniteElement<double>& self)
           {
             auto& [P, shape] = self.interpolation_matrix();
-            return nb::ndarray<nb::numpy, double, nb::shape<nb::any, nb::any>>(
-                const_cast<double*>(P.data()), shape.size(), shape.data());
+            return nb::ndarray<nb::numpy, const double,
+                               nb::shape<nb::any, nb::any>>(
+                P.data(), shape.size(), shape.data());
           },
           "TODO")
       .def_prop_ro(
@@ -455,8 +464,9 @@ NB_MODULE(_basixcpp, m)
           [](const FiniteElement<double>& self)
           {
             auto& [D, shape] = self.dual_matrix();
-            return nb::ndarray<nb::numpy, double, nb::shape<nb::any, nb::any>>(
-                const_cast<double*>(D.data()), shape.size(), shape.data());
+            return nb::ndarray<nb::numpy, const double,
+                               nb::shape<nb::any, nb::any>>(
+                D.data(), shape.size(), shape.data());
           },
           "TODO")
       .def_prop_ro(
@@ -464,8 +474,9 @@ NB_MODULE(_basixcpp, m)
           [](const FiniteElement<double>& self)
           {
             auto& [P, shape] = self.coefficient_matrix();
-            return nb::ndarray<nb::numpy, double, nb::shape<nb::any, nb::any>>(
-                const_cast<double*>(P.data()), shape.size(), shape.data());
+            return nb::ndarray<nb::numpy, const double,
+                               nb::shape<nb::any, nb::any>>(
+                P.data(), shape.size(), shape.data());
           },
           "Coefficient matrix.")
       .def_prop_ro(
@@ -473,8 +484,9 @@ NB_MODULE(_basixcpp, m)
           [](const FiniteElement<double>& self)
           {
             auto& [w, shape] = self.wcoeffs();
-            return nb::ndarray<nb::numpy, double, nb::shape<nb::any, nb::any>>(
-                const_cast<double*>(w.data()), shape.size(), shape.data());
+            return nb::ndarray<nb::numpy, const double,
+                               nb::shape<nb::any, nb::any>>(
+                w.data(), shape.size(), shape.data());
           },
           "TODO")
       .def_prop_ro(
@@ -485,14 +497,14 @@ NB_MODULE(_basixcpp, m)
                                                    std::array<std::size_t, 4>>>,
                              4>& _M
                 = self.M();
-            std::vector<std::vector<nb::ndarray<nb::numpy, double>>> M(4);
+            std::vector<std::vector<nb::ndarray<nb::numpy, const double>>> M(4);
             for (int i = 0; i < 4; ++i)
             {
               for (std::size_t j = 0; j < _M[i].size(); ++j)
               {
                 auto& mat = _M[i][j];
-                M[i].emplace_back(const_cast<double*>(mat.first.data()),
-                                  mat.second.size(), mat.second.data());
+                M[i].emplace_back(mat.first.data(), mat.second.size(),
+                                  mat.second.data());
               }
             }
             return M;
@@ -506,14 +518,14 @@ NB_MODULE(_basixcpp, m)
                                                    std::array<std::size_t, 2>>>,
                              4>& _x
                 = self.x();
-            std::vector<std::vector<nb::ndarray<nb::numpy, double>>> x(4);
+            std::vector<std::vector<nb::ndarray<nb::numpy, const double>>> x(4);
             for (int i = 0; i < 4; ++i)
             {
               for (std::size_t j = 0; j < _x[i].size(); ++j)
               {
                 auto& vec = _x[i][j];
-                x[i].emplace_back(const_cast<double*>(vec.first.data()),
-                                  vec.second.size(), vec.second.data());
+                x[i].emplace_back(vec.first.data(), vec.second.size(),
+                                  vec.second.data());
               }
             }
             return x;

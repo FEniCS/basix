@@ -1814,10 +1814,21 @@ def custom_element(cell_type: _basix.CellType, value_shape: _typing.Union[_typin
         A custom finite element.
 
     """
-    return _BasixElement(_basix.create_custom_element(
-        cell_type, list(value_shape), wcoeffs, x, M, interpolation_nderivs,
-        map_type, sobolev_space, discontinuous, highest_complete_degree,
-        highest_degree, polyset_type), gdim=gdim)
+    e = _basix.create_custom_element(
+        cell_type,
+        list(value_shape),
+        wcoeffs,
+        x,
+        M,
+        interpolation_nderivs,
+        map_type,
+        sobolev_space,
+        discontinuous,
+        highest_complete_degree,
+        highest_degree,
+        polyset_type
+    )
+    return _BasixElement(e, gdim=gdim)
 
 
 def mixed_element(elements: _typing.List[_ElementBase], gdim: _typing.Optional[int] = None) -> _ElementBase:

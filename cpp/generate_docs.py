@@ -1,5 +1,5 @@
 """
-Generate docs for the pybind layer from the C++ header files.
+Generate docs for the nanobind layer from the C++ header files.
 
 To update the docs, run:
     python generate_docs.py > basix/docs.h

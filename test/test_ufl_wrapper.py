@@ -71,19 +71,19 @@ def test_convert_ufl_element(e):
     hash(e2)
 
 
-@pytest.mark.parametrize("celltype, family, degree, variants", [
+@pytest.mark.parametrize("family, celltype, degree, variants", [
     ("Lagrange", "triangle", 1, []),
     ("Lagrange", "triangle", 3, [basix.LagrangeVariant.gll_warped]),
     ("Lagrange", "tetrahedron", 2, [])
 ])
-def test_converted_elements(celltype, family, degree, variants):
-    e1 = basix.ufl.element(celltype, family, degree, *variants)
-    e2 = ufl.FiniteElement(celltype, family, degree)
+def test_converted_elements(family, celltype, degree, variants):
+    e1 = basix.ufl.element(family, celltype, degree, *variants)
+    e2 = ufl.FiniteElement(family, celltype, degree)
     assert e1 == basix.ufl.convert_ufl_element(e1)
     assert e1 == basix.ufl.convert_ufl_element(e2)
 
-    e1 = basix.ufl.element(celltype, family, degree, *variants, shape=(3, ))
-    e2 = ufl.VectorElement(celltype, family, degree)
+    e1 = basix.ufl.element(family, celltype, degree, *variants, shape=(2, ) if celltype == "triangle" else (3, ))
+    e2 = ufl.VectorElement(family, celltype, degree)
     assert e1 == basix.ufl.convert_ufl_element(e1)
     assert e1 == basix.ufl.convert_ufl_element(e2)
 

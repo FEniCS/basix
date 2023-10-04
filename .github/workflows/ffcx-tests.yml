@@ -29,7 +29,7 @@ jobs:
       CXX: g++-10
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
@@ -50,14 +50,14 @@ jobs:
 
       - name: Get FFCx source (default branch)
         if: github.event_name != 'workflow_dispatch'
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           path: ./ffcx
           repository: FEniCS/ffcx
           ref: main
       - name: Get FFCx source (specified branch)
         if: github.event_name == 'workflow_dispatch'
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           path: ./ffcx
           repository: FEniCS/ffcx

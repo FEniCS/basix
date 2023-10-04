@@ -54,7 +54,7 @@ Returns:
 )";
 
 const std::string create_lattice__celltype_n_type_exterior = R"(
-@brief Create a lattice of points on a reference cell optionally
+Create a lattice of points on a reference cell optionally
 including the outer surface points.
 
 For a given `celltype`, this creates a set of points on a regular
@@ -80,7 +80,7 @@ Returns:
 )";
 
 const std::string create_lattice__celltype_n_type_exterior_method = R"(
-@brief Create a lattice of points on a reference cell optionally
+Create a lattice of points on a reference cell optionally
 including the outer surface points.
 
 For a given `celltype`, this creates a set of points on a regular
@@ -169,7 +169,7 @@ Returns:
 )";
 
 const std::string FiniteElement__tabulate = R"(
-@brief Compute basis values and derivatives at set of points.
+Compute basis values and derivatives at set of points.
 
 NOTE: The version of `FiniteElement::tabulate` with the basis data
 as an out argument should be preferred for repeated call where
@@ -270,7 +270,7 @@ Returns:
 )";
 
 const std::string FiniteElement__base_transformations = R"(
-@brief Get the base transformations.
+Get the base transformations.
 
 The base transformations represent the effect of rotating or reflecting
 a subentity of the cell on the numbering and orientation of the DOFs.
@@ -409,69 +409,14 @@ Args:
     discontinuous: Indicates whether or not this is the discontinuous version of the element
     highest_complete_degree: The highest degree n such that a Lagrange (or vector Lagrange) element of degree n is a subspace of this element
     highest_degree: The degree of a polynomial in this element's polyset
+    poly_type: The type of polyset to use for this element
 
 Returns:
     A custom finite element
 )";
 
-const std::string create_element__family_cell_degree_discontinuous = R"(
-Create an element
-
-Args:
-    family: The element family
-    cell: The reference cell type that the element is defined on
-    degree: The degree of the element
-    discontinuous: Indicates whether the element is discontinuous between cells points of the element. The discontinuous element will have the same DOFs, but they will all be associated with the interior of the cell.
-
-Returns:
-    A finite element
-)";
-
-const std::string create_element__family_cell_degree_lvariant_discontinuous
-    = R"(
-Create an element using a given Lagrange variant
-
-Args:
-    family: The element family
-    cell: The reference cell type that the element is defined on
-    degree: The degree of the element
-    lvariant: The variant of Lagrange to use
-    discontinuous: Indicates whether the element is discontinuous between cells points of the element. The discontinuous element will have the same DOFs, but they will all be associated with the interior of the cell.
-
-Returns:
-    A finite element
-)";
-
-const std::string create_element__family_cell_degree_lvariant = R"(
-Create a continuous element using a given Lagrange variant
-
-Args:
-    family: The element family
-    cell: The reference cell type that the element is defined on
-    degree: The degree of the element
-    lvariant: The variant of Lagrange to use
-
-Returns:
-    A finite element
-)";
-
-const std::string create_element__family_cell_degree_dvariant_discontinuous
-    = R"(
-Create an element using a given DPC variant
-
-Args:
-    family: The element family
-    cell: The reference cell type that the element is defined on
-    degree: The degree of the element
-    dvariant: The variant of DPC to use
-    discontinuous: Indicates whether the element is discontinuous between cells points of the element. The discontinuous element will have the same DOFs, but they will all be associated with the interior of the cell.
-
-Returns:
-    A finite element
-)";
-
 const std::string
-    create_element__family_cell_degree_lvariant_dvariant_discontinuous
+    create_element__family_cell_degree_lvariant_dvariant_discontinuous_dof_ordering
     = R"(
 Create an element using a given Lagrange variant and a given DPC variant
 
@@ -482,76 +427,37 @@ Args:
     lvariant: The variant of Lagrange to use
     dvariant: The variant of DPC to use
     discontinuous: Indicates whether the element is discontinuous between cells points of the element. The discontinuous element will have the same DOFs, but they will all be associated with the interior of the cell.
-
-Returns:
-    A finite element
-)";
-
-const std::string create_element__family_cell_degree_dvariant = R"(
-Create a continuous element using a given DPC variant
-
-Args:
-    family: The element family
-    cell: The reference cell type that the element is defined on
-    degree: The degree of the element
-    dvariant: The variant of DPC to use
-
-Returns:
-    A finite element
-)";
-
-const std::string create_element__family_cell_degree_lvariant_dvariant = R"(
-Create a continuous element using a given Lagrange variant and a given DPC
-variant
-
-Args:
-    family: The element family
-    cell: The reference cell type that the element is defined on
-    degree: The degree of the element
-    lvariant: The variant of Lagrange to use
-    dvariant: The variant of DPC to use
-
-Returns:
-    A finite element
-)";
-
-const std::string create_element__family_cell_degree = R"(
-Create a continuous element
-
-Args:
-    family: The element family
-    cell: The reference cell type that the element is defined on
-    degree: The degree of the element
+    dof_ordering: Ordering of dofs for ElementDofLayout
 
 Returns:
     A finite element
 )";
 
 const std::string compute_interpolation_operator = R"(
-Computes a matrix that represents the interpolation between two
-elements.
+Compute a matrix that represents the interpolation between
+two elements.
 
 If the two elements have the same value size, this function returns
 the interpolation between them.
 
-If element_from has value size 1 and element_to has value size > 1, then
-this function returns a matrix to interpolate from a blocked element_from
-(ie multiple copies of element_from) into element_to.
+If element_from has value size 1 and element_to has value size > 1,
+then this function returns a matrix to interpolate from a blocked
+element_from (ie multiple copies of element_from) into element_to.
 
-If element_to has value size 1 and element_from has value size > 1, then
-this function returns a matrix that interpolates the components of
-element_from into copies of element_to.
+If element_to has value size 1 and element_from has value size > 1,
+then this function returns a matrix that interpolates the components
+of element_from into copies of element_to.
 
 NOTE: If the elements have different value sizes and both are
 greater than 1, this function throws a runtime error
 
-In order to interpolate functions between finite element spaces on arbitrary
-cells, the functions must be pulled back to the reference element (this pull
-back includes applying DOF transformations). The matrix that this function
-returns can then be applied, then the result pushed forward to the cell. If
-element_from and element_to have the same map type, then only the DOF
-transformations need to be applied, as the pull back and push forward cancel
-each other out.
+In order to interpolate functions between finite element spaces on
+arbitrary cells, the functions must be pulled back to the reference
+element (this pull back includes applying DOF transformations). The
+matrix that this function returns can then be applied, then the
+result pushed forward to the cell. If element_from and element_to
+have the same map type, then only the DOF transformations need to be
+applied, as the pull back and push forward cancel each other out.
 
 Args:
     element_from: The element to interpolate from
@@ -564,7 +470,7 @@ Returns:
 )";
 
 const std::string tabulate_polynomial_set = R"(
-@brief Tabulate the orthonormal polynomial basis, and derivatives,
+Tabulate the orthonormal polynomial basis, and derivatives,
 at points on the reference cell.
 
 All derivatives up to the given order are computed. If derivatives
@@ -580,6 +486,7 @@ there are `(nderiv + 1)(nderiv + 2)(nderiv + 3)/6`. The ordering is
 
 Args:
     celltype: Cell type
+    ptype: The polynomial type
     d: Polynomial degree
     n: Maximum derivative order. Use n = 0 for the basis only.
     x: Points at which to evaluate the basis. The shape is (number of points, geometric dimension).
@@ -591,14 +498,14 @@ Returns:
     
     - The first index is the derivative. The first entry is the basis
     itself. Derivatives are stored in triangular (2D) or tetrahedral
-    (3D) ordering, eg if `(p, q)` denotes `p` order dervative with
-    repsect to `x` and `q` order derivative with respect to `y`, [0] ->
+    (3D) ordering, eg if `(p, q)` denotes `p` order derivative with
+    respect to `x` and `q` order derivative with respect to `y`, [0] ->
     (0, 0), [1] -> (1, 0), [2] -> (0, 1), [3] -> (2, 0), [4] -> (1, 1),
     [5] -> (0, 2), [6] -> (3, 0),...
-    The function basix::indexing::idx maps tuples `(p, q, r)` to the array
-    index.
+    The function basix::indexing::idx maps tuples `(p, q, r)` to the
+    array index.
     
-    - The second index is the point, with index `i` correspondign to the
+    - The second index is the point, with index `i` corresponding to the
     point in row `i` of @p x.
     
     - The third index is the basis function index.
@@ -606,7 +513,7 @@ Returns:
 )";
 
 const std::string tabulate_polynomials = R"(
-@brief Tabulate a set of polynomials.
+Tabulate a set of polynomials.
 
 Args:
     polytype: Polynomial type
@@ -620,7 +527,7 @@ Returns:
 )";
 
 const std::string polynomials_dim = R"(
-@brief Dimension of a polynomial space.
+Dimension of a polynomial space.
 
 Args:
     polytype: The polynomial type
@@ -632,24 +539,13 @@ Returns:
     polynomial degree @p d
 )";
 
-const std::string make_quadrature__rule_celltype_m = R"(
+const std::string make_quadrature__rule_celltype_polytype_m = R"(
 Make a quadrature rule on a reference cell
 
 Args:
     rule: Type of quadrature rule (or use quadrature::Default)
     celltype: The cell type
-    m: Maximum degree of polynomial that this quadrature rule will integrate exactly
-
-Returns:
-    List of points and list of weights. The number of points
-    arrays has shape (num points, gdim)
-)";
-
-const std::string make_quadrature__celltype_m = R"(
-Make a default quadrature rule on reference cell
-
-Args:
-    celltype: The cell type
+    polytype: The polyset type
     m: Maximum degree of polynomial that this quadrature rule will integrate exactly
 
 Returns:
@@ -668,9 +564,9 @@ Returns:
 )";
 
 const std::string index__p_q = R"(
-Compute indexing in a 2D triangular array compressed into a 1D array.
-This can be used to find the index of a derivative returned by
-`FiniteElement::tabulate`. For instance to find d2N/dx2, use
+Compute indexing in a 2D triangular array compressed into a 1D
+array. This can be used to find the index of a derivative returned
+by `FiniteElement::tabulate`. For instance to find d2N/dx2, use
 `FiniteElement::tabulate(2, points)[idx(2, 0)];`
 
 Args:
@@ -682,7 +578,8 @@ Returns:
 )";
 
 const std::string index__p_q_r = R"(
-Compute indexing in a 3D tetrahedral array compressed into a 1D array
+Compute indexing in a 3D tetrahedral array compressed into a 1D
+array
 
 Args:
     p: Index in x
@@ -694,14 +591,40 @@ Returns:
 )";
 
 const std::string space_intersection = R"(
-Get the intersection of two Sobolev spaces
+Get the intersection of two Sobolev spaces.
 
 Args:
-    space1: The first space
-    space2: The second space
+    space1: First space
+    space2: Second space
 
 Returns:
-    The intersection
+    Intersection of the spaces
+)";
+
+const std::string superset = R"(
+Get the polyset types that is a superset of two types on the given
+cell
+
+Args:
+    cell: The cell type
+    type1: The first polyset type
+    type2: The second polyset type
+
+Returns::
+    The superset type
+)";
+
+const std::string restriction = R"(
+Get the polyset type that represents the restrictions of a type on a
+subentity
+
+Args:
+    ptype: The polyset type
+    cell: The cell type
+    restriction_cell: The cell type of the subentity
+
+Returns::
+    The restricted polyset type
 )";
 
 } // namespace basix::docstring

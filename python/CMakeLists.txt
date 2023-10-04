@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.16)
 
-PROJECT(basix_pybind11 VERSION "0.6.0"  LANGUAGES CXX)
+PROJECT(basix_pybind11 VERSION "0.7.0.0"  LANGUAGES CXX)
 
 # Set C++ standard
 set(CMAKE_CXX_STANDARD 20)
@@ -63,5 +63,5 @@ if (SKBUILD)
     set_target_properties(_basixcpp PROPERTIES INSTALL_RPATH "$ORIGIN/lib")
   endif()
 
-  install(TARGETS _basixcpp DESTINATION .)
+  install(TARGETS _basixcpp DESTINATION basix)
 endif()

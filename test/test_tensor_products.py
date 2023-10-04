@@ -2,11 +2,14 @@
 # FEniCS Project
 # SPDX-License-Identifier: MIT
 
-import numpy as np
-import basix
-import pytest
 from itertools import product
+
 import numpy
+import numpy as np
+import pytest
+
+import basix
+
 from .utils import parametrize_over_elements
 
 
@@ -70,18 +73,25 @@ def test_tensor_product_factorisation_quadrilateral(degree):
 
     # Quadrature degree
     Q = 2 * P + 2
-    points, w = basix.make_quadrature(basix.QuadratureType.Default, cell_type, Q)
-    data = element.tabulate(1, points)
+    points, w = basix.make_quadrature(cell_type, Q)
+
+    # FIXME: This test assumes all factors formed by a single element
+    perm = factors[1]
+    element0 = factors[0][0]
+
+    # create element with tensor product order
+    element_tp = basix.create_element(basix.ElementFamily.P, cell_type,
+                                      P, basix.LagrangeVariant.gll_warped,
+                                      dof_ordering=np.argsort(perm))
+
+    data = element_tp.tabulate(1, points)
     dphi_x = data[1, :, :, 0]
     dphi_y = data[2, :, :, 0]
 
     assert points.shape[0] == (P+2) * (P+2)
 
-    # FIXME: This test assumes all factors formed by a single element
-    perm = factors[1]
-    element0 = factors[0][0]
     cell1d = element0.cell_type
-    points, w = basix.make_quadrature(basix.QuadratureType.Default, cell1d, Q)
+    points, _ = basix.make_quadrature(cell1d, Q)
     data = element0.tabulate(1, points)
     phi0 = data[0, :, :, 0]
     dphi0 = data[1, :, :, 0]
@@ -99,7 +109,7 @@ def test_tensor_product_factorisation_quadrilateral(degree):
                 for i1 in range(Nd):
                     dphi_tensor[q0, q1, i0, i1] = dphi0[q0, i0]*phi0[q1, i1]
     dphi_tensor = dphi_tensor.reshape([Nq*Nq, Nd*Nd])
-    assert numpy.allclose(dphi_x[:, perm], dphi_tensor)
+    assert numpy.allclose(dphi_x, dphi_tensor)
 
     # Compute derivative of basis function in the y direction
     dphi_tensor = numpy.zeros([Nq, Nq, Nd, Nd])
@@ -110,7 +120,7 @@ def test_tensor_product_factorisation_quadrilateral(degree):
                     dphi_tensor[q0, q1, i0, i1] = phi0[q0, i0]*dphi0[q1, i1]
 
     dphi_tensor = dphi_tensor.reshape([Nq*Nq, Nd*Nd])
-    assert numpy.allclose(dphi_y[:, perm], dphi_tensor)
+    assert numpy.allclose(dphi_y, dphi_tensor)
 
 
 @pytest.mark.parametrize("degree", range(1, 6))
@@ -122,19 +132,27 @@ def test_tensor_product_factorisation_hexahedron(degree):
 
     # Quadrature degree
     Q = 2 * P + 2
-    points, w = basix.make_quadrature(basix.QuadratureType.Default, basix.CellType.hexahedron, Q)
-    data = element.tabulate(1, points)
+    points, _ = basix.make_quadrature(
+        basix.CellType.hexahedron, Q)
+
+    # FIXME: This test assumes all factors formed by a single element
+    perm = factors[1]
+    element0 = factors[0][0]
+
+    # create element with tensor product order
+    element_tp = basix.create_element(basix.ElementFamily.P, basix.CellType.hexahedron,
+                                      P, basix.LagrangeVariant.gll_warped,
+                                      dof_ordering=np.argsort(perm))
+
+    data = element_tp.tabulate(1, points)
     dphi_x = data[1, :, :, 0]
     dphi_y = data[2, :, :, 0]
     dphi_z = data[3, :, :, 0]
 
     assert points.shape[0] == (P+2) * (P+2) * (P+2)
 
-    # FIXME: This test assumes all factors formed by a single element
-    perm = factors[1]
-    element0 = factors[0][0]
     cell1d = element0.cell_type
-    points, w = basix.make_quadrature(basix.QuadratureType.Default, cell1d, Q)
+    points, w = basix.make_quadrature(cell1d, Q)
     data = element0.tabulate(1, points)
     phi0 = data[0, :, :, 0]
     dphi0 = data[1, :, :, 0]
@@ -155,7 +173,7 @@ def test_tensor_product_factorisation_hexahedron(degree):
                             dphi_tensor[q0, q1, q2, i0, i1, i2] = dphi0[q0, i0]*phi0[q1, i1]*phi0[q2, i2]
 
     dphi_tensor = dphi_tensor.reshape([Nq*Nq*Nq, Nd*Nd*Nd])
-    assert numpy.allclose(dphi_x[:, perm], dphi_tensor)
+    assert numpy.allclose(dphi_x, dphi_tensor)
 
     # Compute derivative of basis function in the y direction
     dphi_tensor = numpy.zeros([Nq, Nq, Nq, Nd, Nd, Nd])
@@ -168,7 +186,7 @@ def test_tensor_product_factorisation_hexahedron(degree):
                             dphi_tensor[q0, q1, q2, i0, i1, i2] = phi0[q0, i0]*dphi0[q1, i1]*phi0[q2, i2]
 
     dphi_tensor = dphi_tensor.reshape([Nq*Nq*Nq, Nd*Nd*Nd])
-    assert numpy.allclose(dphi_y[:, perm], dphi_tensor)
+    assert numpy.allclose(dphi_y, dphi_tensor)
 
     # Compute the derivative of basis function in the z direction
     dphi_tensor = numpy.zeros([Nq, Nq, Nq, Nd, Nd, Nd])
@@ -181,4 +199,21 @@ def test_tensor_product_factorisation_hexahedron(degree):
                             dphi_tensor[q0, q1, q2, i0, i1, i2] = phi0[q0, i0]*phi0[q1, i1]*dphi0[q2, i2]
 
     dphi_tensor = dphi_tensor.reshape([Nq*Nq*Nq, Nd*Nd*Nd])
-    assert numpy.allclose(dphi_z[:, perm], dphi_tensor)
+    assert numpy.allclose(dphi_z, dphi_tensor)
+
+
+@pytest.mark.parametrize("cell_type", [
+    basix.CellType.quadrilateral,
+    basix.CellType.hexahedron,
+])
+@pytest.mark.parametrize("family, args", [
+    (basix.ElementFamily.P, (basix.LagrangeVariant.equispaced, )),
+    (basix.ElementFamily.P, (basix.LagrangeVariant.gll_warped, )),
+])
+@pytest.mark.parametrize("degree", range(1, 5))
+def test_dof_ordering(cell_type, family, args, degree):
+    e = basix.create_element(family, cell_type, degree, *args)
+    perm = e.get_tensor_product_representation()[0][1]
+    e2 = basix.create_element(family, cell_type, degree, *args, dof_ordering=perm)
+    for i, j in enumerate(e2.get_tensor_product_representation()[0][1]):
+        assert i == j

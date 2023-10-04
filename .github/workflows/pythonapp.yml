@@ -21,22 +21,18 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-22.04]
-        python-version: ["3.8", "3.9", "3.10"]
+        python-version: ["3.8", "3.9", "3.10", "3.11"]
 
     steps:
       - uses: actions/checkout@v3
       - name: Set up Python
-        uses: actions/setup-python@v3
+        uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
       - name: Install dependencies
         run: |
           sudo apt-get update
-          sudo apt-get -y upgrade
           sudo apt-get install -y doxygen graphviz libopenblas-dev liblapack-dev ninja-build
-    
-      - name: Install UFL
-        run: python3 -m pip -v install git+https://github.com/FEniCS/ufl.git@release 
 
       - name: Install Basix
         run: python3 -m pip -v install .[ci]
@@ -54,6 +50,10 @@ jobs:
       - name: pydocstyle checks
         run: |
           python3 -m pydocstyle python/basix
+
+      - name: isort checks
+        run: |
+          python3 -m isort --check .
 
       - name: Run units tests
         run: |
@@ -106,31 +106,31 @@ jobs:
           python make_html.py
 
       - name: Set version name
-        if: ${{ github.repository == 'FEniCS/basix' && ( github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/') ) && matrix.python-version == '3.10' }}
+        if: ${{ github.repository == 'FEniCS/basix' && ( github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/') ) && matrix.python-version == '3.11' }}
         run: |
           echo "VERSION_NAME=${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
       - name: Build documentation to upload
-        if: ${{ github.repository == 'FEniCS/basix' && ( github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/') ) && matrix.python-version == '3.10' }}
+        if: ${{ github.repository == 'FEniCS/basix' && ( github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/') ) && matrix.python-version == '3.11' }}
         run: |
           export BASIX_VERSION=`python3 -c "import basix; print(basix.__version__)"`
           cd doc/web
           python make_html.py --url https://docs.fenicsproject.org/basix/${{ env.VERSION_NAME }}
       - name: Checkout FEniCS/docs
-        if: ${{ github.repository == 'FEniCS/basix' && ( github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/') ) && matrix.python-version == '3.10' }}
+        if: ${{ github.repository == 'FEniCS/basix' && ( github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/') ) && matrix.python-version == '3.11' }}
         uses: actions/checkout@v3
         with:
           repository: "FEniCS/docs"
           path: "docs"
           ssh-key: "${{ secrets.SSH_GITHUB_DOCS_PRIVATE_KEY }}"
       - name: Copy documentation into repository
-        if: ${{ github.repository == 'FEniCS/basix' && ( github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/') ) && matrix.python-version == '3.10' }}
+        if: ${{ github.repository == 'FEniCS/basix' && ( github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/') ) && matrix.python-version == '3.11' }}
         run: |
           cd docs
           git rm -r --ignore-unmatch basix/${{ env.VERSION_NAME }}
           mkdir -p basix/${{ env.VERSION_NAME }}
           cp -r ../doc/web/html/* basix/${{ env.VERSION_NAME }}
       - name: Commit and push documentation to FEniCS/docs
-        if: ${{ github.repository == 'FEniCS/basix' && ( github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/') ) && matrix.python-version == '3.10' }}
+        if: ${{ github.repository == 'FEniCS/basix' && ( github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/') ) && matrix.python-version == '3.11' }}
         run: |
           cd docs
           git config --global user.email "fenics@github.com"
@@ -145,12 +145,12 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-22.04]
-        python-version: ["3.10"]
+        python-version: ["3.11"]
 
     steps:
       - uses: actions/checkout@v3
       - name: Set up Python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
       - name: Install dependencies
@@ -200,9 +200,9 @@ jobs:
           sudo cmake --install build-dir
 
       - name: Set up Python
-        uses: actions/setup-python@v3
+        uses: actions/setup-python@v4
         with:
-          python-version: "3.10"
+          python-version: "3.11"
       - name: Run C++ demos
         run: |
           python3 -m pip install pytest

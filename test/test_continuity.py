@@ -1,6 +1,7 @@
-import basix
-import pytest
 import numpy as np
+import pytest
+
+import basix
 
 elements = [
     (basix.ElementFamily.P, [basix.LagrangeVariant.equispaced]),
@@ -13,7 +14,7 @@ elements = [
     (basix.ElementFamily.HHJ, []),
     (basix.ElementFamily.bubble, []),
     (basix.ElementFamily.serendipity, [basix.LagrangeVariant.legendre, basix.DPCVariant.legendre]),
-    (basix.ElementFamily.DPC, [basix.DPCVariant.legendre]),
+    (basix.ElementFamily.DPC, [basix.LagrangeVariant.unset, basix.DPCVariant.legendre]),
     (basix.ElementFamily.CR, []),
 ]
 

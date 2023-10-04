@@ -6,8 +6,8 @@ import sysconfig
 from setuptools import Extension, setup
 from setuptools.command.build_ext import build_ext
 
-if sys.version_info < (3, 7):
-    print("Python 3.7 or higher required, please upgrade.")
+if sys.version_info < (3, 8):
+    print("Python 3.8 or higher required, please upgrade.")
     sys.exit(1)
 
 CLASSIFIERS = """\
@@ -20,10 +20,10 @@ Operating System :: POSIX :: Linux
 Operating System :: MacOS :: MacOS X
 Programming Language :: Python
 Programming Language :: Python :: 3
-Programming Language :: Python :: 3.7
 Programming Language :: Python :: 3.8
 Programming Language :: Python :: 3.9
 Programming Language :: Python :: 3.10
+Programming Language :: Python :: 3.11
 Topic :: Scientific/Engineering :: Mathematics
 Topic :: Software Development :: Libraries :: Python Modules
 """
@@ -72,7 +72,7 @@ class CMakeBuild(build_ext):
 
 
 setup(name='fenics-basix',
-      version='0.6.0',
+      version='0.7.0.dev0',
       description='Basix Python interface',
       url="https://github.com/FEniCS/basix",
       author='FEniCS Project',
@@ -85,12 +85,11 @@ setup(name='fenics-basix',
       package_data={"basix": ["py.typed"]},
       install_requires=["numpy>=1.21"],
       extras_require={
-          "docs": ["markdown", "pylit3", "pyyaml", "sphinx==5.0.2", "sphinx_rtd_theme"],
-          "lint": ["flake8", "pydocstyle"],
+          "docs": ["markdown", "pyyaml", "sphinx==5.0.2", "sphinx_rtd_theme"],
+          "lint": ["flake8", "pydocstyle", "isort"],
           "optional": ["numba", "fenics-ufl@git+https://github.com/fenics/ufl"],
           "test": ["pytest", "sympy", "scipy", "matplotlib", "fenics-basix[optional]"],
-          "ci": ["mypy", "pytest-xdist", "fenics-basix[docs]", "fenics-basix[lint]", "fenics-basix[optional]",
-                 "fenics-basix[test]"]
+          "ci": ["mypy", "pytest-xdist", "fenics-basix[docs,lint,test,optional]"],
       },
       ext_modules=[CMakeExtension('basix._basixcpp')],
       cmdclass=dict(build_ext=CMakeBuild),

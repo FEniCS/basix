@@ -6,6 +6,9 @@ on:
   pull_request:
     branches:
       - main
+  push:
+    branches:
+      - "main"
   workflow_dispatch:
     inputs:
       ffcx_branch:
@@ -28,7 +31,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: Set up Python
-        uses: actions/setup-python@v3
+        uses: actions/setup-python@v4
         with:
           python-version: 3.9
 
@@ -51,6 +54,7 @@ jobs:
         with:
           path: ./ffcx
           repository: FEniCS/ffcx
+          ref: main
       - name: Get FFCx source (specified branch)
         if: github.event_name == 'workflow_dispatch'
         uses: actions/checkout@v3
@@ -61,7 +65,5 @@ jobs:
 
       - name: Install FFCx
         run: python3 -m pip install ./ffcx[ci]
-      - name: Run mypy checks
-        run: python3 -m mypy ffcx/ffcx
       - name: Run FFCx tests
         run: python3 -m pytest -n auto ffcx/test

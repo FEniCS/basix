@@ -13,6 +13,7 @@ def string_to_family(family: str, cell: str) -> _EF:
 
     Returns:
         The element family.
+
     """
     # Family names that are valid for all cells
     families = {
@@ -20,7 +21,9 @@ def string_to_family(family: str, cell: str) -> _EF:
         "P": _EF.P,
         "Bubble": _EF.bubble,
         "bubble": _EF.bubble,
+        "iso": _EF.iso,
     }
+
     # Family names that are valid on non-interval cells
     if cell != "interval":
         families.update({
@@ -41,11 +44,13 @@ def string_to_family(family: str, cell: str) -> _EF:
             "N2curl": _EF.N2E,
             "Nedelec 2nd kind H(curl)": _EF.N2E,
         })
+
     # Family names that are valid for intervals
     if cell == "interval":
         families.update({
             "DPC": _EF.P,
         })
+
     # Family names that are valid for tensor product cells
     if cell in ["interval", "quadrilateral", "hexahedron"]:
         families.update({
@@ -54,6 +59,7 @@ def string_to_family(family: str, cell: str) -> _EF:
             "serendipity": _EF.serendipity,
             "S": _EF.serendipity,
         })
+
     # Family names that are valid for quads and hexes
     if cell in ["quadrilateral", "hexahedron"]:
         families.update({
@@ -67,6 +73,7 @@ def string_to_family(family: str, cell: str) -> _EF:
             "AAF": _EF.BDM,
             "AAE": _EF.N2E,
         })
+
     # Family names that are valid for triangles and tetrahedra
     if cell in ["triangle", "tetrahedron"]:
         families.update({
@@ -74,6 +81,7 @@ def string_to_family(family: str, cell: str) -> _EF:
             "CR": _EF.CR,
             "Crouzeix-Raviart": _EF.CR,
         })
+
     # Family names that are valid for triangles
     if cell in "triangle":
         families.update({

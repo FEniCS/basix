@@ -1,14 +1,15 @@
-cmake_minimum_required(VERSION 3.16)
+cmake_minimum_required(VERSION 3.19)
 
 # Set the version
-project(Basix VERSION "0.6.0" LANGUAGES CXX)
+project(Basix VERSION "0.7.0.0" LANGUAGES CXX)
 include(GNUInstallDirs)
 
 if(SKBUILD)
   # Always use lib/ in the Python root. Otherwise, environment used for
   # wheels might place in lib64/, which CMake on some systems will not
   # find.
-  set(CMAKE_INSTALL_LIBDIR lib)
+  set(CMAKE_INSTALL_LIBDIR basix/lib)
+  set(CMAKE_INSTALL_INCLUDEDIR basix/include)
 endif()
 
 include(FeatureSummary)
@@ -70,7 +71,6 @@ target_sources(basix PRIVATE
   ${CMAKE_CURRENT_SOURCE_DIR}/basix/finite-element.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/basix/interpolation.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/basix/lattice.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/basix/math.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/basix/moments.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/basix/polynomials.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/basix/polyset.cpp
@@ -93,14 +93,11 @@ target_sources(basix PRIVATE
 set_target_properties(basix PROPERTIES PUBLIC_HEADER basix/finite-element.h)
 set_target_properties(basix PROPERTIES PRIVATE_HEADER "${HEADERS_basix}")
 target_include_directories(basix PUBLIC
-  $<INSTALL_INTERFACE:include>
+  $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
   "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR};${CMAKE_CURRENT_SOURCE_DIR}>")
 
-# The commented lines need CMake >= 3.18
-# target_link_libraries(basix PRIVATE BLAS::BLAS)
-# target_link_libraries(basix PRIVATE LAPACK::LAPACK)
-target_link_libraries(basix PRIVATE ${BLAS_LIBRARIES})
-target_link_libraries(basix PRIVATE ${LAPACK_LIBRARIES})
+target_link_libraries(basix PRIVATE BLAS::BLAS)
+target_link_libraries(basix PRIVATE LAPACK::LAPACK)
 
 # Set compiler flags
 list(APPEND BASIX_DEVELOPER_FLAGS -O2;-g;-pipe)

@@ -4,19 +4,22 @@
 
 #include "interpolation.h"
 #include "finite-element.h"
+#include <concepts>
 #include <exception>
 
 using namespace basix;
 
-namespace stdex = std::experimental;
-using mdspan2_t = stdex::mdspan<double, stdex::dextents<std::size_t, 2>>;
-using cmdspan2_t = stdex::mdspan<const double, stdex::dextents<std::size_t, 2>>;
-using cmdspan4_t = stdex::mdspan<const double, stdex::dextents<std::size_t, 4>>;
+namespace stdex
+    = MDSPAN_IMPL_STANDARD_NAMESPACE::MDSPAN_IMPL_PROPOSED_NAMESPACE;
+template <typename T, std::size_t D>
+using mdspan_t = MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<
+    T, MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, D>>;
 
 //----------------------------------------------------------------------------
-std::pair<std::vector<double>, std::array<std::size_t, 2>>
-basix::compute_interpolation_operator(const FiniteElement& element_from,
-                                      const FiniteElement& element_to)
+template <std::floating_point T>
+std::pair<std::vector<T>, std::array<std::size_t, 2>>
+basix::compute_interpolation_operator(const FiniteElement<T>& element_from,
+                                      const FiniteElement<T>& element_to)
 {
   if (element_from.cell_type() != element_to.cell_type())
   {
@@ -26,10 +29,10 @@ basix::compute_interpolation_operator(const FiniteElement& element_from,
 
   const auto [points, shape] = element_to.points();
   const auto [tab_b, tab_shape]
-      = element_from.tabulate(0, cmdspan2_t(points.data(), shape));
-  cmdspan4_t tab(tab_b.data(), tab_shape);
+      = element_from.tabulate(0, mdspan_t<const T, 2>(points.data(), shape));
+  mdspan_t<const T, 4> tab(tab_b.data(), tab_shape);
   const auto [imb, imshape] = element_to.interpolation_matrix();
-  cmdspan2_t i_m(imb.data(), imshape);
+  mdspan_t<const T, 2> i_m(imb.data(), imshape);
 
   const std::size_t dim_to = element_to.dim();
   const std::size_t dim_from = element_from.dim();
@@ -48,8 +51,8 @@ basix::compute_interpolation_operator(const FiniteElement& element_from,
     {
       // Map element_from's components into element_to
       std::array<std::size_t, 2> shape = {dim_to * vs_from, dim_from};
-      std::vector<double> outb(shape[0] * shape[1], 0.0);
-      mdspan2_t out(outb.data(), shape);
+      std::vector<T> outb(shape[0] * shape[1], 0.0);
+      mdspan_t<T, 2> out(outb.data(), shape);
       for (std::size_t i = 0; i < vs_from; ++i)
         for (std::size_t j = 0; j < dim_to; ++j)
           for (std::size_t k = 0; k < dim_from; ++k)
@@ -62,8 +65,8 @@ basix::compute_interpolation_operator(const FiniteElement& element_from,
     {
       // Map duplicates of element_to to components of element_to
       std::array<std::size_t, 2> shape = {dim_to, dim_from * vs_to};
-      std::vector<double> outb(shape[0] * shape[1], 0.0);
-      mdspan2_t out(outb.data(), shape);
+      std::vector<T> outb(shape[0] * shape[1], 0.0);
+      mdspan_t<T, 2> out(outb.data(), shape);
       for (std::size_t i = 0; i < vs_to; ++i)
         for (std::size_t j = 0; j < dim_from; ++j)
           for (std::size_t k = 0; k < dim_to; ++k)
@@ -81,8 +84,8 @@ basix::compute_interpolation_operator(const FiniteElement& element_from,
   else
   {
     std::array<std::size_t, 2> shape = {dim_to, dim_from};
-    std::vector<double> outb(shape[0] * shape[1], 0.0);
-    mdspan2_t out(outb.data(), shape);
+    std::vector<T> outb(shape[0] * shape[1], 0.0);
+    mdspan_t<T, 2> out(outb.data(), shape);
     for (std::size_t i = 0; i < dim_to; ++i)
       for (std::size_t j = 0; j < dim_from; ++j)
         for (std::size_t k = 0; k < vs_from; ++k)
@@ -93,3 +96,12 @@ basix::compute_interpolation_operator(const FiniteElement& element_from,
   }
 }
 //----------------------------------------------------------------------------
+/// @cond
+template std::pair<std::vector<float>, std::array<std::size_t, 2>>
+basix::compute_interpolation_operator(const FiniteElement<float>&,
+                                      const FiniteElement<float>&);
+template std::pair<std::vector<double>, std::array<std::size_t, 2>>
+basix::compute_interpolation_operator(const FiniteElement<double>&,
+                                      const FiniteElement<double>&);
+/// @endcond
+//-----------------------------------------------------------------------------

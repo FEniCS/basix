@@ -64,6 +64,7 @@ jobs:
         with:
           path: ./dolfinx
           repository: FEniCS/dolfinx
+          ref: main
       - name: Get DOLFINx
         if: github.event_name == 'workflow_dispatch'
         uses: actions/checkout@v3
@@ -85,7 +86,7 @@ jobs:
 
       - name: Build DOLFINx C++ unit tests
         run: |
-          cmake -G Ninja -DCMAKE_BUILD_TYPE=Developer -B build/test/ -S build/test/
+          cmake -G Ninja -DCMAKE_BUILD_TYPE=Developer -B build/test/ -S dolfinx/cpp/test/
           cmake --build build/test
       - name: Run DOLFINx C++ unit tests
         run: |

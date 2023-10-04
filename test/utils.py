@@ -4,7 +4,8 @@
 """Test utilities."""
 
 import pytest
-from basix import ElementFamily, CellType, LagrangeVariant, DPCVariant
+
+from basix import CellType, DPCVariant, ElementFamily, LagrangeVariant
 
 
 def parametrize_over_elements(degree, reference=None, discontinuous=False):
@@ -30,6 +31,12 @@ def parametrize_over_elements(degree, reference=None, discontinuous=False):
             if discontinuous:
                 elementlist.append((c, ElementFamily.P, k, [LagrangeVariant.legendre]))
 
+            if (k <= 2 or c != CellType.triangle) and (k <= 1 or c != CellType.tetrahedron):
+                if k < 4:
+                    elementlist.append((c, ElementFamily.iso, k, [LagrangeVariant.equispaced]))
+                elementlist.append((c, ElementFamily.iso, k, [LagrangeVariant.gll_warped]))
+                elementlist.append((c, ElementFamily.iso, k, [LagrangeVariant.gll_isaac]))
+
         # Elements on all cells except prism, pyramid and interval
         for c in [CellType.triangle, CellType.tetrahedron, CellType.quadrilateral, CellType.hexahedron]:
             elementlist.append((c, ElementFamily.N1E, k, [LagrangeVariant.legendre]))
@@ -42,6 +49,12 @@ def parametrize_over_elements(degree, reference=None, discontinuous=False):
             if k == 1:
                 elementlist.append((c, ElementFamily.CR, k, []))
             elementlist.append((c, ElementFamily.Regge, k, []))
+            if k == 3:
+                elementlist.append((c, ElementFamily.Hermite, k, []))
+
+        # Elements on triangles
+        for c in [CellType.triangle]:
+            elementlist.append((c, ElementFamily.HHJ, k, []))
 
         # Elements on tensor product cells
         for c in [CellType.interval, CellType.quadrilateral, CellType.hexahedron]:
@@ -55,7 +68,7 @@ def parametrize_over_elements(degree, reference=None, discontinuous=False):
                 for v in [DPCVariant.simplex_equispaced, DPCVariant.simplex_gll,
                           DPCVariant.horizontal_equispaced, DPCVariant.horizontal_gll,
                           DPCVariant.diagonal_equispaced, DPCVariant.diagonal_gll]:
-                    elementlist.append((c, ElementFamily.dpc, k, [v]))
+                    elementlist.append((c, ElementFamily.DPC, k, [v]))
 
         # Bubble elements
         if k >= 2:

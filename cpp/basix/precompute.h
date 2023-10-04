@@ -4,14 +4,38 @@
 
 #pragma once
 
+#include "math.h"
 #include "mdspan.hpp"
+#include <concepts>
 #include <span>
 #include <tuple>
+#include <type_traits>
 #include <vector>
 
 /// Matrix and permutation precomputation
 namespace basix::precompute
 {
+
+namespace impl
+{
+/// @private These structs are used to get the float/value type from a
+/// template argument, including support for complex types.
+template <typename T, typename = void>
+struct scalar_value_type
+{
+  /// @internal
+  typedef T value_type;
+};
+/// @private
+template <typename T>
+struct scalar_value_type<T, std::void_t<typename T::value_type>>
+{
+  typedef typename T::value_type value_type;
+};
+/// @private Convenience typedef
+template <typename T>
+using scalar_value_type_t = typename scalar_value_type<T>::value_type;
+} // namespace impl
 
 /// Prepare a permutation
 ///
@@ -60,7 +84,7 @@ namespace basix::precompute
 /// `apply_permutation()`.
 ///
 /// @param[in,out] perm A permutation
-void prepare_permutation(const std::span<std::size_t>& perm);
+void prepare_permutation(std::span<std::size_t> perm);
 
 /// Apply a (precomputed) permutation
 ///
@@ -114,16 +138,31 @@ void prepare_permutation(const std::span<std::size_t>& perm);
 /// @param[in] offset The position in the data to start applying the permutation
 /// @param[in] block_size The block size of the data
 template <typename E>
-void apply_permutation(const std::span<const std::size_t>& perm,
-                       const std::span<E>& data, std::size_t offset = 0,
-                       std::size_t block_size = 1)
+void apply_permutation(std::span<const std::size_t> perm, std::span<E> data,
+                       std::size_t offset = 0, std::size_t block_size = 1)
 {
-  for (std::size_t b = 0; b < block_size; ++b)
+  for (std::size_t i = 0; i < perm.size(); ++i)
   {
-    for (std::size_t i = 0; i < perm.size(); ++i)
+    for (std::size_t b = 0; b < block_size; ++b)
     {
       std::swap(data[block_size * (offset + i) + b],
                 data[block_size * (offset + perm[i]) + b]);
+    }
+  }
+}
+
+/// Permutation of mapped data
+template <typename E>
+void apply_permutation_mapped(std::span<const std::size_t> perm,
+                              std::span<E> data, std::span<const int> emap,
+                              std::size_t block_size = 1)
+{
+  for (std::size_t i = 0; i < perm.size(); ++i)
+  {
+    for (std::size_t b = 0; b < block_size; ++b)
+    {
+      std::swap(data[block_size * emap[i] + b],
+                data[block_size * emap[perm[i]] + b]);
     }
   }
 }
@@ -135,9 +174,8 @@ void apply_permutation(const std::span<const std::size_t>& perm,
 ///
 /// see `apply_permutation()`.
 template <typename E>
-void apply_permutation_to_transpose(const std::span<const std::size_t>& perm,
-                                    const std::span<E>& data,
-                                    std::size_t offset = 0,
+void apply_permutation_to_transpose(std::span<const std::size_t> perm,
+                                    std::span<E> data, std::size_t offset = 0,
                                     std::size_t block_size = 1)
 {
   const std::size_t dim = perm.size();
@@ -157,7 +195,9 @@ void apply_permutation_to_transpose(const std::span<const std::size_t>& perm,
 ///
 /// This computes the LU decomposition of the transpose of the matrix
 ///
-/// This function returns the permutation @f$P@f$P in the representation @f$PA^t=LU@f$ (precomputed as in `prepare_permutation()`). The LU decomposition of @f$A^t@f$ is computed in-place
+/// This function returns the permutation @f$P@f$P in the representation
+/// @f$PA^t=LU@f$ (precomputed as in `prepare_permutation()`). The LU
+/// decomposition of @f$A^t@f$ is computed in-place
 ///
 /// For an example of how the permutation in this form is applied, see
 /// `apply_matrix()`.
@@ -167,8 +207,12 @@ void apply_permutation_to_transpose(const std::span<const std::size_t>& perm,
 /// These are (as described above):
 /// - A permutation (precomputed as in `prepare_permutation()`);
 /// - the vector @f$D@f$;
+template <std::floating_point T>
 std::vector<std::size_t>
-prepare_matrix(std::pair<std::vector<double>, std::array<std::size_t, 2>>& A);
+prepare_matrix(std::pair<std::vector<T>, std::array<std::size_t, 2>>& A)
+{
+  return math::transpose_lu<T>(A);
+}
 
 /// @brief Apply a (precomputed) matrix.
 ///
@@ -204,12 +248,15 @@ prepare_matrix(std::pair<std::vector<double>, std::array<std::size_t, 2>>& A);
 /// permutation
 /// @param[in] block_size The block size of the data
 template <typename T, typename E>
-void apply_matrix(const std::span<const std::size_t>& v_size_t,
-                  const std::experimental::mdspan<
-                      const T, std::experimental::dextents<std::size_t, 2>>& M,
-                  const std::span<E>& data, std::size_t offset = 0,
-                  std::size_t block_size = 1)
+void apply_matrix(
+    std::span<const std::size_t> v_size_t,
+    MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<
+        const T, MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 2>>
+        M,
+    std::span<E> data, std::size_t offset = 0, std::size_t block_size = 1)
 {
+  using U = typename impl::scalar_value_type_t<E>;
+
   const std::size_t dim = v_size_t.size();
   apply_permutation(v_size_t, data, offset, block_size);
   for (std::size_t b = 0; b < block_size; ++b)
@@ -219,16 +266,18 @@ void apply_matrix(const std::span<const std::size_t>& v_size_t,
       for (std::size_t j = i + 1; j < dim; ++j)
       {
         data[block_size * (offset + i) + b]
-            += M(i, j) * data[block_size * (offset + j) + b];
+            += static_cast<U>(M(i, j)) * data[block_size * (offset + j) + b];
       }
     }
     for (std::size_t i = 1; i <= dim; ++i)
     {
-      data[block_size * (offset + dim - i) + b] *= M(dim - i, dim - i);
+      data[block_size * (offset + dim - i) + b]
+          *= static_cast<U>(M(dim - i, dim - i));
       for (std::size_t j = 0; j < dim - i; ++j)
       {
         data[block_size * (offset + dim - i) + b]
-            += M(dim - i, j) * data[block_size * (offset + j) + b];
+            += static_cast<U>(M(dim - i, j))
+               * data[block_size * (offset + j) + b];
       }
     }
   }
@@ -242,12 +291,14 @@ void apply_matrix(const std::span<const std::size_t>& v_size_t,
 /// See `apply_matrix()`.
 template <typename T, typename E>
 void apply_matrix_to_transpose(
-    const std::span<const std::size_t>& v_size_t,
-    const std::experimental::mdspan<
-        const T, std::experimental::dextents<std::size_t, 2>>& M,
-    const std::span<E>& data, std::size_t offset = 0,
-    std::size_t block_size = 1)
+    std::span<const std::size_t> v_size_t,
+    MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<
+        const T, MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 2>>
+        M,
+    std::span<E> data, std::size_t offset = 0, std::size_t block_size = 1)
 {
+  using U = typename impl::scalar_value_type_t<E>;
+
   const std::size_t dim = v_size_t.size();
   const std::size_t data_size
       = (data.size() + (dim < block_size ? block_size - dim : 0)) / block_size;
@@ -259,16 +310,17 @@ void apply_matrix_to_transpose(
       for (std::size_t j = i + 1; j < dim; ++j)
       {
         data[data_size * b + offset + i]
-            += M(i, j) * data[data_size * b + offset + j];
+            += static_cast<U>(M(i, j)) * data[data_size * b + offset + j];
       }
     }
     for (std::size_t i = 1; i <= dim; ++i)
     {
-      data[data_size * b + offset + dim - i] *= M(dim - i, dim - i);
+      data[data_size * b + offset + dim - i]
+          *= static_cast<U>(M(dim - i, dim - i));
       for (std::size_t j = 0; j < dim - i; ++j)
       {
         data[data_size * b + offset + dim - i]
-            += M(dim - i, j) * data[data_size * b + offset + j];
+            += static_cast<U>(M(dim - i, j)) * data[data_size * b + offset + j];
       }
     }
   }

@@ -2,10 +2,11 @@
 # FEniCS Project
 # SPDX-License-Identifier: MIT
 
-import basix
-import pytest
 import numpy
+import pytest
 import sympy
+
+import basix
 
 one = sympy.Integer(1)
 x = sympy.Symbol("x")

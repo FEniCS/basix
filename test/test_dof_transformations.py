@@ -2,10 +2,13 @@
 # FEniCS Project
 # SPDX-License-Identifier: MIT
 
-import basix
-import pytest
-import numpy as np
 import random
+
+import numpy as np
+import pytest
+
+import basix
+
 from .utils import parametrize_over_elements
 
 

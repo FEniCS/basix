@@ -5,25 +5,31 @@
 #include "polynomials.h"
 #include "mdspan.hpp"
 #include "polyset.h"
+#include <concepts>
 #include <utility>
 #include <vector>
 
 using namespace basix;
-namespace stdex = std::experimental;
-using mdarray2_t = stdex::mdarray<double, stdex::dextents<std::size_t, 2>>;
-using mdspan2_t = stdex::mdspan<double, stdex::dextents<std::size_t, 2>>;
-using cmdspan2_t = stdex::mdspan<const double, stdex::dextents<std::size_t, 2>>;
-using cmdspan3_t = stdex::mdspan<const double, stdex::dextents<std::size_t, 3>>;
+namespace stdex
+    = MDSPAN_IMPL_STANDARD_NAMESPACE::MDSPAN_IMPL_PROPOSED_NAMESPACE;
 
 namespace
 {
+template <typename T, std::size_t d>
+using mdarray_t
+    = stdex::mdarray<T,
+                     MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, d>>;
+template <typename T, std::size_t d>
+using mdspan_t = MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<
+    T, MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, d>>;
+
 //-----------------------------------------------------------------------------
 constexpr int single_choose(int n, int k)
 {
   int out = 1;
-  for (int i = k + 1; i <= n; ++i)
+  for (int i = n + 1 - k; i <= n; ++i)
     out *= i;
-  for (int i = 1; i <= n - k; ++i)
+  for (int i = 1; i <= k; ++i)
     out /= i;
   return out;
 }
@@ -39,8 +45,9 @@ int choose(int n, const std::vector<int>& powers)
   return out;
 }
 //-----------------------------------------------------------------------------
-std::pair<std::vector<double>, std::array<std::size_t, 2>>
-tabulate_bernstein(cell::type celltype, int d, cmdspan2_t x)
+template <std::floating_point T>
+std::pair<std::vector<T>, std::array<std::size_t, 2>>
+tabulate_bernstein(cell::type celltype, int d, mdspan_t<const T, 2> x)
 {
   if (celltype != cell::type::interval and celltype != cell::type::triangle
       and celltype != cell::type::tetrahedron)
@@ -53,10 +60,10 @@ tabulate_bernstein(cell::type celltype, int d, cmdspan2_t x)
   const std::size_t pdim = dim(polynomials::type::bernstein, celltype, d);
 
   std::array<std::size_t, 2> shape = {pdim, x.extent(0)};
-  std::vector<double> values_b(shape[0] * shape[1]);
-  mdspan2_t values(values_b.data(), shape);
+  std::vector<T> values_b(shape[0] * shape[1]);
+  mdspan_t<T, 2> values(values_b.data(), shape);
 
-  mdarray2_t lambdas(x.extent(1) + 1, x.extent(0));
+  mdarray_t<T, 2> lambdas(x.extent(1) + 1, x.extent(0));
   for (std::size_t j = 0; j < lambdas.extent(1); ++j)
     lambdas(0, j) = 1.0;
   for (std::size_t i = 0; i < x.extent(1); ++i)
@@ -105,18 +112,19 @@ tabulate_bernstein(cell::type celltype, int d, cmdspan2_t x)
 } // namespace
 
 //-----------------------------------------------------------------------------
-std::pair<std::vector<double>, std::array<std::size_t, 2>>
-polynomials::tabulate(
+template <std::floating_point T>
+std::pair<std::vector<T>, std::array<std::size_t, 2>> polynomials::tabulate(
     polynomials::type polytype, cell::type celltype, int d,
-    std::experimental::mdspan<const double,
-                              std::experimental::dextents<std::size_t, 2>>
+    MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<
+        const T, MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 2>>
         x)
 {
   switch (polytype)
   {
   case polynomials::type::legendre:
   {
-    auto [values, shape] = polyset::tabulate(celltype, d, 0, x);
+    auto [values, shape]
+        = polyset::tabulate(celltype, polyset::type::standard, d, 0, x);
     assert(shape[0] == 1);
     return {std::move(values), {shape[1], shape[2]}};
   }
@@ -132,6 +140,20 @@ polynomials::tabulate(
 //-----------------------------------------------------------------------------
 int polynomials::dim(polynomials::type, cell::type cell, int d)
 {
-  return polyset::dim(cell, d);
+  return polyset::dim(cell, polyset::type::standard, d);
 }
+//-----------------------------------------------------------------------------
+/// @cond
+template std::pair<std::vector<float>, std::array<std::size_t, 2>>
+polynomials::tabulate(
+    polynomials::type, cell::type, int,
+    MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<
+        const float, MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 2>>);
+template std::pair<std::vector<double>, std::array<std::size_t, 2>>
+polynomials::tabulate(
+    polynomials::type, cell::type, int,
+    MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<
+        const double,
+        MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 2>>);
+/// @endcond
 //-----------------------------------------------------------------------------

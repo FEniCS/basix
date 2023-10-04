@@ -22,7 +22,7 @@ def test_finite_element(inputs):
     (basix.ElementFamily.P, "triangle", 2),
 ])
 def test_vector_element(inputs):
-    e = basix.ufl.element(*inputs, rank=1)
+    e = basix.ufl.element(*inputs, shape=(2, ))
     table = e.tabulate(0, [[0, 0]])
     assert table.shape == (1, 1, e.value_size, e.dim)
 
@@ -34,7 +34,7 @@ def test_vector_element(inputs):
     (basix.ElementFamily.P, "triangle", 2),
 ])
 def test_element(inputs):
-    basix.ufl.element(*inputs, rank=2)
+    basix.ufl.element(*inputs, shape=(2, 2))
 
 
 @pytest.mark.parametrize("inputs", [
@@ -56,10 +56,10 @@ def test_tensor_element_hash(inputs):
 @pytest.mark.parametrize("elements", [
     [basix.ufl.element("Lagrange", "triangle", 1), basix.ufl.element("Bubble", "triangle", 3)],
     [basix.ufl.element("Lagrange", "quadrilateral", 1), basix.ufl.element("Bubble", "quadrilateral", 2)],
-    [basix.ufl.element("Lagrange", "quadrilateral", 1, rank=1),
-     basix.ufl.element("Bubble", "quadrilateral", 2, rank=1)],
-    [basix.ufl.element("Lagrange", "quadrilateral", 1, rank=2),
-     basix.ufl.element("Bubble", "quadrilateral", 2, rank=2)],
+    [basix.ufl.element("Lagrange", "quadrilateral", 1, shape=(2, )),
+     basix.ufl.element("Bubble", "quadrilateral", 2, shape=(2, ))],
+    [basix.ufl.element("Lagrange", "quadrilateral", 1, shape=(2, 2)),
+     basix.ufl.element("Bubble", "quadrilateral", 2, shape=(2, 2))],
 ])
 def test_enriched_element(elements):
     e = basix.ufl.enriched_element(elements)

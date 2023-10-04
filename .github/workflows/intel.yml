@@ -13,7 +13,7 @@ on:
 
 jobs:
   build:
-    name: Build and test
+    name: Build and test (oneAPI)
     runs-on: ubuntu-22.04
     container: ubuntu:22.04  # Run in container to test with minimal pre-installed packages
 

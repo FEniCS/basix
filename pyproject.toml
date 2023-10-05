@@ -21,7 +21,7 @@ testpaths = ["test"]
 # addopts = "-n auto --durations 20"
 
 [build-system]
-requires = ["pybind11>=2.9.1", "cmake>=3.19", "scikit-build-core"]
+requires = ["nanobind>=1.5.1", "cmake>=3.19", "scikit-build-core"]
 build-backend = "scikit_build_core.build"
 
 [tool.scikit-build]

@@ -46,12 +46,12 @@ def type_to_string(quadraturetype: _QT) -> str:
         The quadrature rule as a string.
 
     """
-    return quadraturetype.name
+    return quadraturetype.__name__
 
 
-def make_quadrature(
-    cell: _CT, degree: int, rule: _QT = _QT.Default, polyset_type: _PT = _PT.standard
-) -> _typing.Tuple[_npt.NDArray[_np.float64], _npt.NDArray[_np.float64]]:
+def make_quadrature(cell: _CT, degree: int, rule: _QT = _QT.Default,
+                    polyset_type: _PT = _PT.standard) -> _typing.Tuple[_npt.NDArray[_np.float64],
+                                                                       _npt.NDArray[_np.float64]]:
     """Create a quadrature rule.
 
     Args:

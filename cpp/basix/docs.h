@@ -415,6 +415,7 @@ Returns:
     A custom finite element
 )";
 
+
 const std::string
     create_element__family_cell_degree_lvariant_dvariant_discontinuous_dof_ordering
     = R"(
@@ -626,5 +627,7 @@ Args:
 Returns::
     The restricted polyset type
 )";
+
+
 
 } // namespace basix::docstring

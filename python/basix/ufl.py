@@ -67,7 +67,7 @@ def _ufl_pullback_from_enum(m: _basix.MapType) -> _AbstractPullback:
 
     """
     if m not in _pullbackmap:
-        raise ValueError(f"Could not convert to UFL pull back: {m.name}")
+        raise ValueError(f"Could not convert to UFL pull back: {m.__name__}")
     return _pullbackmap[m]
 
 

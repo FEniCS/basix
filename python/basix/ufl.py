@@ -1259,7 +1259,7 @@ class _QuadratureElement(_ElementBase):
         """Initialise the element."""
         self._points = points
         self._weights = weights
-        repr = f"QuadratureElement({cell.__name++}, {points!r}, {weights!r}, {pullback})".replace("\n", "")
+        repr = f"QuadratureElement({cell.__name__}, {points!r}, {weights!r}, {pullback})".replace("\n", "")
         self._cell_type = cell
         self._entity_counts = [len(i) for i in _basix.topology(cell)]
 

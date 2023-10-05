@@ -60,8 +60,8 @@ class CMakeBuild(build_ext):
         build_args += ['--', '-j3']
 
         env = os.environ.copy()
-        import pybind11
-        env['pybind11_DIR'] = pybind11.get_cmake_dir()
+        import nanobind
+        env['nanobind_DIR'] = nanobind.cmake_dir()
         env['CXXFLAGS'] = '{} -DVERSION_INFO=\\"{}\\"'.format(env.get('CXXFLAGS', ''),
                                                               self.distribution.get_version())
 
@@ -82,6 +82,7 @@ setup(name='fenics-basix',
       classifiers=[_f for _f in CLASSIFIERS.split('\n') if _f],
       platforms=["Linux", "Mac OS-X", "Unix"],
       packages=["basix"],
+      setup_requires=["nanobind"],
       package_data={"basix": ["py.typed"]},
       install_requires=["numpy>=1.21"],
       extras_require={

@@ -67,7 +67,7 @@ dependencies for the C++ and Python parts of Basix will be fetched
 automatically.
 
 Building the Python interface requires
-[`pybind11`](https://github.com/pybind/pybind11).
+[`nanobind`](https://github.com/wjakob/nanobind).
 
 At runtime Basix requires [`numpy`](https://numpy.org).
 

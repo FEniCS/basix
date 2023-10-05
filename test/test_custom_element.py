@@ -10,23 +10,17 @@ import basix
 
 def test_lagrange_custom_triangle_degree1():
     """Test that Lagrange element created as a custom element agrees with built-in Lagrange."""
-
     wcoeffs = np.eye(3)
     z = np.zeros((0, 2))
-    x = [[np.array([[0., 0.]]), np.array([[1., 0.]]), np.array([[0., 1.]])],
-         [z, z, z], [z], []]
+    x = [[np.array([[0., 0.]]), np.array([[1., 0.]]), np.array([[0., 1.]])], [z, z, z], [z], []]
     z = np.zeros((0, 1, 0, 1))
-    M = [[np.array([[[[1.]]]]), np.array([[[[1.]]]]), np.array([[[[1.]]]])],
-         [z, z, z], [z], []]
+    M = [[np.array([[[[1.]]]]), np.array([[[[1.]]]]), np.array([[[[1.]]]])], [z, z, z], [z], []]
 
-    lagrange = basix.create_element(
-        basix.ElementFamily.P, basix.CellType.triangle, 1)
-
-    element = basix.create_custom_element(
-        basix.CellType.triangle, [], wcoeffs,
-        x, M, 0, basix.MapType.identity, basix.SobolevSpace.H1, False, 1, 1,
-        basix.PolysetType.standard)
-
+    lagrange = basix.create_element(basix.ElementFamily.P, basix.CellType.triangle, 1)
+    element = basix.create_custom_element(basix.CellType.triangle, [], wcoeffs,
+                                          x, M, 0, basix.MapType.identity,
+                                          basix.SobolevSpace.H1, False, 1, 1,
+                                          basix.PolysetType.standard)
     points = basix.create_lattice(basix.CellType.triangle, 5, basix.LatticeType.equispaced, True)
     assert np.allclose(lagrange.tabulate(1, points), element.tabulate(1, points))
     assert np.allclose(lagrange.base_transformations(), element.base_transformations())
@@ -37,20 +31,14 @@ def test_lagrange_custom_triangle_degree1_l2piola():
 
     wcoeffs = np.eye(3)
     z = np.zeros((0, 2))
-    x = [[np.array([[0., 0.]]), np.array([[1., 0.]]), np.array([[0., 1.]])],
-         [z, z, z], [z], []]
+    x = [[np.array([[0., 0.]]), np.array([[1., 0.]]), np.array([[0., 1.]])], [z, z, z], [z], []]
     z = np.zeros((0, 1, 0, 1))
-    M = [[np.array([[[[1.]]]]), np.array([[[[1.]]]]), np.array([[[[1.]]]])],
-         [z, z, z], [z], []]
+    M = [[np.array([[[[1.]]]]), np.array([[[[1.]]]]), np.array([[[[1.]]]])], [z, z, z], [z], []]
 
-    lagrange = basix.create_element(
-        basix.ElementFamily.P, basix.CellType.triangle, 1)
-
-    element = basix.create_custom_element(
-        basix.CellType.triangle, [], wcoeffs,
-        x, M, 0, basix.MapType.L2Piola, basix.SobolevSpace.L2, False, 1, 1,
-        basix.PolysetType.standard)
-
+    lagrange = basix.create_element(basix.ElementFamily.P, basix.CellType.triangle, 1)
+    element = basix.create_custom_element(basix.CellType.triangle, [], wcoeffs,
+                                          x, M, 0, basix.MapType.L2Piola, basix.SobolevSpace.L2,
+                                          False, 1, 1, basix.PolysetType.standard)
     points = basix.create_lattice(basix.CellType.triangle, 5, basix.LatticeType.equispaced, True)
     assert np.allclose(lagrange.tabulate(1, points), element.tabulate(1, points))
     assert np.allclose(lagrange.base_transformations(), element.base_transformations())
@@ -58,7 +46,6 @@ def test_lagrange_custom_triangle_degree1_l2piola():
 
 def test_lagrange_custom_triangle_degree4():
     """Test that Lagrange element created as a custom element agrees with built-in Lagrange."""
-
     wcoeffs = np.eye(15)
     x = [[np.array([[0., 0.]]), np.array([[1., 0.]]), np.array([[0., 1.]])],
          [np.array([[.75, .25], [.5, .5], [.25, .75]]), np.array([[0., .25], [0., .5], [0., .75]]),
@@ -68,13 +55,12 @@ def test_lagrange_custom_triangle_degree4():
     M = [[np.array([[[[1.]]]]), np.array([[[[1.]]]]), np.array([[[[1.]]]])],
          [id, id, id], [id], []]
 
-    lagrange = basix.create_element(
-        basix.ElementFamily.P, basix.CellType.triangle, 4, basix.LagrangeVariant.equispaced)
-
-    element = basix.create_custom_element(
-        basix.CellType.triangle, [], wcoeffs,
-        x, M, 0, basix.MapType.identity, basix.SobolevSpace.H1, False, 4, 4,
-        basix.PolysetType.standard)
+    lagrange = basix.create_element(basix.ElementFamily.P, basix.CellType.triangle, 4,
+                                    basix.LagrangeVariant.equispaced)
+    element = basix.create_custom_element(basix.CellType.triangle, [], wcoeffs,
+                                          x, M, 0, basix.MapType.identity,
+                                          basix.SobolevSpace.H1, False, 4, 4,
+                                          basix.PolysetType.standard)
 
     points = basix.create_lattice(basix.CellType.triangle, 5, basix.LatticeType.equispaced, True)
     assert np.allclose(lagrange.tabulate(1, points), element.tabulate(1, points))
@@ -86,20 +72,16 @@ def test_lagrange_custom_quadrilateral_degree1():
 
     wcoeffs = np.eye(4)
     z = np.zeros((0, 2))
-    x = [[np.array([[0., 0.]]), np.array([[1., 0.]]), np.array([[0., 1.]]), np.array([[1., 1.]])],
-         [z, z, z, z], [z], []]
+    x = [[np.array([[0., 0.]]), np.array([[1., 0.]]), np.array(
+        [[0., 1.]]), np.array([[1., 1.]])], [z, z, z, z], [z], []]
     z = np.zeros((0, 1, 0, 1))
-    M = [[np.array([[[[1.]]]]), np.array([[[[1.]]]]), np.array([[[[1.]]]]), np.array([[[[1.]]]])],
-         [z, z, z, z], [z], []]
+    M = [[np.array([[[[1.]]]]), np.array([[[[1.]]]]), np.array(
+        [[[[1.]]]]), np.array([[[[1.]]]])], [z, z, z, z], [z], []]
 
-    lagrange = basix.create_element(
-        basix.ElementFamily.P, basix.CellType.quadrilateral, 1)
-
-    element = basix.create_custom_element(
-        basix.CellType.quadrilateral, [], wcoeffs,
-        x, M, 0, basix.MapType.identity, basix.SobolevSpace.H1, False, 1, 1,
-        basix.PolysetType.standard)
-
+    lagrange = basix.create_element(basix.ElementFamily.P, basix.CellType.quadrilateral, 1)
+    element = basix.create_custom_element(basix.CellType.quadrilateral, [], wcoeffs,
+                                          x, M, 0, basix.MapType.identity, basix.SobolevSpace.H1,
+                                          False, 1, 1, basix.PolysetType.standard)
     points = basix.create_lattice(basix.CellType.quadrilateral, 5, basix.LatticeType.equispaced, True)
     assert np.allclose(lagrange.tabulate(1, points), element.tabulate(1, points))
     assert np.allclose(lagrange.base_transformations(), element.base_transformations())
@@ -138,13 +120,11 @@ def test_raviart_thomas_triangle_degree1():
         M[1].append(mat)
     M[2].append(np.zeros((0, 2, 0, 1)))
 
-    element = basix.create_custom_element(
-        basix.CellType.triangle, [2], wcoeffs, x, M, 0, basix.MapType.contravariantPiola,
-        basix.SobolevSpace.HDiv, False, 0, 1, basix.PolysetType.standard)
-
-    rt = basix.create_element(
-        basix.ElementFamily.RT, basix.CellType.triangle, 1)
-
+    element = basix.create_custom_element(basix.CellType.triangle, [2], wcoeffs, x, M, 0,
+                                          basix.MapType.contravariantPiola,
+                                          basix.SobolevSpace.HDiv, False, 0, 1,
+                                          basix.PolysetType.standard)
+    rt = basix.create_element(basix.ElementFamily.RT, basix.CellType.triangle, 1)
     points = basix.create_lattice(basix.CellType.triangle, 5, basix.LatticeType.equispaced, True)
     assert np.allclose(rt.tabulate(1, points), element.tabulate(1, points))
     assert np.allclose(rt.base_transformations(), element.base_transformations())
@@ -157,17 +137,18 @@ def create_lagrange1_quad(cell_type=basix.CellType.quadrilateral, degree=1, wcoe
         wcoeffs = np.eye(4)
     if x is None:
         z = np.zeros((0, 2))
-        x = [[np.array([[0., 0.]]), np.array([[1., 0.]]), np.array([[0., 1.]]), np.array([[1., 1.]])],
-             [z, z, z, z], [z], []]
+        x = [[np.array([[0., 0.]]), np.array([[1., 0.]]), np.array(
+            [[0., 1.]]), np.array([[1., 1.]])], [z, z, z, z], [z], []]
     if M is None:
         z = np.zeros((0, 1, 0, 1))
-        M = [[np.array([[[[1.]]]]), np.array([[[[1.]]]]), np.array([[[[1.]]]]), np.array([[[[1.]]]])],
-             [z, z, z, z], [z], []]
+        M = [[np.array([[[[1.]]]]), np.array([[[[1.]]]]), np.array(
+            [[[[1.]]]]), np.array([[[[1.]]]])], [z, z, z, z], [z], []]
     if value_shape is None:
         value_shape = []
-    basix.create_custom_element(
-        cell_type, value_shape, wcoeffs, x, M, interpolation_nderivs, basix.MapType.identity,
-        basix.SobolevSpace.H1, discontinuous, 1, degree, basix.PolysetType.standard)
+    basix.create_custom_element(cell_type, value_shape, wcoeffs, x, M,
+                                interpolation_nderivs, basix.MapType.identity,
+                                basix.SobolevSpace.H1, discontinuous, 1,
+                                degree, basix.PolysetType.standard)
 
 
 def test_create_lagrange1_quad():
@@ -217,24 +198,16 @@ def test_wcoeffs_equal_rows():
 def test_x_wrong_tdim():
     """Test that a runtime error is thrown when a point in x has the wrong tdim."""
     z = np.zeros((0, 2))
-    x = [[np.array([[0., 0., 0.]]), np.array([[1., 0.]]), np.array([[0., 1.]]), np.array([[1., 1.]])],
-         [z, z, z, z], [z], []]
-    assert_failure(x=x)
-
-
-def test_x_wrong_ndims():
-    """Test that a runtime error is thrown when x has the wrong shape."""
-    z = np.zeros((0, 2))
-    x = [[np.array([0., 0.]), np.array([[1., 0.]]), np.array([[0., 1.]]), np.array([[1., 1.]])],
-         [z, z, z, z], [z], []]
+    x = [[np.array([[0., 0., 0.]]), np.array([[1., 0.]]), np.array(
+        [[0., 1.]]), np.array([[1., 1.]])], [z, z, z, z], [z], []]
     assert_failure(x=x)
 
 
 def test_x_too_many_points():
     """Test that a runtime error is thrown when x has too many points."""
     z = np.zeros((0, 2))
-    x = [[np.array([[0., 0.]]), np.array([[1., 0.]]), np.array([[0., 1.]]), np.array([[1., 1.]])],
-         [z, z, z, z], [np.array([[.5, .5]])], []]
+    x = [[np.array([[0., 0.]]), np.array([[1., 0.]]), np.array([[0., 1.]]),
+          np.array([[1., 1.]])], [z, z, z, z], [np.array([[.5, .5]])], []]
     assert_failure(x=x)
 
 
@@ -249,61 +222,52 @@ def test_x_point_tdim_too_high():
 def test_x_wrong_entity_count():
     """Test that a runtime error is thrown when x has the wrong number of edges."""
     z = np.zeros((0, 2))
-    x = [[np.array([[0., 0.]]), np.array([[1., 0.]]), np.array([[0., 1.]]), np.array([[1., 1.]])],
-         [z, z, z, z, z], [z], []]
+    x = [[np.array([[0., 0.]]), np.array([[1., 0.]]), np.array(
+        [[0., 1.]]), np.array([[1., 1.]])], [z, z, z, z, z], [z], []]
     assert_failure(x=x)
 
 
 def test_M_wrong_value_size():
     """Test that a runtime error is thrown when M has the wrong shape."""
     z = np.zeros((0, 1, 0, 1))
-    M = [[np.array([[[[1.], [1.]]]]), np.array([[[[1.]]]]), np.array([[[[1.]]]]), np.array([[[[1.]]]])],
-         [z, z, z, z], [z], []]
-    assert_failure(M=M)
-
-
-def test_M_wrong_ndims():
-    """Test that a runtime error is thrown when M has the wrong shape."""
-    z = np.zeros((0, 1, 0, 1))
-    M = [[np.array([[[1.]]]), np.array([[[[1.]]]]), np.array([[[[1.]]]]), np.array([[[[1.]]]])],
-         [z, z, z, z], [z], []]
+    M = [[np.array([[[[1.], [1.]]]]), np.array([[[[1.]]]]), np.array(
+        [[[[1.]]]]), np.array([[[[1.]]]])], [z, z, z, z], [z], []]
     assert_failure(M=M)
 
 
 def test_M_too_many_points():
     """Test that a runtime error is thrown when M is the wrong shape."""
     z = np.zeros((0, 1, 0, 1))
-    M = [[np.array([[[[1.]]]]), np.array([[[[1.]]]]), np.array([[[[1.]]]]), np.array([[[[1.]]]])],
-         [z, z, z, z], [np.array([[[[1.]]]])], []]
+    M = [[np.array([[[[1.]]]]), np.array([[[[1.]]]]), np.array([[[[1.]]]]),
+          np.array([[[[1.]]]])], [z, z, z, z], [np.array([[[[1.]]]])], []]
     assert_failure(M=M)
 
     z = np.zeros((0, 1, 0, 1))
-    M = [[np.array([[[[1.], [1.]]]]), np.array([[[[1.]]]]), np.array([[[[1.]]]]), np.array([[[[1.]]]])],
-         [z, z, z, z], [z], []]
+    M = [[np.array([[[[1.], [1.]]]]), np.array([[[[1.]]]]), np.array(
+        [[[[1.]]]]), np.array([[[[1.]]]])], [z, z, z, z], [z], []]
     assert_failure(M=M)
 
 
 def test_M_wrong_entities():
     """Test that a runtime error is thrown when the shape of M does not match x."""
     z = np.zeros((0, 1, 0, 1))
-    M = [[np.array([[[[1.]]]]), np.array([[[[1.]]]]), np.array([[[[1.]]], [[[1.]]]]), z],
-         [z, z, z, z], [z], []]
+    M = [[np.array([[[[1.]]]]), np.array([[[[1.]]]]), np.array([[[[1.]]], [[[1.]]]]), z], [z, z, z, z], [z], []]
     assert_failure(M=M)
 
 
 def test_M_too_many_derivs():
     """Test that a runtime error is thrown when M is the wrong shape."""
     z = np.zeros((0, 1, 0, 1))
-    M = [[np.array([[[[1.]]]]), np.array([[[[1.]]]]), np.array([[[[1., 1.]]]]), np.array([[[[1.]]]])],
-         [z, z, z, z], [z], []]
+    M = [[np.array([[[[1.]]]]), np.array([[[[1.]]]]), np.array(
+        [[[[1., 1.]]]]), np.array([[[[1.]]]])], [z, z, z, z], [z], []]
     assert_failure(M=M)
 
 
 def test_M_zero_row():
     """Test that a runtime error is thrown when M has a zero row."""
     z = np.zeros((0, 1, 0, 1))
-    M = [[np.array([[[[1.]]]]), np.array([[[[1.]]]]), np.array([[[[1.]]]]), np.array([[[[0.]]]])],
-         [z, z, z, z], [z], []]
+    M = [[np.array([[[[1.]]]]), np.array([[[[1.]]]]), np.array(
+        [[[[1.]]]]), np.array([[[[0.]]]])], [z, z, z, z], [z], []]
     assert_failure(M=M)
 
 

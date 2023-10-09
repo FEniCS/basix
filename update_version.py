@@ -62,7 +62,7 @@ for file in ["CMakeLists.txt", "cpp/CMakeLists.txt", "python/CMakeLists.txt"]:
     with open(os.path.join(path, file), "w") as f:
         f.write(replace_version(content, version))
 
-for file in ["setup.py", "python/setup.py"]:
+for file in ["pyproject.toml", "python/setup.py"]:
     print(f"Replacing version numbers in {file}.")
     with open(os.path.join(path, file)) as f:
         content = f.read()

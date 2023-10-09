@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.19)
 
-PROJECT(basix_nanobind VERSION "0.7.0.0" LANGUAGES CXX)
+PROJECT(basix_nanobind VERSION "0.8.0.0" LANGUAGES CXX)
 
 # Set C++ standard
 set(CMAKE_CXX_STANDARD 20)

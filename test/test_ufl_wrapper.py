@@ -124,7 +124,7 @@ def test_sobolev_space(e, space0, space1):
 @pytest.mark.parametrize("degree", [1, 3, 6])
 @pytest.mark.parametrize("shape", [(), (1, ), (2, ), (3, ), (5, ), (2, 2), (3, 3), (4, 1), (5, 1, 7)])
 def test_quadrature_element(cell, degree, shape):
-    scalar_e = basix.ufl.quadrature_element(cell, degree=degree);
+    scalar_e = basix.ufl.quadrature_element(cell, (), degree=degree)
     e = basix.ufl.quadrature_element(cell, shape, degree=degree)
 
     size = 1

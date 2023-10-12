@@ -132,3 +132,4 @@ def test_quadrature_element(cell, degree, shape):
         size *= i
 
     assert e.value_size == scalar_e.value_size * size
+    assert e.dim == scalar_e.dim * size

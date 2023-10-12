@@ -1219,9 +1219,8 @@ class _BlockedElement(_ElementBase):
 class _QuadratureElement(_ElementBase):
     """A quadrature element."""
 
-    def __init__(self, cell: _basix.CellType, value_shape: _typing.Tuple[int, ...],
-                 points: _npt.NDArray[_np.float64], weights: _npt.NDArray[_np.float64],
-                 mapname: str, degree: _typing.Optional[int] = None):
+    def __init__(self, cell: _basix.CellType, points: _npt.NDArray[_np.float64],
+                 weights: _npt.NDArray[_np.float64], mapname: str, degree: _typing.Optional[int] = None):
         """Initialise the element."""
         self._points = points
         self._weights = weights
@@ -1232,7 +1231,7 @@ class _QuadratureElement(_ElementBase):
         if degree is None:
             degree = len(points)
 
-        super().__init__(repr, "quadrature element", cell.__name__, value_shape, degree, mapname=mapname)
+        super().__init__(repr, "quadrature element", cell.__name__, (), degree, mapname=mapname)
 
     def basix_sobolev_space(self):
         """Return the underlying Sobolev space."""
@@ -1862,7 +1861,11 @@ def quadrature_element(cell: _typing.Union[str, _basix.CellType],
     assert points is not None
     assert weights is not None
 
-    return _QuadratureElement(cell, value_shape, points, weights, mapname, degree)
+    e = _QuadratureElement(cell, points, weights, mapname, degree)
+    if value_shape == ():
+        return e
+    else:
+        return _BlockedElement(a, value_shape)
 
 
 def real_element(cell: _typing.Union[_basix.CellType, str],

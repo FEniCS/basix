@@ -1865,7 +1865,7 @@ def quadrature_element(cell: _typing.Union[str, _basix.CellType],
     if value_shape == ():
         return e
     else:
-        return _BlockedElement(a, value_shape)
+        return _BlockedElement(e, value_shape)
 
 
 def real_element(cell: _typing.Union[_basix.CellType, str],

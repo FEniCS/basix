@@ -1897,7 +1897,7 @@ def quadrature_element(cell: _typing.Union[str, _basix.CellType],
     assert points is not None
     assert weights is not None
 
-    e = _QuadratureElement(cell, points, weights, mapname, pullback, degree)
+    e = _QuadratureElement(cell, points, weights, pullback, degree)
     if value_shape == ():
         return e
     else:

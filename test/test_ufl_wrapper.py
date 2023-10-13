@@ -82,3 +82,19 @@ def test_enriched_element(elements):
 def test_sobolev_space(e, space0, space1):
     assert e.sobolev_space.name == space0
     assert e.basix_sobolev_space == space1
+
+
+@pytest.mark.parametrize("cell", [
+    basix.CellType.triangle, basix.CellType.quadrilateral, basix.CellType.tetrahedron, basix.CellType.prism])
+@pytest.mark.parametrize("degree", [1, 3, 6])
+@pytest.mark.parametrize("shape", [(), (1, ), (2, ), (3, ), (5, ), (2, 2), (3, 3), (4, 1), (5, 1, 7)])
+def test_quadrature_element(cell, degree, shape):
+    scalar_e = basix.ufl.quadrature_element(cell, (), degree=degree)
+    e = basix.ufl.quadrature_element(cell, shape, degree=degree)
+
+    size = 1
+    for i in shape:
+        size *= i
+
+    assert e.value_size == scalar_e.value_size * size
+    assert e.dim == scalar_e.dim * size

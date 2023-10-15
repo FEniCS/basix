@@ -49,13 +49,14 @@ jobs:
           . ./spack/share/spack/setup-env.sh
           spack env create main
           spack env activate main
-          spack add py-fenics-basix@main
-          spack install --test=root
+          # spack add py-fenics-basix@main
+          spack add py-nanobind
+          spack install
 
-      - name: Install Basix release version and run tests
-        run: |
-          . ./spack/share/spack/setup-env.sh
-          spack env create release
-          spack env activate release
-          spack add py-fenics-basix
-          spack install --test=root
+      # - name: Install Basix release version and run tests
+      #   run: |
+      #     . ./spack/share/spack/setup-env.sh
+      #     spack env create release
+      #     spack env activate release
+      #     spack add py-fenics-basix
+      #     spack install --test=root

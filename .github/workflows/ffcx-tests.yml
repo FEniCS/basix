@@ -40,7 +40,7 @@ jobs:
 
       - name: Install UFL (default branch)
         if: github.event_name != 'workflow_dispatch'
-        run: python3 -m pip install git+https://github.com/FEniCS/ufl.git@mscroggs/remove-elements
+        run: python3 -m pip install git+https://github.com/FEniCS/ufl.git
       - name: Install UFL (specified branch)
         if: github.event_name == 'workflow_dispatch'
         run: python3 -m pip install git+https://github.com/FEniCS/ufl.git@${{ github.event.inputs.ufl_branch }}

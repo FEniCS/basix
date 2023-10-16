@@ -1,4 +1,4 @@
-name: Spack build
+name: Spack install
 
 on:
   # Uncomment the below 'push' to trigger on push

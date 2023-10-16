@@ -13,8 +13,7 @@ Basix allows users to:
   reference cell and a physical cell;
 - permute and transform DOFs to allow higher-order elements to be use on
   arbitrary meshes; and
-- interpolate into a finite element space and between finite element
-  spaces.
+- interpolate into and between finite element spaces.
 
 Basix includes a range of built-in elements, and also allows the user to define
 their own custom elements.

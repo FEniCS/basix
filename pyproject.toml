@@ -1,3 +1,7 @@
+[build-system]
+requires = ["nanobind>=1.5.1", "cmake>=3.19", "scikit-build-core"]
+build-backend = "scikit_build_core.build"
+
 [project]
 name = "fenics-basix"
 version = "0.8.0.dev0"
@@ -18,28 +22,26 @@ ci = ["mypy", "pytest-xdist", "fenics-basix[docs,lint,test,optional]"]
 
 [tool.pytest.ini_options]
 testpaths = ["test"]
-# addopts = "-n auto --durations 20"
-
-[build-system]
-requires = ["nanobind>=1.5.1", "cmake>=3.19", "scikit-build-core"]
-build-backend = "scikit_build_core.build"
 
 [tool.scikit-build]
 wheel.packages = ["python/basix"]
 
 [tool.cibuildwheel]
-build = ["cp{38,39,310}-manylinux_x86_64", "cp{38,39,310}-manylinux_aarch64", "cp{38,39,310}-macosx_x86_64", "cp{38,39,310}-macosx_arm64"]
-
+build = [
+    "cp{38,39,310}-manylinux_x86_64",
+    "cp{38,39,310}-manylinux_aarch64",
+    "cp{38,39,310}-macosx_x86_64",
+    "cp{38,39,310}-macosx_arm64",
+]
 test-command = [
     "cmake -G Ninja -DPython3_EXECUTABLE=$(which python) -B build-dir -S {project}/test/test_cmake",
     "cmake --build build-dir/",
     "build-dir/a.out",
-    "python -m pytest -v -n auto --durations 20 {project}/test/"
+    "python -m pytest -v -n auto --durations 20 {project}/test/",
 ]
 test-requires = ["pytest-xdist"]
 test-extras = ["test"]
 test-skip = "*-macosx_arm64 *-*linux_aarch64"
-
 manylinux-x86_64-image = "manylinux_2_28"
 
 [tool.cibuildwheel.linux]
@@ -49,3 +51,12 @@ before-build = "yum -y update && yum install -y epel-release && yum install -y o
 [tool.cibuildwheel.macos]
 archs = ["x86_64", "arm64"] # Forces arm64 build on x86_64 runner using cross-compilation.
 before-build = "export HOMEBREW_AUTO_UPDATING=0 && brew update && brew install ninja"
+
+[tool.pydocstyle]
+convention = "google"
+
+[tool.mypy]
+ignore_missing_imports = true
+
+[tool.isort]
+line_length = 120

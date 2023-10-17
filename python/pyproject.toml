@@ -1,5 +1,24 @@
 [build-system]
-# We require that the user installs cmake
-requires = ["setuptools>=42", "wheel", "nanobind>=1.5.1", "cmake>=3.19"]
+requires = ["scikit-build-core", "nanobind>=1.5.1", "cmake>=3.19"]
+build-backend = "scikit_build_core.build"
 
-build-backend = "setuptools.build_meta"
+[project]
+name = "fenics-basix"
+version = "0.8.0.dev0"
+description = "Basix Python interface"
+readme = "../README.md"
+requires-python = ">=3.8.0"
+license = {file = "../LICENSE"}
+authors = [{email="fenics-dev@googlegroups.com"}, {name="FEniCS Project"}]
+packages = ["basix"]
+dependencies = ["numpy>=1.21"]
+
+[project.optional-dependencies]
+docs = ["markdown", "pylit3", "pyyaml", "sphinx==5.0.2", "sphinx_rtd_theme"]
+lint = ["flake8", "pydocstyle", "isort"]
+optional = ["numba", "fenics-ufl@git+https://github.com/fenics/ufl"]
+test = ["pytest", "sympy", "scipy", "matplotlib", "fenics-basix[optional]"]
+ci = ["mypy", "pytest-xdist", "fenics-basix[docs,lint,test,optional]"]
+
+[tool.scikit-build]
+wheel.packages = ["basix"]

@@ -39,7 +39,7 @@ endif()
 
 # Add relative rpath so _basixcpp can find the Basix::basix library
 # when the build is relocated
-if(BASIC_FULL_SKBUILD)
+if(BASIX_FULL_SKBUILD)
   if(APPLE)
     set_target_properties(_basixcpp PROPERTIES INSTALL_RPATH "@loader_path/lib")
   else()

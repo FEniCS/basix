@@ -27,8 +27,6 @@ find_package(nanobind CONFIG REQUIRED)
 nanobind_add_module(_basixcpp MODULE wrapper.cpp)
 target_link_libraries(_basixcpp PRIVATE Basix::basix)
 
-# get_property(ResultVariable TARGET TargetName PROPERTY CXX_STANDARD)
-
 # Add strict compiler flags
 include(CheckCXXCompilerFlag)
 CHECK_CXX_COMPILER_FLAG("-Wall -Werror -Wextra -Wno-comment -pedantic" HAVE_PEDANTIC)

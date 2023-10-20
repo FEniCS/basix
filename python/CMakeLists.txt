@@ -30,18 +30,23 @@ target_link_libraries(_basixcpp PRIVATE Basix::basix)
 # Add strict compiler flags
 include(CheckCXXCompilerFlag)
 CHECK_CXX_COMPILER_FLAG("-Wall -Werror -Wextra -Wno-comment -pedantic" HAVE_PEDANTIC)
+
 if(HAVE_PEDANTIC)
   target_compile_options(_basixcpp PRIVATE -Wall;-Wextra;-Werror;-Wno-comment)
 endif()
 
-# scikit-build specific steps
-if(SKBUILD)
-  # Add relative rpath so _basixcpp can find the Basix::basix library
-  # when the build is relocated
+# Add relative rpath so _basixcpp can find the Basix::basix library
+# when the build is relocated
+if(BASIX_FULL_SKBUILD)
   if(APPLE)
     set_target_properties(_basixcpp PROPERTIES INSTALL_RPATH "@loader_path/lib")
   else()
     set_target_properties(_basixcpp PROPERTIES INSTALL_RPATH "$ORIGIN/lib")
   endif()
-  install(TARGETS _basixcpp DESTINATION basix)
+else()
+  get_target_property(_location Basix::basix LOCATION)
+  get_filename_component(_basix_dir ${_location} DIRECTORY)
+  set_target_properties(_basixcpp PROPERTIES INSTALL_RPATH ${_basix_dir})
 endif()
+
+install(TARGETS _basixcpp LIBRARY DESTINATION basix)

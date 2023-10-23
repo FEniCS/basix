@@ -1,6 +1,8 @@
 [build-system]
-requires = ["scikit-build-core", "nanobind>=1.5.1", "cmake>=3.19"]
+requires = ["scikit-build-core", "nanobind>=1.5.1"]
 build-backend = "scikit_build_core.build"
+# minimum cmake and any necessary cmake install is handled by scikit-build-core 
+# minimum scikit-build-core handled by scikit-build-core 
 
 [project]
 name = "fenics-basix"
@@ -21,4 +23,6 @@ test = ["pytest", "sympy", "scipy", "matplotlib", "fenics-basix[optional]"]
 ci = ["mypy", "pytest-xdist", "fenics-basix[docs,lint,test,optional]"]
 
 [tool.scikit-build]
+minimum-version = "0.5"
+cmake.minimum-version = "3.19.0"
 wheel.packages = ["basix"]

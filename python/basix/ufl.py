@@ -1026,7 +1026,8 @@ class _BlockedElement(_ElementBase):
         """Check if two elements are equal."""
         return (
             isinstance(other, _BlockedElement) and self._block_size == other._block_size
-            and self.block_shape == other.block_shape and self.sub_element == other.sub_element)
+            and self.block_shape == other.block_shape and self.sub_element == other.sub_element
+            and self._gdim == other._gdim)
 
     def __hash__(self) -> int:
         """Return a hash."""

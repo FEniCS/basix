@@ -756,13 +756,15 @@ class _MixedElement(_ElementBase):
         else:
             pullback = _MixedPullback(self)
 
-        super().__init__("mixed element (" + ", ".join(i._repr for i in sub_elements) + ")",
-                         sub_elements[0].cell_type.__name__,
+        repr = "mixed element (" + ", ".join(i._repr for i in sub_elements)
+        repr = _repr_optional_args(repr, ("gdim", gdim))
+        super().__init__(repr, sub_elements[0].cell_type.__name__,
                          (sum(i.value_size for i in sub_elements), ), pullback=pullback, gdim=gdim)
 
     def __eq__(self, other) -> bool:
         """Check if two elements are equal."""
-        if isinstance(other, _MixedElement) and len(self._sub_elements) == len(other._sub_elements):
+        if isinstance(other, _MixedElement) and (len(self._sub_elements) == len(other._sub_elements)
+                                                 and self._gdim == other._gdim):
             for i, j in zip(self._sub_elements, other._sub_elements):
                 if i != j:
                     return False

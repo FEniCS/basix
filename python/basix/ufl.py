@@ -1443,7 +1443,7 @@ class _RealElement(_ElementBase):
         self._cell_type = cell
         tdim = len(_basix.topology(cell)) - 1
 
-        super().__init__(f"RealElement({element})", cell.__name__, value_shape, 0)
+        super().__init__(f"RealElement({cell.__name__}, {value_shape})", cell.__name__, value_shape, 0)
 
         self._entity_counts = []
         if tdim >= 1:
@@ -1456,7 +1456,8 @@ class _RealElement(_ElementBase):
 
     def __eq__(self, other) -> bool:
         """Check if two elements are equal."""
-        return isinstance(other, _RealElement)
+        return isinstance(other, _RealElement) and (self._cell_type == other._cell_type
+                                                    and self._value_shape == other._value_shape)
 
     def __hash__(self) -> int:
         """Return a hash."""

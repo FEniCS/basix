@@ -1276,8 +1276,12 @@ class _QuadratureElement(_ElementBase):
 
     def __eq__(self, other) -> bool:
         """Check if two elements are equal."""
-        return isinstance(other, _QuadratureElement) and _np.allclose(self._points, other._points) and \
-            _np.allclose(self._weights, other._weights)
+        return isinstance(other, _QuadratureElement) and (
+            self._cell_type == other._cell_type
+            and self._pullback == other._pullback
+            and _np.allclose(self._points, other._points)
+            and _np.allclose(self._weights, other._weights)
+        )
 
     def __hash__(self) -> int:
         """Return a hash."""

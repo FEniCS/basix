@@ -350,7 +350,7 @@ class _BasixElement(_ElementBase):
         """Create a Basix element."""
         if element.family == _basix.ElementFamily.custom:
             self._is_custom = True
-            repr = f"custom Basix element ({_compute_signature(element)})"
+            repr = f"custom Basix element ({_compute_signature(element)}"
         else:
             self._is_custom = False
             repr = (f"Basix element ({element.family.__name__}, {element.cell_type.__name__}, {element.degree}, "

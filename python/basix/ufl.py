@@ -355,9 +355,7 @@ class _BasixElement(_ElementBase):
             self._is_custom = False
             repr = (f"Basix element ({element.family.__name__}, {element.cell_type.__name__}, {element.degree}, "
                     f"{element.lagrange_variant.__name__}, {element.dpc_variant.__name__}, {element.discontinuous}")
-        if gdim is not None:
-            repr += f", gdim={gdim}"
-        repr += ")"
+        repr = _repr_optional_args(repr, ("gdim", gdim))
 
         super().__init__(
             repr, element.cell_type.__name__, tuple(element.value_shape), element.degree,
@@ -571,9 +569,7 @@ class _ComponentElement(_ElementBase):
         self.element = element
         self.component = component
         repr = f"component element ({element._repr}, {component}"
-        if gdim is not None:
-            repr += f", gdim={gdim}"
-        repr += ")"
+        repr = _repr_optional_args(repr, ("gdim", gdim))
         super().__init__(repr, element.cell_type.__name__, (1, ), element._degree, gdim=gdim)
 
     def __eq__(self, other) -> bool:
@@ -1006,13 +1002,10 @@ class _BlockedElement(_ElementBase):
 
         repr = f"blocked element ({sub_element._repr}, {shape}"
         if len(shape) == 2:
-            if symmetry:
-                repr += ", True"
-            else:
-                repr += ", False"
-        if gdim is not None:
-            repr += f", gdim={gdim}"
-        repr += ")"
+            _symm = ("symmetry", "True" if symmetry else "False")
+        else:
+            _symm = ("symmetry", None)
+        repr = _repr_optional_args(repr, _symm, ("gdim", gdim))
 
         super().__init__(repr, sub_element.cell_type.__name__, shape,
                          sub_element._degree, sub_element._pullback, gdim=gdim)
@@ -1639,6 +1632,29 @@ def _compute_signature(element: _basix.finite_element.FiniteElement) -> str:
     signature += _hashlib.sha1(data.encode('utf-8')).hexdigest()
 
     return signature
+
+
+def _repr_optional_args(partial_repr: str, *args):
+    """Augment an element `repr` by appending non-None optional arguments.
+
+    Args:
+        partial_repr: The initial `repr` of a finite element incorporating all required
+                      arguments but not including any optional args
+        args: Sequence of tuples `(name: str, value: typing.Any)` where `name` is the name
+              of an optional argument to be including in the repr and `value` is its
+              value. All arguments for which `value is not None` will be appended to
+              `partial_repr`.
+    
+    Returns:
+        A string representation of a finite element
+    """
+
+    repr = partial_repr
+    for name, value in args:
+        if value is not None:
+            repr += f", {name}={value}"
+    repr += ")"
+    return repr
 
 
 @_functools.lru_cache()

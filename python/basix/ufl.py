@@ -570,13 +570,16 @@ class _ComponentElement(_ElementBase):
         """Initialise the element."""
         self.element = element
         self.component = component
-        super().__init__(f"component element ({element._repr}, {component})",
-                         element.cell_type.__name__, (1, ), element._degree, gdim=gdim)
+        repr = f"component element ({element._repr}, {component}"
+        if gdim is not None:
+            repr += f", gdim={gdim}"
+        repr += ")"
+        super().__init__(repr, element.cell_type.__name__, (1, ), element._degree, gdim=gdim)
 
     def __eq__(self, other) -> bool:
         """Check if two elements are equal."""
         return (isinstance(other, _ComponentElement) and self.element == other.element
-                and self.component == other.component)
+                and self.component == other.component and self._gdim == other._gdim)
 
     def __hash__(self) -> int:
         """Return a hash."""

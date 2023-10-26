@@ -354,7 +354,10 @@ class _BasixElement(_ElementBase):
         else:
             self._is_custom = False
             repr = (f"Basix element ({element.family.__name__}, {element.cell_type.__name__}, {element.degree}, "
-                    f"{element.lagrange_variant.__name__}, {element.dpc_variant.__name__}, {element.discontinuous})")
+                    f"{element.lagrange_variant.__name__}, {element.dpc_variant.__name__}, {element.discontinuous}")
+        if gdim is not None:
+            repr += f", gdim={gdim}"
+        repr += ")"
 
         super().__init__(
             repr, element.cell_type.__name__, tuple(element.value_shape), element.degree,
@@ -364,7 +367,7 @@ class _BasixElement(_ElementBase):
 
     def __eq__(self, other) -> bool:
         """Check if two elements are equal."""
-        return isinstance(other, _BasixElement) and self.element == other.element
+        return isinstance(other, _BasixElement) and (self.element == other.element and self._gdim == other._gdim)
 
     def __hash__(self) -> int:
         """Return a hash."""

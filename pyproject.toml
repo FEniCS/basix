@@ -1,6 +1,6 @@
 [project]
 name = "fenics-basix"
-version = "0.7.0"
+version = "0.7.0.post0"
 description = "Basix Python interface"
 readme = "README.md"
 requires-python = ">=3.8.0"

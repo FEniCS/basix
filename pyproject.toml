@@ -1,6 +1,12 @@
+[build-system]
+requires = ["nanobind>=1.5.1", "scikit-build-core"]
+build-backend = "scikit_build_core.build"
+# minimum cmake and any necessary cmake install is handled by scikit-build-core 
+# minimum scikit-build-core handled by scikit-build-core 
+
 [project]
 name = "fenics-basix"
-version = "0.7.0.dev0"
+version = "0.8.0.dev0"
 description = "Basix Python interface"
 readme = "README.md"
 requires-python = ">=3.8.0"
@@ -8,6 +14,11 @@ license = {file = "LICENSE"}
 authors = [{email="fenics-dev@googlegroups.com"}, {name="FEniCS Project"}]
 packages = ["basix"]
 dependencies = ["numpy>=1.21"]
+
+[project.urls]
+homepage = "https://fenicsproject.org"
+repository = "https://github.com/fenics/basix.git"
+documentation = "https://docs.fenicsproject.org"
 
 [project.optional-dependencies]
 docs = ["markdown", "pylit3", "pyyaml", "sphinx==5.0.2", "sphinx_rtd_theme"]
@@ -18,28 +29,28 @@ ci = ["mypy", "pytest-xdist", "fenics-basix[docs,lint,test,optional]"]
 
 [tool.pytest.ini_options]
 testpaths = ["test"]
-# addopts = "-n auto --durations 20"
-
-[build-system]
-requires = ["pybind11>=2.9.1", "cmake>=3.19", "scikit-build-core"]
-build-backend = "scikit_build_core.build"
 
 [tool.scikit-build]
+minimum-version = "0.5"
+cmake.minimum-version = "3.19.0"
 wheel.packages = ["python/basix"]
 
 [tool.cibuildwheel]
-build = ["cp{38,39,310,311}-manylinux_x86_64", "cp{38,39,310,311}-manylinux_aarch64", "cp{38,39,310,311}-macosx_x86_64", "cp{38,39,310,311}-macosx_arm64"]
-
+build = [
+    "cp{38,39,310}-manylinux_x86_64",
+    "cp{38,39,310}-manylinux_aarch64",
+    "cp{38,39,310}-macosx_x86_64",
+    "cp{38,39,310}-macosx_arm64",
+]
 test-command = [
     "cmake -G Ninja -DPython3_EXECUTABLE=$(which python) -B build-dir -S {project}/test/test_cmake",
     "cmake --build build-dir/",
     "build-dir/a.out",
-    "python -m pytest -v -n auto --durations 20 {project}/test/"
+    "python -m pytest -v -n auto --durations 20 {project}/test/",
 ]
 test-requires = ["pytest-xdist"]
 test-extras = ["test"]
 test-skip = "*-macosx_arm64 *-*linux_aarch64"
-
 manylinux-x86_64-image = "manylinux_2_28"
 
 [tool.cibuildwheel.linux]
@@ -49,3 +60,12 @@ before-build = "yum -y update && yum install -y epel-release && yum install -y o
 [tool.cibuildwheel.macos]
 archs = ["x86_64", "arm64"] # Forces arm64 build on x86_64 runner using cross-compilation.
 before-build = "export HOMEBREW_AUTO_UPDATING=0 && brew update && brew install ninja"
+
+[tool.pydocstyle]
+convention = "google"
+
+[tool.mypy]
+ignore_missing_imports = true
+
+[tool.isort]
+line_length = 120

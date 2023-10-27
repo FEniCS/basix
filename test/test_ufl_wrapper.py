@@ -1,5 +1,5 @@
+import numpy as np
 import pytest
-import ufl
 
 import basix
 import basix.ufl
@@ -24,7 +24,7 @@ def test_finite_element(inputs):
 ])
 def test_vector_element(inputs):
     e = basix.ufl.element(*inputs, shape=(2, ))
-    table = e.tabulate(0, [[0, 0]])
+    table = e.tabulate(0, np.array([[0, 0]]))
     assert table.shape == (1, 1, e.value_size, e.dim)
 
 
@@ -48,56 +48,22 @@ def test_tensor_element_hash(inputs):
     e = basix.ufl.element(*inputs)
     sym = basix.ufl.blocked_element(e, shape=(2, 2), symmetry=True)
     asym = basix.ufl.blocked_element(e, shape=(2, 2), symmetry=False)
-    table = e.tabulate(0, [[0, 0]])
+    table = e.tabulate(0, np.array([[0, 0]], dtype=np.float64))
     assert table.shape == (1, 1, e.dim)
     assert sym != asym
     assert hash(sym) != hash(asym)
 
 
-@pytest.mark.parametrize("e", [
-    ufl.FiniteElement("Q", "quadrilateral", 1),
-    ufl.FiniteElement("Lagrange", "triangle", 2),
-    ufl.VectorElement("Lagrange", "triangle", 2),
-    ufl.TensorElement("Lagrange", "triangle", 2),
-    ufl.MixedElement(ufl.VectorElement("Lagrange", "triangle", 2), ufl.VectorElement("Lagrange", "triangle", 1)),
-    ufl.EnrichedElement(ufl.FiniteElement("Lagrange", "triangle", 1), ufl.FiniteElement("Bubble", "triangle", 3)),
-    ufl.EnrichedElement(ufl.VectorElement("Lagrange", "triangle", 1), ufl.VectorElement("Bubble", "triangle", 3)),
-    ufl.FiniteElement("Real", "quadrilateral", 0),
-    ufl.FiniteElement("Quadrature", "quadrilateral", 1),
-])
-def test_convert_ufl_element(e):
-    e2 = basix.ufl.convert_ufl_element(e)
-    # Check that element is hashable
-    hash(e2)
-
-
-@pytest.mark.parametrize("family, celltype, degree, variants", [
-    ("Lagrange", "triangle", 1, []),
-    ("Lagrange", "triangle", 3, [basix.LagrangeVariant.gll_warped]),
-    ("Lagrange", "tetrahedron", 2, [])
-])
-def test_converted_elements(family, celltype, degree, variants):
-    e1 = basix.ufl.element(family, celltype, degree, *variants)
-    e2 = ufl.FiniteElement(family, celltype, degree)
-    assert e1 == basix.ufl.convert_ufl_element(e1)
-    assert e1 == basix.ufl.convert_ufl_element(e2)
-
-    e1 = basix.ufl.element(family, celltype, degree, *variants, shape=(2, ) if celltype == "triangle" else (3, ))
-    e2 = ufl.VectorElement(family, celltype, degree)
-    assert e1 == basix.ufl.convert_ufl_element(e1)
-    assert e1 == basix.ufl.convert_ufl_element(e2)
-
-
 @pytest.mark.parametrize("elements", [
-    [ufl.FiniteElement("Lagrange", "triangle", 1), ufl.FiniteElement("Bubble", "triangle", 3)],
-    [ufl.FiniteElement("Lagrange", "quadrilateral", 1), basix.ufl.element("Bubble", "quadrilateral", 2)],
-    [ufl.VectorElement("Lagrange", "quadrilateral", 1),
+    [basix.ufl.element("Lagrange", "triangle", 1), basix.ufl.element("Bubble", "triangle", 3)],
+    [basix.ufl.element("Lagrange", "quadrilateral", 1), basix.ufl.element("Bubble", "quadrilateral", 2)],
+    [basix.ufl.element("Lagrange", "quadrilateral", 1, shape=(2, )),
      basix.ufl.element("Bubble", "quadrilateral", 2, shape=(2, ))],
-    [ufl.TensorElement("Lagrange", "quadrilateral", 1),
+    [basix.ufl.element("Lagrange", "quadrilateral", 1, shape=(2, 2)),
      basix.ufl.element("Bubble", "quadrilateral", 2, shape=(2, 2))],
 ])
 def test_enriched_element(elements):
-    e = basix.ufl.enriched_element([basix.ufl.convert_ufl_element(e) for e in elements])
+    e = basix.ufl.enriched_element(elements)
     # Check that element is hashable
     hash(e)
 
@@ -114,5 +80,21 @@ def test_enriched_element(elements):
      "L2", basix.SobolevSpace.L2),
 ])
 def test_sobolev_space(e, space0, space1):
-    assert e.sobolev_space().name == space0
+    assert e.sobolev_space.name == space0
     assert e.basix_sobolev_space == space1
+
+
+@pytest.mark.parametrize("cell", [
+    basix.CellType.triangle, basix.CellType.quadrilateral, basix.CellType.tetrahedron, basix.CellType.prism])
+@pytest.mark.parametrize("degree", [1, 3, 6])
+@pytest.mark.parametrize("shape", [(), (1, ), (2, ), (3, ), (5, ), (2, 2), (3, 3), (4, 1), (5, 1, 7)])
+def test_quadrature_element(cell, degree, shape):
+    scalar_e = basix.ufl.quadrature_element(cell, (), degree=degree)
+    e = basix.ufl.quadrature_element(cell, shape, degree=degree)
+
+    size = 1
+    for i in shape:
+        size *= i
+
+    assert e.value_size == scalar_e.value_size * size
+    assert e.dim == scalar_e.dim * size

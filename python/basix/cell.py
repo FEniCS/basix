@@ -35,4 +35,4 @@ def type_to_string(celltype: _CT) -> str:
         The name of the cell as a string.
 
     """
-    return celltype.name
+    return celltype.__name__

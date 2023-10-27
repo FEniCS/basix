@@ -1,6 +1,7 @@
 # Basix
 
-![Basix CI](https://github.com/FEniCS/basix/workflows/Basix%20CI/badge.svg)
+[![Basix CI](https://github.com/FEniCS/basix/actions/workflows/pythonapp.yml/badge.svg)](https://github.com/FEniCS/basix/actions/workflows/pythonapp.yml)
+[![Spack install](https://github.com/FEniCS/basix/actions/workflows/spack.yml/badge.svg)](https://github.com/FEniCS/basix/actions/workflows/spack.yml)
 
 Basix is a finite element definition and tabulation runtime library.
 Basix allows users to:
@@ -12,8 +13,7 @@ Basix allows users to:
   reference cell and a physical cell;
 - permute and transform DOFs to allow higher-order elements to be use on
   arbitrary meshes; and
-- interpolate into a finite element space and between finite element
-  spaces.
+- interpolate into and between finite element spaces.
 
 Basix includes a range of built-in elements, and also allows the user to define
 their own custom elements.

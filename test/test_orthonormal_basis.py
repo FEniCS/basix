@@ -17,6 +17,7 @@ def test_quad(order):
         for q, v in zip(Lpts, Lwts):
             Qpts.append([p[0], q[0]])
             Qwts.append(u * v)
+    Qpts = np.array(Qpts)
     basis = basix._basixcpp.tabulate_polynomial_set(
         basix.CellType.quadrilateral, basix.PolysetType.standard, order, 0, Qpts)[0]
     ndofs = basis.shape[0]
@@ -40,6 +41,7 @@ def test_pyramid(order):
                 sc = (1.0 - r[0])
                 Qpts.append([p[0] * sc, q[0] * sc, r[0]])
                 Qwts.append(u * v * sc * sc * w)
+    Qpts = np.array(Qpts)
     basis = basix._basixcpp.tabulate_polynomial_set(
         basix.CellType.pyramid, basix.PolysetType.standard,  order, 0, Qpts)[0]
     ndofs = basis.shape[0]
@@ -62,6 +64,7 @@ def test_hex(order):
             for r, w in zip(Lpts, Lwts):
                 Qpts.append([p[0], q[0], r[0]])
                 Qwts.append(u * v * w)
+    Qpts = np.array(Qpts)
     basis = basix._basixcpp.tabulate_polynomial_set(
         basix.CellType.hexahedron, basix.PolysetType.standard, order, 0, Qpts)[0]
     ndofs = basis.shape[0]
@@ -84,6 +87,7 @@ def test_prism(order):
         for q, v in zip(Lpts, Lwts):
             Qpts.append([p[0], p[1], q[0]])
             Qwts.append(u * v)
+    Qpts = np.array(Qpts)
     basis = basix._basixcpp.tabulate_polynomial_set(
         basix.CellType.prism, basix.PolysetType.standard, order, 0, Qpts)[0]
     ndofs = basis.shape[0]

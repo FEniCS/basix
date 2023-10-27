@@ -140,3 +140,15 @@ autoclass_content = "both"
 napoleon_google_docstring = True
 napoleon_numpy_docstring = False
 napoleon_use_admonition_for_notes = False
+
+def skip_member(app, what, name, obj, skip, opts):
+    # Skip @entries from nanobind enums
+    # Imported abc.abstractmethod (as _abstractmethod)
+    # also seems to be confusing sphinx
+    if name == '@entries' or name == "_abstractmethod":
+        return True
+    else:
+        return skip
+
+def setup(app):
+    app.connect('autodoc-skip-member', skip_member)

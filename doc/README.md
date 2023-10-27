@@ -3,7 +3,8 @@ Basix documentation
 
 C++ documentation
 -----------------
-To build the documentation of the Basix C++ library, run the following commands:
+To build the documentation of the Basix C++ library, run the following
+commands:
 
 ```bash
 cd cpp
@@ -15,7 +16,8 @@ The documentation will then be built in the folder `cpp/html/`.
 
 Python documentation
 --------------------
-To build the documentation of the Basix Python interface, run the following commands:
+To build the documentation of the Basix Python interface, run the
+following commands:
 
 ```bash
 cd python

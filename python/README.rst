@@ -1,9 +1,8 @@
 Basix Python interface
 ========================
 
-This document explains how to install the Basix Python interface. Note that
-this interface must be built without PEP517 build isolation by passing
-`--no-build-isolation` flag to `pip install`.
+This document explains how to install the Basix Python interface, given that the C++ interface has been built.
+This is meant for development purposes, and regular users should use the top-level install instructions.
 
 1. Build and install the Basix C++ library in the usual way.
 

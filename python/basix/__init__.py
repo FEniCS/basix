@@ -2,6 +2,7 @@
 
 The core of the library is written in C++, but the majority of Basix's
 functionality can be used via this Python interface.
+
 """
 
 from . import cell, finite_element, lattice, polynomials, quadrature, sobolev_spaces, variants

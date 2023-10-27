@@ -1004,7 +1004,7 @@ class _BlockedElement(_ElementBase):
 
         repr = f"blocked element ({sub_element._repr}, {shape}"
         if len(shape) == 2:
-            _symm = ("symmetry", "True" if symmetry else "False")
+            _symm: tuple[str, _typing.Any] = ("symmetry", "True" if symmetry else "False")
         else:
             _symm = ("symmetry", None)
         repr = _repr_optional_args(repr, _symm, ("gdim", gdim))
@@ -1641,7 +1641,7 @@ def _compute_signature(element: _basix.finite_element.FiniteElement) -> str:
     return signature
 
 
-def _repr_optional_args(partial_repr: str, *args):
+def _repr_optional_args(partial_repr: str, *args: tuple[str, _typing.Any]) -> str:
     """Augment an element `repr` by appending non-None optional arguments.
 
     Args:

@@ -1651,7 +1651,6 @@ def _repr_optional_args(partial_repr: str, *args):
               of an optional argument to be including in the repr and `value` is its
               value. All arguments for which `value is not None` will be appended to
               `partial_repr`.
-    
     Returns:
         A string representation of a finite element
     """

@@ -1,5 +1,6 @@
 [build-system]
-requires = ["nanobind>=1.5.1", "scikit-build-core"]
+requires = ["nanobind>=1.5.1", "scikit-build-core==0.5.1"]
+# Pinned due to https://github.com/scikit-build/scikit-build-core/issues/532
 build-backend = "scikit_build_core.build"
 # minimum cmake and any necessary cmake install is handled by scikit-build-core 
 # minimum scikit-build-core handled by scikit-build-core 
@@ -10,8 +11,11 @@ version = "0.8.0.dev0"
 description = "Basix Python interface"
 readme = "README.md"
 requires-python = ">=3.8.0"
-license = {file = "LICENSE"}
-authors = [{email="fenics-dev@googlegroups.com"}, {name="FEniCS Project"}]
+license = { file = "LICENSE" }
+authors = [
+    { email = "fenics-dev@googlegroups.com" },
+    { name = "FEniCS Project" },
+]
 packages = ["basix"]
 dependencies = ["numpy>=1.21"]
 
@@ -54,11 +58,17 @@ test-skip = "*-macosx_arm64 *-*linux_aarch64"
 manylinux-x86_64-image = "manylinux_2_28"
 
 [tool.cibuildwheel.linux]
-archs = ["x86_64", "aarch64"] # Forces arm64 build on x86_64 runner using emulation.
+archs = [
+    "x86_64",
+    "aarch64",
+] # Forces arm64 build on x86_64 runner using emulation.
 before-build = "yum -y update && yum install -y epel-release && yum install -y openblas-devel ninja-build"
 
 [tool.cibuildwheel.macos]
-archs = ["x86_64", "arm64"] # Forces arm64 build on x86_64 runner using cross-compilation.
+archs = [
+    "x86_64",
+    "arm64",
+] # Forces arm64 build on x86_64 runner using cross-compilation.
 before-build = "export HOMEBREW_AUTO_UPDATING=0 && brew update && brew install ninja"
 
 [tool.pydocstyle]

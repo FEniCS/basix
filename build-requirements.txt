@@ -1,0 +1,2 @@
+scikit-build-core[pyproject]==0.5.1 # Pinned due to https://github.com/scikit-build/scikit-build-core/issues/532
+nanobind>=1.5.1

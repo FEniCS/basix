@@ -15,19 +15,15 @@ def test_hermite_interval():
 
     # Hermite basis functions taken from Symfem
     sym_basis = [2*x**3 - 3*x**2 + 1, x**3 - 2*x**2 + x, -2*x**3 + 3*x**2, x**3 - x**2]
-
     pts = basix.create_lattice(basix.CellType.interval, 3, basix.LatticeType.equispaced, True)
-
     nderiv = 2
     wtab = hermite.tabulate(nderiv, pts)
-
     for kx in range(nderiv + 1):
         wsym = numpy.zeros_like(wtab[0])
         for i, f in enumerate(sym_basis):
             wd = sympy.diff(f, x, kx)
             for k, p in enumerate(pts):
                 wsym[k, i] = wd.subs([(x, p[0])])
-
         assert numpy.allclose(wtab[kx], wsym)
 
 
@@ -52,10 +48,8 @@ def test_hermite_triangle():
     ]
 
     pts = basix.create_lattice(basix.CellType.triangle, 3, basix.LatticeType.equispaced, True)
-
     nderiv = 2
     wtab = hermite.tabulate(nderiv, pts)
-
     for kx in range(nderiv + 1):
         for ky in range(nderiv + 1 - kx):
             wsym = numpy.zeros_like(wtab[0])
@@ -63,7 +57,6 @@ def test_hermite_triangle():
                 wd = sympy.diff(f, x, kx, y, ky)
                 for k, p in enumerate(pts):
                     wsym[k, i] = wd.subs([(x, p[0]), (y, p[1])])
-
             assert numpy.allclose(wtab[basix.index(kx, ky)], wsym)
 
 
@@ -102,10 +95,8 @@ def test_hermite_tetrahedron():
     ]
 
     pts = basix.create_lattice(basix.CellType.tetrahedron, 3, basix.LatticeType.equispaced, True)
-
     nderiv = 2
     wtab = hermite.tabulate(nderiv, pts)
-
     for kx in range(nderiv + 1):
         for ky in range(nderiv + 1 - kx):
             for kz in range(nderiv + 1 - kx - ky):
@@ -114,5 +105,4 @@ def test_hermite_tetrahedron():
                     wd = sympy.diff(f, x, kx, y, ky, z, kz)
                     for k, p in enumerate(pts):
                         wsym[k, i] = wd.subs([(x, p[0]), (y, p[1]), (z, p[2])])
-
                 assert numpy.allclose(wtab[basix.index(kx, ky, kz)], wsym)

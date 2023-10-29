@@ -69,7 +69,6 @@ def test_lagrange_custom_triangle_degree4():
 
 def test_lagrange_custom_quadrilateral_degree1():
     """Test that Lagrange element created as a custom element agrees with built-in Lagrange."""
-
     wcoeffs = np.eye(4)
     z = np.zeros((0, 2))
     x = [[np.array([[0., 0.]]), np.array([[1., 0.]]), np.array(
@@ -89,7 +88,6 @@ def test_lagrange_custom_quadrilateral_degree1():
 
 def test_raviart_thomas_triangle_degree1():
     """Test that Raviart-Thomas element created as a custom element agrees with built-in Raviart-Thomas."""
-
     wcoeffs = np.zeros((3, 6))
     wcoeffs[0, 0] = 1
     wcoeffs[1, 3] = 1

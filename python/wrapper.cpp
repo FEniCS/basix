@@ -1,4 +1,4 @@
-// Copyright (c) 2020 Chris Richardson & Matthew Scroggs
+// Copyright (c) 2020-2023 Chris Richardson, Matthew Scroggs and Garth N. Wells
 // FEniCS Project
 // SPDX-License-Identifier:    MIT
 
@@ -46,11 +46,9 @@ std::string cell_type_to_str(cell::type type)
          {cell::type::pyramid, "pyramid"},
          {cell::type::prism, "prism"},
          {cell::type::hexahedron, "hexahedron"}};
-
   auto it = type_to_name.find(type);
   if (it == type_to_name.end())
     throw std::runtime_error("Can't find type");
-
   return it->second;
 }
 
@@ -82,34 +80,11 @@ auto as_nbarrayp(std::pair<V, std::array<std::size_t, U>>&& x)
   return as_nbarray(std::move(x.first), x.second.size(), x.second.data());
 }
 
-// template <typename V, typename U>
-// auto as_nbndarray(V&& array, U&& shape)
-// {
-//   std::size_t dim = shape.size();
-//   auto data = array.data();
-//   using _V = std::decay_t<V>;
-//   std::unique_ptr<_V> x_ptr = std::make_unique<_V>(std::move(array));
-//   auto capsule
-//       = nb::capsule(x_ptr.get(), [](void* p) noexcept
-//                     { std::unique_ptr<_V>(reinterpret_cast<_V*>(p)); });
-//   x_ptr.release();
-//   return nb::ndarray<nb::numpy, typename _V::value_type>(data, dim,
-//                                                          shape.data(),
-//                                                          capsule);
-// }
-
-// template <typename V>
-// auto as_nbndarray(V&& p)
-// {
-//   return as_nbndarray(p.first, p.second);
-// }
-
 } // namespace
 
 NB_MODULE(_basixcpp, m)
 {
   m.doc() = "Interface to the Basix C++ library.";
-
   m.attr("__version__") = basix::version();
 
   m.def("topology", &cell::topology, basix::docstring::topology.c_str());
@@ -158,10 +133,7 @@ NB_MODULE(_basixcpp, m)
       [](polynomials::type polytype, cell::type celltype, int d,
          nb::ndarray<const double, nb::ndim<2>, nb::c_contig> x)
       {
-        MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<
-            const double,
-            MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 2>>
-            _x(x.data(), x.shape(0), x.shape(1));
+        mdspan_t<const double, 2> _x(x.data(), x.shape(0), x.shape(1));
         return as_nbarrayp(polynomials::tabulate(polytype, celltype, d, _x));
       },
       basix::docstring::tabulate_polynomials.c_str());
@@ -288,10 +260,7 @@ NB_MODULE(_basixcpp, m)
           [](const FiniteElement<double>& self, int n,
              nb::ndarray<const double, nb::ndim<2>, nb::c_contig> x)
           {
-            MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<
-                const double,
-                MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 2>>
-                _x(x.data(), x.shape(0), x.shape(1));
+            mdspan_t<const double, 2> _x(x.data(), x.shape(0), x.shape(1));
             return as_nbarrayp(self.tabulate(n, _x));
           },
           basix::docstring::FiniteElement__tabulate.c_str())
@@ -677,10 +646,7 @@ NB_MODULE(_basixcpp, m)
       [](cell::type celltype, polyset::type polytype, int d, int n,
          nb::ndarray<const double, nb::ndim<2>, nb::c_contig> x)
       {
-        MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<
-            const double,
-            MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 2>>
-            _x(x.data(), x.shape(0), x.shape(1));
+        mdspan_t<const double, 2> _x(x.data(), x.shape(0), x.shape(1));
         return as_nbarrayp(polyset::tabulate(celltype, polytype, d, n, _x));
       },
       basix::docstring::tabulate_polynomial_set.c_str());

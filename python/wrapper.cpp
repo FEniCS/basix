@@ -305,7 +305,7 @@ NB_MODULE(_basixcpp, m)
              nb::ndarray<const double, nb::ndim<1>, nb::c_contig> detJ,
              nb::ndarray<const double, nb::ndim<3>, nb::c_contig> K)
           {
-            auto [u, shape] = self.push_forward(
+            auto u = self.push_forward(
                 mdspan_t<const double, 3>(U.data(), U.shape(0), U.shape(1),
                                           U.shape(2)),
                 mdspan_t<const double, 3>(J.data(), J.shape(0), J.shape(1),
@@ -313,7 +313,7 @@ NB_MODULE(_basixcpp, m)
                 std::span<const double>(detJ.data(), detJ.shape(0)),
                 mdspan_t<const double, 3>(K.data(), K.shape(0), K.shape(1),
                                           K.shape(2)));
-            return as_nbndarray(u, shape);
+            return as_nbarrayp(std::move(u));
           },
           basix::docstring::FiniteElement__push_forward.c_str())
       .def(
@@ -324,7 +324,7 @@ NB_MODULE(_basixcpp, m)
              nb::ndarray<const double, nb::ndim<1>, nb::c_contig> detJ,
              nb::ndarray<const double, nb::ndim<3>, nb::c_contig> K)
           {
-            auto [U, shape] = self.pull_back(
+            auto U = self.pull_back(
                 mdspan_t<const double, 3>(u.data(), u.shape(0), u.shape(1),
                                           u.shape(2)),
                 mdspan_t<const double, 3>(J.data(), J.shape(0), J.shape(1),
@@ -332,7 +332,7 @@ NB_MODULE(_basixcpp, m)
                 std::span<const double>(detJ.data(), detJ.shape(0)),
                 mdspan_t<const double, 3>(K.data(), K.shape(0), K.shape(1),
                                           K.shape(2)));
-            return as_nbndarray(U, shape);
+            return as_nbarrayp(std::move(U));
           },
           basix::docstring::FiniteElement__pull_back.c_str())
       .def(

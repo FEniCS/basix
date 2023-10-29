@@ -77,7 +77,7 @@ auto as_nbarray(V&& x)
 }
 
 template <typename V, std::size_t U>
-auto as_nbarray(std::pair<V, std::array<std::size_t, U>>&& x)
+auto as_nbarrayp(std::pair<V, std::array<std::size_t, U>>&& x)
 {
   return as_nbarray(std::move(x.first), x.second.size(), x.second.data());
 }
@@ -117,7 +117,7 @@ NB_MODULE(_basixcpp, m)
   m.def(
       "geometry",
       [](cell::type celltype)
-      { return as_nbndarray(cell::geometry<double>(celltype)); },
+      { return as_nbarrayp(cell::geometry<double>(celltype)); },
       basix::docstring::geometry.c_str());
   m.def("sub_entity_connectivity", &cell::sub_entity_connectivity,
         basix::docstring::sub_entity_connectivity.c_str());
@@ -125,7 +125,7 @@ NB_MODULE(_basixcpp, m)
       "sub_entity_geometry",
       [](cell::type celltype, int dim, int index)
       {
-        return as_nbndarray(
+        return as_nbarrayp(
             cell::sub_entity_geometry<double>(celltype, dim, index));
       },
       basix::docstring::sub_entity_geometry.c_str());
@@ -163,7 +163,7 @@ NB_MODULE(_basixcpp, m)
             const double,
             MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 2>>
             _x(x.data(), x.shape(0), x.shape(1));
-        return as_nbndarray(polynomials::tabulate(polytype, celltype, d, _x));
+        return as_nbarrayp(polynomials::tabulate(polytype, celltype, d, _x));
       },
       basix::docstring::tabulate_polynomials.c_str());
   m.def("polynomials_dim", &polynomials::dim,
@@ -173,7 +173,7 @@ NB_MODULE(_basixcpp, m)
       "create_lattice",
       [](cell::type celltype, int n, lattice::type type, bool exterior)
       {
-        return as_nbndarray(lattice::create<double>(
+        return as_nbarrayp(lattice::create<double>(
             celltype, n, type, exterior, lattice::simplex_method::none));
       },
       basix::docstring::create_lattice__celltype_n_type_exterior.c_str());
@@ -183,7 +183,7 @@ NB_MODULE(_basixcpp, m)
       [](cell::type celltype, int n, lattice::type type, bool exterior,
          lattice::simplex_method method)
       {
-        return as_nbndarray(
+        return as_nbarrayp(
             lattice::create<double>(celltype, n, type, exterior, method));
       },
       basix::docstring::create_lattice__celltype_n_type_exterior_method
@@ -240,7 +240,7 @@ NB_MODULE(_basixcpp, m)
   m.def(
       "cell_facet_normals",
       [](cell::type cell_type)
-      { return as_nbndarray(cell::facet_normals<double>(cell_type)); },
+      { return as_nbarrayp(cell::facet_normals<double>(cell_type)); },
       basix::docstring::cell_facet_normals.c_str());
   m.def(
       "cell_facet_reference_volumes",
@@ -255,7 +255,7 @@ NB_MODULE(_basixcpp, m)
   m.def(
       "cell_facet_outward_normals",
       [](cell::type cell_type)
-      { return as_nbndarray(cell::facet_outward_normals<double>(cell_type)); },
+      { return as_nbarrayp(cell::facet_outward_normals<double>(cell_type)); },
       basix::docstring::cell_facet_outward_normals.c_str());
   m.def(
       "cell_facet_orientations",

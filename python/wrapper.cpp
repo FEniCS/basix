@@ -108,6 +108,7 @@ auto as_nbndarray(V&& p)
 NB_MODULE(_basixcpp, m)
 {
   m.doc() = "Interface to the Basix C++ library.";
+
   m.attr("__version__") = basix::version();
 
   m.def("topology", &cell::topology, basix::docstring::topology.c_str());
@@ -373,8 +374,11 @@ NB_MODULE(_basixcpp, m)
           "entity_transformations",
           [](const FiniteElement<double>& self)
           {
+            std::map<cell::type,
+                     std::pair<std::vector<double>, std::array<std::size_t, 3>>>
+                t = self.entity_transformations();
             nb::dict t2;
-            for (auto& [key, data] : self.entity_transformations())
+            for (auto& [key, data] : t)
               t2[cell_type_to_str(key).c_str()] = as_nbndarray(data);
             return t2;
           },
@@ -690,9 +694,11 @@ NB_MODULE(_basixcpp, m)
       {
         auto [pts, w]
             = quadrature::make_quadrature<double>(rule, celltype, polytype, m);
-        return std::pair(
-            as_nbarray(std::move(pts), {w.size(), pts.size() / w.size()}),
-            as_nbarray(std::move(w), {w.size()}));
+        std::array<std::size_t, 1> wshape = {w.size()};
+        std::array<std::size_t, 2> shape = {w.size(), pts.size() / w.size()};
+        return std::pair(as_nbndarray(pts, shape), as_nbndarray(w, wshape));
+        // return std::pair(as_nbarray(pts, {w.size(), pts.size() / w.size()}),
+        //                  as_nbarray(w, {w.size()}));
       },
       basix::docstring::make_quadrature__rule_celltype_polytype_m.c_str());
 

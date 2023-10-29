@@ -129,10 +129,8 @@ NB_MODULE(_basixcpp, m)
   m.def(
       "tabulate_polynomials",
       [](polynomials::type polytype, cell::type celltype, int d,
-         nb::ndarray<const double> x)
+         nb::ndarray<const double, nb::ndim<2>, nb::c_contig> x)
       {
-        if (x.ndim() != 2)
-          throw std::runtime_error("x has the wrong number of dimensions");
         MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<
             const double,
             MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 2>>
@@ -266,11 +264,8 @@ NB_MODULE(_basixcpp, m)
       .def(
           "tabulate",
           [](const FiniteElement<double>& self, int n,
-             nb::ndarray<nb::numpy, const double, nb::shape<nb::any, nb::any>>
-                 x)
+             nb::ndarray<const double, nb::ndim<2>, nb::c_contig> x)
           {
-            if (x.ndim() != 2)
-              throw std::runtime_error("x has the wrong size");
             MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<
                 const double,
                 MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 2>>
@@ -283,10 +278,10 @@ NB_MODULE(_basixcpp, m)
       .def(
           "push_forward",
           [](const FiniteElement<double>& self,
-             nb::ndarray<const double, nb::shape<nb::any, nb::any, nb::any>> U,
-             nb::ndarray<const double, nb::shape<nb::any, nb::any, nb::any>> J,
-             nb::ndarray<const double, nb::shape<nb::any>> detJ,
-             nb::ndarray<const double, nb::shape<nb::any, nb::any, nb::any>> K)
+             nb::ndarray<const double, nb::ndim<3>, nb::c_contig> U,
+             nb::ndarray<const double, nb::ndim<3>, nb::c_contig> J,
+             nb::ndarray<const double, nb::ndim<1>, nb::c_contig> detJ,
+             nb::ndarray<const double, nb::ndim<3>, nb::c_contig> K)
           {
             auto [u, shape] = self.push_forward(
                 mdspan_t<const double, 3>(U.data(), U.shape(0), U.shape(1),
@@ -302,10 +297,10 @@ NB_MODULE(_basixcpp, m)
       .def(
           "pull_back",
           [](const FiniteElement<double>& self,
-             nb::ndarray<const double, nb::shape<nb::any, nb::any, nb::any>> u,
-             nb::ndarray<const double, nb::shape<nb::any, nb::any, nb::any>> J,
-             nb::ndarray<const double, nb::shape<nb::any>> detJ,
-             nb::ndarray<const double, nb::shape<nb::any, nb::any, nb::any>> K)
+             nb::ndarray<const double, nb::ndim<3>, nb::c_contig> u,
+             nb::ndarray<const double, nb::ndim<3>, nb::c_contig> J,
+             nb::ndarray<const double, nb::ndim<1>, nb::c_contig> detJ,
+             nb::ndarray<const double, nb::ndim<3>, nb::c_contig> K)
           {
             auto [U, shape] = self.pull_back(
                 mdspan_t<const double, 3>(u.data(), u.shape(0), u.shape(1),
@@ -321,34 +316,32 @@ NB_MODULE(_basixcpp, m)
       .def(
           "apply_dof_transformation",
           [](const FiniteElement<double>& self,
-             nb::ndarray<double, nb::shape<nb::any>> data, int block_size,
-             std::uint32_t cell_info)
+             nb::ndarray<double, nb::ndim<1>, nb::c_contig> data,
+             int block_size, std::uint32_t cell_info)
           {
-            std::span<double> data_span(data.data(), data.shape(0));
-            self.apply_dof_transformation(data_span, block_size, cell_info);
+            self.apply_dof_transformation(std::span(data.data(), data.size()),
+                                          block_size, cell_info);
           },
           basix::docstring::FiniteElement__apply_dof_transformation.c_str())
       .def(
           "apply_dof_transformation_to_transpose",
           [](const FiniteElement<double>& self,
-             nb::ndarray<double, nb::shape<nb::any>> data, int block_size,
-             std::uint32_t cell_info)
+             nb::ndarray<double, nb::ndim<1>, nb::c_contig> data,
+             int block_size, std::uint32_t cell_info)
           {
-            std::span<double> data_span(data.data(), data.shape(0));
-            self.apply_dof_transformation_to_transpose(data_span, block_size,
-                                                       cell_info);
+            self.apply_dof_transformation_to_transpose(
+                std::span(data.data(), data.size()), block_size, cell_info);
           },
           basix::docstring::FiniteElement__apply_dof_transformation_to_transpose
               .c_str())
       .def(
           "apply_inverse_transpose_dof_transformation",
           [](const FiniteElement<double>& self,
-             nb::ndarray<double, nb::shape<nb::any>> data, int block_size,
-             std::uint32_t cell_info)
+             nb::ndarray<double, nb::ndim<1>, nb::c_contig> data,
+             int block_size, std::uint32_t cell_info)
           {
-            std::span<double> data_span(data.data(), data.shape(0));
             self.apply_inverse_transpose_dof_transformation(
-                data_span, block_size, cell_info);
+                std::span(data.data(), data.size()), block_size, cell_info);
           },
           basix::docstring::
               FiniteElement__apply_inverse_transpose_dof_transformation.c_str())
@@ -439,8 +432,7 @@ NB_MODULE(_basixcpp, m)
           [](const FiniteElement<double>& self)
           {
             auto& [x, shape] = self.points();
-            return nb::ndarray<nb::numpy, const double,
-                               nb::shape<nb::any, nb::any>>(
+            return nb::ndarray<const double, nb::ndim<2>, nb::c_contig>(
                 x.data(), shape.size(), shape.data());
           },
           "TODO")
@@ -449,8 +441,7 @@ NB_MODULE(_basixcpp, m)
           [](const FiniteElement<double>& self)
           {
             auto& [P, shape] = self.interpolation_matrix();
-            return nb::ndarray<nb::numpy, const double,
-                               nb::shape<nb::any, nb::any>>(
+            return nb::ndarray<const double, nb::ndim<2>, nb::c_contig>(
                 P.data(), shape.size(), shape.data());
           },
           "TODO")
@@ -459,8 +450,7 @@ NB_MODULE(_basixcpp, m)
           [](const FiniteElement<double>& self)
           {
             auto& [D, shape] = self.dual_matrix();
-            return nb::ndarray<nb::numpy, const double,
-                               nb::shape<nb::any, nb::any>>(
+            return nb::ndarray<const double, nb::ndim<2>, nb::c_contig>(
                 D.data(), shape.size(), shape.data());
           },
           "TODO")
@@ -469,8 +459,7 @@ NB_MODULE(_basixcpp, m)
           [](const FiniteElement<double>& self)
           {
             auto& [P, shape] = self.coefficient_matrix();
-            return nb::ndarray<nb::numpy, const double,
-                               nb::shape<nb::any, nb::any>>(
+            return nb::ndarray<const double, nb::ndim<2>, nb::c_contig>(
                 P.data(), shape.size(), shape.data());
           },
           "Coefficient matrix.")
@@ -479,8 +468,7 @@ NB_MODULE(_basixcpp, m)
           [](const FiniteElement<double>& self)
           {
             auto& [w, shape] = self.wcoeffs();
-            return nb::ndarray<nb::numpy, const double,
-                               nb::shape<nb::any, nb::any>>(
+            return nb::ndarray<const double, nb::ndim<2>, nb::c_contig>(
                 w.data(), shape.size(), shape.data());
           },
           "TODO")
@@ -570,11 +558,11 @@ NB_MODULE(_basixcpp, m)
       "create_custom_element",
       [](cell::type cell_type, const std::vector<std::size_t>& value_shape,
          nb::ndarray<const double, nb::shape<nb::any, nb::any>> wcoeffs,
-         std::vector<std::vector<
-             nb::ndarray<const double, nb::shape<nb::any, nb::any>>>>
+         std::vector<
+             std::vector<nb::ndarray<const double, nb::ndim<2>, nb::c_contig>>>
              x,
-         std::vector<std::vector<nb::ndarray<
-             const double, nb::shape<nb::any, nb::any, nb::any, nb::any>>>>
+         std::vector<
+             std::vector<nb::ndarray<const double, nb::ndim<4>, nb::c_contig>>>
              M,
          int interpolation_nderivs, maps::type map_type,
          sobolev::space sobolev_space, bool discontinuous,
@@ -666,14 +654,12 @@ NB_MODULE(_basixcpp, m)
   m.def(
       "tabulate_polynomial_set",
       [](cell::type celltype, polyset::type polytype, int d, int n,
-         nb::ndarray<nb::numpy, double, nb::shape<nb::any, nb::any>> x)
+         nb::ndarray<const double, nd::ndim<2>, nb::c_contig> x)
       {
-        if (x.ndim() != 2)
-          throw std::runtime_error("x has the wrong number of dimensions");
         MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<
             const double,
             MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 2>>
-            _x(static_cast<double*>(x.data()), x.shape(0), x.shape(1));
+            _x(x.data(), x.shape(0), x.shape(1));
         return as_nbndarray(polyset::tabulate(celltype, polytype, d, n, _x));
       },
       basix::docstring::tabulate_polynomial_set.c_str());

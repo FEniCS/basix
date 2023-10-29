@@ -54,6 +54,34 @@ std::string cell_type_to_str(cell::type type)
   return it->second;
 }
 
+template <typename V>
+auto as_nbarray(V&& x, std::size_t ndim, const std::size_t* shape)
+{
+  using _V = std::decay_t<V>;
+  _V* ptr = new _V(std::move(x));
+  return nb::ndarray<typename _V::value_type, nb::numpy>(
+      ptr->data(), ndim, shape,
+      nb::capsule(ptr, [](void* p) noexcept { delete (_V*)p; }));
+}
+
+template <typename V>
+auto as_nbarray(V&& x, const std::initializer_list<std::size_t> shape)
+{
+  return as_nbarray(x, shape.size(), shape.begin());
+}
+
+template <typename V>
+auto as_nbarray(V&& x)
+{
+  return as_nbarray(std::move(x), {x.size()});
+}
+
+template <typename V, std::size_t U>
+auto as_nbarray(std::pair<V, std::array<std::size_t, U>>&& x)
+{
+  return as_nbarray(std::move(x.first), x.second.size(), x.second.data());
+}
+
 template <typename V, typename U>
 auto as_nbndarray(V&& array, U&& shape)
 {
@@ -354,7 +382,9 @@ NB_MODULE(_basixcpp, m)
           "entity_transformations",
           [](const FiniteElement<double>& self)
           {
-            auto t = self.entity_transformations();
+            std::map<cell::type,
+                     std::pair<std::vector<double>, std::array<std::size_t, 3>>>
+                t = self.entity_transformations();
             nb::dict t2;
             for (auto& [key, data] : t)
               t2[cell_type_to_str(key).c_str()] = as_nbndarray(data);
@@ -435,7 +465,7 @@ NB_MODULE(_basixcpp, m)
             return nb::ndarray<const double, nb::ndim<2>, nb::c_contig>(
                 x.data(), shape.size(), shape.data());
           },
-          "TODO")
+          nb::rv_policy::reference_internal, "TODO")
       .def_prop_ro(
           "interpolation_matrix",
           [](const FiniteElement<double>& self)
@@ -444,7 +474,7 @@ NB_MODULE(_basixcpp, m)
             return nb::ndarray<const double, nb::ndim<2>, nb::c_contig>(
                 P.data(), shape.size(), shape.data());
           },
-          "TODO")
+          nb::rv_policy::reference_internal, "TODO")
       .def_prop_ro(
           "dual_matrix",
           [](const FiniteElement<double>& self)
@@ -453,7 +483,7 @@ NB_MODULE(_basixcpp, m)
             return nb::ndarray<const double, nb::ndim<2>, nb::c_contig>(
                 D.data(), shape.size(), shape.data());
           },
-          "TODO")
+          nb::rv_policy::reference_internal, "TODO")
       .def_prop_ro(
           "coefficient_matrix",
           [](const FiniteElement<double>& self)
@@ -462,7 +492,7 @@ NB_MODULE(_basixcpp, m)
             return nb::ndarray<const double, nb::ndim<2>, nb::c_contig>(
                 P.data(), shape.size(), shape.data());
           },
-          "Coefficient matrix.")
+          nb::rv_policy::reference_internal, "Coefficient matrix.")
       .def_prop_ro(
           "wcoeffs",
           [](const FiniteElement<double>& self)
@@ -471,7 +501,7 @@ NB_MODULE(_basixcpp, m)
             return nb::ndarray<const double, nb::ndim<2>, nb::c_contig>(
                 w.data(), shape.size(), shape.data());
           },
-          "TODO")
+          nb::rv_policy::reference_internal, "TODO")
       .def_prop_ro(
           "M",
           [](const FiniteElement<double>& self)
@@ -492,7 +522,7 @@ NB_MODULE(_basixcpp, m)
             }
             return M;
           },
-          "TODO")
+          nb::rv_policy::reference_internal, "TODO")
       .def_prop_ro(
           "x",
           [](const FiniteElement<double>& self)
@@ -512,7 +542,8 @@ NB_MODULE(_basixcpp, m)
               }
             }
             return x;
-          })
+          },
+          nb::rv_policy::reference_internal)
       .def_prop_ro("has_tensor_product_factorisation",
                    &FiniteElement<double>::has_tensor_product_factorisation,
                    "TODO")
@@ -654,7 +685,7 @@ NB_MODULE(_basixcpp, m)
   m.def(
       "tabulate_polynomial_set",
       [](cell::type celltype, polyset::type polytype, int d, int n,
-         nb::ndarray<const double, nd::ndim<2>, nb::c_contig> x)
+         nb::ndarray<const double, nb::ndim<2>, nb::c_contig> x)
       {
         MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<
             const double,

@@ -293,8 +293,7 @@ NB_MODULE(_basixcpp, m)
                 const double,
                 MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 2>>
                 _x(x.data(), x.shape(0), x.shape(1));
-            auto [t, shape] = self.tabulate(n, _x);
-            return as_nbndarray(t, shape);
+            return as_nbarrayp(self.tabulate(n, _x));
           },
           basix::docstring::FiniteElement__tabulate.c_str())
       .def("__eq__", &FiniteElement<double>::operator==)

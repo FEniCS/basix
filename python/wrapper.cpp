@@ -370,7 +370,7 @@ NB_MODULE(_basixcpp, m)
       .def(
           "base_transformations",
           [](const FiniteElement<double>& self)
-          { return as_nbndarray(self.base_transformations()); },
+          { return as_nbarrayp(self.base_transformations()); },
           basix::docstring::FiniteElement__base_transformations.c_str())
       .def(
           "entity_transformations",
@@ -655,7 +655,7 @@ NB_MODULE(_basixcpp, m)
       [](const FiniteElement<double>& element_from,
          const FiniteElement<double>& element_to)
       {
-        return as_nbndarray(
+        return as_nbarrayp(
             basix::compute_interpolation_operator(element_from, element_to));
       },
       basix::docstring::compute_interpolation_operator.c_str());
@@ -685,7 +685,7 @@ NB_MODULE(_basixcpp, m)
             const double,
             MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 2>>
             _x(x.data(), x.shape(0), x.shape(1));
-        return as_nbndarray(polyset::tabulate(celltype, polytype, d, n, _x));
+        return as_nbarrayp(polyset::tabulate(celltype, polytype, d, n, _x));
       },
       basix::docstring::tabulate_polynomial_set.c_str());
 

@@ -166,6 +166,7 @@ jobs:
 
       - name: Install Basix Python wrapper
         run: |
+          python3 -m pip install git+https://github.com/garth-wells/nanobind.git@zero-length-array
           cd python
           python3 -m pip install .[test]
 

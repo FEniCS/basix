@@ -245,12 +245,7 @@ NB_MODULE(_basixcpp, m)
   m.def(
       "cell_facet_reference_volumes",
       [](cell::type cell_type)
-      {
-        std::vector<double> v
-            = cell::facet_reference_volumes<double>(cell_type);
-        std::array<std::size_t, 1> shape = {v.size()};
-        return as_nbndarray(v, shape);
-      },
+      { return as_nbarray(cell::facet_reference_volumes<double>(cell_type)); },
       basix::docstring::cell_facet_reference_volumes.c_str());
   m.def(
       "cell_facet_outward_normals",
@@ -269,7 +264,7 @@ NB_MODULE(_basixcpp, m)
   m.def(
       "cell_facet_jacobians",
       [](cell::type cell_type)
-      { return as_nbndarray(cell::facet_jacobians<double>(cell_type)); },
+      { return as_nbarrayp(cell::facet_jacobians<double>(cell_type)); },
       basix::docstring::cell_facet_jacobians.c_str());
 
   nb::enum_<element::family>(m, "ElementFamily")

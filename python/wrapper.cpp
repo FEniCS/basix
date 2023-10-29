@@ -306,7 +306,7 @@ NB_MODULE(_basixcpp, m)
              nb::ndarray<const double, nb::ndim<1>, nb::c_contig> detJ,
              nb::ndarray<const double, nb::ndim<3>, nb::c_contig> K)
           {
-            auto [u, shape] = self.push_forward(
+            auto u = self.push_forward(
                 mdspan_t<const double, 3>(U.data(), U.shape(0), U.shape(1),
                                           U.shape(2)),
                 mdspan_t<const double, 3>(J.data(), J.shape(0), J.shape(1),
@@ -314,7 +314,7 @@ NB_MODULE(_basixcpp, m)
                 std::span<const double>(detJ.data(), detJ.shape(0)),
                 mdspan_t<const double, 3>(K.data(), K.shape(0), K.shape(1),
                                           K.shape(2)));
-            return as_nbndarray(u, shape);
+            return as_nbarrayp(std::move(u));
           },
           basix::docstring::FiniteElement__push_forward.c_str())
       .def(
@@ -325,7 +325,7 @@ NB_MODULE(_basixcpp, m)
              nb::ndarray<const double, nb::ndim<1>, nb::c_contig> detJ,
              nb::ndarray<const double, nb::ndim<3>, nb::c_contig> K)
           {
-            auto [U, shape] = self.pull_back(
+            auto U = self.pull_back(
                 mdspan_t<const double, 3>(u.data(), u.shape(0), u.shape(1),
                                           u.shape(2)),
                 mdspan_t<const double, 3>(J.data(), J.shape(0), J.shape(1),
@@ -333,7 +333,7 @@ NB_MODULE(_basixcpp, m)
                 std::span<const double>(detJ.data(), detJ.shape(0)),
                 mdspan_t<const double, 3>(K.data(), K.shape(0), K.shape(1),
                                           K.shape(2)));
-            return as_nbndarray(U, shape);
+            return as_nbarrayp(std::move(U));
           },
           basix::docstring::FiniteElement__pull_back.c_str())
       .def(
@@ -371,7 +371,7 @@ NB_MODULE(_basixcpp, m)
       .def(
           "base_transformations",
           [](const FiniteElement<double>& self)
-          { return as_nbndarray(self.base_transformations()); },
+          { return as_nbarrayp(self.base_transformations()); },
           basix::docstring::FiniteElement__base_transformations.c_str())
       .def(
           "entity_transformations",
@@ -656,7 +656,7 @@ NB_MODULE(_basixcpp, m)
       [](const FiniteElement<double>& element_from,
          const FiniteElement<double>& element_to)
       {
-        return as_nbndarray(
+        return as_nbarrayp(
             basix::compute_interpolation_operator(element_from, element_to));
       },
       basix::docstring::compute_interpolation_operator.c_str());
@@ -686,7 +686,7 @@ NB_MODULE(_basixcpp, m)
             const double,
             MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 2>>
             _x(x.data(), x.shape(0), x.shape(1));
-        return as_nbndarray(polyset::tabulate(celltype, polytype, d, n, _x));
+        return as_nbarrayp(polyset::tabulate(celltype, polytype, d, n, _x));
       },
       basix::docstring::tabulate_polynomial_set.c_str());
 
@@ -697,9 +697,8 @@ NB_MODULE(_basixcpp, m)
       {
         auto [pts, w]
             = quadrature::make_quadrature<double>(rule, celltype, polytype, m);
-        std::array<std::size_t, 1> wshape = {w.size()};
-        std::array<std::size_t, 2> shape = {w.size(), pts.size() / w.size()};
-        return std::pair(as_nbndarray(pts, shape), as_nbndarray(w, wshape));
+        return std::pair(as_nbarray(pts, {w.size(), pts.size() / w.size()}),
+                         as_nbarray(w));
       },
       basix::docstring::make_quadrature__rule_celltype_polytype_m.c_str());
 

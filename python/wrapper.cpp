@@ -510,7 +510,7 @@ NB_MODULE(_basixcpp, m)
                                                    std::array<std::size_t, 4>>>,
                              4>& _M
                 = self.M();
-            std::vector<std::vector<nb::ndarray<nb::numpy, const double>>> M(4);
+            std::vector<std::vector<nb::ndarray<const double, nb::numpy>>> M(4);
             for (int i = 0; i < 4; ++i)
             {
               for (std::size_t j = 0; j < _M[i].size(); ++j)
@@ -531,7 +531,7 @@ NB_MODULE(_basixcpp, m)
                                                    std::array<std::size_t, 2>>>,
                              4>& _x
                 = self.x();
-            std::vector<std::vector<nb::ndarray<nb::numpy, const double>>> x(4);
+            std::vector<std::vector<nb::ndarray<const double, nb::numpy>>> x(4);
             for (int i = 0; i < 4; ++i)
             {
               for (std::size_t j = 0; j < _x[i].size(); ++j)
@@ -588,7 +588,7 @@ NB_MODULE(_basixcpp, m)
   m.def(
       "create_custom_element",
       [](cell::type cell_type, const std::vector<std::size_t>& value_shape,
-         nb::ndarray<const double, nb::shape<nb::any, nb::any>> wcoeffs,
+         nb::ndarray<const double, nb::ndim<2>, nb::c_contig> wcoeffs,
          std::vector<
              std::vector<nb::ndarray<const double, nb::ndim<2>, nb::c_contig>>>
              x,

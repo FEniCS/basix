@@ -462,7 +462,7 @@ NB_MODULE(_basixcpp, m)
           [](const FiniteElement<double>& self)
           {
             auto& [x, shape] = self.points();
-            return nb::ndarray<const double, nb::ndim<2>, nb::c_contig>(
+            return nb::ndarray<const double, nb::ndim<2>, nb::numpy>(
                 x.data(), shape.size(), shape.data());
           },
           nb::rv_policy::reference_internal, "TODO")
@@ -471,7 +471,7 @@ NB_MODULE(_basixcpp, m)
           [](const FiniteElement<double>& self)
           {
             auto& [P, shape] = self.interpolation_matrix();
-            return nb::ndarray<const double, nb::ndim<2>, nb::c_contig>(
+            return nb::ndarray<const double, nb::ndim<2>, nb::numpy>(
                 P.data(), shape.size(), shape.data());
           },
           nb::rv_policy::reference_internal, "TODO")
@@ -480,7 +480,7 @@ NB_MODULE(_basixcpp, m)
           [](const FiniteElement<double>& self)
           {
             auto& [D, shape] = self.dual_matrix();
-            return nb::ndarray<const double, nb::ndim<2>, nb::c_contig>(
+            return nb::ndarray<const double, nb::ndim<2>, nb::numpy>(
                 D.data(), shape.size(), shape.data());
           },
           nb::rv_policy::reference_internal, "TODO")
@@ -489,7 +489,7 @@ NB_MODULE(_basixcpp, m)
           [](const FiniteElement<double>& self)
           {
             auto& [P, shape] = self.coefficient_matrix();
-            return nb::ndarray<const double, nb::ndim<2>, nb::c_contig>(
+            return nb::ndarray<const double, nb::ndim<2>, nb::numpy>(
                 P.data(), shape.size(), shape.data());
           },
           nb::rv_policy::reference_internal, "Coefficient matrix.")
@@ -498,7 +498,7 @@ NB_MODULE(_basixcpp, m)
           [](const FiniteElement<double>& self)
           {
             auto& [w, shape] = self.wcoeffs();
-            return nb::ndarray<const double, nb::ndim<2>, nb::c_contig>(
+            return nb::ndarray<const double, nb::ndim<2>, nb::numpy>(
                 w.data(), shape.size(), shape.data());
           },
           nb::rv_policy::reference_internal, "TODO")

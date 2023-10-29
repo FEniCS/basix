@@ -34,7 +34,6 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y doxygen graphviz libopenblas-dev liblapack-dev ninja-build
-          python3 -m pip install git+https://github.com/garth-wells/nanobind.git@zero-length-array
 
       - name: Install Basix
         run: python3 -m pip -v install .[ci]
@@ -167,7 +166,6 @@ jobs:
 
       - name: Install Basix Python wrapper
         run: |
-          python3 -m pip install git+https://github.com/garth-wells/nanobind.git@zero-length-array
           cd python
           python3 -m pip install .[test]
 

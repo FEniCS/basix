@@ -82,26 +82,27 @@ auto as_nbarrayp(std::pair<V, std::array<std::size_t, U>>&& x)
   return as_nbarray(std::move(x.first), x.second.size(), x.second.data());
 }
 
-template <typename V, typename U>
-auto as_nbndarray(V&& array, U&& shape)
-{
-  std::size_t dim = shape.size();
-  auto data = array.data();
-  using _V = std::decay_t<V>;
-  std::unique_ptr<_V> x_ptr = std::make_unique<_V>(std::move(array));
-  auto capsule
-      = nb::capsule(x_ptr.get(), [](void* p) noexcept
-                    { std::unique_ptr<_V>(reinterpret_cast<_V*>(p)); });
-  x_ptr.release();
-  return nb::ndarray<nb::numpy, typename _V::value_type>(data, dim,
-                                                         shape.data(), capsule);
-}
+// template <typename V, typename U>
+// auto as_nbndarray(V&& array, U&& shape)
+// {
+//   std::size_t dim = shape.size();
+//   auto data = array.data();
+//   using _V = std::decay_t<V>;
+//   std::unique_ptr<_V> x_ptr = std::make_unique<_V>(std::move(array));
+//   auto capsule
+//       = nb::capsule(x_ptr.get(), [](void* p) noexcept
+//                     { std::unique_ptr<_V>(reinterpret_cast<_V*>(p)); });
+//   x_ptr.release();
+//   return nb::ndarray<nb::numpy, typename _V::value_type>(data, dim,
+//                                                          shape.data(),
+//                                                          capsule);
+// }
 
-template <typename V>
-auto as_nbndarray(V&& p)
-{
-  return as_nbndarray(p.first, p.second);
-}
+// template <typename V>
+// auto as_nbndarray(V&& p)
+// {
+//   return as_nbndarray(p.first, p.second);
+// }
 
 } // namespace
 
@@ -374,13 +375,10 @@ NB_MODULE(_basixcpp, m)
           "entity_transformations",
           [](const FiniteElement<double>& self)
           {
-            std::map<cell::type,
-                     std::pair<std::vector<double>, std::array<std::size_t, 3>>>
-                t = self.entity_transformations();
-            nb::dict t2;
-            for (auto& [key, data] : t)
-              t2[cell_type_to_str(key).c_str()] = as_nbndarray(data);
-            return t2;
+            nb::dict t;
+            for (auto& [key, data] : self.entity_transformations())
+              t[cell_type_to_str(key).c_str()] = as_nbarrayp(std::move(data));
+            return t;
           },
           basix::docstring::FiniteElement__entity_transformations.c_str())
       .def(

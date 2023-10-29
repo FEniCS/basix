@@ -690,8 +690,8 @@ NB_MODULE(_basixcpp, m)
       {
         auto [pts, w]
             = quadrature::make_quadrature<double>(rule, celltype, polytype, m);
-        return std::pair(std::move(as_nbarray(pts, {w.size(), pts.size() / w.size()})),
-                         std::move(as_nbarray(w, {w.size()})));
+        return std::pair(as_nbarray(pts, {w.size(), pts.size() / w.size()}),
+                         as_nbarray(w, {w.size()}));
       },
       basix::docstring::make_quadrature__rule_celltype_polytype_m.c_str());
 

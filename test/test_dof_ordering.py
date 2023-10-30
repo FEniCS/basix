@@ -6,7 +6,6 @@ np.set_printoptions(suppress=True)
 
 
 def test_ordering():
-
     pt = np.array([[1 / 3, 1 / 3], [.3, .2]])
 
     # reordered element

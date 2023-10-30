@@ -34,22 +34,21 @@ def test_custom_element_equality():
     z = np.zeros((0, 1, 0, 1))
     M = [[np.array([[[[1.]]]]), np.array([[[[1.]]]]), np.array([[[[1.]]]])], [z, z, z], [z], []]
 
-    p1_custom = basix.create_custom_element(
-        basix.CellType.triangle, [], wcoeffs,
-        x, M, 0, basix.MapType.identity, basix.SobolevSpace.H1, False, 1, 1, basix.PolysetType.standard)
-    p1_custom_again = basix.create_custom_element(
-        basix.CellType.triangle, [], wcoeffs,
-        x, M, 0, basix.MapType.identity, basix.SobolevSpace.H1, False, 1, 1, basix.PolysetType.standard)
-
+    p1_custom = basix.create_custom_element(basix.CellType.triangle, [], wcoeffs,
+                                            x, M, 0, basix.MapType.identity, basix.SobolevSpace.H1,
+                                            False, 1, 1, basix.PolysetType.standard)
+    p1_custom_again = basix.create_custom_element(basix.CellType.triangle, [], wcoeffs,
+                                                  x, M, 0, basix.MapType.identity, basix.SobolevSpace.H1,
+                                                  False, 1, 1, basix.PolysetType.standard)
     wcoeffs = np.eye(3)
     z = np.zeros((0, 2))
     x = [[z, z, z], [np.array([[.5, .5]]), np.array([[0., .5]]), np.array([[.5, 0.]])], [z], []]
     z = np.zeros((0, 1, 0, 1))
     M = [[z, z, z], [np.array([[[[1.]]]]), np.array([[[[1.]]]]), np.array([[[[1.]]]])], [z], []]
 
-    cr_custom = basix.create_custom_element(
-        basix.CellType.triangle, [], wcoeffs,
-        x, M, 0, basix.MapType.identity, basix.SobolevSpace.L2, False, 1, 1, basix.PolysetType.standard)
+    cr_custom = basix.create_custom_element(basix.CellType.triangle, [], wcoeffs,
+                                            x, M, 0, basix.MapType.identity, basix.SobolevSpace.L2,
+                                            False, 1, 1, basix.PolysetType.standard)
 
     assert p1_custom == p1_custom_again
     assert p1_custom != cr_custom

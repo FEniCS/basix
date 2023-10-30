@@ -125,7 +125,6 @@ def test_tri(degree):
     pts = basix.create_lattice(celltype, 6, basix.LatticeType.equispaced, True)
     nderiv = 3
     wtab = nedelec.tabulate(nderiv, pts)
-
     for kx in range(nderiv + 1):
         for ky in range(nderiv + 1 - kx):
             wsym = numpy.zeros_like(wtab[0])
@@ -134,7 +133,6 @@ def test_tri(degree):
                     wd = sympy.diff(gij, x, kx, y, ky)
                     for k, p in enumerate(pts):
                         wsym[k, i, j] = wd.subs([(x, p[0]), (y, p[1])])
-
             assert numpy.isclose(wtab[basix.index(kx, ky)], wsym).all()
 
 
@@ -150,7 +148,6 @@ def test_tet(degree):
     pts = basix.create_lattice(celltype, 6, basix.LatticeType.equispaced, True)
     nderiv = 1
     wtab = nedelec.tabulate(nderiv, pts)
-
     for kx in range(nderiv + 1):
         for ky in range(nderiv + 1 - kx):
             for kz in range(nderiv + 1 - kx - ky):
@@ -160,5 +157,4 @@ def test_tet(degree):
                         wd = sympy.diff(gij, x, kx, y, ky, z, kz)
                         for k, p in enumerate(pts):
                             wsym[k, i, j] = wd.subs([(x, p[0]), (y, p[1]), (z, p[2])])
-
                 assert numpy.isclose(wtab[basix.index(kx, ky, kz)], wsym).all()

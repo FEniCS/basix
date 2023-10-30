@@ -1,4 +1,4 @@
-// Copyright (c) 2020 Chris Richardson & Matthew Scroggs
+// Copyright (c) 2020-2023 Chris Richardson, Matthew Scroggs and Garth N. Wells
 // FEniCS Project
 // SPDX-License-Identifier:    MIT
 
@@ -46,50 +46,52 @@ std::string cell_type_to_str(cell::type type)
          {cell::type::pyramid, "pyramid"},
          {cell::type::prism, "prism"},
          {cell::type::hexahedron, "hexahedron"}};
-
   auto it = type_to_name.find(type);
   if (it == type_to_name.end())
     throw std::runtime_error("Can't find type");
-
   return it->second;
 }
 
-template <typename V, typename U>
-auto as_nbndarray(V&& array, U&& shape)
+template <typename V>
+auto as_nbarray(V&& x, std::size_t ndim, const std::size_t* shape)
 {
-  std::size_t dim = shape.size();
-  auto data = array.data();
   using _V = std::decay_t<V>;
-  std::unique_ptr<_V> x_ptr = std::make_unique<_V>(std::move(array));
-  auto capsule
-      = nb::capsule(x_ptr.get(), [](void* p) noexcept
-                    { std::unique_ptr<_V>(reinterpret_cast<_V*>(p)); });
-  x_ptr.release();
-  return nb::ndarray<nb::numpy, typename _V::value_type>(data, dim,
-                                                         shape.data(), capsule);
+  _V* ptr = new _V(std::move(x));
+  return nb::ndarray<typename _V::value_type, nb::numpy>(
+      ptr->data(), ndim, shape,
+      nb::capsule(ptr, [](void* p) noexcept { delete (_V*)p; }));
 }
 
 template <typename V>
-auto as_nbndarray(V&& p)
+auto as_nbarray(V&& x, const std::initializer_list<std::size_t> shape)
 {
-  return as_nbndarray(p.first, p.second);
+  return as_nbarray(x, shape.size(), shape.begin());
+}
+
+template <typename V>
+auto as_nbarray(V&& x)
+{
+  return as_nbarray(std::move(x), {x.size()});
+}
+
+template <typename V, std::size_t U>
+auto as_nbarrayp(std::pair<V, std::array<std::size_t, U>>&& x)
+{
+  return as_nbarray(std::move(x.first), x.second.size(), x.second.data());
 }
 
 } // namespace
 
 NB_MODULE(_basixcpp, m)
 {
-  //   m.doc() = R"(
-  // Interface to the Basix C++ library.
-  // )";
-
+  m.doc() = "Interface to the Basix C++ library.";
   m.attr("__version__") = basix::version();
 
   m.def("topology", &cell::topology, basix::docstring::topology.c_str());
   m.def(
       "geometry",
       [](cell::type celltype)
-      { return as_nbndarray(cell::geometry<double>(celltype)); },
+      { return as_nbarrayp(cell::geometry<double>(celltype)); },
       basix::docstring::geometry.c_str());
   m.def("sub_entity_connectivity", &cell::sub_entity_connectivity,
         basix::docstring::sub_entity_connectivity.c_str());
@@ -97,7 +99,7 @@ NB_MODULE(_basixcpp, m)
       "sub_entity_geometry",
       [](cell::type celltype, int dim, int index)
       {
-        return as_nbndarray(
+        return as_nbarrayp(
             cell::sub_entity_geometry<double>(celltype, dim, index));
       },
       basix::docstring::sub_entity_geometry.c_str());
@@ -129,15 +131,10 @@ NB_MODULE(_basixcpp, m)
   m.def(
       "tabulate_polynomials",
       [](polynomials::type polytype, cell::type celltype, int d,
-         nb::ndarray<const double> x)
+         nb::ndarray<const double, nb::ndim<2>, nb::c_contig> x)
       {
-        if (x.ndim() != 2)
-          throw std::runtime_error("x has the wrong number of dimensions");
-        MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<
-            const double,
-            MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 2>>
-            _x(x.data(), x.shape(0), x.shape(1));
-        return as_nbndarray(polynomials::tabulate(polytype, celltype, d, _x));
+        mdspan_t<const double, 2> _x(x.data(), x.shape(0), x.shape(1));
+        return as_nbarrayp(polynomials::tabulate(polytype, celltype, d, _x));
       },
       basix::docstring::tabulate_polynomials.c_str());
   m.def("polynomials_dim", &polynomials::dim,
@@ -147,7 +144,7 @@ NB_MODULE(_basixcpp, m)
       "create_lattice",
       [](cell::type celltype, int n, lattice::type type, bool exterior)
       {
-        return as_nbndarray(lattice::create<double>(
+        return as_nbarrayp(lattice::create<double>(
             celltype, n, type, exterior, lattice::simplex_method::none));
       },
       basix::docstring::create_lattice__celltype_n_type_exterior.c_str());
@@ -157,7 +154,7 @@ NB_MODULE(_basixcpp, m)
       [](cell::type celltype, int n, lattice::type type, bool exterior,
          lattice::simplex_method method)
       {
-        return as_nbndarray(
+        return as_nbarrayp(
             lattice::create<double>(celltype, n, type, exterior, method));
       },
       basix::docstring::create_lattice__celltype_n_type_exterior_method
@@ -214,22 +211,17 @@ NB_MODULE(_basixcpp, m)
   m.def(
       "cell_facet_normals",
       [](cell::type cell_type)
-      { return as_nbndarray(cell::facet_normals<double>(cell_type)); },
+      { return as_nbarrayp(cell::facet_normals<double>(cell_type)); },
       basix::docstring::cell_facet_normals.c_str());
   m.def(
       "cell_facet_reference_volumes",
       [](cell::type cell_type)
-      {
-        std::vector<double> v
-            = cell::facet_reference_volumes<double>(cell_type);
-        std::array<std::size_t, 1> shape = {v.size()};
-        return as_nbndarray(v, shape);
-      },
+      { return as_nbarray(cell::facet_reference_volumes<double>(cell_type)); },
       basix::docstring::cell_facet_reference_volumes.c_str());
   m.def(
       "cell_facet_outward_normals",
       [](cell::type cell_type)
-      { return as_nbndarray(cell::facet_outward_normals<double>(cell_type)); },
+      { return as_nbarrayp(cell::facet_outward_normals<double>(cell_type)); },
       basix::docstring::cell_facet_outward_normals.c_str());
   m.def(
       "cell_facet_orientations",
@@ -243,7 +235,7 @@ NB_MODULE(_basixcpp, m)
   m.def(
       "cell_facet_jacobians",
       [](cell::type cell_type)
-      { return as_nbndarray(cell::facet_jacobians<double>(cell_type)); },
+      { return as_nbarrayp(cell::facet_jacobians<double>(cell_type)); },
       basix::docstring::cell_facet_jacobians.c_str());
 
   nb::enum_<element::family>(m, "ElementFamily")
@@ -266,29 +258,22 @@ NB_MODULE(_basixcpp, m)
       .def(
           "tabulate",
           [](const FiniteElement<double>& self, int n,
-             nb::ndarray<nb::numpy, const double, nb::shape<nb::any, nb::any>>
-                 x)
+             nb::ndarray<const double, nb::ndim<2>, nb::c_contig> x)
           {
-            if (x.ndim() != 2)
-              throw std::runtime_error("x has the wrong size");
-            MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<
-                const double,
-                MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 2>>
-                _x(x.data(), x.shape(0), x.shape(1));
-            auto [t, shape] = self.tabulate(n, _x);
-            return as_nbndarray(t, shape);
+            mdspan_t<const double, 2> _x(x.data(), x.shape(0), x.shape(1));
+            return as_nbarrayp(self.tabulate(n, _x));
           },
           basix::docstring::FiniteElement__tabulate.c_str())
       .def("__eq__", &FiniteElement<double>::operator==)
       .def(
           "push_forward",
           [](const FiniteElement<double>& self,
-             nb::ndarray<const double, nb::shape<nb::any, nb::any, nb::any>> U,
-             nb::ndarray<const double, nb::shape<nb::any, nb::any, nb::any>> J,
-             nb::ndarray<const double, nb::shape<nb::any>> detJ,
-             nb::ndarray<const double, nb::shape<nb::any, nb::any, nb::any>> K)
+             nb::ndarray<const double, nb::ndim<3>, nb::c_contig> U,
+             nb::ndarray<const double, nb::ndim<3>, nb::c_contig> J,
+             nb::ndarray<const double, nb::ndim<1>, nb::c_contig> detJ,
+             nb::ndarray<const double, nb::ndim<3>, nb::c_contig> K)
           {
-            auto [u, shape] = self.push_forward(
+            auto u = self.push_forward(
                 mdspan_t<const double, 3>(U.data(), U.shape(0), U.shape(1),
                                           U.shape(2)),
                 mdspan_t<const double, 3>(J.data(), J.shape(0), J.shape(1),
@@ -296,18 +281,18 @@ NB_MODULE(_basixcpp, m)
                 std::span<const double>(detJ.data(), detJ.shape(0)),
                 mdspan_t<const double, 3>(K.data(), K.shape(0), K.shape(1),
                                           K.shape(2)));
-            return as_nbndarray(u, shape);
+            return as_nbarrayp(std::move(u));
           },
           basix::docstring::FiniteElement__push_forward.c_str())
       .def(
           "pull_back",
           [](const FiniteElement<double>& self,
-             nb::ndarray<const double, nb::shape<nb::any, nb::any, nb::any>> u,
-             nb::ndarray<const double, nb::shape<nb::any, nb::any, nb::any>> J,
-             nb::ndarray<const double, nb::shape<nb::any>> detJ,
-             nb::ndarray<const double, nb::shape<nb::any, nb::any, nb::any>> K)
+             nb::ndarray<const double, nb::ndim<3>, nb::c_contig> u,
+             nb::ndarray<const double, nb::ndim<3>, nb::c_contig> J,
+             nb::ndarray<const double, nb::ndim<1>, nb::c_contig> detJ,
+             nb::ndarray<const double, nb::ndim<3>, nb::c_contig> K)
           {
-            auto [U, shape] = self.pull_back(
+            auto U = self.pull_back(
                 mdspan_t<const double, 3>(u.data(), u.shape(0), u.shape(1),
                                           u.shape(2)),
                 mdspan_t<const double, 3>(J.data(), J.shape(0), J.shape(1),
@@ -315,57 +300,54 @@ NB_MODULE(_basixcpp, m)
                 std::span<const double>(detJ.data(), detJ.shape(0)),
                 mdspan_t<const double, 3>(K.data(), K.shape(0), K.shape(1),
                                           K.shape(2)));
-            return as_nbndarray(U, shape);
+            return as_nbarrayp(std::move(U));
           },
           basix::docstring::FiniteElement__pull_back.c_str())
       .def(
           "apply_dof_transformation",
           [](const FiniteElement<double>& self,
-             nb::ndarray<double, nb::shape<nb::any>> data, int block_size,
-             std::uint32_t cell_info)
+             nb::ndarray<double, nb::ndim<1>, nb::c_contig> data,
+             int block_size, std::uint32_t cell_info)
           {
-            std::span<double> data_span(data.data(), data.shape(0));
-            self.apply_dof_transformation(data_span, block_size, cell_info);
+            self.apply_dof_transformation(std::span(data.data(), data.size()),
+                                          block_size, cell_info);
           },
           basix::docstring::FiniteElement__apply_dof_transformation.c_str())
       .def(
           "apply_dof_transformation_to_transpose",
           [](const FiniteElement<double>& self,
-             nb::ndarray<double, nb::shape<nb::any>> data, int block_size,
-             std::uint32_t cell_info)
+             nb::ndarray<double, nb::ndim<1>, nb::c_contig> data,
+             int block_size, std::uint32_t cell_info)
           {
-            std::span<double> data_span(data.data(), data.shape(0));
-            self.apply_dof_transformation_to_transpose(data_span, block_size,
-                                                       cell_info);
+            self.apply_dof_transformation_to_transpose(
+                std::span(data.data(), data.size()), block_size, cell_info);
           },
           basix::docstring::FiniteElement__apply_dof_transformation_to_transpose
               .c_str())
       .def(
           "apply_inverse_transpose_dof_transformation",
           [](const FiniteElement<double>& self,
-             nb::ndarray<double, nb::shape<nb::any>> data, int block_size,
-             std::uint32_t cell_info)
+             nb::ndarray<double, nb::ndim<1>, nb::c_contig> data,
+             int block_size, std::uint32_t cell_info)
           {
-            std::span<double> data_span(data.data(), data.shape(0));
             self.apply_inverse_transpose_dof_transformation(
-                data_span, block_size, cell_info);
+                std::span(data.data(), data.size()), block_size, cell_info);
           },
           basix::docstring::
               FiniteElement__apply_inverse_transpose_dof_transformation.c_str())
       .def(
           "base_transformations",
           [](const FiniteElement<double>& self)
-          { return as_nbndarray(self.base_transformations()); },
+          { return as_nbarrayp(self.base_transformations()); },
           basix::docstring::FiniteElement__base_transformations.c_str())
       .def(
           "entity_transformations",
           [](const FiniteElement<double>& self)
           {
-            auto t = self.entity_transformations();
-            nb::dict t2;
-            for (auto& [key, data] : t)
-              t2[cell_type_to_str(key).c_str()] = as_nbndarray(data);
-            return t2;
+            nb::dict t;
+            for (auto& [key, data] : self.entity_transformations())
+              t[cell_type_to_str(key).c_str()] = as_nbarrayp(std::move(data));
+            return t;
           },
           basix::docstring::FiniteElement__entity_transformations.c_str())
       .def(
@@ -439,51 +421,46 @@ NB_MODULE(_basixcpp, m)
           [](const FiniteElement<double>& self)
           {
             auto& [x, shape] = self.points();
-            return nb::ndarray<nb::numpy, const double,
-                               nb::shape<nb::any, nb::any>>(
+            return nb::ndarray<const double, nb::ndim<2>, nb::numpy>(
                 x.data(), shape.size(), shape.data());
           },
-          "TODO")
+          nb::rv_policy::reference_internal, "TODO")
       .def_prop_ro(
           "interpolation_matrix",
           [](const FiniteElement<double>& self)
           {
             auto& [P, shape] = self.interpolation_matrix();
-            return nb::ndarray<nb::numpy, const double,
-                               nb::shape<nb::any, nb::any>>(
+            return nb::ndarray<const double, nb::ndim<2>, nb::numpy>(
                 P.data(), shape.size(), shape.data());
           },
-          "TODO")
+          nb::rv_policy::reference_internal, "TODO")
       .def_prop_ro(
           "dual_matrix",
           [](const FiniteElement<double>& self)
           {
             auto& [D, shape] = self.dual_matrix();
-            return nb::ndarray<nb::numpy, const double,
-                               nb::shape<nb::any, nb::any>>(
+            return nb::ndarray<const double, nb::ndim<2>, nb::numpy>(
                 D.data(), shape.size(), shape.data());
           },
-          "TODO")
+          nb::rv_policy::reference_internal, "TODO")
       .def_prop_ro(
           "coefficient_matrix",
           [](const FiniteElement<double>& self)
           {
             auto& [P, shape] = self.coefficient_matrix();
-            return nb::ndarray<nb::numpy, const double,
-                               nb::shape<nb::any, nb::any>>(
+            return nb::ndarray<const double, nb::ndim<2>, nb::numpy>(
                 P.data(), shape.size(), shape.data());
           },
-          "Coefficient matrix.")
+          nb::rv_policy::reference_internal, "Coefficient matrix.")
       .def_prop_ro(
           "wcoeffs",
           [](const FiniteElement<double>& self)
           {
             auto& [w, shape] = self.wcoeffs();
-            return nb::ndarray<nb::numpy, const double,
-                               nb::shape<nb::any, nb::any>>(
+            return nb::ndarray<const double, nb::ndim<2>, nb::numpy>(
                 w.data(), shape.size(), shape.data());
           },
-          "TODO")
+          nb::rv_policy::reference_internal, "TODO")
       .def_prop_ro(
           "M",
           [](const FiniteElement<double>& self)
@@ -492,7 +469,7 @@ NB_MODULE(_basixcpp, m)
                                                    std::array<std::size_t, 4>>>,
                              4>& _M
                 = self.M();
-            std::vector<std::vector<nb::ndarray<nb::numpy, const double>>> M(4);
+            std::vector<std::vector<nb::ndarray<const double, nb::numpy>>> M(4);
             for (int i = 0; i < 4; ++i)
             {
               for (std::size_t j = 0; j < _M[i].size(); ++j)
@@ -504,7 +481,7 @@ NB_MODULE(_basixcpp, m)
             }
             return M;
           },
-          "TODO")
+          nb::rv_policy::reference_internal, "TODO")
       .def_prop_ro(
           "x",
           [](const FiniteElement<double>& self)
@@ -513,7 +490,7 @@ NB_MODULE(_basixcpp, m)
                                                    std::array<std::size_t, 2>>>,
                              4>& _x
                 = self.x();
-            std::vector<std::vector<nb::ndarray<nb::numpy, const double>>> x(4);
+            std::vector<std::vector<nb::ndarray<const double, nb::numpy>>> x(4);
             for (int i = 0; i < 4; ++i)
             {
               for (std::size_t j = 0; j < _x[i].size(); ++j)
@@ -524,7 +501,8 @@ NB_MODULE(_basixcpp, m)
               }
             }
             return x;
-          })
+          },
+          nb::rv_policy::reference_internal)
       .def_prop_ro("has_tensor_product_factorisation",
                    &FiniteElement<double>::has_tensor_product_factorisation,
                    "TODO")
@@ -569,12 +547,12 @@ NB_MODULE(_basixcpp, m)
   m.def(
       "create_custom_element",
       [](cell::type cell_type, const std::vector<std::size_t>& value_shape,
-         nb::ndarray<const double, nb::shape<nb::any, nb::any>> wcoeffs,
-         std::vector<std::vector<
-             nb::ndarray<const double, nb::shape<nb::any, nb::any>>>>
+         nb::ndarray<const double, nb::ndim<2>, nb::c_contig> wcoeffs,
+         std::vector<
+             std::vector<nb::ndarray<const double, nb::ndim<2>, nb::c_contig>>>
              x,
-         std::vector<std::vector<nb::ndarray<
-             const double, nb::shape<nb::any, nb::any, nb::any, nb::any>>>>
+         std::vector<
+             std::vector<nb::ndarray<const double, nb::ndim<4>, nb::c_contig>>>
              M,
          int interpolation_nderivs, maps::type map_type,
          sobolev::space sobolev_space, bool discontinuous,
@@ -642,7 +620,7 @@ NB_MODULE(_basixcpp, m)
       [](const FiniteElement<double>& element_from,
          const FiniteElement<double>& element_to)
       {
-        return as_nbndarray(
+        return as_nbarrayp(
             basix::compute_interpolation_operator(element_from, element_to));
       },
       basix::docstring::compute_interpolation_operator.c_str());
@@ -666,15 +644,10 @@ NB_MODULE(_basixcpp, m)
   m.def(
       "tabulate_polynomial_set",
       [](cell::type celltype, polyset::type polytype, int d, int n,
-         nb::ndarray<nb::numpy, double, nb::shape<nb::any, nb::any>> x)
+         nb::ndarray<const double, nb::ndim<2>, nb::c_contig> x)
       {
-        if (x.ndim() != 2)
-          throw std::runtime_error("x has the wrong number of dimensions");
-        MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<
-            const double,
-            MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 2>>
-            _x(static_cast<double*>(x.data()), x.shape(0), x.shape(1));
-        return as_nbndarray(polyset::tabulate(celltype, polytype, d, n, _x));
+        mdspan_t<const double, 2> _x(x.data(), x.shape(0), x.shape(1));
+        return as_nbarrayp(polyset::tabulate(celltype, polytype, d, n, _x));
       },
       basix::docstring::tabulate_polynomial_set.c_str());
 
@@ -685,16 +658,16 @@ NB_MODULE(_basixcpp, m)
       {
         auto [pts, w]
             = quadrature::make_quadrature<double>(rule, celltype, polytype, m);
-        std::array<std::size_t, 1> wshape = {w.size()};
-        std::array<std::size_t, 2> shape = {w.size(), pts.size() / w.size()};
-        return std::pair(as_nbndarray(pts, shape), as_nbndarray(w, wshape));
+        std::array shape{w.size(), pts.size() / w.size()};
+        return std::pair(as_nbarray(std::move(pts), shape.size(), shape.data()),
+                         as_nbarray(std::move(w)));
       },
       basix::docstring::make_quadrature__rule_celltype_polytype_m.c_str());
 
   m.def("index", nb::overload_cast<int>(&basix::indexing::idx),
-        basix::docstring::index__p.c_str())
-      .def("index", nb::overload_cast<int, int>(&basix::indexing::idx),
-           basix::docstring::index__p_q.c_str())
-      .def("index", nb::overload_cast<int, int, int>(&basix::indexing::idx),
-           basix::docstring::index__p_q_r.c_str());
+        basix::docstring::index__p.c_str());
+  m.def("index", nb::overload_cast<int, int>(&basix::indexing::idx),
+        basix::docstring::index__p_q.c_str());
+  m.def("index", nb::overload_cast<int, int, int>(&basix::indexing::idx),
+        basix::docstring::index__p_q_r.c_str());
 }

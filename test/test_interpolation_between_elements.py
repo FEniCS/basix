@@ -12,22 +12,16 @@ from .utils import parametrize_over_elements
 
 def run_test(lower_element, higher_element, power, value_size):
     l_points = lower_element.points
-    l_eval = np.concatenate([
-        l_points[:, 0] ** power if i == 0 else 0 * l_points[:, 0]
-        for i in range(value_size)
-    ])
+    l_eval = np.concatenate([l_points[:, 0] ** power if i == 0 else 0 * l_points[:, 0] for i in range(value_size)])
     l_coeffs = lower_element.interpolation_matrix @ l_eval
 
     i_m = basix.compute_interpolation_operator(lower_element, higher_element)
     h_coeffs = i_m @ l_coeffs
 
     h_points = higher_element.points
-    h_eval = np.concatenate([
-        h_points[:, 0] ** power if i == 0 else 0 * h_points[:, 0]
-        for i in range(value_size)
-    ])
+    h_eval = np.concatenate([h_points[:, 0] ** power if i == 0 else 0 * h_points[:, 0]
+                             for i in range(value_size)])
     h_coeffs2 = higher_element.interpolation_matrix @ h_eval
-
     assert np.allclose(h_coeffs, h_coeffs2)
 
 
@@ -37,7 +31,6 @@ def run_test(lower_element, higher_element, power, value_size):
 def test_different_order_interpolation_lagrange(cell_type, orders):
     lower_element = basix.create_element(basix.ElementFamily.P, cell_type, orders[0], basix.LagrangeVariant.gll_warped)
     higher_element = basix.create_element(basix.ElementFamily.P, cell_type, orders[1], basix.LagrangeVariant.gll_warped)
-
     run_test(lower_element, higher_element, orders[0], lower_element.value_size)
 
 
@@ -51,7 +44,6 @@ def test_different_order_interpolation_lagrange(cell_type, orders):
 def test_different_variant_interpolation(cell_type, order, variant1, variant2):
     lower_element = basix.create_element(basix.ElementFamily.P, cell_type, order, variant1)
     higher_element = basix.create_element(basix.ElementFamily.P, cell_type, order, variant2)
-
     run_test(lower_element, higher_element, order, lower_element.value_size)
 
 
@@ -67,7 +59,6 @@ def test_different_variant_interpolation(cell_type, order, variant1, variant2):
 def test_different_order_interpolation_vector(family, args, cell_type, orders):
     lower_element = basix.create_element(family, cell_type, orders[0], *args)
     higher_element = basix.create_element(family, cell_type, orders[1], *args)
-
     run_test(lower_element, higher_element, orders[0] - 1, lower_element.value_size)
 
 
@@ -77,7 +68,6 @@ def test_different_order_interpolation_vector(family, args, cell_type, orders):
 def test_different_order_interpolation_matrix(family, args, cell_type, orders):
     lower_element = basix.create_element(family, cell_type, orders[0], *args)
     higher_element = basix.create_element(family, cell_type, orders[1], *args)
-
     run_test(lower_element, higher_element, orders[0] - 1, lower_element.value_size)
 
 
@@ -99,7 +89,6 @@ def test_different_order_interpolation_matrix(family, args, cell_type, orders):
 def test_different_element_interpolation(family1, args1, family2, args2, cell_type, order):
     lower_element = basix.create_element(family1, cell_type, order, *args1)
     higher_element = basix.create_element(family2, cell_type, order, *args2)
-
     run_test(lower_element, higher_element, order - 1, lower_element.value_size)
 
 
@@ -108,8 +97,8 @@ def test_different_element_interpolation(family1, args1, family2, args2, cell_ty
 @pytest.mark.parametrize("order", [1, 4])
 def test_blocked_interpolation(cell_type, order):
     """Test interpolation of Nedelec's components into a Lagrange space."""
-    nedelec = basix.create_element(
-        basix.ElementFamily.N2E, cell_type, order, basix.LagrangeVariant.legendre, basix.DPCVariant.legendre)
+    nedelec = basix.create_element(basix.ElementFamily.N2E, cell_type, order,
+                                   basix.LagrangeVariant.legendre, basix.DPCVariant.legendre)
     lagrange = basix.create_element(basix.ElementFamily.P, cell_type, order, basix.LagrangeVariant.gll_isaac)
 
     n_points = nedelec.points
@@ -146,11 +135,10 @@ def test_degree_bounds(cell_type, degree, element_type, element_args):
     points = basix.create_lattice(cell_type, 10, basix.LatticeType.equispaced, True)
     tab = element.tabulate(0, points)[0]
 
-    # Test that this element's basis functions are contained in Lagrange space with
-    # degree element.highest_degree
+    # Test that this element's basis functions are contained in Lagrange
+    # space with degree element.highest_degree
     coeffs = np.random.rand(element.dim)
-    values = np.array([tab[:, :, i] @ coeffs
-                       for i in range(element.value_size)])
+    values = np.array([tab[:, :, i] @ coeffs for i in range(element.value_size)])
 
     if element.polyset_type == basix.PolysetType.standard:
         p_family = basix.ElementFamily.P
@@ -159,9 +147,8 @@ def test_degree_bounds(cell_type, degree, element_type, element_args):
 
     if element.highest_degree >= 0:
         # The element being tested should be a subset of this Lagrange space
-        lagrange = basix.create_element(
-            p_family, cell_type, element.highest_degree,
-            basix.LagrangeVariant.equispaced, discontinuous=True)
+        lagrange = basix.create_element(p_family, cell_type, element.highest_degree,
+                                        basix.LagrangeVariant.equispaced, discontinuous=True)
         lagrange_coeffs = basix.compute_interpolation_operator(element, lagrange) @ coeffs
         lagrange_tab = lagrange.tabulate(0, points)[0]
         lagrange_values = np.array([lagrange_tab[:, :, 0] @ lagrange_coeffs[i::element.value_size]
@@ -170,10 +157,10 @@ def test_degree_bounds(cell_type, degree, element_type, element_args):
         assert np.allclose(values, lagrange_values)
 
     if element.highest_degree >= 1:
-        # The element being tested should be NOT a subset of this Lagrange space
-        lagrange = basix.create_element(
-            p_family, cell_type, element.highest_degree - 1,
-            basix.LagrangeVariant.equispaced, discontinuous=True)
+        # The element being tested should be NOT a subset of this
+        # Lagrange space
+        lagrange = basix.create_element(p_family, cell_type, element.highest_degree - 1,
+                                        basix.LagrangeVariant.equispaced, discontinuous=True)
         lagrange_coeffs = basix.compute_interpolation_operator(element, lagrange) @ coeffs
         lagrange_tab = lagrange.tabulate(0, points)[0]
         lagrange_values = np.array([lagrange_tab[:, :, 0] @ lagrange_coeffs[i::element.value_size]
@@ -181,23 +168,21 @@ def test_degree_bounds(cell_type, degree, element_type, element_args):
 
         assert not np.allclose(values, lagrange_values)
 
-    # Test that the basis functions of Lagrange space with degree element.highest_complete_degree
-    # are contained in this space
+    # Test that the basis functions of Lagrange space with degree
+    # element.highest_complete_degree are contained in this space
 
     if element.highest_complete_degree >= 0:
-        # This Lagrange space should be a subset to the element being tested
-        lagrange = basix.create_element(
-            p_family, cell_type, element.highest_complete_degree,
-            basix.LagrangeVariant.equispaced, discontinuous=True)
+        # This Lagrange space should be a subset to the element being
+        # tested
+        lagrange = basix.create_element(p_family, cell_type, element.highest_complete_degree,
+                                        basix.LagrangeVariant.equispaced, discontinuous=True)
         lagrange_coeffs = np.random.rand(lagrange.dim * element.value_size)
         lagrange_tab = lagrange.tabulate(0, points)[0]
         lagrange_values = np.array([lagrange_tab[:, :, 0] @ lagrange_coeffs[i::element.value_size]
                                     for i in range(element.value_size)])
-
         coeffs = basix.compute_interpolation_operator(lagrange, element) @ lagrange_coeffs
         values = np.array([tab[:, :, i] @ coeffs
                            for i in range(element.value_size)])
-
         assert np.allclose(values, lagrange_values)
 
     if element.polyset_type == basix.PolysetType.macroedge:
@@ -207,17 +192,14 @@ def test_degree_bounds(cell_type, degree, element_type, element_args):
             pytest.xfail("Cannot run test with macro polyset on a tetrahedron with degree > 1")
 
     if element.highest_complete_degree >= -1:
-        # This Lagrange space should NOT be a subset to the element being tested
-        lagrange = basix.create_element(
-            p_family, cell_type, element.highest_complete_degree + 1,
-            basix.LagrangeVariant.equispaced, discontinuous=True)
+        # This Lagrange space should NOT be a subset to the element
+        # being tested
+        lagrange = basix.create_element(p_family, cell_type, element.highest_complete_degree + 1,
+                                        basix.LagrangeVariant.equispaced, discontinuous=True)
         lagrange_coeffs = np.random.rand(lagrange.dim * element.value_size)
         lagrange_tab = lagrange.tabulate(0, points)[0]
         lagrange_values = np.array([lagrange_tab[:, :, 0] @ lagrange_coeffs[i::element.value_size]
                                     for i in range(element.value_size)])
-
         coeffs = basix.compute_interpolation_operator(lagrange, element) @ lagrange_coeffs
-        values = np.array([tab[:, :, i] @ coeffs
-                           for i in range(element.value_size)])
-
+        values = np.array([tab[:, :, i] @ coeffs for i in range(element.value_size)])
         assert not np.allclose(values, lagrange_values)

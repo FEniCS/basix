@@ -1646,15 +1646,15 @@ def _repr_optional_args(partial_repr: str, *args: tuple[str, _typing.Any]) -> st
 
     Args:
         partial_repr: The initial `repr` of a finite element incorporating all required
-                      arguments but not including any optional args
+            arguments but not including any optional args
         args: Sequence of tuples `(name: str, value: typing.Any)` where `name` is the name
-              of an optional argument to be including in the repr and `value` is its
-              value. All arguments for which `value is not None` will be appended to
-              `partial_repr`.
+            of an optional argument to be including in the repr and `value` is its
+            value. All arguments for which `value is not None` will be appended to
+            `partial_repr`.
+
     Returns:
         A string representation of a finite element
     """
-
     repr = partial_repr
     for name, value in args:
         if value is not None:

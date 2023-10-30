@@ -1,8 +1,9 @@
 [build-system]
-requires = ["nanobind>=1.5.1", "scikit-build-core"]
+requires = ["scikit-build-core", "nanobind>=1.6.0"]
 build-backend = "scikit_build_core.build"
-# minimum cmake and any necessary cmake install is handled by scikit-build-core 
-# minimum scikit-build-core handled by scikit-build-core 
+# Minimum cmake and any necessary cmake install is handled by
+# scikit-build-core
+# Minimum scikit-build-core handled by scikit-build-core
 
 [project]
 name = "fenics-basix"

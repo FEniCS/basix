@@ -41,14 +41,12 @@ def create_continuity_map_interval(map_type, start, end):
 def create_continuity_map_triangle(map_type, v0, v1, v2):
     if map_type == basix.MapType.identity:
         return lambda x: x
-
     raise NotImplementedError
 
 
 def create_continuity_map_quadrilateral(map_type, v0, v1, v2):
     if map_type == basix.MapType.identity:
         return lambda x: x
-
     raise NotImplementedError
 
 
@@ -73,9 +71,7 @@ def test_continuity_interval_facet(degree, element, variant):
 
     for start, end, cellmap in facets:
         points = np.array([start + i/10 * (end - start) for i in range(11)])
-
         data = None
-
         for c, e in elements.items():
             tab = e.tabulate(0, points)[0]
             continuity_map = create_continuity_map_interval(e.map_type, start, end)
@@ -115,9 +111,7 @@ def test_continuity_triangle_facet(degree, element, variant):
 
     for v0, v1, v2, cellmap in facets:
         points = np.array([v0 + i/10 * (v1 - v0) + j/10 * (v2 - v0) for i in range(11) for j in range(11 - i)])
-
         data = None
-
         for c, e in elements.items():
             if c in cellmap:
                 tab = e.tabulate(0, points)
@@ -159,9 +153,7 @@ def test_continuity_quadrilateral_facet(degree, element, variant):
     for v0, v1, v2, v3, cellmap in facets:
         assert np.allclose(v0 + v3, v1 + v2)
         points = np.array([v0 + i/10 * (v1 - v0) + j/10 * (v2 - v0) for i in range(11) for j in range(11)])
-
         data = None
-
         for c, e in elements.items():
             if c in cellmap:
                 tab = e.tabulate(0, points)

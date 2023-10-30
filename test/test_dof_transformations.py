@@ -15,7 +15,6 @@ from .utils import parametrize_over_elements
 @parametrize_over_elements(3)
 def test_if_permutations(cell_type, element_type, degree, element_args):
     e = basix.create_element(element_type, cell_type, degree, *element_args)
-
     for t in e.base_transformations():
         for row in t:
             a = np.argmax(row)
@@ -28,7 +27,6 @@ def test_if_permutations(cell_type, element_type, degree, element_args):
 @parametrize_over_elements(3)
 def test_if_identity(cell_type, element_type, degree, element_args):
     e = basix.create_element(element_type, cell_type, degree, *element_args)
-
     for t in e.base_transformations():
         if not np.allclose(t, np.eye(t.shape[0])):
             assert not e.dof_transformations_are_identity
@@ -47,10 +45,8 @@ def test_non_zero(cell_type, element_type, degree, element_args):
 @parametrize_over_elements(5)
 def test_apply_to_transpose(cell_type, element_type, degree, element_args):
     random.seed(42)
-
     e = basix.create_element(element_type, cell_type, degree, *element_args)
     size = e.dim
-
     for i in range(10):
         cell_info = random.randrange(2**30)
 
@@ -130,9 +126,7 @@ def test_prism_transformation_degrees(element_type, degree, element_args):
     identity = np.identity(e.dim)
     for i, degree in enumerate([2, 2, 2, 2, 2, 2, 2, 2, 2,
                                 3, 2, 4, 2, 4, 2, 4, 2, 3, 2]):
-        assert np.allclose(
-            np.linalg.matrix_power(bt[i], degree),
-            identity)
+        assert np.allclose(np.linalg.matrix_power(bt[i], degree), identity)
 
 
 @parametrize_over_elements(5, basix.CellType.pyramid)
@@ -143,9 +137,7 @@ def test_pyramid_transformation_degrees(element_type, degree, element_args):
     identity = np.identity(e.dim)
     for i, degree in enumerate([2, 2, 2, 2, 2, 2, 2, 2,
                                 4, 2, 3, 2, 3, 2, 3, 2, 3, 2]):
-        assert np.allclose(
-            np.linalg.matrix_power(bt[i], degree),
-            identity)
+        assert np.allclose(np.linalg.matrix_power(bt[i], degree), identity)
 
 
 @parametrize_over_elements(5, basix.CellType.triangle)
@@ -169,7 +161,6 @@ def test_transformation_of_tabulated_data_triangle(element_type, degree, element
         detJ = np.array([np.linalg.det(_J) for p in points])
         K = np.array([np.linalg.inv(_J) for p in points])
         mapped_values = e.push_forward(reflected_values, J, detJ, K)
-
         for i, j in zip(values, mapped_values):
             for d in range(e.value_size):
                 i_slice = i[:, d]
@@ -220,10 +211,10 @@ def test_transformation_of_tabulated_data_tetrahedron(element_type, degree, elem
     start = sum(e.num_entity_dofs[0])
     ndofs = e.num_entity_dofs[1][0]
     if ndofs != 0:
-        # Check that the 0th transformation undoes the effect of reflecting edge 0
+        # Check that the 0th transformation undoes the effect of
+        # reflecting edge 0
         reflected_points = np.array([[p[0], p[2], p[1]] for p in points])
         reflected_values = e.tabulate(0, reflected_points)[0]
-
         _J = np.array([[1, 0, 0], [0, 0, 1], [0, 1, 0]])
         J = np.array([_J for p in points])
         detJ = np.array([np.linalg.det(_J) for p in points])
@@ -239,7 +230,8 @@ def test_transformation_of_tabulated_data_tetrahedron(element_type, degree, elem
     start = sum(e.num_entity_dofs[0]) + sum(e.num_entity_dofs[1])
     ndofs = e.num_entity_dofs[2][0]
     if ndofs != 0:
-        # Check that the 6th transformation undoes the effect of rotating face 0
+        # Check that the 6th transformation undoes the effect of
+        # rotating face 0
         rotated_points = np.array([[p[2], p[0], p[1]] for p in points])
         rotated_values = e.tabulate(0, rotated_points)[0]
 
@@ -259,7 +251,6 @@ def test_transformation_of_tabulated_data_tetrahedron(element_type, degree, elem
         # Check that the 7th transformation undoes the effect of reflecting face 0
         reflected_points = np.array([[p[0], p[2], p[1]] for p in points])
         reflected_values = e.tabulate(0, reflected_points)[0]
-
         _J = np.array([[1, 0, 0], [0, 0, 1], [0, 1, 0]])
         J = np.array([_J for p in points])
         detJ = np.array([np.linalg.det(_J) for p in points])
@@ -293,7 +284,6 @@ def test_transformation_of_tabulated_data_hexahedron(element_type, degree, eleme
         # Check that the 0th transformation undoes the effect of reflecting edge 0
         reflected_points = np.array([[1 - p[0], p[1], p[2]] for p in points])
         reflected_values = e.tabulate(0, reflected_points)[0]
-
         _J = np.array([[-1, 0, 0], [0, 1, 0], [0, 0, 1]])
         J = np.array([_J for p in points])
         detJ = np.array([np.linalg.det(_J) for p in points])
@@ -309,10 +299,10 @@ def test_transformation_of_tabulated_data_hexahedron(element_type, degree, eleme
     start = sum(e.num_entity_dofs[0]) + sum(e.num_entity_dofs[1])
     ndofs = e.num_entity_dofs[2][0]
     if ndofs != 0:
-        # Check that the 12th transformation undoes the effect of rotating face 0
+        # Check that the 12th transformation undoes the effect of
+        # rotating face 0
         rotated_points = np.array([[1 - p[1], p[0], p[2]] for p in points])
         rotated_values = e.tabulate(0, rotated_points)[0]
-
         _J = np.array([[0, 1, 0], [-1, 0, 0], [0, 0, 1]])
         J = np.array([_J for p in points])
         detJ = np.array([np.linalg.det(_J) for p in points])
@@ -326,7 +316,8 @@ def test_transformation_of_tabulated_data_hexahedron(element_type, degree, eleme
                                    j_slice[start: start + ndofs])
 
     if ndofs != 0:
-        # Check that the 13th transformation undoes the effect of reflecting face 0
+        # Check that the 13th transformation undoes the effect of
+        # reflecting face 0
         reflected_points = np.array([[p[1], p[0], p[2]] for p in points])
         reflected_values = e.tabulate(0, reflected_points)[0]
 
@@ -356,10 +347,10 @@ def test_transformation_of_tabulated_data_prism(element_type, degree, element_ar
     start = sum(e.num_entity_dofs[0])
     ndofs = e.num_entity_dofs[1][0]
     if ndofs != 0:
-        # Check that the 0th transformation undoes the effect of reflecting edge 0
+        # Check that the 0th transformation undoes the effect of
+        # reflecting edge 0
         reflected_points = np.array([[1 - p[1] - p[0], p[1], p[2]] for p in points])
         reflected_values = e.tabulate(0, reflected_points)[0]
-
         _J = np.array([[-1, 0, 0], [-1, 1, 0], [0, 0, 1]])
         J = np.array([_J for p in points])
         detJ = np.array([np.linalg.det(_J) for p in points])
@@ -375,7 +366,8 @@ def test_transformation_of_tabulated_data_prism(element_type, degree, element_ar
     start = sum(e.num_entity_dofs[0]) + sum(e.num_entity_dofs[1])
     ndofs = e.num_entity_dofs[2][0]
     if ndofs != 0:
-        # Check that the 10th transformation undoes the effect of rotating face 0
+        # Check that the 10th transformation undoes the effect of
+        # rotating face 0
         rotated_points = np.array([[1 - p[0] - p[1], p[0], p[2]] for p in points])
         rotated_values = e.tabulate(0, rotated_points)[0]
 
@@ -392,10 +384,10 @@ def test_transformation_of_tabulated_data_prism(element_type, degree, element_ar
                                    j_slice[start: start + ndofs])
 
     if ndofs != 0:
-        # Check that the 11th transformation undoes the effect of reflecting face 0
+        # Check that the 11th transformation undoes the effect of
+        # reflecting face 0
         reflected_points = np.array([[p[1], p[0], p[2]] for p in points])
         reflected_values = e.tabulate(0, reflected_points)[0]
-
         _J = np.array([[0, 1, 0], [1, 0, 0], [0, 0, 1]])
         J = np.array([_J for p in points])
         detJ = np.array([np.linalg.det(_J) for p in points])
@@ -422,10 +414,10 @@ def test_transformation_of_tabulated_data_pyramid(element_type, degree, element_
     start = sum(e.num_entity_dofs[0])
     ndofs = e.num_entity_dofs[1][0]
     if ndofs != 0:
-        # Check that the 0th transformation undoes the effect of reflecting edge 0
+        # Check that the 0th transformation undoes the effect of
+        # reflecting edge 0
         reflected_points = np.array([[1 - p[2] - p[0], p[1], p[2]] for p in points])
         reflected_values = e.tabulate(0, reflected_points)[0]
-
         _J = np.array([[-1, 0, 0], [0, 1, 0], [-1, 0, 1]])
         J = np.array([_J for p in points])
         detJ = np.array([np.linalg.det(_J) for p in points])
@@ -441,10 +433,10 @@ def test_transformation_of_tabulated_data_pyramid(element_type, degree, element_
     start = sum(e.num_entity_dofs[0]) + sum(e.num_entity_dofs[1])
     ndofs = e.num_entity_dofs[2][0]
     if ndofs != 0:
-        # Check that the 8th transformation undoes the effect of rotating face 0
+        # Check that the 8th transformation undoes the effect of
+        # rotating face 0
         rotated_points = np.array([[1 - p[1] - p[2], p[0], p[2]] for p in points])
         rotated_values = e.tabulate(0, rotated_points)[0]
-
         _J = np.array([[0, 1, 0], [-1, 0, 0], [-1, 0, 1]])
         J = np.array([_J for p in points])
         detJ = np.array([np.linalg.det(_J) for p in points])
@@ -458,10 +450,10 @@ def test_transformation_of_tabulated_data_pyramid(element_type, degree, element_
                                    j_slice[start: start + ndofs])
 
     if ndofs != 0:
-        # Check that the 9th transformation undoes the effect of reflecting face 0
+        # Check that the 9th transformation undoes the effect of
+        # reflecting face 0
         reflected_points = np.array([[p[1], p[0], p[2]] for p in points])
         reflected_values = e.tabulate(0, reflected_points)[0]
-
         _J = np.array([[0, 1, 0], [1, 0, 0], [0, 0, 1]])
         J = np.array([_J for p in points])
         detJ = np.array([np.linalg.det(_J) for p in points])

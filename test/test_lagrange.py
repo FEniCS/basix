@@ -226,7 +226,6 @@ def test_line_without_variant(n):
             wd = sympy.diff(g[i], x, k)
             for j, p in enumerate(pts):
                 wsym[j, i] = wd.subs(x, p[0])
-
         assert numpy.allclose(wtab[k], wsym)
 
 
@@ -241,7 +240,6 @@ def test_tri(degree):
     pts = basix.create_lattice(celltype, 6, basix.LatticeType.equispaced, True)
     nderiv = 3
     wtab = lagrange.tabulate(nderiv, pts)
-
     for kx in range(nderiv):
         for ky in range(0, nderiv - kx):
             wsym = numpy.zeros_like(wtab[0])
@@ -249,7 +247,6 @@ def test_tri(degree):
                 wd = sympy.diff(g[i], x, kx, y, ky)
                 for j, p in enumerate(pts):
                     wsym[j, i] = wd.subs([(x, p[0]), (y, p[1])])
-
             assert numpy.allclose(wtab[basix.index(kx, ky)], wsym)
 
 
@@ -278,7 +275,6 @@ def test_tet(degree):
                         wsym[j, i] = wd.subs([(x, p[0]),
                                               (y, p[1]),
                                               (z, p[2])])
-
                 assert numpy.allclose(wtab[basix.index(kx, ky, kz)], wsym)
 
 
@@ -335,7 +331,6 @@ def test_dof_transformations_triangle(degree):
 def test_dof_transformations_tetrahedron(degree):
     lagrange = basix.create_element(basix.ElementFamily.P, basix.CellType.tetrahedron, degree,
                                     basix.LagrangeVariant.equispaced)
-
     permuted = {}
     if degree == 3:
         # Reflect 2 DOFs on edges
@@ -365,7 +360,6 @@ def test_dof_transformations_tetrahedron(degree):
 
     base_transformations = lagrange.base_transformations()
     assert len(base_transformations) == 14
-
     for i, t in enumerate(base_transformations):
         actual = numpy.zeros_like(t)
         for j, row in enumerate(t):
@@ -386,8 +380,7 @@ def test_dof_transformations_tetrahedron(degree):
 def test_celltypes(degree, celltype):
     tp = basix.create_element(basix.ElementFamily.P, celltype, degree,
                               basix.LagrangeVariant.equispaced)
-    pts = basix.create_lattice(celltype, 5,
-                               basix.LatticeType.equispaced, True)
+    pts = basix.create_lattice(celltype, 5, basix.LatticeType.equispaced, True)
     w = tp.tabulate(0, pts)[0]
     assert numpy.allclose(numpy.sum(w, axis=1), 1.0)
 
@@ -461,21 +454,17 @@ def test_continuous_lagrange(celltype, variant):
 def test_vtk_element(celltype, degree):
     if degree > 5 and celltype == basix.CellType.hexahedron:
         pytest.skip("Skipping slow test on hexahedron")
-
     equi = basix.create_element(basix.ElementFamily.P, celltype, degree,
                                 basix.LagrangeVariant.equispaced, discontinuous=True)
     vtk = basix.create_element(basix.ElementFamily.P, celltype, degree,
                                basix.LagrangeVariant.vtk, discontinuous=True)
-
     assert vtk.points.shape == equi.points.shape
 
     perm = []
-
     for i, p in enumerate(vtk.points):
         for j, q in enumerate(vtk.points):
             if i != j:
                 assert not numpy.allclose(p, q)
-
         for j, q in enumerate(equi.points):
             if numpy.allclose(p, q):
                 perm.append(j)
@@ -491,7 +480,6 @@ def test_vtk_element(celltype, degree):
             target += [2 * degree + k for k in range(1, degree)]
             target += [2 + k for k in range(1, degree)]
             target += [2 * degree + 1 - k for k in range(1, degree)]
-
             if degree == 3:
                 target += [len(target) + i for i in [0]]
             elif degree == 4:
@@ -527,7 +515,6 @@ def test_vtk_element(celltype, degree):
         target += [4 + 3 * (degree - 1) + k for k in range(degree - 1)]
         target += [4 + (degree - 1) + k for k in range(degree - 1)]
         target += [4 + (degree - 1) * 4 + k for k in range((degree - 1) ** 2)]
-
         assert target == perm
 
     elif celltype == basix.CellType.hexahedron:
@@ -680,7 +667,6 @@ def test_legendre_dpc_variant(celltype, degree):
                 computed_values = [numpy.dot(v, coeffs) for v in values]
                 actual_values = pts[:, 0] ** px * pts[:, 1] ** py
                 assert numpy.allclose(computed_values, actual_values)
-
     else:
         assert tdim == 3
         for px in range(degree + 1):

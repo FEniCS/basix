@@ -65,7 +65,6 @@ def test_mappings_2d_to_3d(element_type, element_args):
     J = np.array([[1., -1.], [1., 1.], [-1., 0.]])
     detJ = np.sqrt(6)
     K = np.array([[0.5, 0.5, 0.], [-0.5, 0.5, 0.]])
-
     if e.value_size == 1:
         physical_vs = 1
     elif e.value_size == 2:
@@ -81,11 +80,9 @@ def test_mappings_3d_to_3d(element_type, element_args):
         pytest.xfail("HHJ not implemented on tetrahedra.")
     random.seed(42)
     e = basix.create_element(element_type, basix.CellType.tetrahedron, 1, *element_args)
-
     J = np.array([[random.random() + 2, random.random(), random.random()],
                   [random.random(), random.random() + 1, random.random()],
                   [random.random(), random.random(), random.random()]])
     detJ = np.linalg.det(J)
     K = np.linalg.inv(J)
-
     run_map_test(e, J, detJ, K, e.value_size, e.value_size)

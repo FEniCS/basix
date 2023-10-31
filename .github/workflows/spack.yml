@@ -18,6 +18,10 @@ on:
         description: "Spack repository branch/tag to test"
         default: "develop"
         type: string
+      basix_version:
+        description: "Basix version"
+        default: "main"
+        type: string
 
 jobs:
   build:
@@ -29,7 +33,6 @@ jobs:
           apt-get -y update
           apt-get install -y bzip2 curl file git gzip make patch python3-minimal tar xz-utils
           apt-get install -y g++ gfortran  # compilers
-
       - name: Get Spack
         if: github.event_name != 'workflow_dispatch'
         uses: actions/checkout@v4
@@ -43,19 +46,10 @@ jobs:
           path: ./spack
           repository: ${{ github.event.inputs.spack_repo }}
           ref: ${{ github.event.inputs.spack_ref }}
-
-      - name: Install Basix development version and run tests
+      - name: Install Basix and run tests
         run: |
           . ./spack/share/spack/setup-env.sh
           spack env create main
           spack env activate main
-          spack add py-fenics-basix@main
-          spack install --test=root
-
-      - name: Install Basix release version and run tests
-        run: |
-          . ./spack/share/spack/setup-env.sh
-          spack env create release
-          spack env activate release
-          spack add py-fenics-basix
+          spack add py-fenics-basix@${{ github.event.inputs.basix_version }}
           spack install --test=root

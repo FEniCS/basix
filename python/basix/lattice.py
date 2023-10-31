@@ -1,7 +1,7 @@
 """Functions to manipulate lattice types."""
 
-from ._basixcpp import LatticeSimplexMethod as _LSM
-from ._basixcpp import LatticeType as _LT
+from basix._basixcpp import LatticeSimplexMethod as _LSM
+from basix._basixcpp import LatticeType as _LT
 
 
 def string_to_type(lattice: str) -> _LT:

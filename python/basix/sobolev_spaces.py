@@ -2,8 +2,8 @@
 
 import typing as _typing
 
-from ._basixcpp import SobolevSpace as _SS
-from ._basixcpp import sobolev_space_intersection as _ssi
+from basix._basixcpp import SobolevSpace as _SS
+from basix._basixcpp import sobolev_space_intersection as _ssi
 
 
 def intersection(spaces: _typing.List[_SS]) -> _SS:

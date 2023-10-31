@@ -26,7 +26,7 @@ jobs:
   build:
     name: Run DOLFINx tests
     runs-on: ubuntu-22.04
-    container: fenicsproject/test-env:nightly-openmpi
+    container: ghcr.io/fenics/test-env:current-openmpi
 
     env:
       PETSC_ARCH: linux-gnu-complex-32
@@ -77,6 +77,7 @@ jobs:
           cmake -G Ninja -DCMAKE_BUILD_TYPE=Developer -B build -S dolfinx/cpp/
           cmake --build build
           cmake --install build
+          python3 -m pip install -r python/build-requirements.txt # TO REMOVE
           python3 -m pip -v install --global-option build --global-option --debug dolfinx/python/
 
       - name: Run mypy checks

@@ -72,12 +72,14 @@ jobs:
           path: ./dolfinx
           repository: FEniCS/dolfinx
           ref: ${{ github.event.inputs.dolfinx_branch }}
-      - name: Install DOLFINx
+      - name: Install DOLFINx (C++)
         run: |
           cmake -G Ninja -DCMAKE_BUILD_TYPE=Developer -B build -S dolfinx/cpp/
           cmake --build build
           cmake --install build
-          python3 -m pip install -r python/build-requirements.txt # TO REMOVE
+      - name: Install DOLFINx (Python)
+        run: |
+          python3 -m pip install -r dolfinx/python/build-requirements.txt # TO REMOVE
           python3 -m pip -v install --global-option build --global-option --debug dolfinx/python/
 
       - name: Run mypy checks

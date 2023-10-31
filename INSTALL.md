@@ -7,20 +7,11 @@ Basix can be installed using
 pip install .
 ```
 
-For an editable build:
-```console
-pip install --no-build-isolation -e .
-```
-
 ## Advanced
 
-In the standard install, the C++ library is built and installed inside
-the Python package.  This method is suitable for the majority of use
-cases.
-
 It is also possible to install the C++ and Python interfaces separately
-(see below). This is useful if you only need the C++ interface, and can
-be helpful during development.
+(see below). This is useful if you only need the C++ interface or during
+development.
 
 ### C++ library
 
@@ -30,22 +21,25 @@ cmake -DCMAKE_BUILD_TYPE=Release -B build-dir -S .
 cmake --build build-dir
 cmake --install build-dir
 ```
-You may need to use `sudo` for the final install step. Using the CMake
-build type `Release` is strongly recommended for performance.
+Using the CMake build type `Release` is strongly recommended for
+performance.
 
 
 ### Python interface
 
-After installing the C++ library, install the Python interface by running in
-the directory `python/`:
+After installing the C++ library, install the Python interface by
+running in the directory `python/`:
 ```console
 pip install .
 ```
 
-For an editable build:
+For an editable build and to avoid pip downloading the build
+dependencies:
 ```console
 pip install --no-build-isolation -e .
 ```
+When using the `--no-build-isolation` option all build and runtime
+dependencies must already be installed.
 
 ## Running the unit tests
 
@@ -71,13 +65,8 @@ Basix requires a C++20 compiler and depends on BLAS and LAPACK.
 ### Python
 
 When using the standard install approach all build and runtime
-dependencies for the C++ and Python parts of Basix will be fetched
+dependencies for the C++ and Python parts of Basix are fetched
 automatically.
-
-Building the Python interface requires
-[`nanobind`](https://github.com/wjakob/nanobind).
-
-At runtime Basix requires [`numpy`](https://numpy.org).
 
 Basix specifies sets of optional extras `docs`, `lint`, `optional`,
 `test`, and `ci` for building documentation, linting, enabling optional

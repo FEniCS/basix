@@ -377,7 +377,9 @@ class _BasixElement(_ElementBase):
             self._is_custom = False
             repr = (f"Basix element ({element.family.__name__}, {element.cell_type.__name__}, {element.degree}, "
                     f"{element.lagrange_variant.__name__}, {element.dpc_variant.__name__}, {element.discontinuous}")
-        repr += _repr_optional_args(gdim=gdim) + ")"
+        if gdim != _cellname_to_tdim(element.cell_type.__name__):
+            repr += _repr_optional_args(gdim=gdim)
+        repr += ")"
 
         super().__init__(
             repr, element.cell_type.__name__, tuple(element.value_shape), element.degree,
@@ -590,7 +592,10 @@ class _ComponentElement(_ElementBase):
         """Initialise the element."""
         self.element = element
         self.component = component
-        repr = f"component element ({element!r}, {component}" + _repr_optional_args(gdim=gdim) + ")"
+        repr = f"component element ({element!r}, {component}"
+        if gdim != _cellname_to_tdim(element.cell_type.__name__):
+            repr += _repr_optional_args(gdim=gdim)
+        repr += ")"
         super().__init__(repr, element.cell_type.__name__, (1, ), element._degree, gdim=gdim)
 
     def __eq__(self, other) -> bool:
@@ -777,7 +782,10 @@ class _MixedElement(_ElementBase):
         else:
             pullback = _MixedPullback(self)
 
-        repr = "mixed element (" + ", ".join(i._repr for i in sub_elements) + _repr_optional_args(gdim=gdim) + ")"
+        repr = "mixed element (" + ", ".join(i._repr for i in sub_elements)
+        if gdim != _cellname_to_tdim(sub_elements[0].cell_type.__name__):
+            repr += _repr_optional_args(gdim=gdim)
+        repr += ")"
         super().__init__(repr, sub_elements[0].cell_type.__name__,
                          (sum(i.value_size for i in sub_elements), ), pullback=pullback, gdim=gdim)
 
@@ -1022,7 +1030,12 @@ class _BlockedElement(_ElementBase):
         self._block_size = block_size
         self.block_shape = shape
 
-        repr = f"blocked element ({sub_element!r}, {shape}" + _repr_optional_args(symmetry=symmetry, gdim=gdim) + ")"
+        repr = f"blocked element ({sub_element!r}, {shape}"
+        if gdim != _cellname_to_tdim(sub_element.cell_type.__name__):
+            repr += _repr_optional_args(symmetry=symmetry, gdim=gdim)
+        else:
+            repr += _repr_optional_args(symmetry=symmetry)
+        repr += ")"
 
         super().__init__(repr, sub_element.cell_type.__name__, shape,
                          sub_element._degree, sub_element._pullback, gdim=gdim)

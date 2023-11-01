@@ -1643,7 +1643,7 @@ def _compute_signature(element: _basix.finite_element.FiniteElement) -> str:
     return signature
 
 
-def _repr_optional_args(partial_repr: str, *args: tuple[str, _typing.Any]) -> str:
+def _repr_optional_args(partial_repr: str, *args: typing.Tuple[str, _typing.Any]) -> str:
     """Augment an element `repr` by appending non-None optional arguments.
 
     Args:

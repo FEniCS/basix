@@ -350,11 +350,12 @@ class _BasixElement(_ElementBase):
         """Create a Basix element."""
         if element.family == _basix.ElementFamily.custom:
             self._is_custom = True
-            repr = f"custom Basix element ({_compute_signature(element)})"
+            repr = f"custom Basix element ({_compute_signature(element)}"
         else:
             self._is_custom = False
             repr = (f"Basix element ({element.family.__name__}, {element.cell_type.__name__}, {element.degree}, "
-                    f"{element.lagrange_variant.__name__}, {element.dpc_variant.__name__}, {element.discontinuous})")
+                    f"{element.lagrange_variant.__name__}, {element.dpc_variant.__name__}, {element.discontinuous}")
+        repr = _repr_optional_args(repr, ("gdim", gdim))
 
         super().__init__(
             repr, element.cell_type.__name__, tuple(element.value_shape), element.degree,
@@ -364,7 +365,7 @@ class _BasixElement(_ElementBase):
 
     def __eq__(self, other) -> bool:
         """Check if two elements are equal."""
-        return isinstance(other, _BasixElement) and self.element == other.element
+        return isinstance(other, _BasixElement) and (self.element == other.element and self._gdim == other._gdim)
 
     def __hash__(self) -> int:
         """Return a hash."""
@@ -567,13 +568,14 @@ class _ComponentElement(_ElementBase):
         """Initialise the element."""
         self.element = element
         self.component = component
-        super().__init__(f"component element ({element._repr}, {component})",
-                         element.cell_type.__name__, (1, ), element._degree, gdim=gdim)
+        repr = f"component element ({element._repr}, {component}"
+        repr = _repr_optional_args(repr, ("gdim", gdim))
+        super().__init__(repr, element.cell_type.__name__, (1, ), element._degree, gdim=gdim)
 
     def __eq__(self, other) -> bool:
         """Check if two elements are equal."""
         return (isinstance(other, _ComponentElement) and self.element == other.element
-                and self.component == other.component)
+                and self.component == other.component and self._gdim == other._gdim)
 
     def __hash__(self) -> int:
         """Return a hash."""
@@ -754,13 +756,15 @@ class _MixedElement(_ElementBase):
         else:
             pullback = _MixedPullback(self)
 
-        super().__init__("mixed element (" + ", ".join(i._repr for i in sub_elements) + ")",
-                         sub_elements[0].cell_type.__name__,
+        repr = "mixed element (" + ", ".join(i._repr for i in sub_elements)
+        repr = _repr_optional_args(repr, ("gdim", gdim))
+        super().__init__(repr, sub_elements[0].cell_type.__name__,
                          (sum(i.value_size for i in sub_elements), ), pullback=pullback, gdim=gdim)
 
     def __eq__(self, other) -> bool:
         """Check if two elements are equal."""
-        if isinstance(other, _MixedElement) and len(self._sub_elements) == len(other._sub_elements):
+        if isinstance(other, _MixedElement) and (len(self._sub_elements) == len(other._sub_elements)
+                                                 and self._gdim == other._gdim):
             for i, j in zip(self._sub_elements, other._sub_elements):
                 if i != j:
                     return False
@@ -1000,13 +1004,10 @@ class _BlockedElement(_ElementBase):
 
         repr = f"blocked element ({sub_element._repr}, {shape}"
         if len(shape) == 2:
-            if symmetry:
-                repr += ", True"
-            else:
-                repr += ", False"
-        if gdim is not None:
-            repr += f", gdim={gdim}"
-        repr += ")"
+            _symm: _typing.Tuple[str, _typing.Any] = ("symmetry", "True" if symmetry else "False")
+        else:
+            _symm = ("symmetry", None)
+        repr = _repr_optional_args(repr, _symm, ("gdim", gdim))
 
         super().__init__(repr, sub_element.cell_type.__name__, shape,
                          sub_element._degree, sub_element._pullback, gdim=gdim)
@@ -1026,7 +1027,8 @@ class _BlockedElement(_ElementBase):
         """Check if two elements are equal."""
         return (
             isinstance(other, _BlockedElement) and self._block_size == other._block_size
-            and self.block_shape == other.block_shape and self.sub_element == other.sub_element)
+            and self.block_shape == other.block_shape and self.sub_element == other.sub_element
+            and self._gdim == other._gdim)
 
     def __hash__(self) -> int:
         """Return a hash."""
@@ -1274,8 +1276,14 @@ class _QuadratureElement(_ElementBase):
 
     def __eq__(self, other) -> bool:
         """Check if two elements are equal."""
-        return isinstance(other, _QuadratureElement) and _np.allclose(self._points, other._points) and \
-            _np.allclose(self._weights, other._weights)
+        return isinstance(other, _QuadratureElement) and (
+            self._cell_type == other._cell_type
+            and self._pullback == other._pullback
+            and self._points.shape == other._points.shape
+            and self._weights.shape == other._weights.shape
+            and _np.allclose(self._points, other._points)
+            and _np.allclose(self._weights, other._weights)
+        )
 
     def __hash__(self) -> int:
         """Return a hash."""
@@ -1437,7 +1445,7 @@ class _RealElement(_ElementBase):
         self._cell_type = cell
         tdim = len(_basix.topology(cell)) - 1
 
-        super().__init__(f"RealElement({element})", cell.__name__, value_shape, 0)
+        super().__init__(f"RealElement({cell.__name__}, {value_shape})", cell.__name__, value_shape, 0)
 
         self._entity_counts = []
         if tdim >= 1:
@@ -1450,7 +1458,8 @@ class _RealElement(_ElementBase):
 
     def __eq__(self, other) -> bool:
         """Check if two elements are equal."""
-        return isinstance(other, _RealElement)
+        return isinstance(other, _RealElement) and (self._cell_type == other._cell_type
+                                                    and self._value_shape == other._value_shape)
 
     def __hash__(self) -> int:
         """Return a hash."""
@@ -1632,6 +1641,28 @@ def _compute_signature(element: _basix.finite_element.FiniteElement) -> str:
     signature += _hashlib.sha1(data.encode('utf-8')).hexdigest()
 
     return signature
+
+
+def _repr_optional_args(partial_repr: str, *args: _typing.Tuple[str, _typing.Any]) -> str:
+    """Augment an element `repr` by appending non-None optional arguments.
+
+    Args:
+        partial_repr: The initial `repr` of a finite element incorporating all required
+            arguments but not including any optional args
+        args: Sequence of tuples `(name: str, value: typing.Any)` where `name` is the name
+            of an optional argument to be including in the repr and `value` is its
+            value. All arguments for which `value is not None` will be appended to
+            `partial_repr`.
+
+    Returns:
+        A string representation of a finite element
+    """
+    repr = partial_repr
+    for name, value in args:
+        if value is not None:
+            repr += f", {name}={value}"
+    repr += ")"
+    return repr
 
 
 @_functools.lru_cache()

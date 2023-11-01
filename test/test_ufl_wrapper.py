@@ -3,7 +3,6 @@ import pytest
 
 import basix
 import basix.ufl
-import ufl
 
 
 @pytest.mark.parametrize("inputs", [
@@ -101,7 +100,7 @@ def test_quadrature_element(cell, degree, shape):
     assert e.dim == scalar_e.dim * size
 
 
-@pytest.mark.parameterize("family,cell,degree,shape,gdim", [
+@pytest.mark.parametrize("family,cell,degree,shape,gdim", [
     ("Lagrange", "triangle", 1, None, None),
     ("Discontinuous Lagrange", "triangle", 1, None, None),
     ("Lagrange", "quadrilateral", 1, None, None),
@@ -115,7 +114,7 @@ def test_finite_element_eq_hash(family, cell, degree, shape, gdim):
     assert (e1 == e2 and hash(e1) == hash(e2)) or (e1 != e2 and hash(e1) != hash(e2))
 
 
-@pytest.mark.parameterize("component,gdim", [(0, None), (1, None), (0, 2)])
+@pytest.mark.parametrize("component,gdim", [(0, None), (1, None), (0, 2)])
 def test_component_element_eq_hash(component, gdim):
     base_el = basix.ufl.element("Lagrange", "triangle", 1)
     e1 = basix.ufl._ComponentElement(base_el, component=0, gdim=None)
@@ -123,7 +122,7 @@ def test_component_element_eq_hash(component, gdim):
     assert (e1 == e2 and hash(e1) == hash(e2)) or (e1 != e2 and hash(e1) != hash(e2))
 
 
-@pytest.mark.parameterize("e1,e2,gdim", [
+@pytest.mark.parametrize("e1,e2,gdim", [
     (basix.ufl.element("Lagrange", "triangle", 1),
      basix.ufl.element("Lagrange", "triangle", 1, shape=(2, 2), symmetry=True),
      None),
@@ -144,19 +143,19 @@ def test_mixed_element_eq_hash(e1, e2, gdim):
         (mixed1 != mixed2 and hash(mixed1) != hash(mixed2))
 
 
-@pytest.mark.parameterize("cell_type,degree,pullback", [
-    ("triangle", 2, ufl.identity_pullback),
-    ("quadrilateral", 2, ufl.identity_pullback),
-    ("triangle", 3, ufl.identity_pullback),
-    ("triangle", 2, ufl.covariant_piola),
+@pytest.mark.parametrize("cell_type,degree,pullback", [
+    ("triangle", 2, basix.ufl._ufl.identity_pullback),
+    ("quadrilateral", 2, basix.ufl._ufl.identity_pullback),
+    ("triangle", 3, basix.ufl._ufl.identity_pullback),
+    ("triangle", 2, basix.ufl._ufl.covariant_piola),
 ])
 def test_quadrature_element_eq_hash(cell_type, degree, pullback):
-    e1 = basix.ufl.quadrature_element("triangle", scheme="default", degree=2, pullback=ufl.identity_pullback)
+    e1 = basix.ufl.quadrature_element("triangle", scheme="default", degree=2, pullback=basix.ufl._ufl.identity_pullback)
     e2 = basix.ufl.quadrature_element(cell_type, scheme="default", degree=degree, pullback=pullback)
     assert (e1 == e2 and hash(e1) == hash(e2)) or (e1 != e2 and hash(e1) != hash(e2))
 
 
-@pytest.mark.parameterize("cell_type,value_shape", [("triangle", ()), ("quadrilateral", ()), ("triangle", (2,))])
+@pytest.mark.parametrize("cell_type,value_shape", [("triangle", ()), ("quadrilateral", ()), ("triangle", (2,))])
 def test_real_element_eq_hash(cell_type, value_shape):
     e1 = basix.ufl.real_element("triangle", ())
     e2 = basix.ufl.real_element(cell_type, value_shape)

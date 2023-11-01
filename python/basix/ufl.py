@@ -1279,6 +1279,8 @@ class _QuadratureElement(_ElementBase):
         return isinstance(other, _QuadratureElement) and (
             self._cell_type == other._cell_type
             and self._pullback == other._pullback
+            and self._points.shape == other._points.shape
+            and self._weights.shape == other._weights.shape
             and _np.allclose(self._points, other._points)
             and _np.allclose(self._weights, other._weights)
         )

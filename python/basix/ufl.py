@@ -71,6 +71,28 @@ def _ufl_pullback_from_enum(m: _basix.MapType) -> _AbstractPullback:
     return _pullbackmap[m]
 
 
+def _repr_optional_args(**kwargs: _typing.Any) -> str:
+    """Augment an element `repr` by appending non-None optional arguments.
+
+    Args:
+        kwargs: Optional arguments to include in repr. All arguments for which
+            `value is not None` will be appended to `partial_repr`.
+
+    Returns:
+        A string representation of a finite element
+    """
+    out = ""
+    for name, value in kwargs.items():
+        if value is not None:
+            out += f", {name}={value}"
+    return out
+
+
+def _cellname_to_tdim(cellname: str) -> int:
+    """Get the tdim of a cell."""
+    return len(_basix.topology(getattr(_basix.CellType, cellname))) - 1
+
+
 class _ElementBase(_AbstractFiniteElement):
     """A base wrapper to allow elements to be used with UFL.
 
@@ -87,7 +109,7 @@ class _ElementBase(_AbstractFiniteElement):
         self._value_shape = value_shape
         self._degree = degree
         self._pullback = pullback
-        self._gdim = gdim
+        self._gdim = _cellname_to_tdim(cellname) if gdim is None else gdim
 
     # Implementation of methods for UFL AbstractFiniteElement
     def __repr__(self):
@@ -355,7 +377,9 @@ class _BasixElement(_ElementBase):
             self._is_custom = False
             repr = (f"Basix element ({element.family.__name__}, {element.cell_type.__name__}, {element.degree}, "
                     f"{element.lagrange_variant.__name__}, {element.dpc_variant.__name__}, {element.discontinuous}")
-        repr = _repr_optional_args(repr, ("gdim", gdim))
+        if gdim != _cellname_to_tdim(element.cell_type.__name__):
+            repr += _repr_optional_args(gdim=gdim)
+        repr += ")"
 
         super().__init__(
             repr, element.cell_type.__name__, tuple(element.value_shape), element.degree,
@@ -568,8 +592,10 @@ class _ComponentElement(_ElementBase):
         """Initialise the element."""
         self.element = element
         self.component = component
-        repr = f"component element ({element._repr}, {component}"
-        repr = _repr_optional_args(repr, ("gdim", gdim))
+        repr = f"component element ({element!r}, {component}"
+        if gdim != _cellname_to_tdim(element.cell_type.__name__):
+            repr += _repr_optional_args(gdim=gdim)
+        repr += ")"
         super().__init__(repr, element.cell_type.__name__, (1, ), element._degree, gdim=gdim)
 
     def __eq__(self, other) -> bool:
@@ -757,7 +783,9 @@ class _MixedElement(_ElementBase):
             pullback = _MixedPullback(self)
 
         repr = "mixed element (" + ", ".join(i._repr for i in sub_elements)
-        repr = _repr_optional_args(repr, ("gdim", gdim))
+        if gdim != _cellname_to_tdim(sub_elements[0].cell_type.__name__):
+            repr += _repr_optional_args(gdim=gdim)
+        repr += ")"
         super().__init__(repr, sub_elements[0].cell_type.__name__,
                          (sum(i.value_size for i in sub_elements), ), pullback=pullback, gdim=gdim)
 
@@ -1002,12 +1030,12 @@ class _BlockedElement(_ElementBase):
         self._block_size = block_size
         self.block_shape = shape
 
-        repr = f"blocked element ({sub_element._repr}, {shape}"
-        if len(shape) == 2:
-            _symm: _typing.Tuple[str, _typing.Any] = ("symmetry", "True" if symmetry else "False")
+        repr = f"blocked element ({sub_element!r}, {shape}"
+        if gdim != _cellname_to_tdim(sub_element.cell_type.__name__):
+            repr += _repr_optional_args(symmetry=symmetry, gdim=gdim)
         else:
-            _symm = ("symmetry", None)
-        repr = _repr_optional_args(repr, _symm, ("gdim", gdim))
+            repr += _repr_optional_args(symmetry=symmetry)
+        repr += ")"
 
         super().__init__(repr, sub_element.cell_type.__name__, shape,
                          sub_element._degree, sub_element._pullback, gdim=gdim)
@@ -1641,28 +1669,6 @@ def _compute_signature(element: _basix.finite_element.FiniteElement) -> str:
     signature += _hashlib.sha1(data.encode('utf-8')).hexdigest()
 
     return signature
-
-
-def _repr_optional_args(partial_repr: str, *args: _typing.Tuple[str, _typing.Any]) -> str:
-    """Augment an element `repr` by appending non-None optional arguments.
-
-    Args:
-        partial_repr: The initial `repr` of a finite element incorporating all required
-            arguments but not including any optional args
-        args: Sequence of tuples `(name: str, value: typing.Any)` where `name` is the name
-            of an optional argument to be including in the repr and `value` is its
-            value. All arguments for which `value is not None` will be appended to
-            `partial_repr`.
-
-    Returns:
-        A string representation of a finite element
-    """
-    repr = partial_repr
-    for name, value in args:
-        if value is not None:
-            repr += f", {name}={value}"
-    repr += ")"
-    return repr
 
 
 @_functools.lru_cache()

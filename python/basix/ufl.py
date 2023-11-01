@@ -528,11 +528,6 @@ class _BasixElement(_ElementBase):
         return self.element.map_type
 
     @property
-    def embedded_subdegree(self) -> int:
-        """The highest complete degree of the element."""
-        return self.element.embedded_subdegree
-
-    @property
     def embedded_superdegree(self) -> int:
         """Return the degree of the minimum degree Lagrange space that spans this element.
 

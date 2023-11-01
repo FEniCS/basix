@@ -1004,7 +1004,7 @@ class _BlockedElement(_ElementBase):
 
         repr = f"blocked element ({sub_element._repr}, {shape}"
         if len(shape) == 2:
-            _symm: tuple[str, _typing.Any] = ("symmetry", "True" if symmetry else "False")
+            _symm: typing.Tuple[str, _typing.Any] = ("symmetry", "True" if symmetry else "False")
         else:
             _symm = ("symmetry", None)
         repr = _repr_optional_args(repr, _symm, ("gdim", gdim))

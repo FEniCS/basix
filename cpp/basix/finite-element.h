@@ -304,10 +304,10 @@ public:
   /// element
   /// @param[in] discontinuous Indicates whether or not this is the
   /// discontinuous version of the element
-  /// @param[in] highest_complete_degree The highest degree n such that
+  /// @param[in] embedded_subdegree The highest degree n such that
   /// a Lagrange (or vector Lagrange) element of degree n is a subspace
   /// of this element
-  /// @param[in] highest_degree The highest degree n such that at least
+  /// @param[in] embedded_superdegree The highest degree n such that at least
   /// one polynomial of degree n is included in this element's
   /// polymonial set
   /// @param[in] lvariant The Lagrange variant of the element
@@ -323,9 +323,9 @@ public:
       const std::array<std::vector<mdspan_t<const F, 2>>, 4>& x,
       const std::array<std::vector<mdspan_t<const F, 4>>, 4>& M,
       int interpolation_nderivs, maps::type map_type,
-      sobolev::space sobolev_space, bool discontinuous,
-      int highest_complete_degree, int highest_degree,
-      element::lagrange_variant lvariant, element::dpc_variant dvariant,
+      sobolev::space sobolev_space, bool discontinuous, int embedded_subdegree,
+      int embedded_superdegree, element::lagrange_variant lvariant,
+      element::dpc_variant dvariant,
       std::vector<std::tuple<std::vector<FiniteElement>, std::vector<int>>>
           tensor_factors
       = {},
@@ -498,12 +498,12 @@ public:
   /// element is contained in a Lagrange (or vector Lagrange) element of
   /// degree `n`.
   /// @return Polynomial degree
-  int highest_degree() const { return _highest_degree; }
+  int embedded_superdegree() const { return _embedded_superdegree; }
 
   /// Highest degree `n` such that a Lagrange (or vector Lagrange)
   /// element of degree n is a subspace of this element.
   /// @return Polynomial degree
-  int highest_complete_degree() const { return _highest_complete_degree; }
+  int embedded_subdegree() const { return _embedded_subdegree; }
 
   /// The element value tensor shape, e.g. returning {} for scalars, {3}
   /// for vectors in 3D, {2, 2} for a rank-2 tensor in 2D.
@@ -1182,10 +1182,10 @@ private:
   int _interpolation_nderivs;
 
   // Highest degree polynomial in element's polyset
-  int _highest_degree;
+  int _embedded_superdegree;
 
   // Highest degree space that is a subspace of element's polyset
-  int _highest_complete_degree;
+  int _embedded_subdegree;
 
   // Value shape
   std::vector<std::size_t> _value_shape;
@@ -1314,10 +1314,10 @@ private:
 /// @param[in] sobolev_space The underlying Sobolev space for the element
 /// @param[in] discontinuous Indicates whether or not this is the
 /// discontinuous version of the element
-/// @param[in] highest_complete_degree The highest degree n such that a
+/// @param[in] embedded_subdegree The highest degree n such that a
 /// Lagrange (or vector Lagrange) element of degree n is a subspace of this
 /// element
-/// @param[in] highest_degree The degree of a polynomial in this element's
+/// @param[in] embedded_superdegree The degree of a polynomial in this element's
 /// polyset
 /// @param[in] poly_type The type of polyset to use for this element
 /// @return A custom finite element
@@ -1328,8 +1328,8 @@ FiniteElement<T> create_custom_element(
     const std::array<std::vector<impl::mdspan_t<const T, 2>>, 4>& x,
     const std::array<std::vector<impl::mdspan_t<const T, 4>>, 4>& M,
     int interpolation_nderivs, maps::type map_type,
-    sobolev::space sobolev_space, bool discontinuous,
-    int highest_complete_degree, int highest_degree, polyset::type poly_type);
+    sobolev::space sobolev_space, bool discontinuous, int embedded_subdegree,
+    int embedded_superdegree, polyset::type poly_type);
 
 /// Create an element using a given Lagrange variant and a given DPC variant
 /// @param[in] family The element family

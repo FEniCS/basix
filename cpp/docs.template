@@ -228,24 +228,24 @@ Returns:
 )";
 
 {{DOCTYPE}} create_custom_element = R"(
-{{finite-element.h > create_custom_element(cell_type, value_shape, wcoeffs, x, M, interpolation_nderivs, map_type, sobolev_space, discontinuous, highest_complete_degree, highest_degree, poly_type) > doc}}
+{{finite-element.h > create_custom_element(cell_type, value_shape, wcoeffs, x, M, interpolation_nderivs, map_type, sobolev_space, discontinuous, embedded_subdegree, embedded_superdegree, poly_type) > doc}}
 
 Args:
-    {{finite-element.h > create_custom_element(cell_type, value_shape, wcoeffs, x, M, interpolation_nderivs, map_type, sobolev_space, discontinuous, highest_complete_degree, highest_degree, poly_type) > param > cell_type}}
-    {{finite-element.h > create_custom_element(cell_type, value_shape, wcoeffs, x, M, interpolation_nderivs, map_type, sobolev_space, discontinuous, highest_complete_degree, highest_degree, poly_type) > param > value_shape}}
-    {{finite-element.h > create_custom_element(cell_type, value_shape, wcoeffs, x, M, interpolation_nderivs, map_type, sobolev_space, discontinuous, highest_complete_degree, highest_degree, poly_type) > param > wcoeffs}}
-    {{finite-element.h > create_custom_element(cell_type, value_shape, wcoeffs, x, M, interpolation_nderivs, map_type, sobolev_space, discontinuous, highest_complete_degree, highest_degree, poly_type) > param > x}}
-    {{finite-element.h > create_custom_element(cell_type, value_shape, wcoeffs, x, M, interpolation_nderivs, map_type, sobolev_space, discontinuous, highest_complete_degree, highest_degree, poly_type) > param > M}}
-    {{finite-element.h > create_custom_element(cell_type, value_shape, wcoeffs, x, M, interpolation_nderivs, map_type, sobolev_space, discontinuous, highest_complete_degree, highest_degree, poly_type) > param > interpolation_nderivs}}
-    {{finite-element.h > create_custom_element(cell_type, value_shape, wcoeffs, x, M, interpolation_nderivs, map_type, sobolev_space, discontinuous, highest_complete_degree, highest_degree, poly_type) > param > map_type}}
-    {{finite-element.h > create_custom_element(cell_type, value_shape, wcoeffs, x, M, interpolation_nderivs, map_type, sobolev_space, discontinuous, highest_complete_degree, highest_degree, poly_type) > param > sobolev_space}}
-    {{finite-element.h > create_custom_element(cell_type, value_shape, wcoeffs, x, M, interpolation_nderivs, map_type, sobolev_space, discontinuous, highest_complete_degree, highest_degree, poly_type) > param > discontinuous}}
-    {{finite-element.h > create_custom_element(cell_type, value_shape, wcoeffs, x, M, interpolation_nderivs, map_type, sobolev_space, discontinuous, highest_complete_degree, highest_degree, poly_type) > param > highest_complete_degree}}
-    {{finite-element.h > create_custom_element(cell_type, value_shape, wcoeffs, x, M, interpolation_nderivs, map_type, sobolev_space, discontinuous, highest_complete_degree, highest_degree, poly_type) > param > highest_degree}}
-    {{finite-element.h > create_custom_element(cell_type, value_shape, wcoeffs, x, M, interpolation_nderivs, map_type, sobolev_space, discontinuous, highest_complete_degree, highest_degree, poly_type) > param > poly_type}}
+    {{finite-element.h > create_custom_element(cell_type, value_shape, wcoeffs, x, M, interpolation_nderivs, map_type, sobolev_space, discontinuous, embedded_subdegree, embedded_superdegree, poly_type) > param > cell_type}}
+    {{finite-element.h > create_custom_element(cell_type, value_shape, wcoeffs, x, M, interpolation_nderivs, map_type, sobolev_space, discontinuous, embedded_subdegree, embedded_superdegree, poly_type) > param > value_shape}}
+    {{finite-element.h > create_custom_element(cell_type, value_shape, wcoeffs, x, M, interpolation_nderivs, map_type, sobolev_space, discontinuous, embedded_subdegree, embedded_superdegree, poly_type) > param > wcoeffs}}
+    {{finite-element.h > create_custom_element(cell_type, value_shape, wcoeffs, x, M, interpolation_nderivs, map_type, sobolev_space, discontinuous, embedded_subdegree, embedded_superdegree, poly_type) > param > x}}
+    {{finite-element.h > create_custom_element(cell_type, value_shape, wcoeffs, x, M, interpolation_nderivs, map_type, sobolev_space, discontinuous, embedded_subdegree, embedded_superdegree, poly_type) > param > M}}
+    {{finite-element.h > create_custom_element(cell_type, value_shape, wcoeffs, x, M, interpolation_nderivs, map_type, sobolev_space, discontinuous, embedded_subdegree, embedded_superdegree, poly_type) > param > interpolation_nderivs}}
+    {{finite-element.h > create_custom_element(cell_type, value_shape, wcoeffs, x, M, interpolation_nderivs, map_type, sobolev_space, discontinuous, embedded_subdegree, embedded_superdegree, poly_type) > param > map_type}}
+    {{finite-element.h > create_custom_element(cell_type, value_shape, wcoeffs, x, M, interpolation_nderivs, map_type, sobolev_space, discontinuous, embedded_subdegree, embedded_superdegree, poly_type) > param > sobolev_space}}
+    {{finite-element.h > create_custom_element(cell_type, value_shape, wcoeffs, x, M, interpolation_nderivs, map_type, sobolev_space, discontinuous, embedded_subdegree, embedded_superdegree, poly_type) > param > discontinuous}}
+    {{finite-element.h > create_custom_element(cell_type, value_shape, wcoeffs, x, M, interpolation_nderivs, map_type, sobolev_space, discontinuous, embedded_subdegree, embedded_superdegree, poly_type) > param > embedded_subdegree}}
+    {{finite-element.h > create_custom_element(cell_type, value_shape, wcoeffs, x, M, interpolation_nderivs, map_type, sobolev_space, discontinuous, embedded_subdegree, embedded_superdegree, poly_type) > param > embedded_superdegree}}
+    {{finite-element.h > create_custom_element(cell_type, value_shape, wcoeffs, x, M, interpolation_nderivs, map_type, sobolev_space, discontinuous, embedded_subdegree, embedded_superdegree, poly_type) > param > poly_type}}
 
 Returns:
-    {{finite-element.h > create_custom_element(cell_type, value_shape, wcoeffs, x, M, interpolation_nderivs, map_type, sobolev_space, discontinuous, highest_complete_degree, highest_degree, poly_type) > return}}
+    {{finite-element.h > create_custom_element(cell_type, value_shape, wcoeffs, x, M, interpolation_nderivs, map_type, sobolev_space, discontinuous, embedded_subdegree, embedded_superdegree, poly_type) > return}}
 )";
 
 

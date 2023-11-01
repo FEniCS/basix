@@ -407,14 +407,13 @@ Args:
     map_type: The type of map to be used to map values from the reference to a cell
     sobolev_space: The underlying Sobolev space for the element
     discontinuous: Indicates whether or not this is the discontinuous version of the element
-    highest_complete_degree: The highest degree n such that a Lagrange (or vector Lagrange) element of degree n is a subspace of this element
-    highest_degree: The degree of a polynomial in this element's polyset
+    embedded_subdegree: The highest degree n such that a Lagrange (or vector Lagrange) element of degree n is a subspace of this element
+    embedded_superdegree: The degree of a polynomial in this element's polyset
     poly_type: The type of polyset to use for this element
 
 Returns:
     A custom finite element
 )";
-
 
 const std::string
     create_element__family_cell_degree_lvariant_dvariant_discontinuous_dof_ordering

@@ -357,9 +357,10 @@ NB_MODULE(_basixcpp, m)
           basix::docstring::FiniteElement__get_tensor_product_representation
               .c_str())
       .def_prop_ro("degree", &FiniteElement<double>::degree)
-      .def_prop_ro("highest_degree", &FiniteElement<double>::highest_degree)
-      .def_prop_ro("highest_complete_degree",
-                   &FiniteElement<double>::highest_complete_degree)
+      .def_prop_ro("embedded_superdegree",
+                   &FiniteElement<double>::embedded_superdegree)
+      .def_prop_ro("embedded_subdegree",
+                   &FiniteElement<double>::embedded_subdegree)
       .def_prop_ro("cell_type", &FiniteElement<double>::cell_type)
       .def_prop_ro("polyset_type", &FiniteElement<double>::polyset_type)
       .def_prop_ro("dim", &FiniteElement<double>::dim)
@@ -556,7 +557,7 @@ NB_MODULE(_basixcpp, m)
              M,
          int interpolation_nderivs, maps::type map_type,
          sobolev::space sobolev_space, bool discontinuous,
-         int highest_complete_degree, int highest_degree,
+         int embedded_subdegree, int embedded_superdegree,
          polyset::type poly_type) -> FiniteElement<double>
       {
         if (x.size() != 4)
@@ -590,7 +591,7 @@ NB_MODULE(_basixcpp, m)
             mdspan_t<const double, 2>(wcoeffs.data(), wcoeffs.shape(0),
                                       wcoeffs.shape(1)),
             _x, _M, interpolation_nderivs, map_type, sobolev_space,
-            discontinuous, highest_complete_degree, highest_degree, poly_type);
+            discontinuous, embedded_subdegree, embedded_superdegree, poly_type);
       },
       basix::docstring::create_custom_element.c_str());
 

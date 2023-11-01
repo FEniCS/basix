@@ -136,7 +136,7 @@ def test_degree_bounds(cell_type, degree, element_type, element_args):
     tab = element.tabulate(0, points)[0]
 
     # Test that this element's basis functions are contained in Lagrange
-    # space with degree element.highest_degree
+    # space with degree element.embedded_superdegree
     coeffs = np.random.rand(element.dim)
     values = np.array([tab[:, :, i] @ coeffs for i in range(element.value_size)])
 
@@ -145,9 +145,9 @@ def test_degree_bounds(cell_type, degree, element_type, element_args):
     elif element.polyset_type == basix.PolysetType.macroedge:
         p_family = basix.ElementFamily.iso
 
-    if element.highest_degree >= 0:
+    if element.embedded_superdegree >= 0:
         # The element being tested should be a subset of this Lagrange space
-        lagrange = basix.create_element(p_family, cell_type, element.highest_degree,
+        lagrange = basix.create_element(p_family, cell_type, element.embedded_superdegree,
                                         basix.LagrangeVariant.equispaced, discontinuous=True)
         lagrange_coeffs = basix.compute_interpolation_operator(element, lagrange) @ coeffs
         lagrange_tab = lagrange.tabulate(0, points)[0]
@@ -156,10 +156,10 @@ def test_degree_bounds(cell_type, degree, element_type, element_args):
 
         assert np.allclose(values, lagrange_values)
 
-    if element.highest_degree >= 1:
+    if element.embedded_superdegree >= 1:
         # The element being tested should be NOT a subset of this
         # Lagrange space
-        lagrange = basix.create_element(p_family, cell_type, element.highest_degree - 1,
+        lagrange = basix.create_element(p_family, cell_type, element.embedded_superdegree - 1,
                                         basix.LagrangeVariant.equispaced, discontinuous=True)
         lagrange_coeffs = basix.compute_interpolation_operator(element, lagrange) @ coeffs
         lagrange_tab = lagrange.tabulate(0, points)[0]
@@ -169,12 +169,12 @@ def test_degree_bounds(cell_type, degree, element_type, element_args):
         assert not np.allclose(values, lagrange_values)
 
     # Test that the basis functions of Lagrange space with degree
-    # element.highest_complete_degree are contained in this space
+    # element.embedded_subdegree are contained in this space
 
-    if element.highest_complete_degree >= 0:
+    if element.embedded_subdegree >= 0:
         # This Lagrange space should be a subset to the element being
         # tested
-        lagrange = basix.create_element(p_family, cell_type, element.highest_complete_degree,
+        lagrange = basix.create_element(p_family, cell_type, element.embedded_subdegree,
                                         basix.LagrangeVariant.equispaced, discontinuous=True)
         lagrange_coeffs = np.random.rand(lagrange.dim * element.value_size)
         lagrange_tab = lagrange.tabulate(0, points)[0]
@@ -186,15 +186,15 @@ def test_degree_bounds(cell_type, degree, element_type, element_args):
         assert np.allclose(values, lagrange_values)
 
     if element.polyset_type == basix.PolysetType.macroedge:
-        if cell_type == basix.CellType.triangle and element.highest_complete_degree + 1 > 2:
+        if cell_type == basix.CellType.triangle and element.embedded_subdegree + 1 > 2:
             pytest.xfail("Cannot run test with macro polyset on a triangle with degree > 2")
-        if cell_type == basix.CellType.tetrahedron and element.highest_complete_degree + 1 > 1:
+        if cell_type == basix.CellType.tetrahedron and element.embedded_subdegree + 1 > 1:
             pytest.xfail("Cannot run test with macro polyset on a tetrahedron with degree > 1")
 
-    if element.highest_complete_degree >= -1:
+    if element.embedded_subdegree >= -1:
         # This Lagrange space should NOT be a subset to the element
         # being tested
-        lagrange = basix.create_element(p_family, cell_type, element.highest_complete_degree + 1,
+        lagrange = basix.create_element(p_family, cell_type, element.embedded_subdegree + 1,
                                         basix.LagrangeVariant.equispaced, discontinuous=True)
         lagrange_coeffs = np.random.rand(lagrange.dim * element.value_size)
         lagrange_tab = lagrange.tabulate(0, points)[0]

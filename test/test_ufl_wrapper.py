@@ -111,7 +111,7 @@ def test_quadrature_element(cell, degree, shape):
 def test_finite_element_eq_hash(family, cell, degree, shape, gdim):
     e1 = basix.ufl.element("Lagrange", "triangle", 1, shape=None, gdim=None)
     e2 = basix.ufl.element(family, cell, degree, shape=shape, gdim=gdim)
-    assert (e1 == e2 and hash(e1) == hash(e2)) or (e1 != e2 and hash(e1) != hash(e2))
+    assert (e1 == e2) == (hash(e1) == hash(e2))
 
 
 @pytest.mark.parametrize("component,gdim", [(0, None), (1, None), (0, 2)])
@@ -119,7 +119,7 @@ def test_component_element_eq_hash(component, gdim):
     base_el = basix.ufl.element("Lagrange", "triangle", 1)
     e1 = basix.ufl._ComponentElement(base_el, component=0, gdim=None)
     e2 = basix.ufl._ComponentElement(base_el, component=component, gdim=gdim)
-    assert (e1 == e2 and hash(e1) == hash(e2)) or (e1 != e2 and hash(e1) != hash(e2))
+    assert (e1 == e2) == (hash(e1) == hash(e2))
 
 
 @pytest.mark.parametrize("e1,e2,gdim", [
@@ -139,8 +139,7 @@ def test_mixed_element_eq_hash(e1, e2, gdim):
          basix.ufl.element("Lagrange", "triangle", 1, shape=(2, 2), symmetry=True)],
         gdim=None)
     mixed2 = basix.ufl.mixed_element([e1, e2], gdim=gdim)
-    assert (mixed1 == mixed2 and hash(mixed1) == hash(mixed2)) or \
-        (mixed1 != mixed2 and hash(mixed1) != hash(mixed2))
+    assert (mixed1 == mixed2) == (hash(mixed1) == hash(mixed2))
 
 
 @pytest.mark.parametrize("cell_type,degree,pullback", [
@@ -152,11 +151,11 @@ def test_mixed_element_eq_hash(e1, e2, gdim):
 def test_quadrature_element_eq_hash(cell_type, degree, pullback):
     e1 = basix.ufl.quadrature_element("triangle", scheme="default", degree=2, pullback=basix.ufl._ufl.identity_pullback)
     e2 = basix.ufl.quadrature_element(cell_type, scheme="default", degree=degree, pullback=pullback)
-    assert (e1 == e2 and hash(e1) == hash(e2)) or (e1 != e2 and hash(e1) != hash(e2))
+    assert (e1 == e2) == (hash(e1) == hash(e2))
 
 
 @pytest.mark.parametrize("cell_type,value_shape", [("triangle", ()), ("quadrilateral", ()), ("triangle", (2,))])
 def test_real_element_eq_hash(cell_type, value_shape):
     e1 = basix.ufl.real_element("triangle", ())
     e2 = basix.ufl.real_element(cell_type, value_shape)
-    assert (e1 == e2 and hash(e1) == hash(e2)) or (e1 != e2 and hash(e1) != hash(e2))
+    assert (e1 == e2) == (hash(e1) == hash(e2))

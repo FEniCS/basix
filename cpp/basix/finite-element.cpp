@@ -421,11 +421,12 @@ FiniteElement<T> basix::create_custom_element(
     const std::array<std::vector<impl::mdspan_t<const T, 2>>, 4>& x,
     const std::array<std::vector<impl::mdspan_t<const T, 4>>, 4>& M,
     int interpolation_nderivs, maps::type map_type,
-    sobolev::space sobolev_space, bool discontinuous,
-    int highest_complete_degree, int highest_degree, polyset::type poly_type)
+    sobolev::space sobolev_space, bool discontinuous, int embedded_subdegree,
+    int embedded_superdegree, polyset::type poly_type)
 {
   // Check that inputs are valid
-  const std::size_t psize = polyset::dim(cell_type, poly_type, highest_degree);
+  const std::size_t psize
+      = polyset::dim(cell_type, poly_type, embedded_superdegree);
   const std::size_t value_size = std::reduce(
       value_shape.begin(), value_shape.end(), 1, std::multiplies{});
   const std::size_t deriv_count
@@ -501,7 +502,7 @@ FiniteElement<T> basix::create_custom_element(
 
   auto [dualmatrix, dualshape]
       = compute_dual_matrix(cell_type, poly_type, wcoeffs_ortho, x, M,
-                            highest_degree, interpolation_nderivs);
+                            embedded_superdegree, interpolation_nderivs);
   if (math::is_singular(mdspan_t<const T, 2>(dualmatrix.data(), dualshape)))
   {
     throw std::runtime_error(
@@ -509,9 +510,9 @@ FiniteElement<T> basix::create_custom_element(
   }
 
   return basix::FiniteElement<T>(
-      element::family::custom, cell_type, poly_type, highest_degree,
+      element::family::custom, cell_type, poly_type, embedded_superdegree,
       value_shape, wcoeffs_ortho, x, M, interpolation_nderivs, map_type,
-      sobolev_space, discontinuous, highest_complete_degree, highest_degree,
+      sobolev_space, discontinuous, embedded_subdegree, embedded_superdegree,
       element::lagrange_variant::unset, element::dpc_variant::unset);
 }
 //-----------------------------------------------------------------------------
@@ -539,9 +540,9 @@ FiniteElement<F>::FiniteElement(
     const std::array<std::vector<mdspan_t<const F, 2>>, 4>& x,
     const std::array<std::vector<mdspan_t<const F, 4>>, 4>& M,
     int interpolation_nderivs, maps::type map_type,
-    sobolev::space sobolev_space, bool discontinuous,
-    int highest_complete_degree, int highest_degree,
-    element::lagrange_variant lvariant, element::dpc_variant dvariant,
+    sobolev::space sobolev_space, bool discontinuous, int embedded_subdegree,
+    int embedded_superdegree, element::lagrange_variant lvariant,
+    element::dpc_variant dvariant,
     std::vector<std::tuple<std::vector<FiniteElement<F>>, std::vector<int>>>
         tensor_factors,
     std::vector<int> dof_ordering)
@@ -550,11 +551,11 @@ FiniteElement<F>::FiniteElement(
       _cell_subentity_types(cell::subentity_types(cell_type)), _family(family),
       _lagrange_variant(lvariant), _dpc_variant(dvariant), _degree(degree),
       _interpolation_nderivs(interpolation_nderivs),
-      _highest_degree(highest_degree),
-      _highest_complete_degree(highest_complete_degree),
-      _value_shape(value_shape), _map_type(map_type),
-      _sobolev_space(sobolev_space), _discontinuous(discontinuous),
-      _tensor_factors(tensor_factors), _dof_ordering(dof_ordering)
+      _embedded_superdegree(embedded_superdegree),
+      _embedded_subdegree(embedded_subdegree), _value_shape(value_shape),
+      _map_type(map_type), _sobolev_space(sobolev_space),
+      _discontinuous(discontinuous), _tensor_factors(tensor_factors),
+      _dof_ordering(dof_ordering)
 {
   // Check that discontinuous elements only have DOFs on interior
   if (discontinuous)
@@ -577,8 +578,9 @@ FiniteElement<F>::FiniteElement(
             wcoeffs_b.begin());
 
   _wcoeffs = {wcoeffs_b, {wcoeffs.extent(0), wcoeffs.extent(1)}};
-  _dual_matrix = compute_dual_matrix<F>(cell_type, poly_type, wcoeffs, x, M,
-                                        highest_degree, interpolation_nderivs);
+  _dual_matrix
+      = compute_dual_matrix<F>(cell_type, poly_type, wcoeffs, x, M,
+                               embedded_superdegree, interpolation_nderivs);
 
   // Copy x
   for (std::size_t i = 0; i < x.size(); ++i)
@@ -647,7 +649,7 @@ FiniteElement<F>::FiniteElement(
   _entity_transformations = doftransforms::compute_entity_transformations(
       cell_type, x, M,
       mdspan_t<const F, 2>(_coeffs.first.data(), _coeffs.second),
-      highest_degree, value_size, map_type, poly_type);
+      embedded_superdegree, value_size, map_type, poly_type);
 
   const std::size_t nderivs
       = polyset::nderivs(cell_type, interpolation_nderivs);
@@ -978,9 +980,9 @@ bool FiniteElement<F>::operator==(const FiniteElement& e) const
            and map_type() == e.map_type()
            and sobolev_space() == e.sobolev_space()
            and value_shape() == e.value_shape()
-           and highest_degree() == e.highest_degree()
-           and highest_complete_degree() == e.highest_complete_degree()
-           and coeff_equal and entity_dofs() == e.entity_dofs();
+           and embedded_superdegree() == e.embedded_superdegree()
+           and embedded_subdegree() == e.embedded_subdegree() and coeff_equal
+           and entity_dofs() == e.entity_dofs();
   }
   else
   {
@@ -1026,12 +1028,13 @@ void FiniteElement<F>::tabulate(int nd, impl::mdspan_t<const F, 2> x,
   }
 
   const std::size_t psize
-      = polyset::dim(_cell_type, _poly_type, _highest_degree);
+      = polyset::dim(_cell_type, _poly_type, _embedded_superdegree);
   const std::array<std::size_t, 3> bsize
       = {(std::size_t)polyset::nderivs(_cell_type, nd), psize, x.extent(0)};
   std::vector<F> basis_b(bsize[0] * bsize[1] * bsize[2]);
   mdspan_t<F, 3> basis(basis_b.data(), bsize);
-  polyset::tabulate(basis, _cell_type, _poly_type, _highest_degree, nd, x);
+  polyset::tabulate(basis, _cell_type, _poly_type, _embedded_superdegree, nd,
+                    x);
   const int vs = std::accumulate(_value_shape.begin(), _value_shape.end(), 1,
                                  std::multiplies{});
 

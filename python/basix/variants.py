@@ -1,7 +1,7 @@
 """Functions to manipulate variant types."""
 
-from ._basixcpp import DPCVariant as _DV
-from ._basixcpp import LagrangeVariant as _LV
+from basix._basixcpp import DPCVariant as _DV
+from basix._basixcpp import LagrangeVariant as _LV
 
 
 def string_to_lagrange_variant(variant: str) -> _LV:

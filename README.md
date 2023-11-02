@@ -15,8 +15,8 @@ Basix allows users to:
   arbitrary meshes; and
 - interpolate into and between finite element spaces.
 
-Basix includes a range of built-in elements, and also allows the user to define
-their own custom elements.
+Basix includes a range of built-in elements, and also allows the user to
+define their own custom elements.
 
 Basix is one of the components of FEniCSx, alongside
 [UFL](https://github.com/fenics/ufl),
@@ -31,13 +31,8 @@ pip install fenics-basix
 ```
 We currently build binary wheels for Linux and macOS x86-64 architectures.
 
-To install the `main` (development) branch of Basix:
-```console
-pip install git+https://github.com/FEniCS/basix.git
-```
-
-For advanced installation instructions see the detailed [install
-instructions](INSTALL.md)
+For advanced and developer installation instructions see the more
+detailed [install instructions](INSTALL.md)
 
 
 ## Documentation
@@ -47,14 +42,17 @@ https://docs.fenicsproject.org/basix/main/.
 
 ## Support
 
-If you find a bug in Basix, you can report it on the [GitHub issue tracker](https://github.com/fenics/basix/issues/new?labels=bug).
+If you find a bug in Basix, you can report it on the [GitHub issue
+tracker](https://github.com/fenics/basix/issues/new?labels=bug).
 
-Questions about using Basix can be asked on the [FEniCS discourse group](https://fenicsproject.discourse.group/).
+Questions about using Basix can be asked on the [FEniCS discourse
+group](https://fenicsproject.discourse.group/).
 
 
 ## Contributing
 
-Information about how to contribute to Basix can be found [here](CONTRIBUTING.md).
+Information about how to contribute to Basix can be found
+[here](CONTRIBUTING.md).
 
 ## Supported elements
 

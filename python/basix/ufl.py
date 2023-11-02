@@ -71,6 +71,28 @@ def _ufl_pullback_from_enum(m: _basix.MapType) -> _AbstractPullback:
     return _pullbackmap[m]
 
 
+def _repr_optional_args(**kwargs: _typing.Any) -> str:
+    """Augment an element `repr` by appending non-None optional arguments.
+
+    Args:
+        kwargs: Optional arguments to include in repr. All arguments for which
+            `value is not None` will be appended to `partial_repr`.
+
+    Returns:
+        A string representation of a finite element
+    """
+    out = ""
+    for name, value in kwargs.items():
+        if value is not None:
+            out += f", {name}={value}"
+    return out
+
+
+def _cellname_to_tdim(cellname: str) -> int:
+    """Get the tdim of a cell."""
+    return len(_basix.topology(getattr(_basix.CellType, cellname))) - 1
+
+
 class _ElementBase(_AbstractFiniteElement):
     """A base wrapper to allow elements to be used with UFL.
 
@@ -87,7 +109,7 @@ class _ElementBase(_AbstractFiniteElement):
         self._value_shape = value_shape
         self._degree = degree
         self._pullback = pullback
-        self._gdim = gdim
+        self._gdim = _cellname_to_tdim(cellname) if gdim is None else gdim
 
     # Implementation of methods for UFL AbstractFiniteElement
     def __repr__(self):
@@ -116,7 +138,7 @@ class _ElementBase(_AbstractFiniteElement):
         """Return the pullback for this element."""
         return self._pullback
 
-    @property
+    @_abstractproperty
     def embedded_superdegree(self) -> int:
         """Return the degree of the minimum degree Lagrange space that spans this element.
 
@@ -129,9 +151,8 @@ class _ElementBase(_AbstractFiniteElement):
         space, but on other cells this is not true. For example, on quadrilateral cells, the degree 1
         Lagrange space includes the degree 2 polynomial xy.
         """
-        return self.highest_degree
 
-    @property
+    @_abstractproperty
     def embedded_subdegree(self) -> int:
         """Return the degree of the maximum degree Lagrange space that is spanned by this element.
 
@@ -144,7 +165,6 @@ class _ElementBase(_AbstractFiniteElement):
         space, but on other cells this is not true. For example, on quadrilateral cells, the degree 1
         Lagrange space includes the degree 2 polynomial xy.
         """
-        return self.highest_complete_degree
 
     @property
     def cell(self) -> _ufl.Cell:
@@ -264,14 +284,6 @@ class _ElementBase(_AbstractFiniteElement):
         """The Basix map type."""
 
     @_abstractproperty
-    def highest_complete_degree(self) -> int:
-        """The highest complete degree of the element."""
-
-    @_abstractproperty
-    def highest_degree(self) -> int:
-        """The highest degree of the element."""
-
-    @_abstractproperty
     def polyset_type(self) -> _basix.PolysetType:
         """The polyset type of the element."""
 
@@ -350,11 +362,14 @@ class _BasixElement(_ElementBase):
         """Create a Basix element."""
         if element.family == _basix.ElementFamily.custom:
             self._is_custom = True
-            repr = f"custom Basix element ({_compute_signature(element)})"
+            repr = f"custom Basix element ({_compute_signature(element)}"
         else:
             self._is_custom = False
             repr = (f"Basix element ({element.family.__name__}, {element.cell_type.__name__}, {element.degree}, "
-                    f"{element.lagrange_variant.__name__}, {element.dpc_variant.__name__}, {element.discontinuous})")
+                    f"{element.lagrange_variant.__name__}, {element.dpc_variant.__name__}, {element.discontinuous}")
+        if gdim != _cellname_to_tdim(element.cell_type.__name__):
+            repr += _repr_optional_args(gdim=gdim)
+        repr += ")"
 
         super().__init__(
             repr, element.cell_type.__name__, tuple(element.value_shape), element.degree,
@@ -364,7 +379,7 @@ class _BasixElement(_ElementBase):
 
     def __eq__(self, other) -> bool:
         """Check if two elements are equal."""
-        return isinstance(other, _BasixElement) and self.element == other.element
+        return isinstance(other, _BasixElement) and (self.element == other.element and self._gdim == other._gdim)
 
     def __hash__(self) -> int:
         """Return a hash."""
@@ -513,14 +528,34 @@ class _BasixElement(_ElementBase):
         return self.element.map_type
 
     @property
-    def highest_complete_degree(self) -> int:
-        """The highest complete degree of the element."""
-        return self.element.highest_complete_degree
+    def embedded_superdegree(self) -> int:
+        """Return the degree of the minimum degree Lagrange space that spans this element.
+
+        This returns the degree of the lowest degree Lagrange space such that the polynomial
+        space of the Lagrange space is a superspace of this element's polynomial space. If this
+        element contains basis functions that are not in any Lagrange space, this function should
+        return None.
+
+        Note that on a simplex cells, the polynomial space of Lagrange space is a complete polynomial
+        space, but on other cells this is not true. For example, on quadrilateral cells, the degree 1
+        Lagrange space includes the degree 2 polynomial xy.
+        """
+        return self.element.embedded_superdegree
 
     @property
-    def highest_degree(self) -> int:
-        """The highest degree of the element."""
-        return self.element.highest_degree
+    def embedded_subdegree(self) -> int:
+        """Return the degree of the maximum degree Lagrange space that is spanned by this element.
+
+        This returns the degree of the highest degree Lagrange space such that the polynomial
+        space of the Lagrange space is a subspace of this element's polynomial space. If this
+        element's polynomial space does not include the constant function, this function should
+        return -1.
+
+        Note that on a simplex cells, the polynomial space of Lagrange space is a complete polynomial
+        space, but on other cells this is not true. For example, on quadrilateral cells, the degree 1
+        Lagrange space includes the degree 2 polynomial xy.
+        """
+        return self.element.embedded_subdegree
 
     @property
     def polyset_type(self) -> _basix.PolysetType:
@@ -567,13 +602,16 @@ class _ComponentElement(_ElementBase):
         """Initialise the element."""
         self.element = element
         self.component = component
-        super().__init__(f"component element ({element._repr}, {component})",
-                         element.cell_type.__name__, (1, ), element._degree, gdim=gdim)
+        repr = f"component element ({element!r}, {component}"
+        if gdim != _cellname_to_tdim(element.cell_type.__name__):
+            repr += _repr_optional_args(gdim=gdim)
+        repr += ")"
+        super().__init__(repr, element.cell_type.__name__, (1, ), element._degree, gdim=gdim)
 
     def __eq__(self, other) -> bool:
         """Check if two elements are equal."""
         return (isinstance(other, _ComponentElement) and self.element == other.element
-                and self.component == other.component)
+                and self.component == other.component and self._gdim == other._gdim)
 
     def __hash__(self) -> int:
         """Return a hash."""
@@ -724,14 +762,34 @@ class _ComponentElement(_ElementBase):
         raise NotImplementedError()
 
     @property
-    def highest_complete_degree(self) -> int:
-        """The highest complete degree of the element."""
-        return self.element.highest_complete_degree
+    def embedded_superdegree(self) -> int:
+        """Return the degree of the minimum degree Lagrange space that spans this element.
+
+        This returns the degree of the lowest degree Lagrange space such that the polynomial
+        space of the Lagrange space is a superspace of this element's polynomial space. If this
+        element contains basis functions that are not in any Lagrange space, this function should
+        return None.
+
+        Note that on a simplex cells, the polynomial space of Lagrange space is a complete polynomial
+        space, but on other cells this is not true. For example, on quadrilateral cells, the degree 1
+        Lagrange space includes the degree 2 polynomial xy.
+        """
+        return self.element.embedded_superdegree
 
     @property
-    def highest_degree(self) -> int:
-        """The highest degree of the element."""
-        return self.element.highest_degree
+    def embedded_subdegree(self) -> int:
+        """Return the degree of the maximum degree Lagrange space that is spanned by this element.
+
+        This returns the degree of the highest degree Lagrange space such that the polynomial
+        space of the Lagrange space is a subspace of this element's polynomial space. If this
+        element's polynomial space does not include the constant function, this function should
+        return -1.
+
+        Note that on a simplex cells, the polynomial space of Lagrange space is a complete polynomial
+        space, but on other cells this is not true. For example, on quadrilateral cells, the degree 1
+        Lagrange space includes the degree 2 polynomial xy.
+        """
+        return self.element.embedded_subdegree
 
 
 class _MixedElement(_ElementBase):
@@ -754,13 +812,17 @@ class _MixedElement(_ElementBase):
         else:
             pullback = _MixedPullback(self)
 
-        super().__init__("mixed element (" + ", ".join(i._repr for i in sub_elements) + ")",
-                         sub_elements[0].cell_type.__name__,
+        repr = "mixed element (" + ", ".join(i._repr for i in sub_elements)
+        if gdim != _cellname_to_tdim(sub_elements[0].cell_type.__name__):
+            repr += _repr_optional_args(gdim=gdim)
+        repr += ")"
+        super().__init__(repr, sub_elements[0].cell_type.__name__,
                          (sum(i.value_size for i in sub_elements), ), pullback=pullback, gdim=gdim)
 
     def __eq__(self, other) -> bool:
         """Check if two elements are equal."""
-        if isinstance(other, _MixedElement) and len(self._sub_elements) == len(other._sub_elements):
+        if isinstance(other, _MixedElement) and (len(self._sub_elements) == len(other._sub_elements)
+                                                 and self._gdim == other._gdim):
             for i, j in zip(self._sub_elements, other._sub_elements):
                 if i != j:
                     return False
@@ -826,13 +888,33 @@ class _MixedElement(_ElementBase):
         return e, irange[component_element_index] + offset, stride
 
     @property
-    def highest_degree(self) -> int:
-        """The highest degree of the element."""
-        return max(e.highest_degree for e in self._sub_elements)
+    def embedded_superdegree(self) -> int:
+        """Return the degree of the minimum degree Lagrange space that spans this element.
+
+        This returns the degree of the lowest degree Lagrange space such that the polynomial
+        space of the Lagrange space is a superspace of this element's polynomial space. If this
+        element contains basis functions that are not in any Lagrange space, this function should
+        return None.
+
+        Note that on a simplex cells, the polynomial space of Lagrange space is a complete polynomial
+        space, but on other cells this is not true. For example, on quadrilateral cells, the degree 1
+        Lagrange space includes the degree 2 polynomial xy.
+        """
+        return max(e.embedded_superdegree for e in self._sub_elements)
 
     @property
-    def highest_complete_degree(self) -> int:
-        """The highest degree of the element."""
+    def embedded_subdegree(self) -> int:
+        """Return the degree of the maximum degree Lagrange space that is spanned by this element.
+
+        This returns the degree of the highest degree Lagrange space such that the polynomial
+        space of the Lagrange space is a subspace of this element's polynomial space. If this
+        element's polynomial space does not include the constant function, this function should
+        return -1.
+
+        Note that on a simplex cells, the polynomial space of Lagrange space is a complete polynomial
+        space, but on other cells this is not true. For example, on quadrilateral cells, the degree 1
+        Lagrange space includes the degree 2 polynomial xy.
+        """
         raise NotImplementedError()
 
     @property
@@ -998,14 +1080,11 @@ class _BlockedElement(_ElementBase):
         self._block_size = block_size
         self.block_shape = shape
 
-        repr = f"blocked element ({sub_element._repr}, {shape}"
-        if len(shape) == 2:
-            if symmetry:
-                repr += ", True"
-            else:
-                repr += ", False"
-        if gdim is not None:
-            repr += f", gdim={gdim}"
+        repr = f"blocked element ({sub_element!r}, {shape}"
+        if gdim != _cellname_to_tdim(sub_element.cell_type.__name__):
+            repr += _repr_optional_args(symmetry=symmetry, gdim=gdim)
+        else:
+            repr += _repr_optional_args(symmetry=symmetry)
         repr += ")"
 
         super().__init__(repr, sub_element.cell_type.__name__, shape,
@@ -1026,7 +1105,8 @@ class _BlockedElement(_ElementBase):
         """Check if two elements are equal."""
         return (
             isinstance(other, _BlockedElement) and self._block_size == other._block_size
-            and self.block_shape == other.block_shape and self.sub_element == other.sub_element)
+            and self.block_shape == other.block_shape and self.sub_element == other.sub_element
+            and self._gdim == other._gdim)
 
     def __hash__(self) -> int:
         """Return a hash."""
@@ -1194,14 +1274,34 @@ class _BlockedElement(_ElementBase):
         return self.sub_element.map_type
 
     @property
-    def highest_complete_degree(self) -> int:
-        """The highest complete degree of the element."""
-        return self.sub_element.highest_complete_degree
+    def embedded_superdegree(self) -> int:
+        """Return the degree of the minimum degree Lagrange space that spans this element.
+
+        This returns the degree of the lowest degree Lagrange space such that the polynomial
+        space of the Lagrange space is a superspace of this element's polynomial space. If this
+        element contains basis functions that are not in any Lagrange space, this function should
+        return None.
+
+        Note that on a simplex cells, the polynomial space of Lagrange space is a complete polynomial
+        space, but on other cells this is not true. For example, on quadrilateral cells, the degree 1
+        Lagrange space includes the degree 2 polynomial xy.
+        """
+        return self.sub_element.embedded_superdegree
 
     @property
-    def highest_degree(self) -> int:
-        """The highest degree of the element."""
-        return self.sub_element.highest_degree
+    def embedded_subdegree(self) -> int:
+        """Return the degree of the maximum degree Lagrange space that is spanned by this element.
+
+        This returns the degree of the highest degree Lagrange space such that the polynomial
+        space of the Lagrange space is a subspace of this element's polynomial space. If this
+        element's polynomial space does not include the constant function, this function should
+        return -1.
+
+        Note that on a simplex cells, the polynomial space of Lagrange space is a complete polynomial
+        space, but on other cells this is not true. For example, on quadrilateral cells, the degree 1
+        Lagrange space includes the degree 2 polynomial xy.
+        """
+        return self.sub_element.embedded_subdegree
 
     @property
     def polyset_type(self) -> _basix.PolysetType:
@@ -1274,8 +1374,14 @@ class _QuadratureElement(_ElementBase):
 
     def __eq__(self, other) -> bool:
         """Check if two elements are equal."""
-        return isinstance(other, _QuadratureElement) and _np.allclose(self._points, other._points) and \
-            _np.allclose(self._weights, other._weights)
+        return isinstance(other, _QuadratureElement) and (
+            self._cell_type == other._cell_type
+            and self._pullback == other._pullback
+            and self._points.shape == other._points.shape
+            and self._weights.shape == other._weights.shape
+            and _np.allclose(self._points, other._points)
+            and _np.allclose(self._weights, other._weights)
+        )
 
     def __hash__(self) -> int:
         """Return a hash."""
@@ -1419,13 +1525,33 @@ class _QuadratureElement(_ElementBase):
         return True
 
     @property
-    def highest_complete_degree(self) -> int:
-        """The highest complete degree of the element."""
+    def embedded_superdegree(self) -> int:
+        """Return the degree of the minimum degree Lagrange space that spans this element.
+
+        This returns the degree of the lowest degree Lagrange space such that the polynomial
+        space of the Lagrange space is a superspace of this element's polynomial space. If this
+        element contains basis functions that are not in any Lagrange space, this function should
+        return None.
+
+        Note that on a simplex cells, the polynomial space of Lagrange space is a complete polynomial
+        space, but on other cells this is not true. For example, on quadrilateral cells, the degree 1
+        Lagrange space includes the degree 2 polynomial xy.
+        """
         raise NotImplementedError()
 
     @property
-    def highest_degree(self) -> int:
-        """The highest degree of the element."""
+    def embedded_subdegree(self) -> int:
+        """Return the degree of the maximum degree Lagrange space that is spanned by this element.
+
+        This returns the degree of the highest degree Lagrange space such that the polynomial
+        space of the Lagrange space is a subspace of this element's polynomial space. If this
+        element's polynomial space does not include the constant function, this function should
+        return -1.
+
+        Note that on a simplex cells, the polynomial space of Lagrange space is a complete polynomial
+        space, but on other cells this is not true. For example, on quadrilateral cells, the degree 1
+        Lagrange space includes the degree 2 polynomial xy.
+        """
         raise NotImplementedError()
 
 
@@ -1437,7 +1563,7 @@ class _RealElement(_ElementBase):
         self._cell_type = cell
         tdim = len(_basix.topology(cell)) - 1
 
-        super().__init__(f"RealElement({element})", cell.__name__, value_shape, 0)
+        super().__init__(f"RealElement({cell.__name__}, {value_shape})", cell.__name__, value_shape, 0)
 
         self._entity_counts = []
         if tdim >= 1:
@@ -1450,7 +1576,8 @@ class _RealElement(_ElementBase):
 
     def __eq__(self, other) -> bool:
         """Check if two elements are equal."""
-        return isinstance(other, _RealElement)
+        return isinstance(other, _RealElement) and (self._cell_type == other._cell_type
+                                                    and self._value_shape == other._value_shape)
 
     def __hash__(self) -> int:
         """Return a hash."""
@@ -1496,13 +1623,33 @@ class _RealElement(_ElementBase):
         return 0
 
     @property
-    def highest_degree(self) -> int:
-        """The highest degree of the element."""
+    def embedded_superdegree(self) -> int:
+        """Return the degree of the minimum degree Lagrange space that spans this element.
+
+        This returns the degree of the lowest degree Lagrange space such that the polynomial
+        space of the Lagrange space is a superspace of this element's polynomial space. If this
+        element contains basis functions that are not in any Lagrange space, this function should
+        return None.
+
+        Note that on a simplex cells, the polynomial space of Lagrange space is a complete polynomial
+        space, but on other cells this is not true. For example, on quadrilateral cells, the degree 1
+        Lagrange space includes the degree 2 polynomial xy.
+        """
         return 0
 
     @property
-    def highest_complete_degree(self) -> int:
-        """The highest complete degree of the element."""
+    def embedded_subdegree(self) -> int:
+        """Return the degree of the maximum degree Lagrange space that is spanned by this element.
+
+        This returns the degree of the highest degree Lagrange space such that the polynomial
+        space of the Lagrange space is a subspace of this element's polynomial space. If this
+        element's polynomial space does not include the constant function, this function should
+        return -1.
+
+        Note that on a simplex cells, the polynomial space of Lagrange space is a complete polynomial
+        space, but on other cells this is not true. For example, on quadrilateral cells, the degree 1
+        Lagrange space includes the degree 2 polynomial xy.
+        """
         return 0
 
     @property
@@ -1611,7 +1758,7 @@ def _compute_signature(element: _basix.finite_element.FiniteElement) -> str:
     """
     assert element.family == _basix.ElementFamily.custom
     signature = (f"{element.cell_type.__name__}, {element.value_shape}, {element.map_type.__name__}, "
-                 f"{element.discontinuous}, {element.highest_complete_degree}, {element.highest_degree}, ")
+                 f"{element.discontinuous}, {element.embedded_subdegree}, {element.embedded_superdegree}, ")
     data = ",".join([f"{i}" for row in element.wcoeffs for i in row])
     data += "__"
     for entity in element.x:
@@ -1733,8 +1880,8 @@ def enriched_element(elements: _typing.List[_ElementBase],
             if e.map_type != map_type:
                 raise ValueError("Enriched elements on different map types not supported.")
 
-    hcd = min(e.highest_complete_degree for e in elements)
-    hd = max(e.highest_degree for e in elements)
+    hcd = min(e.embedded_subdegree for e in elements)
+    hd = max(e.embedded_superdegree for e in elements)
     ss = _basix.sobolev_spaces.intersection([e.basix_sobolev_space for e in elements])
     discontinuous = True
     for e in elements:
@@ -1773,7 +1920,7 @@ def enriched_element(elements: _typing.List[_ElementBase],
     row = 0
     for e in elements:
         wcoeffs[row: row + e.dim, :] = _basix.polynomials.reshape_coefficients(
-            _basix.PolynomialType.legendre, ct, e._wcoeffs, vsize, e.highest_degree, hd)
+            _basix.PolynomialType.legendre, ct, e._wcoeffs, vsize, e.embedded_superdegree, hd)
         row += e.dim
 
     return custom_element(ct, list(vshape), wcoeffs, x, M, nderivs,
@@ -1784,7 +1931,7 @@ def custom_element(cell_type: _basix.CellType, value_shape: _typing.Union[_typin
                    wcoeffs: _npt.NDArray[_np.float64], x: _typing.List[_typing.List[_npt.NDArray[_np.float64]]],
                    M: _typing.List[_typing.List[_npt.NDArray[_np.float64]]], interpolation_nderivs: int,
                    map_type: _basix.MapType, sobolev_space: _basix.SobolevSpace, discontinuous: bool,
-                   highest_complete_degree: int, highest_degree: int,
+                   embedded_subdegree: int, embedded_superdegree: int,
                    polyset_type: _basix.PolysetType = _basix.PolysetType.standard,
                    gdim: _typing.Optional[int] = None) -> _ElementBase:
     """Create a UFL compatible custom Basix element.
@@ -1807,10 +1954,10 @@ def custom_element(cell_type: _basix.CellType, value_shape: _typing.Union[_typin
         sobolev_space: Underlying Sobolev space for the element.
         discontinuous: Indicates whether or not this is the
             discontinuous version of the element.
-        highest_complete_degree: The highest degree ``n`` such that a
+        embedded_subdegree: The highest degree ``n`` such that a
             Lagrange (or vector Lagrange) element of degree ``n`` is a
             subspace of this element.
-        highest_degree: The degree of a polynomial in this element's
+        embedded_superdegree: The highest degree of a polynomial in this element's
             polyset.
         polyset_type: Polyset type for the element.
         gdim: Geometric dimension. If not set the geometric dimension is
@@ -1830,8 +1977,8 @@ def custom_element(cell_type: _basix.CellType, value_shape: _typing.Union[_typin
         map_type,
         sobolev_space,
         discontinuous,
-        highest_complete_degree,
-        highest_degree,
+        embedded_subdegree,
+        embedded_superdegree,
         polyset_type
     )
     return _BasixElement(e, gdim=gdim)

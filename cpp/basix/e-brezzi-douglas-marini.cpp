@@ -25,6 +25,9 @@ FiniteElement<T> element::create_bdm(cell::type celltype, int degree,
   if (celltype != cell::type::triangle and celltype != cell::type::tetrahedron)
     throw std::runtime_error("Unsupported cell type");
 
+  if (degree < 1)
+    throw std::runtime_error("Degree must be at least 1");
+
   const std::size_t tdim = cell::topological_dimension(celltype);
   std::array<std::vector<impl::mdarray_t<T, 2>>, 4> x;
   std::array<std::vector<impl::mdarray_t<T, 4>>, 4> M;

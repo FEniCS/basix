@@ -1537,7 +1537,7 @@ class _QuadratureElement(_ElementBase):
         space, but on other cells this is not true. For example, on quadrilateral cells, the degree 1
         Lagrange space includes the degree 2 polynomial xy.
         """
-        raise NotImplementedError()
+        return self.degree
 
     @property
     def embedded_subdegree(self) -> int:
@@ -1552,7 +1552,7 @@ class _QuadratureElement(_ElementBase):
         space, but on other cells this is not true. For example, on quadrilateral cells, the degree 1
         Lagrange space includes the degree 2 polynomial xy.
         """
-        raise NotImplementedError()
+        return -1
 
 
 class _RealElement(_ElementBase):

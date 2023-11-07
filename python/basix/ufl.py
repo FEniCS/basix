@@ -40,7 +40,7 @@ _pullbackmap = {
     _basix.MapType.doubleContravariantPiola: _ufl.double_contravariant_piola,
     _basix.MapType.doubleCovariantPiola: _ufl.double_covariant_piola,
 }
-_pullbackmap_inverse = {j:i for i, j in _pullbackmap.items()}
+_pullbackmap_inverse = {j: i for i, j in _pullbackmap.items()}
 
 
 def _ufl_sobolev_space_from_enum(s: _basix.SobolevSpace):

@@ -235,7 +235,10 @@ class _ElementBase(_AbstractFiniteElement):
     @property
     def ufcx_map_type(self) -> str:
         """Map type."""
-        return _pullbackmap_ufcx[self.pullback]
+        if self._pullback in _pullbackmap_ufcx:
+            return _pullbackmap_ufcx[self.pullback]
+        else:
+            return "ufcx_custom_pullback"
 
     @_abstractproperty
     def dim(self) -> int:

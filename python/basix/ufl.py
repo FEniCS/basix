@@ -224,7 +224,7 @@ class _ElementBase(_AbstractFiniteElement):
         """Element type."""
 
     @property
-    def basix_map_type(self) -> str:
+    def basix_map_type(self) -> _basix.MapType:
         """Map type."""
         if self._pullback in _pullbackmap.values():
             return _pullbackmap.index(self.pullback)

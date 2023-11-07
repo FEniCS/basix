@@ -167,6 +167,7 @@ NB_MODULE(_basixcpp, m)
       .value("contravariantPiola", maps::type::contravariantPiola)
       .value("doubleCovariantPiola", maps::type::doubleCovariantPiola)
       .value("doubleContravariantPiola", maps::type::doubleContravariantPiola)
+      .value("custom", maps::type::custom)
       .def_prop_ro("name",
                    [](nb::object obj) { return nb::getattr(obj, "__name__"); });
 

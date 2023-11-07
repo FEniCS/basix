@@ -41,6 +41,15 @@ _pullbackmap = {
     _basix.MapType.doubleCovariantPiola: _ufl.double_covariant_piola,
 }
 
+_pullbackmap_ufcx = {
+    _ufl.identity_pullback: "ufcx_identity_pullback",
+    _ufl.l2_piola: "ufcx_l2_piola",
+    _ufl.contravariant_piola: "ufcx_contravariant_piola",
+    _ufl.covariant_piola: "ufcx_covariant_piola",
+    _ufl.double_contravariant_piola: "ufcx_double_contravariant_piola",
+    _ufl.double_covariant_piola: "ufcx_double_covariant_piola",
+}
+
 
 def _ufl_sobolev_space_from_enum(s: _basix.SobolevSpace):
     """Convert a Basix Sobolev space enum to a UFL Sobolev space.
@@ -222,6 +231,11 @@ class _ElementBase(_AbstractFiniteElement):
     @_abstractproperty
     def ufcx_element_type(self) -> str:
         """Element type."""
+
+    @property
+    def ufcx_map_type(self) -> str:
+        """Map type."""
+        return _pullbackmap_ufcx[self.pullback]
 
     @_abstractproperty
     def dim(self) -> int:

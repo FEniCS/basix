@@ -40,6 +40,7 @@ _pullbackmap = {
     _basix.MapType.doubleContravariantPiola: _ufl.double_contravariant_piola,
     _basix.MapType.doubleCovariantPiola: _ufl.double_covariant_piola,
 }
+_pullbackmap_inverse = {j: i for i, j in _pullbackmap.items()}
 
 
 def _ufl_sobolev_space_from_enum(s: _basix.SobolevSpace):
@@ -222,6 +223,14 @@ class _ElementBase(_AbstractFiniteElement):
     @_abstractproperty
     def ufcx_element_type(self) -> str:
         """Element type."""
+
+    @property
+    def basix_map_type(self) -> _basix.MapType:
+        """Map type."""
+        if self._pullback in _pullbackmap_inverse:
+            return _pullbackmap_inverse[self.pullback]
+        else:
+            return _basix.MapType.custom
 
     @_abstractproperty
     def dim(self) -> int:
@@ -1041,6 +1050,29 @@ class _MixedElement(_ElementBase):
             pt = _basix.polyset_superset(self.cell_type, pt, e.polyset_type)
         return pt
 
+    def custom_quadrature(self) -> _typing.Tuple[_npt.NDArray[_np.float64], _npt.NDArray[_np.float64]]:
+        """Return custom quadrature rule or raise a ValueError."""
+        custom_q = None
+        for e in self._sub_elements:
+            if e.has_custom_quadrature:
+                if custom_q is None:
+                    custom_q = e.custom_quadrature()
+                else:
+                    p, w = e.custom_quadrature()
+                    if not _np.allclose(p, custom_q[0]) or not _np.allclose(w, custom_q[1]):
+                        raise ValueError("Subelements of mixed element use different quadrature rules")
+        if custom_q is not None:
+            return custom_q
+        raise ValueError("Element does not have custom quadrature")
+
+    @property
+    def has_custom_quadrature(self) -> bool:
+        """True if the element has a custom quadrature rule."""
+        for e in self._sub_elements:
+            if e.has_custom_quadrature:
+                return True
+        return False
+
 
 class _BlockedElement(_ElementBase):
     """Element with a block size that contains multiple copies of a sub element.
@@ -1348,6 +1380,15 @@ class _BlockedElement(_ElementBase):
 
         """
         return self.sub_element.has_tensor_product_factorisation
+
+    def custom_quadrature(self) -> _typing.Tuple[_npt.NDArray[_np.float64], _npt.NDArray[_np.float64]]:
+        """Return custom quadrature rule or raise a ValueError."""
+        return self.sub_element.custom_quadrature()
+
+    @property
+    def has_custom_quadrature(self) -> bool:
+        """True if the element has a custom quadrature rule."""
+        return self.sub_element.has_custom_quadrature
 
 
 class _QuadratureElement(_ElementBase):

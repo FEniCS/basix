@@ -42,6 +42,7 @@ enum class type
   contravariantPiola = 3,
   doubleCovariantPiola = 4,
   doubleContravariantPiola = 5,
+  custom = 6,
 };
 
 /// L2 Piola map

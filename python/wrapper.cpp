@@ -252,7 +252,9 @@ NB_MODULE(_basixcpp, m)
       .value("DPC", element::family::DPC)
       .value("CR", element::family::CR)
       .value("Hermite", element::family::Hermite)
-      .value("iso", element::family::iso);
+      .value("iso", element::family::iso)
+      .def_prop_ro("name",
+                   [](nb::object obj) { return nb::getattr(obj, "__name__"); });
 
   nb::class_<FiniteElement<double>>(m, "FiniteElement")
       .def(
@@ -628,7 +630,9 @@ NB_MODULE(_basixcpp, m)
 
   nb::enum_<polyset::type>(m, "PolysetType")
       .value("standard", polyset::type::standard)
-      .value("macroedge", polyset::type::macroedge);
+      .value("macroedge", polyset::type::macroedge)
+      .def_prop_ro("name",
+                   [](nb::object obj) { return nb::getattr(obj, "__name__"); });
 
   m.def(
       "superset",

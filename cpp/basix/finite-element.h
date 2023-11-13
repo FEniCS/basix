@@ -1374,7 +1374,7 @@ void FiniteElement<F>::permute_data(
       {
         // Reverse an edge
         if (cell_info >> (face_start + e) & 1)
-          precompute::apply_permutation_mapped(trans, data, _edofs[1][e],
+          precompute::pre_apply_permutation_mapped(trans, data, _edofs[1][e],
                                                block_size);
       }
     }
@@ -1388,17 +1388,17 @@ void FiniteElement<F>::permute_data(
 
         // Reflect a face (pre rotate)
         if (!post and cell_info >> (3 * f) & 1)
-          precompute::apply_permutation_mapped(trans[1], data, _edofs[2][f],
+          precompute::pre_apply_permutation_mapped(trans[1], data, _edofs[2][f],
                                                block_size);
 
         // Rotate a face
         for (std::uint32_t r = 0; r < (cell_info >> (3 * f + 1) & 3); ++r)
-          precompute::apply_permutation_mapped(trans[0], data, _edofs[2][f],
+          precompute::pre_apply_permutation_mapped(trans[0], data, _edofs[2][f],
                                                block_size);
 
         // Reflect a face (post rotate)
         if (post and cell_info >> (3 * f) & 1)
-          precompute::apply_permutation_mapped(trans[1], data, _edofs[2][f],
+          precompute::pre_apply_permutation_mapped(trans[1], data, _edofs[2][f],
                                                block_size);
       }
     }
@@ -1495,7 +1495,7 @@ void FiniteElement<F>::pre_apply_dof_transformation(std::span<T> data,
     permute_data<T, false>(data, block_size, cell_info, _eperm);
   else
     transform_data<T, false>(data, block_size, cell_info, _etrans,
-                             precompute::apply_matrix<F, T>);
+                             precompute::pre_apply_matrix<F, T>);
 }
 //-----------------------------------------------------------------------------
 template <std::floating_point F>
@@ -1510,7 +1510,7 @@ void FiniteElement<F>::pre_apply_transpose_dof_transformation(
     permute_data<T, true>(data, block_size, cell_info, _eperm_rev);
   else
     transform_data<T, true>(data, block_size, cell_info, _etransT,
-                            precompute::apply_matrix<F, T>);
+                            precompute::pre_apply_matrix<F, T>);
 }
 //-----------------------------------------------------------------------------
 template <std::floating_point F>
@@ -1525,7 +1525,7 @@ void FiniteElement<F>::pre_apply_inverse_transpose_dof_transformation(
     permute_data<T, false>(data, block_size, cell_info, _eperm);
   else
     transform_data<T, false>(data, block_size, cell_info, _etrans_invT,
-                             precompute::apply_matrix<F, T>);
+                             precompute::pre_apply_matrix<F, T>);
 }
 //-----------------------------------------------------------------------------
 template <std::floating_point F>
@@ -1540,7 +1540,7 @@ void FiniteElement<F>::pre_apply_inverse_dof_transformation(
     permute_data<T, true>(data, block_size, cell_info, _eperm_rev);
   else
     transform_data<T, true>(data, block_size, cell_info, _etrans_inv,
-                            precompute::apply_matrix<F, T>);
+                            precompute::pre_apply_matrix<F, T>);
 }
 //-----------------------------------------------------------------------------
 template <std::floating_point F>
@@ -1563,7 +1563,7 @@ void FiniteElement<F>::post_apply_transpose_dof_transformation(
   }
   else
     transform_data<T, false>(data, block_size, cell_info, _etrans,
-                             precompute::apply_matrix_to_transpose<F, T>);
+                             precompute::post_apply_tranpose_matrix<F, T>);
 }
 //-----------------------------------------------------------------------------
 template <std::floating_point F>
@@ -1586,7 +1586,7 @@ void FiniteElement<F>::post_apply_inverse_dof_transformation(
   }
   else
     transform_data<T, false>(data, block_size, cell_info, _etrans_invT,
-                             precompute::apply_matrix_to_transpose<F, T>);
+                             precompute::post_apply_tranpose_matrix<F, T>);
 }
 //-----------------------------------------------------------------------------
 template <std::floating_point F>
@@ -1609,7 +1609,7 @@ void FiniteElement<F>::post_apply_dof_transformation(
   }
   else
     transform_data<T, true>(data, block_size, cell_info, _etransT,
-                            precompute::apply_matrix_to_transpose<F, T>);
+                            precompute::post_apply_tranpose_matrix<F, T>);
 }
 //-----------------------------------------------------------------------------
 template <std::floating_point F>
@@ -1633,7 +1633,7 @@ void FiniteElement<F>::post_apply_inverse_transpose_dof_transformation(
   else
   {
     transform_data<T, true>(data, block_size, cell_info, _etrans_inv,
-                            precompute::apply_matrix_to_transpose<F, T>);
+                            precompute::post_apply_tranpose_matrix<F, T>);
   }
 }
 //-----------------------------------------------------------------------------

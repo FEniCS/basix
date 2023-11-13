@@ -43,7 +43,7 @@ def test_non_zero(cell_type, element_type, degree, element_args):
 
 
 @parametrize_over_elements(5)
-def test_apply_to_transpose(cell_type, element_type, degree, element_args):
+def test_post_apply(cell_type, element_type, degree, element_args):
     random.seed(42)
     e = basix.create_element(element_type, cell_type, degree, *element_args)
     size = e.dim

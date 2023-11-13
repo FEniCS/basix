@@ -224,7 +224,7 @@ Returns:
 )";
 
 const std::string FiniteElement__pre_apply_dof_transformation = R"(
-Apply DOF transformations to some data
+Pre-apply DOF transformations to some data
 
 NOTE: This function is designed to be called at runtime, so its
 performance is critical.
@@ -239,7 +239,7 @@ Returns:
 )";
 
 const std::string FiniteElement__post_apply_transpose_dof_transformation = R"(
-Apply DOF transformations to some transposed data
+Post-apply DOF transformations to some transposed data
 
 NOTE: This function is designed to be called at runtime, so its
 performance is critical.
@@ -255,7 +255,7 @@ Returns:
 
 const std::string FiniteElement__pre_apply_inverse_transpose_dof_transformation
     = R"(
-Apply inverse transpose DOF transformations to some data
+Pre-apply inverse transpose DOF transformations to some data
 
 NOTE: This function is designed to be called at runtime, so its
 performance is critical.

@@ -27,7 +27,7 @@ def pre_apply_dof_transformation(
     tdim: int, edge_count: int, face_count: int, entity_transformations: _Dict[str, _nda],
     entity_dofs: _ListT[_ListT[int]], data: _nda, cell_info: int, face_types: _ListT[str]
 ):
-    """Apply dof transformations to some data.
+    """Pre-apply dof transformations to some data.
 
     Args:
         tdim: The topological dimension of the cell.
@@ -81,7 +81,7 @@ def pre_apply_dof_transformation_interval(
     entity_dofs: _Dict[str, _nda_i32],
     data: _nda, cell_info: int
 ):
-    """Apply dof transformations to some data on an interval.
+    """Pre-apply dof transformations to some data on an interval.
 
     Args:
         entity_transformations: The DOF transformations for each entity.
@@ -100,7 +100,7 @@ def pre_apply_dof_transformation_triangle(
     entity_dofs: _Dict[str, _nda_i32],
     data: _nda, cell_info: int
 ):
-    """Apply dof transformations to some data on a triangle.
+    """Pre-apply dof transformations to some data on a triangle.
 
     Args:
         entity_transformations: The DOF transformations for each entity.
@@ -120,7 +120,7 @@ def pre_apply_dof_transformation_quadrilateral(
     entity_dofs: _Dict[str, _nda_i32],
     data: _nda, cell_info: int
 ):
-    """Apply dof transformations to some data on an quadrilateral.
+    """Pre-apply dof transformations to some data on an quadrilateral.
 
     Args:
         entity_transformations: The DOF transformations for each entity.
@@ -140,7 +140,7 @@ def pre_apply_dof_transformation_tetrahedron(
     entity_dofs: _Dict[str, _nda_i32],
     data: _nda, cell_info: int
 ):
-    """Apply dof transformations to some data on a tetrahedron.
+    """Pre-apply dof transformations to some data on a tetrahedron.
 
     Args:
         entity_transformations: The DOF transformations for each entity.
@@ -160,7 +160,7 @@ def pre_apply_dof_transformation_hexahedron(
     entity_dofs: _Dict[str, _nda_i32],
     data: _nda, cell_info: int
 ):
-    """Apply dof transformations to some data on a hexahedron.
+    """Pre-apply dof transformations to some data on a hexahedron.
 
     Args:
         entity_transformations: The DOF transformations for each entity.
@@ -180,7 +180,7 @@ def pre_apply_dof_transformation_prism(
     entity_dofs: _Dict[str, _nda_i32],
     data: _nda, cell_info: int
 ):
-    """Apply dof transformations to some data on an prism.
+    """Pre-apply dof transformations to some data on an prism.
 
     Args:
         entity_transformations: The DOF transformations for each entity.
@@ -200,7 +200,7 @@ def pre_apply_dof_transformation_pyramid(
     entity_dofs: _Dict[str, _nda_i32],
     data: _nda, cell_info: int
 ):
-    """Apply dof transformations to some data on an prism.
+    """Pre-apply dof transformations to some data on an prism.
 
     Args:
         entity_transformations: The DOF transformations for each entity.
@@ -219,7 +219,7 @@ def post_apply_transpose_dof_transformation(
     tdim: int, edge_count: int, face_count: int, entity_transformations: _ListT[int], entity_dofs: _ListT[int],
     data: _nda, cell_info: int, face_types: _ListT[str]
 ):
-    """Apply dof transformations to some transposed data.
+    """Post-apply dof transformations to some transposed data.
 
     Args:
         tdim: The topological dimension of the cell.
@@ -246,7 +246,7 @@ def post_apply_transpose_dof_transformation_interval(
     entity_dofs: _Dict[str, _nda_i32],
     data: _nda, cell_info: int
 ):
-    """Apply dof transformations to some transposed data on an interval.
+    """Post-apply dof transformations to some transposed data on an interval.
 
     Args:
         entity_transformations: The DOF transformations for each entity.
@@ -265,7 +265,7 @@ def post_apply_transpose_dof_transformation_triangle(
     entity_dofs: _Dict[str, _nda_i32],
     data: _nda, cell_info: int
 ):
-    """Apply dof transformations to some transposed data on a triangle.
+    """Post-apply dof transformations to some transposed data on a triangle.
 
     Args:
         entity_transformations: The DOF transformations for each entity.
@@ -285,7 +285,7 @@ def post_apply_transpose_dof_transformation_quadrilateral(
     entity_dofs: _Dict[str, _nda_i32],
     data: _nda, cell_info: int
 ):
-    """Apply dof transformations to some transposed data on an quadrilateral.
+    """Post-apply dof transformations to some transposed data on an quadrilateral.
 
     Args:
         entity_transformations: The DOF transformations for each entity.
@@ -303,7 +303,7 @@ def post_apply_transpose_dof_transformation_quadrilateral(
 def post_apply_transpose_dof_transformation_tetrahedron(entity_transformations: _Dict[str, _nda_f64],
                                                       entity_dofs: _Dict[str, _nda_i32],
                                                       data: _nda, cell_info: int):
-    """Apply dof transformations to some transposed data on a tetrahedron.
+    """Post-apply dof transformations to some transposed data on a tetrahedron.
 
     Args:
         entity_transformations: The DOF transformations for each entity.
@@ -323,7 +323,7 @@ def post_apply_transpose_dof_transformation_hexahedron(
     entity_dofs: _Dict[str, _nda_i32],
     data: _nda, cell_info: int
 ):
-    """Apply dof transformations to some transposed data on a hexahedron.
+    """Post-apply dof transformations to some transposed data on a hexahedron.
 
     Args:
         entity_transformations: The DOF transformations for each entity.
@@ -341,7 +341,7 @@ def post_apply_transpose_dof_transformation_hexahedron(
 def post_apply_transpose_dof_transformation_prism(entity_transformations: _Dict[str, _nda_f64],
                                                 entity_dofs: _Dict[str, _nda_i32],
                                                 data: _nda, cell_info: int):
-    """Apply dof transformations to some transposed data on an prism.
+    """Post-apply dof transformations to some transposed data on an prism.
 
     Args:
         entity_transformations: The DOF transformations for each entity.
@@ -360,7 +360,7 @@ def post_apply_transpose_dof_transformation_prism(entity_transformations: _Dict[
 def post_apply_transpose_dof_transformation_pyramid(entity_transformations: _Dict[str, _nda_f64],
                                                   entity_dofs: _Dict[str, _nda_i32],
                                                   data: _nda, cell_info: int):
-    """Apply dof transformations to some transposed data on an prism.
+    """Post-apply dof transformations to some transposed data on an prism.
 
     Args:
         entity_transformations: The DOF transformations for each entity.

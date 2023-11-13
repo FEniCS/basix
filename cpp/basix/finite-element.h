@@ -855,7 +855,7 @@ public:
   void pre_apply_inverse_dof_transformation(std::span<T> data, int block_size,
                                         std::uint32_t cell_info) const;
 
-  /// Post-apply DOF transformations to some transposed data
+  /// Post-apply DOF transformations to some data
   ///
   /// @note This function is designed to be called at runtime, so its
   /// performance is critical.
@@ -867,7 +867,7 @@ public:
   void post_apply_transpose_dof_transformation(std::span<T> data, int block_size,
                                              std::uint32_t cell_info) const;
 
-  /// Post-apply transpose DOF transformations to some transposed data
+  /// Post-apply transpose DOF transformations to some data
   ///
   /// @note This function is designed to be called at runtime, so its
   /// performance is critical.
@@ -880,7 +880,7 @@ public:
       std::span<T> data, int block_size, std::uint32_t cell_info) const;
 
   /// @brief Apply inverse transpose DOF transformations to some
-  /// transposed data.
+  /// data.
   ///
   /// @note This function is designed to be called at runtime, so its
   /// performance is critical.
@@ -892,7 +892,7 @@ public:
   void post_apply_inverse_dof_transformation(
       std::span<T> data, int block_size, std::uint32_t cell_info) const;
 
-  /// Post-apply inverse DOF transformations to some transposed data
+  /// Post-apply inverse DOF transformations to some data
   ///
   /// @note This function is designed to be called at runtime, so its
   /// performance is critical.

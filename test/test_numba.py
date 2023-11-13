@@ -30,12 +30,12 @@ def test_dof_transformations(cell, element, degree, element_args, block_size):
     from basix import numba_helpers
 
     transform_functions = {
-        basix.CellType.triangle: numba_helpers.apply_dof_transformation_triangle,
-        basix.CellType.quadrilateral: numba_helpers.apply_dof_transformation_quadrilateral,
-        basix.CellType.tetrahedron: numba_helpers.apply_dof_transformation_tetrahedron,
-        basix.CellType.hexahedron: numba_helpers.apply_dof_transformation_hexahedron,
-        basix.CellType.prism: numba_helpers.apply_dof_transformation_prism,
-        basix.CellType.pyramid: numba_helpers.apply_dof_transformation_pyramid
+        basix.CellType.triangle: numba_helpers.pre_apply_dof_transformation_triangle,
+        basix.CellType.quadrilateral: numba_helpers.pre_apply_dof_transformation_quadrilateral,
+        basix.CellType.tetrahedron: numba_helpers.pre_apply_dof_transformation_tetrahedron,
+        basix.CellType.hexahedron: numba_helpers.pre_apply_dof_transformation_hexahedron,
+        basix.CellType.prism: numba_helpers.pre_apply_dof_transformation_prism,
+        basix.CellType.pyramid: numba_helpers.pre_apply_dof_transformation_pyramid
     }
 
     random.seed(1337)
@@ -47,7 +47,7 @@ def test_dof_transformations(cell, element, degree, element_args, block_size):
         cell_info = random.randrange(2 ** 30)
 
         data1 = data.copy()
-        e.apply_dof_transformation(data1, block_size, cell_info)
+        e.pre_apply_dof_transformation(data1, block_size, cell_info)
         # Numba function does not use blocked data
         data2 = data.copy().reshape(e.dim, block_size)
         # Mapping lists to numba dictionaries
@@ -84,12 +84,12 @@ def test_dof_transformations_to_transpose(cell, element, degree, block_size, ele
     from basix import numba_helpers
 
     transform_functions = {
-        basix.CellType.triangle: numba_helpers.apply_dof_transformation_to_transpose_triangle,
-        basix.CellType.quadrilateral: numba_helpers.apply_dof_transformation_to_transpose_quadrilateral,
-        basix.CellType.tetrahedron: numba_helpers.apply_dof_transformation_to_transpose_tetrahedron,
-        basix.CellType.hexahedron: numba_helpers.apply_dof_transformation_to_transpose_hexahedron,
-        basix.CellType.prism: numba_helpers.apply_dof_transformation_to_transpose_prism,
-        basix.CellType.pyramid: numba_helpers.apply_dof_transformation_to_transpose_pyramid
+        basix.CellType.triangle: numba_helpers.post_apply_transpose_dof_transformation_triangle,
+        basix.CellType.quadrilateral: numba_helpers.post_apply_transpose_dof_transformation_quadrilateral,
+        basix.CellType.tetrahedron: numba_helpers.post_apply_transpose_dof_transformation_tetrahedron,
+        basix.CellType.hexahedron: numba_helpers.post_apply_transpose_dof_transformation_hexahedron,
+        basix.CellType.prism: numba_helpers.post_apply_transpose_dof_transformation_prism,
+        basix.CellType.pyramid: numba_helpers.post_apply_transpose_dof_transformation_pyramid
     }
 
     random.seed(1337)
@@ -101,7 +101,7 @@ def test_dof_transformations_to_transpose(cell, element, degree, block_size, ele
         cell_info = random.randrange(2 ** 30)
 
         data1 = data.copy()
-        e.apply_dof_transformation_to_transpose(data1, block_size, cell_info)
+        e.post_apply_transpose_dof_transformation(data1, block_size, cell_info)
         # Numba function does not use blocked data
         data2 = data.copy().reshape(block_size, e.dim)
         # Mapping lists to numba dictionaries

@@ -51,12 +51,12 @@ def test_apply_to_transpose(cell_type, element_type, degree, element_args):
         cell_info = random.randrange(2**30)
 
         data1 = np.array(list(range(size**2)), dtype=np.float32)
-        e.apply_dof_transformation(data1, size, cell_info)
+        e.pre_apply_dof_transformation(data1, size, cell_info)
         data1 = data1.reshape((size, size))
 
         # This is the transpose of the data used above
         data2 = np.array([size * j + i for i in range(size) for j in range(size)], dtype=np.float32)
-        e.apply_dof_transformation_to_transpose(data2, size, cell_info)
+        e.post_apply_transpose_dof_transformation(data2, size, cell_info)
         data2 = data2.reshape((size, size))
 
         assert np.allclose(data1.transpose(), data2)

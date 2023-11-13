@@ -815,7 +815,7 @@ public:
   /// @param block_size The number of data points per DOF
   /// @param cell_info The permutation info for the cell
   template <typename T>
-  void apply_dof_transformation(std::span<T> data, int block_size,
+  void pre_apply_dof_transformation(std::span<T> data, int block_size,
                                 std::uint32_t cell_info) const;
 
   /// Apply transpose DOF transformations to some data
@@ -827,7 +827,7 @@ public:
   /// @param block_size The number of data points per DOF
   /// @param cell_info The permutation info for the cell
   template <typename T>
-  void apply_transpose_dof_transformation(std::span<T> data, int block_size,
+  void pre_apply_transpose_dof_transformation(std::span<T> data, int block_size,
                                           std::uint32_t cell_info) const;
 
   /// Apply inverse transpose DOF transformations to some data
@@ -840,7 +840,7 @@ public:
   /// @param cell_info The permutation info for the cell
   template <typename T>
   void
-  apply_inverse_transpose_dof_transformation(std::span<T> data, int block_size,
+  pre_apply_inverse_transpose_dof_transformation(std::span<T> data, int block_size,
                                              std::uint32_t cell_info) const;
 
   /// Apply inverse DOF transformations to some data
@@ -852,7 +852,7 @@ public:
   /// @param block_size The number of data points per DOF
   /// @param cell_info The permutation info for the cell
   template <typename T>
-  void apply_inverse_dof_transformation(std::span<T> data, int block_size,
+  void pre_apply_inverse_dof_transformation(std::span<T> data, int block_size,
                                         std::uint32_t cell_info) const;
 
   /// Apply DOF transformations to some transposed data
@@ -864,7 +864,7 @@ public:
   /// @param block_size The number of data points per DOF
   /// @param cell_info The permutation info for the cell
   template <typename T>
-  void apply_dof_transformation_to_transpose(std::span<T> data, int block_size,
+  void post_apply_transpose_dof_transformation(std::span<T> data, int block_size,
                                              std::uint32_t cell_info) const;
 
   /// Apply transpose DOF transformations to some transposed data
@@ -876,7 +876,7 @@ public:
   /// @param block_size The number of data points per DOF
   /// @param cell_info The permutation info for the cell
   template <typename T>
-  void apply_transpose_dof_transformation_to_transpose(
+  void post_apply_dof_transformation(
       std::span<T> data, int block_size, std::uint32_t cell_info) const;
 
   /// @brief Apply inverse transpose DOF transformations to some
@@ -889,7 +889,7 @@ public:
   /// @param block_size The number of data points per DOF
   /// @param cell_info The permutation info for the cell
   template <typename T>
-  void apply_inverse_transpose_dof_transformation_to_transpose(
+  void post_apply_inverse_dof_transformation(
       std::span<T> data, int block_size, std::uint32_t cell_info) const;
 
   /// Apply inverse DOF transformations to some transposed data
@@ -901,7 +901,7 @@ public:
   /// @param block_size The number of data points per DOF
   /// @param cell_info The permutation info for the cell
   template <typename T>
-  void apply_inverse_dof_transformation_to_transpose(
+  void post_apply_inverse_transpose_dof_transformation(
       std::span<T> data, int block_size, std::uint32_t cell_info) const;
 
   /// Return the interpolation points, i.e. the coordinates on the
@@ -1484,7 +1484,7 @@ void FiniteElement<F>::transform_data(
 //-----------------------------------------------------------------------------
 template <std::floating_point F>
 template <typename T>
-void FiniteElement<F>::apply_dof_transformation(std::span<T> data,
+void FiniteElement<F>::pre_apply_dof_transformation(std::span<T> data,
                                                 int block_size,
                                                 std::uint32_t cell_info) const
 {
@@ -1500,7 +1500,7 @@ void FiniteElement<F>::apply_dof_transformation(std::span<T> data,
 //-----------------------------------------------------------------------------
 template <std::floating_point F>
 template <typename T>
-void FiniteElement<F>::apply_transpose_dof_transformation(
+void FiniteElement<F>::pre_apply_transpose_dof_transformation(
     std::span<T> data, int block_size, std::uint32_t cell_info) const
 {
   if (_dof_transformations_are_identity)
@@ -1515,7 +1515,7 @@ void FiniteElement<F>::apply_transpose_dof_transformation(
 //-----------------------------------------------------------------------------
 template <std::floating_point F>
 template <typename T>
-void FiniteElement<F>::apply_inverse_transpose_dof_transformation(
+void FiniteElement<F>::pre_apply_inverse_transpose_dof_transformation(
     std::span<T> data, int block_size, std::uint32_t cell_info) const
 {
   if (_dof_transformations_are_identity)
@@ -1530,7 +1530,7 @@ void FiniteElement<F>::apply_inverse_transpose_dof_transformation(
 //-----------------------------------------------------------------------------
 template <std::floating_point F>
 template <typename T>
-void FiniteElement<F>::apply_inverse_dof_transformation(
+void FiniteElement<F>::pre_apply_inverse_dof_transformation(
     std::span<T> data, int block_size, std::uint32_t cell_info) const
 {
   if (_dof_transformations_are_identity)
@@ -1545,7 +1545,7 @@ void FiniteElement<F>::apply_inverse_dof_transformation(
 //-----------------------------------------------------------------------------
 template <std::floating_point F>
 template <typename T>
-void FiniteElement<F>::apply_dof_transformation_to_transpose(
+void FiniteElement<F>::post_apply_transpose_dof_transformation(
     std::span<T> data, int block_size, std::uint32_t cell_info) const
 {
   if (_dof_transformations_are_identity)
@@ -1568,7 +1568,7 @@ void FiniteElement<F>::apply_dof_transformation_to_transpose(
 //-----------------------------------------------------------------------------
 template <std::floating_point F>
 template <typename T>
-void FiniteElement<F>::apply_inverse_transpose_dof_transformation_to_transpose(
+void FiniteElement<F>::post_apply_inverse_dof_transformation(
     std::span<T> data, int block_size, std::uint32_t cell_info) const
 {
   if (_dof_transformations_are_identity)
@@ -1591,7 +1591,7 @@ void FiniteElement<F>::apply_inverse_transpose_dof_transformation_to_transpose(
 //-----------------------------------------------------------------------------
 template <std::floating_point F>
 template <typename T>
-void FiniteElement<F>::apply_transpose_dof_transformation_to_transpose(
+void FiniteElement<F>::post_apply_dof_transformation(
     std::span<T> data, int block_size, std::uint32_t cell_info) const
 {
   if (_dof_transformations_are_identity)
@@ -1614,7 +1614,7 @@ void FiniteElement<F>::apply_transpose_dof_transformation_to_transpose(
 //-----------------------------------------------------------------------------
 template <std::floating_point F>
 template <typename T>
-void FiniteElement<F>::apply_inverse_dof_transformation_to_transpose(
+void FiniteElement<F>::post_apply_inverse_transpose_dof_transformation(
     std::span<T> data, int block_size, std::uint32_t cell_info) const
 {
   if (_dof_transformations_are_identity)

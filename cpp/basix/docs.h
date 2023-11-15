@@ -223,8 +223,8 @@ Returns:
     [Jacobian index, point index, components].
 )";
 
-const std::string FiniteElement__apply_dof_transformation = R"(
-Apply DOF transformations to some data
+const std::string FiniteElement__pre_apply_dof_transformation = R"(
+Pre-apply DOF transformations to some data
 
 NOTE: This function is designed to be called at runtime, so its
 performance is critical.
@@ -238,8 +238,8 @@ Returns:
     data: The data
 )";
 
-const std::string FiniteElement__apply_dof_transformation_to_transpose = R"(
-Apply DOF transformations to some transposed data
+const std::string FiniteElement__post_apply_transpose_dof_transformation = R"(
+Post-apply DOF transformations to some transposed data
 
 NOTE: This function is designed to be called at runtime, so its
 performance is critical.
@@ -253,9 +253,9 @@ Returns:
     data: The data
 )";
 
-const std::string FiniteElement__apply_inverse_transpose_dof_transformation
+const std::string FiniteElement__pre_apply_inverse_transpose_dof_transformation
     = R"(
-Apply inverse transpose DOF transformations to some data
+Pre-apply inverse transpose DOF transformations to some data
 
 NOTE: This function is designed to be called at runtime, so its
 performance is critical.
@@ -414,6 +414,7 @@ Args:
 Returns:
     A custom finite element
 )";
+
 
 const std::string
     create_element__family_cell_degree_lvariant_dvariant_discontinuous_dof_ordering

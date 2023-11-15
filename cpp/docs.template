@@ -169,41 +169,41 @@ Returns:
     {{finite-element.h > FiniteElement::pull_back > return}}
 )";
 
-{{DOCTYPE}} FiniteElement__apply_dof_transformation = R"(
-{{finite-element.h > FiniteElement::apply_dof_transformation > doc}}
+{{DOCTYPE}} FiniteElement__pre_apply_dof_transformation = R"(
+{{finite-element.h > FiniteElement::pre_apply_dof_transformation > doc}}
 
 Args:
-    {{finite-element.h > FiniteElement::apply_dof_transformation > param > data}}
-    {{finite-element.h > FiniteElement::apply_dof_transformation > param > block_size}}
-    {{finite-element.h > FiniteElement::apply_dof_transformation > param > cell_info}}
+    {{finite-element.h > FiniteElement::pre_apply_dof_transformation > param > data}}
+    {{finite-element.h > FiniteElement::pre_apply_dof_transformation > param > block_size}}
+    {{finite-element.h > FiniteElement::pre_apply_dof_transformation > param > cell_info}}
 
 Returns:
-    {{finite-element.h > FiniteElement::apply_dof_transformation > param > data}}
+    {{finite-element.h > FiniteElement::pre_apply_dof_transformation > param > data}}
 )";
 
-{{DOCTYPE}} FiniteElement__apply_dof_transformation_to_transpose = R"(
-{{finite-element.h > FiniteElement::apply_dof_transformation_to_transpose > doc}}
+{{DOCTYPE}} FiniteElement__post_apply_transpose_dof_transformation = R"(
+{{finite-element.h > FiniteElement::post_apply_transpose_dof_transformation > doc}}
 
 Args:
-    {{finite-element.h > FiniteElement::apply_dof_transformation_to_transpose > param > data}}
-    {{finite-element.h > FiniteElement::apply_dof_transformation_to_transpose > param > block_size}}
-    {{finite-element.h > FiniteElement::apply_dof_transformation_to_transpose > param > cell_info}}
+    {{finite-element.h > FiniteElement::post_apply_transpose_dof_transformation > param > data}}
+    {{finite-element.h > FiniteElement::post_apply_transpose_dof_transformation > param > block_size}}
+    {{finite-element.h > FiniteElement::post_apply_transpose_dof_transformation > param > cell_info}}
 
 Returns:
-    {{finite-element.h > FiniteElement::apply_dof_transformation_to_transpose > param > data}}
+    {{finite-element.h > FiniteElement::post_apply_transpose_dof_transformation > param > data}}
 )";
 
-{{DOCTYPE}} FiniteElement__apply_inverse_transpose_dof_transformation
+{{DOCTYPE}} FiniteElement__pre_apply_inverse_transpose_dof_transformation
     = R"(
-{{finite-element.h > FiniteElement::apply_inverse_transpose_dof_transformation > doc}}
+{{finite-element.h > FiniteElement::pre_apply_inverse_transpose_dof_transformation > doc}}
 
 Args:
-    {{finite-element.h > FiniteElement::apply_inverse_transpose_dof_transformation > param > data}}
-    {{finite-element.h > FiniteElement::apply_inverse_transpose_dof_transformation > param > block_size}}
-    {{finite-element.h > FiniteElement::apply_inverse_transpose_dof_transformation > param > cell_info}}
+    {{finite-element.h > FiniteElement::pre_apply_inverse_transpose_dof_transformation > param > data}}
+    {{finite-element.h > FiniteElement::pre_apply_inverse_transpose_dof_transformation > param > block_size}}
+    {{finite-element.h > FiniteElement::pre_apply_inverse_transpose_dof_transformation > param > cell_info}}
 
 Returns:
-    {{finite-element.h > FiniteElement::apply_inverse_transpose_dof_transformation > param > data}}
+    {{finite-element.h > FiniteElement::pre_apply_inverse_transpose_dof_transformation > param > data}}
 )";
 
 {{DOCTYPE}} FiniteElement__base_transformations = R"(

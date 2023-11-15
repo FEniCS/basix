@@ -81,7 +81,7 @@ using scalar_value_type_t = typename scalar_value_type<T>::value_type;
 /// Hence, the output of this function in this case is `[1, 4, 4, 5, 4, 5]`.
 ///
 /// For an example of how the permutation in this form is applied, see
-/// `apply_permutation()`.
+/// `pre_apply_permutation()`.
 ///
 /// @param[in,out] perm A permutation
 void prepare_permutation(std::span<std::size_t> perm);
@@ -138,7 +138,7 @@ void prepare_permutation(std::span<std::size_t> perm);
 /// @param[in] offset The position in the data to start applying the permutation
 /// @param[in] block_size The block size of the data
 template <typename E>
-void apply_permutation(std::span<const std::size_t> perm, std::span<E> data,
+void pre_apply_permutation(std::span<const std::size_t> perm, std::span<E> data,
                        std::size_t offset = 0, std::size_t block_size = 1)
 {
   for (std::size_t i = 0; i < perm.size(); ++i)
@@ -153,7 +153,7 @@ void apply_permutation(std::span<const std::size_t> perm, std::span<E> data,
 
 /// Permutation of mapped data
 template <typename E>
-void apply_permutation_mapped(std::span<const std::size_t> perm,
+void pre_apply_permutation_mapped(std::span<const std::size_t> perm,
                               std::span<E> data, std::span<const int> emap,
                               std::size_t block_size = 1)
 {
@@ -172,9 +172,9 @@ void apply_permutation_mapped(std::span<const std::size_t> perm,
 /// @note This function is designed to be called at runtime, so its performance
 /// is critical.
 ///
-/// see `apply_permutation()`.
+/// see `pre_apply_permutation()`.
 template <typename E>
-void apply_permutation_to_transpose(std::span<const std::size_t> perm,
+void post_apply_transpose_permutation(std::span<const std::size_t> perm,
                                     std::span<E> data, std::size_t offset = 0,
                                     std::size_t block_size = 1)
 {
@@ -200,7 +200,7 @@ void apply_permutation_to_transpose(std::span<const std::size_t> perm,
 /// decomposition of @f$A^t@f$ is computed in-place
 ///
 /// For an example of how the permutation in this form is applied, see
-/// `apply_matrix()`.
+/// `pre_apply_matrix()`.
 ///
 /// @param[in,out] A The matrix's data
 /// @return The three parts of a precomputed representation of the matrix.
@@ -223,7 +223,7 @@ prepare_matrix(std::pair<std::vector<T>, std::array<std::size_t, 2>>& A)
 ///
 /// \code{.pseudo}
 /// INPUT perm, mat, data
-/// apply_permutation(perm, data)
+/// pre_apply_permutation(perm, data)
 /// FOR i IN RANGE(dim):
 ///     FOR j IN RANGE(i+1, dim):
 ///         data[i] += mat[i, j] * data[j]
@@ -248,7 +248,7 @@ prepare_matrix(std::pair<std::vector<T>, std::array<std::size_t, 2>>& A)
 /// permutation
 /// @param[in] block_size The block size of the data
 template <typename T, typename E>
-void apply_matrix(
+void pre_apply_matrix(
     std::span<const std::size_t> v_size_t,
     MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<
         const T, MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 2>>
@@ -258,7 +258,7 @@ void apply_matrix(
   using U = typename impl::scalar_value_type_t<E>;
 
   const std::size_t dim = v_size_t.size();
-  apply_permutation(v_size_t, data, offset, block_size);
+  pre_apply_permutation(v_size_t, data, offset, block_size);
   for (std::size_t b = 0; b < block_size; ++b)
   {
     for (std::size_t i = 0; i < dim; ++i)
@@ -288,9 +288,9 @@ void apply_matrix(
 /// @note This function is designed to be called at runtime, so its
 /// performance is critical.
 ///
-/// See `apply_matrix()`.
+/// See `pre_apply_matrix()`.
 template <typename T, typename E>
-void apply_matrix_to_transpose(
+void post_apply_tranpose_matrix(
     std::span<const std::size_t> v_size_t,
     MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<
         const T, MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 2>>
@@ -302,7 +302,7 @@ void apply_matrix_to_transpose(
   const std::size_t dim = v_size_t.size();
   const std::size_t data_size
       = (data.size() + (dim < block_size ? block_size - dim : 0)) / block_size;
-  apply_permutation_to_transpose(v_size_t, data, offset, block_size);
+  post_apply_transpose_permutation(v_size_t, data, offset, block_size);
   for (std::size_t b = 0; b < block_size; ++b)
   {
     for (std::size_t i = 0; i < dim; ++i)

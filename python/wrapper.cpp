@@ -306,37 +306,37 @@ NB_MODULE(_basixcpp, m)
           },
           basix::docstring::FiniteElement__pull_back.c_str())
       .def(
-          "apply_dof_transformation",
+          "pre_apply_dof_transformation",
           [](const FiniteElement<double>& self,
              nb::ndarray<double, nb::ndim<1>, nb::c_contig> data,
              int block_size, std::uint32_t cell_info)
           {
-            self.apply_dof_transformation(std::span(data.data(), data.size()),
+            self.pre_apply_dof_transformation(std::span(data.data(), data.size()),
                                           block_size, cell_info);
           },
-          basix::docstring::FiniteElement__apply_dof_transformation.c_str())
+          basix::docstring::FiniteElement__pre_apply_dof_transformation.c_str())
       .def(
-          "apply_dof_transformation_to_transpose",
+          "post_apply_transpose_dof_transformation",
           [](const FiniteElement<double>& self,
              nb::ndarray<double, nb::ndim<1>, nb::c_contig> data,
              int block_size, std::uint32_t cell_info)
           {
-            self.apply_dof_transformation_to_transpose(
+            self.post_apply_transpose_dof_transformation(
                 std::span(data.data(), data.size()), block_size, cell_info);
           },
-          basix::docstring::FiniteElement__apply_dof_transformation_to_transpose
+          basix::docstring::FiniteElement__post_apply_transpose_dof_transformation
               .c_str())
       .def(
-          "apply_inverse_transpose_dof_transformation",
+          "pre_apply_inverse_transpose_dof_transformation",
           [](const FiniteElement<double>& self,
              nb::ndarray<double, nb::ndim<1>, nb::c_contig> data,
              int block_size, std::uint32_t cell_info)
           {
-            self.apply_inverse_transpose_dof_transformation(
+            self.pre_apply_inverse_transpose_dof_transformation(
                 std::span(data.data(), data.size()), block_size, cell_info);
           },
           basix::docstring::
-              FiniteElement__apply_inverse_transpose_dof_transformation.c_str())
+              FiniteElement__pre_apply_inverse_transpose_dof_transformation.c_str())
       .def(
           "base_transformations",
           [](const FiniteElement<double>& self)

@@ -806,7 +806,7 @@ public:
     permute_data<std::int32_t, true>(dofs, 1, cell_info, _eperm_rev);
   }
 
-  /// Pre-apply DOF transformations to some data
+  /// Multiply data by DOF transformation matrix from the left
   ///
   /// @note This function is designed to be called at runtime, so its
   /// performance is critical.
@@ -818,7 +818,7 @@ public:
   void pre_apply_dof_transformation(std::span<T> data, int block_size,
                                 std::uint32_t cell_info) const;
 
-  /// Pre-apply transpose DOF transformations to some data
+  /// Multiply data by transpose DOF transformation matrix from the left
   ///
   /// @note This function is designed to be called at runtime, so its
   /// performance is critical.
@@ -830,7 +830,7 @@ public:
   void pre_apply_transpose_dof_transformation(std::span<T> data, int block_size,
                                           std::uint32_t cell_info) const;
 
-  /// Pre-apply inverse transpose DOF transformations to some data
+  /// Multiply data by inverse transpose DOF transformation matrix from the left
   ///
   /// @note This function is designed to be called at runtime, so its
   /// performance is critical.
@@ -843,7 +843,7 @@ public:
   pre_apply_inverse_transpose_dof_transformation(std::span<T> data, int block_size,
                                              std::uint32_t cell_info) const;
 
-  /// Pre-apply inverse DOF transformations to some data
+  /// Multiply data by inverse DOF transformation matrix from the left
   ///
   /// @note This function is designed to be called at runtime, so its
   /// performance is critical.
@@ -855,7 +855,7 @@ public:
   void pre_apply_inverse_dof_transformation(std::span<T> data, int block_size,
                                         std::uint32_t cell_info) const;
 
-  /// Post-apply DOF transformations to some data
+  /// Multiply data by transpose DOF transformation matrix from the right
   ///
   /// @note This function is designed to be called at runtime, so its
   /// performance is critical.
@@ -867,7 +867,7 @@ public:
   void post_apply_transpose_dof_transformation(std::span<T> data, int block_size,
                                              std::uint32_t cell_info) const;
 
-  /// Post-apply transpose DOF transformations to some data
+  /// Multiply data by DOF transformation matrix from the right
   ///
   /// @note This function is designed to be called at runtime, so its
   /// performance is critical.
@@ -879,8 +879,7 @@ public:
   void post_apply_dof_transformation(
       std::span<T> data, int block_size, std::uint32_t cell_info) const;
 
-  /// @brief Apply inverse transpose DOF transformations to some
-  /// data.
+  /// Multiply data by inverse DOF transformation matrix from the right
   ///
   /// @note This function is designed to be called at runtime, so its
   /// performance is critical.
@@ -892,7 +891,8 @@ public:
   void post_apply_inverse_dof_transformation(
       std::span<T> data, int block_size, std::uint32_t cell_info) const;
 
-  /// Post-apply inverse DOF transformations to some data
+  /// Multiply data by inverse transpose DOF transformation matrix from the
+  /// right
   ///
   /// @note This function is designed to be called at runtime, so its
   /// performance is critical.
@@ -1388,18 +1388,24 @@ void FiniteElement<F>::permute_data(
 
         // Reflect a face (pre rotate)
         if (!post and cell_info >> (3 * f) & 1)
+        {
           precompute::pre_apply_permutation_mapped(trans[1], data, _edofs[2][f],
                                                block_size);
+        }
 
         // Rotate a face
         for (std::uint32_t r = 0; r < (cell_info >> (3 * f + 1) & 3); ++r)
+        {
           precompute::pre_apply_permutation_mapped(trans[0], data, _edofs[2][f],
                                                block_size);
+        }
 
         // Reflect a face (post rotate)
         if (post and cell_info >> (3 * f) & 1)
+        {
           precompute::pre_apply_permutation_mapped(trans[1], data, _edofs[2][f],
                                                block_size);
+        }
       }
     }
   }
@@ -1492,10 +1498,14 @@ void FiniteElement<F>::pre_apply_dof_transformation(std::span<T> data,
     return;
 
   if (_dof_transformations_are_permutations)
+  {
     permute_data<T, false>(data, block_size, cell_info, _eperm);
+  }
   else
+  {
     transform_data<T, false>(data, block_size, cell_info, _etrans,
                              precompute::pre_apply_matrix<F, T>);
+  }
 }
 //-----------------------------------------------------------------------------
 template <std::floating_point F>
@@ -1507,10 +1517,14 @@ void FiniteElement<F>::pre_apply_transpose_dof_transformation(
     return;
 
   if (_dof_transformations_are_permutations)
+  {
     permute_data<T, true>(data, block_size, cell_info, _eperm_rev);
+  }
   else
+  {
     transform_data<T, true>(data, block_size, cell_info, _etransT,
                             precompute::pre_apply_matrix<F, T>);
+  }
 }
 //-----------------------------------------------------------------------------
 template <std::floating_point F>
@@ -1522,10 +1536,14 @@ void FiniteElement<F>::pre_apply_inverse_transpose_dof_transformation(
     return;
 
   if (_dof_transformations_are_permutations)
+  {
     permute_data<T, false>(data, block_size, cell_info, _eperm);
+  }
   else
+  {
     transform_data<T, false>(data, block_size, cell_info, _etrans_invT,
                              precompute::pre_apply_matrix<F, T>);
+  }
 }
 //-----------------------------------------------------------------------------
 template <std::floating_point F>
@@ -1537,10 +1555,14 @@ void FiniteElement<F>::pre_apply_inverse_dof_transformation(
     return;
 
   if (_dof_transformations_are_permutations)
+  {
     permute_data<T, true>(data, block_size, cell_info, _eperm_rev);
+  }
   else
+  {
     transform_data<T, true>(data, block_size, cell_info, _etrans_inv,
                             precompute::pre_apply_matrix<F, T>);
+  }
 }
 //-----------------------------------------------------------------------------
 template <std::floating_point F>
@@ -1562,8 +1584,10 @@ void FiniteElement<F>::post_apply_transpose_dof_transformation(
     }
   }
   else
+  {
     transform_data<T, false>(data, block_size, cell_info, _etrans,
                              precompute::post_apply_tranpose_matrix<F, T>);
+  }
 }
 //-----------------------------------------------------------------------------
 template <std::floating_point F>
@@ -1585,8 +1609,10 @@ void FiniteElement<F>::post_apply_inverse_dof_transformation(
     }
   }
   else
+  {
     transform_data<T, false>(data, block_size, cell_info, _etrans_invT,
                              precompute::post_apply_tranpose_matrix<F, T>);
+  }
 }
 //-----------------------------------------------------------------------------
 template <std::floating_point F>
@@ -1608,8 +1634,10 @@ void FiniteElement<F>::post_apply_dof_transformation(
     }
   }
   else
+  {
     transform_data<T, true>(data, block_size, cell_info, _etransT,
                             precompute::post_apply_tranpose_matrix<F, T>);
+  }
 }
 //-----------------------------------------------------------------------------
 template <std::floating_point F>

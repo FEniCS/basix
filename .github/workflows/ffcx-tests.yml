@@ -27,10 +27,6 @@ jobs:
   build:
     name: Run FFCx tests
     runs-on: ubuntu-latest
-    env:
-      CC: gcc-10
-      CXX: g++-10
-
     steps:
       - uses: actions/checkout@v4
       - name: Set up Python
@@ -64,4 +60,4 @@ jobs:
       - name: Install FFCx
         run: pip install ./ffcx[ci]
       - name: Run FFCx tests
-        run: python3 -m pytest -n auto --ignore=ffcx/test/test_lnodes.py ffcx/test
+        run: pytest -n auto --ignore=ffcx/test/test_lnodes.py ffcx/test

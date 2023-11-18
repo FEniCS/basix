@@ -30,13 +30,12 @@ jobs:
     env:
       CC: gcc-10
       CXX: g++-10
-
     steps:
       - uses: actions/checkout@v4
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.9'
+          python-version: '3.11'
       - name: Install dependencies
         run: sudo apt-get install -y libopenblas-dev liblapack-dev graphviz libgraphviz-dev ninja-build
       - name: Install UFL (default branch)
@@ -62,6 +61,6 @@ jobs:
           repository: FEniCS/ffcx
           ref: ${{ github.event.inputs.ffcx_branch }}
       - name: Install FFCx
-        run: python3 -m pip install ./ffcx[ci]
+        run: pip install ./ffcx[ci]
       - name: Run FFCx tests
         run: python3 -m pytest -n auto ffcx/test

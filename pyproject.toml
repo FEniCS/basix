@@ -1,5 +1,5 @@
 [build-system]
-requires = ["scikit-build-core", "nanobind>=1.6.0"]
+requires = ["scikit-build-core[pyproject]", "nanobind>=1.6.0"]
 build-backend = "scikit_build_core.build"
 # Minimum cmake and any necessary cmake install is handled by
 # scikit-build-core

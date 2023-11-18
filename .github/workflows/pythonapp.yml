@@ -39,178 +39,183 @@ jobs:
           sudo apt-get install -y doxygen graphviz libopenblas-dev liblapack-dev ninja-build
 
       - name: Install Basix
-        # run: python3 -m pip -v install .[ci]
+        run: python3 -m pip -v install .[ci]
+
+      - name: Lint with flake8
         run: |
-          python3 -m pip -v install scikit_build_core[pyproject] nanobind
-          python3 -m pip -v install --no-build-isolation .
+          flake8 --statistics test/
+          flake8 --statistics python/
+          flake8 --statistics demo/python
 
-  #     - name: Lint with flake8
-  #       run: |
-  #         flake8 --statistics test/
-  #         flake8 --statistics python/
-  #         flake8 --statistics demo/python
+      - name: Run mypy checks
+        run: |
+          python3 -m mypy python/basix
 
-  #     - name: Run mypy checks
-  #       run: |
-  #         python3 -m mypy python/basix
+      - name: pydocstyle checks
+        run: |
+          python3 -m pydocstyle python/basix
 
-  #     - name: pydocstyle checks
-  #       run: |
-  #         python3 -m pydocstyle python/basix
+      - name: isort checks
+        run: |
+          python3 -m isort --check .
 
-  #     - name: isort checks
-  #       run: |
-  #         python3 -m isort --check .
+      - name: Run units tests
+        run: |
+          python3 -m pytest -n auto --durations 20 test/
 
-  #     - name: Run units tests
-  #       run: |
-  #         python3 -m pytest -n auto --durations 20 test/
+      - name: Run simple CMake integration test
+        run: |
+          cd test/test_cmake
+          cmake -DCMAKE_BUILD_TYPE=Debug -DPython3_EXECUTABLE=python3 -G Ninja -B build-dir -S .
+          cmake --build build-dir/
+          build-dir/a.out
 
-  #     - name: Run simple CMake integration test
-  #       run: |
-  #         cd test/test_cmake
-  #         cmake -DCMAKE_BUILD_TYPE=Debug -DPython3_EXECUTABLE=python3 -G Ninja -B build-dir -S .
-  #         cmake --build build-dir/
-  #         build-dir/a.out
+      - name: Run Python demos
+        run: |
+          python3 -m pytest demo/python/test.py
 
-  #     - name: Run Python demos
-  #       run: |
-  #         python3 -m pytest demo/python/test.py
+      - name: Run C++ demos
+        run: |
+          python3 -m pytest demo/cpp/test.py
 
-  #     - name: Run C++ demos
-  #       run: |
-  #         python3 -m pytest demo/cpp/test.py
+      - name: Build documentation
+        run: |
+          export BASIX_VERSION=`python3 -c "import basix; print(basix.__version__)"`
+          cd doc/cpp
+          doxygen
+          cd ../python
+          make html
 
-  #     - name: Build documentation
-  #       run: |
-  #         export BASIX_VERSION=`python3 -c "import basix; print(basix.__version__)"`
-  #         cd doc/cpp
-  #         doxygen
-  #         cd ../python
-  #         make html
+      - name: Upload C++ documentation artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: doc-cpp
+          path: |
+            doc/cpp/html
+          retention-days: 2
+          if-no-files-found: error
+      - name: Upload Python documentation artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: doc-python
+          path: |
+            doc/python/build/html
+          retention-days: 2
+          if-no-files-found: error
 
-  #     - name: Upload C++ documentation artifact
-  #       uses: actions/upload-artifact@v3
-  #       with:
-  #         name: doc-cpp
-  #         path: |
-  #           doc/cpp/html
-  #         retention-days: 2
-  #         if-no-files-found: error
-  #     - name: Upload Python documentation artifact
-  #       uses: actions/upload-artifact@v3
-  #       with:
-  #         name: doc-python
-  #         path: |
-  #           doc/python/build/html
-  #         retention-days: 2
-  #         if-no-files-found: error
+      - name: Build website documentation
+        run: |
+          export BASIX_VERSION=`python3 -c "import basix; print(basix.__version__)"`
+          cd doc/web
+          python make_html.py
 
-  #     - name: Build website documentation
-  #       run: |
-  #         export BASIX_VERSION=`python3 -c "import basix; print(basix.__version__)"`
-  #         cd doc/web
-  #         python make_html.py
+      - name: Set version name
+        if: ${{ github.repository == 'FEniCS/basix' && ( github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/') ) && matrix.python-version == '3.11' }}
+        run: |
+          echo "VERSION_NAME=${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
+      - name: Build documentation to upload
+        if: ${{ github.repository == 'FEniCS/basix' && ( github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/') ) && matrix.python-version == '3.11' }}
+        run: |
+          export BASIX_VERSION=`python3 -c "import basix; print(basix.__version__)"`
+          cd doc/web
+          python make_html.py --url https://docs.fenicsproject.org/basix/${{ env.VERSION_NAME }}
+      - name: Checkout FEniCS/docs
+        if: ${{ github.repository == 'FEniCS/basix' && ( github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/') ) && matrix.python-version == '3.11' }}
+        uses: actions/checkout@v3
+        with:
+          repository: "FEniCS/docs"
+          path: "docs"
+          ssh-key: "${{ secrets.SSH_GITHUB_DOCS_PRIVATE_KEY }}"
+      - name: Copy documentation into repository
+        if: ${{ github.repository == 'FEniCS/basix' && ( github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/') ) && matrix.python-version == '3.11' }}
+        run: |
+          cd docs
+          git rm -r --ignore-unmatch basix/${{ env.VERSION_NAME }}
+          mkdir -p basix/${{ env.VERSION_NAME }}
+          cp -r ../doc/web/html/* basix/${{ env.VERSION_NAME }}
+      - name: Commit and push documentation to FEniCS/docs
+        if: ${{ github.repository == 'FEniCS/basix' && ( github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/') ) && matrix.python-version == '3.11' }}
+        run: |
+          cd docs
+          git config --global user.email "fenics@github.com"
+          git config --global user.name "FEniCS GitHub Actions"
+          git add --all
+          git commit --allow-empty -m "Update Basix docs FEniCS/basix@${{ github.sha }}"
+          git push
 
-  #     - name: Set version name
-  #       if: ${{ github.repository == 'FEniCS/basix' && ( github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/') ) && matrix.python-version == '3.11' }}
-  #       run: |
-  #         echo "VERSION_NAME=${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
-  #     - name: Build documentation to upload
-  #       if: ${{ github.repository == 'FEniCS/basix' && ( github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/') ) && matrix.python-version == '3.11' }}
-  #       run: |
-  #         export BASIX_VERSION=`python3 -c "import basix; print(basix.__version__)"`
-  #         cd doc/web
-  #         python make_html.py --url https://docs.fenicsproject.org/basix/${{ env.VERSION_NAME }}
-  #     - name: Checkout FEniCS/docs
-  #       if: ${{ github.repository == 'FEniCS/basix' && ( github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/') ) && matrix.python-version == '3.11' }}
-  #       uses: actions/checkout@v3
-  #       with:
-  #         repository: "FEniCS/docs"
-  #         path: "docs"
-  #         ssh-key: "${{ secrets.SSH_GITHUB_DOCS_PRIVATE_KEY }}"
-  #     - name: Copy documentation into repository
-  #       if: ${{ github.repository == 'FEniCS/basix' && ( github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/') ) && matrix.python-version == '3.11' }}
-  #       run: |
-  #         cd docs
-  #         git rm -r --ignore-unmatch basix/${{ env.VERSION_NAME }}
-  #         mkdir -p basix/${{ env.VERSION_NAME }}
-  #         cp -r ../doc/web/html/* basix/${{ env.VERSION_NAME }}
-  #     - name: Commit and push documentation to FEniCS/docs
-  #       if: ${{ github.repository == 'FEniCS/basix' && ( github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/') ) && matrix.python-version == '3.11' }}
-  #       run: |
-  #         cd docs
-  #         git config --global user.email "fenics@github.com"
-  #         git config --global user.name "FEniCS GitHub Actions"
-  #         git add --all
-  #         git commit --allow-empty -m "Update Basix docs FEniCS/basix@${{ github.sha }}"
-  #         git push
+  isolated-python-build:
+    name: Build C++ only and run demos
+    runs-on: ubuntu-22.04]
+    steps:
+      - uses: actions/checkout@v3
+      - name: Install dependencies
+        run: sudo apt-get install -y libopenblas-dev liblapack-dev ninja-build
+      - name: Install Python dependencies
+        run: pip install nanobind
+      - name: Install Basix
+        run: pip install --no-build-isolation .
 
-  # build-cmake:
-  #   name: Build using C++ and Python parts separately and run tests
-  #   runs-on: ${{ matrix.os }}
-  #   strategy:
-  #     matrix:
-  #       os: [ubuntu-22.04]
-  #       python-version: ["3.11"]
+  build-cmake:
+    name: Build using C++ and Python parts separately and run tests
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-22.04]
+        python-version: ["3.11"]
 
-  #   steps:
-  #     - uses: actions/checkout@v3
-  #     - name: Set up Python
-  #       uses: actions/setup-python@v4
-  #       with:
-  #         python-version: ${{ matrix.python-version }}
-  #     - name: Install dependencies
-  #       run: sudo apt-get install -y libopenblas-dev liblapack-dev
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install dependencies
+        run: sudo apt-get install -y libopenblas-dev liblapack-dev
 
-  #     - name: Install Basix C++ library
-  #       run: |
-  #         cd cpp
-  #         cmake -DCMAKE_BUILD_TYPE=Release -B build-dir -S . # Use make (not ninja)
-  #         cmake --build build-dir
-  #         sudo cmake --install build-dir
+      - name: Install Basix C++ library
+        run: |
+          cd cpp
+          cmake -DCMAKE_BUILD_TYPE=Release -B build-dir -S . # Use make (not ninja)
+          cmake --build build-dir
+          sudo cmake --install build-dir
 
-  #     - name: Install Basix Python wrapper
-  #       run: |
-  #         cd python
-  #         python3 -m pip install .[test]
+      - name: Install Basix Python wrapper
+        run: |
+          cd python
+          python3 -m pip install .[test]
 
-  #     - name: Run units tests
-  #       run: |
-  #         python3 -m pip install pytest-xdist # in ci extras, but most not needed.
-  #         python3 -m pytest -n auto --durations 20 test/
+      - name: Run units tests
+        run: |
+          python3 -m pip install pytest-xdist # in ci extras, but most not needed.
+          python3 -m pytest -n auto --durations 20 test/
 
-  #     - name: Run Python demos
-  #       run: |
-  #         python3 -m pytest demo/python/test.py
+      - name: Run Python demos
+        run: |
+          python3 -m pytest demo/python/test.py
 
-  #     - name: Run C++ demos
-  #       run: |
-  #         python3 -m pytest demo/cpp/test.py
+      - name: Run C++ demos
+        run: |
+          python3 -m pytest demo/cpp/test.py
 
-  # build-cpp-only:
-  #   name: Build C++ only and run demos
-  #   runs-on: ${{ matrix.os }}
-  #   strategy:
-  #     matrix:
-  #       os: [ubuntu-22.04]
+  build-cpp-only:
+    name: Build C++ only and run demos
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v3
+      - name: Install dependencies
+        run: sudo apt-get install -y libopenblas-dev liblapack-dev ninja-build
 
-  #   steps:
-  #     - uses: actions/checkout@v3
-  #     - name: Install dependencies
-  #       run: sudo apt-get install -y libopenblas-dev liblapack-dev ninja-build
+      - name: Install Basix
+        run: |
+          cmake -G Ninja -DCMAKE_BUILD_TYPE=Release -B build-dir -S cpp
+          cmake --build build-dir
+          sudo cmake --install build-dir
 
-  #     - name: Install Basix
-  #       run: |
-  #         cmake -G Ninja -DCMAKE_BUILD_TYPE=Release -B build-dir -S cpp
-  #         cmake --build build-dir
-  #         sudo cmake --install build-dir
-
-  #     - name: Set up Python
-  #       uses: actions/setup-python@v4
-  #       with:
-  #         python-version: "3.11"
-  #     - name: Run C++ demos
-  #       run: |
-  #         python3 -m pip install pytest
-  #         python3 -m pytest demo/cpp/test.py
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
+      - name: Run C++ demos
+        run: |
+          python3 -m pip install pytest
+          python3 -m pytest demo/cpp/test.py

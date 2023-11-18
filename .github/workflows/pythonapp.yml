@@ -144,7 +144,7 @@ jobs:
           git push
 
   isolated-python-build:
-    name: Build C++ only and run demos
+    name: Build Python using '--no-build-isolation'
     runs-on: ubuntu-22.04]
     steps:
       - uses: actions/checkout@v3

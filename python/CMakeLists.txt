@@ -4,13 +4,13 @@ cmake_minimum_required(VERSION 3.19)
 if(APPLE)
   set(CMAKE_OSX_DEPLOYMENT_TARGET "10.14")
 endif()
+
 project(basix_nanobind VERSION "0.8.0.0" LANGUAGES CXX)
 
 # Set C++ standard
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
-
 
 # See https://gitlab.kitware.com/cmake/cmake/-/issues/16414
 if(TARGET basix)
@@ -29,7 +29,7 @@ list(APPEND CMAKE_PREFIX_PATH "${NB_DIR}")
 find_package(nanobind CONFIG REQUIRED)
 
 # Create the binding library
-nanobind_add_module(_basixcpp MODULE wrapper.cpp)
+nanobind_add_module(_basixcpp wrapper.cpp)
 target_link_libraries(_basixcpp PRIVATE Basix::basix)
 
 # Add strict compiler flags
@@ -38,6 +38,7 @@ CHECK_CXX_COMPILER_FLAG("-Wall -Werror -Wextra -Wno-comment -pedantic" HAVE_PEDA
 
 if(HAVE_PEDANTIC)
   target_compile_options(_basixcpp PRIVATE -Wall;-Wextra;-Werror;-Wno-comment)
+
   # target_compile_options(_basixcpp PRIVATE -Wall;-Wextra;-Werror;-Wno-comment;-pedantic)
 endif()
 

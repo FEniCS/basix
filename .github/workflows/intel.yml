@@ -17,43 +17,35 @@ on:
 jobs:
   build:
     name: Build and test (oneAPI)
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     container: ubuntu:22.04  # Run in container to test with minimal pre-installed packages
-
     env:
       CC: icx
       CXX: icpx
       DEBIAN_FRONTEND: noninteractive
-
     steps:
       - name: Install required packages to install Intel compilers and to build
         run: apt -y update && apt install -y bzip2 cmake git gnupg ninja-build wget
-
-      - uses: actions/checkout@v3
-
+      - uses: actions/checkout@v4
       - name: Install Intel compilers and Intel Python
         run: |
           wget -O- https://apt.repos.intel.com/intel-gpg-keys/GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB | gpg --dearmor | tee /usr/share/keyrings/oneapi-archive-keyring.gpg > /dev/null
           echo "deb [signed-by=/usr/share/keyrings/oneapi-archive-keyring.gpg] https://apt.repos.intel.com/oneapi all main" | tee /etc/apt/sources.list.d/oneAPI.list
           apt update
           apt install -y intel-oneapi-compiler-dpcpp-cpp intel-oneapi-mkl intel-oneapi-python libstdc++-11-dev
-
       - name: Install Basix
         run: |
           . /opt/intel/oneapi/setvars.sh
           pip -v install .[test]
-
       - name: Run units tests
         run: |
           . /opt/intel/oneapi/setvars.sh
           pip install pytest-xdist
           pytest -n auto --durations 20 test/
-
       - name: Run Python demos
         run: |
           . /opt/intel/oneapi/setvars.sh
           pytest demo/python/test.py
-
       - name: Run C++ demos
         run: |
           . /opt/intel/oneapi/setvars.sh

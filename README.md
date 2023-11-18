@@ -23,9 +23,10 @@ Basix is one of the components of FEniCSx, alongside
 [FFCx](https://github.com/fenics/ffcx), and
 [DOLFINx](https://github.com/fenics/dolfinx).
 
-## Installing Basix
 
-To install the latest stable version of Basix from [pypi.org](https://pypi.org/project/fenics-basix/):
+## Installation
+
+To install Basix:
 ```console
 pip install fenics-basix
 ```
@@ -39,6 +40,7 @@ detailed [install instructions](INSTALL.md)
 
 Documentation of Basix can be found at
 https://docs.fenicsproject.org/basix/main/.
+
 
 ## Support
 
@@ -70,6 +72,7 @@ The following elements are supported on an interval:
   - [Serendipity](https://defelement.com/elements/serendipity.html)
   - [Hermite](https://defelement.com/elements/hermite.html)
   - [iso](https://defelement.com/elements/p1-iso-p2.html)
+
 
 ### Triangle
 
@@ -164,6 +167,7 @@ follows:
 The following elements are supported on a prism:
 
   - [Lagrange](https://defelement.com/elements/lagrange.html)
+
 
 ### Pyramid
 

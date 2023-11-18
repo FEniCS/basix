@@ -26,9 +26,8 @@ jobs:
       matrix:
         os: [ubuntu-22.04]
         python-version: ["3.8", "3.9", "3.10", "3.11"]
-
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
@@ -37,47 +36,28 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y doxygen graphviz libopenblas-dev liblapack-dev ninja-build
-
       - name: Install Basix
-        run: python3 -m pip -v install .[ci]
-
+        run: pip -v install .[ci]
       - name: Lint with flake8
-        run: |
-          flake8 --statistics test/
-          flake8 --statistics python/
-          flake8 --statistics demo/python
-
+        run: flake8 --statistics test/ python/ demo/python
       - name: Run mypy checks
-        run: |
-          python3 -m mypy python/basix
-
+        run: mypy python/basix
       - name: pydocstyle checks
-        run: |
-          python3 -m pydocstyle python/basix
-
+        run: pydocstyle python/basix
       - name: isort checks
-        run: |
-          python3 -m isort --check .
-
+        run: isort --check .
       - name: Run units tests
-        run: |
-          python3 -m pytest -n auto --durations 20 test/
-
+        run: pytest -n auto --durations 20 test/
       - name: Run simple CMake integration test
         run: |
           cd test/test_cmake
           cmake -DCMAKE_BUILD_TYPE=Debug -DPython3_EXECUTABLE=python3 -G Ninja -B build-dir -S .
           cmake --build build-dir/
           build-dir/a.out
-
       - name: Run Python demos
-        run: |
-          python3 -m pytest demo/python/test.py
-
+        run: pytest demo/python/test.py
       - name: Run C++ demos
-        run: |
-          python3 -m pytest demo/cpp/test.py
-
+        run: pytest demo/cpp/test.py
       - name: Build documentation
         run: |
           export BASIX_VERSION=`python3 -c "import basix; print(basix.__version__)"`
@@ -85,7 +65,6 @@ jobs:
           doxygen
           cd ../python
           make html
-
       - name: Upload C++ documentation artifact
         uses: actions/upload-artifact@v3
         with:
@@ -102,13 +81,11 @@ jobs:
             doc/python/build/html
           retention-days: 2
           if-no-files-found: error
-
       - name: Build website documentation
         run: |
           export BASIX_VERSION=`python3 -c "import basix; print(basix.__version__)"`
           cd doc/web
           python make_html.py
-
       - name: Set version name
         if: ${{ github.repository == 'FEniCS/basix' && ( github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/') ) && matrix.python-version == '3.11' }}
         run: |
@@ -121,7 +98,7 @@ jobs:
           python make_html.py --url https://docs.fenicsproject.org/basix/${{ env.VERSION_NAME }}
       - name: Checkout FEniCS/docs
         if: ${{ github.repository == 'FEniCS/basix' && ( github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/') ) && matrix.python-version == '3.11' }}
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           repository: "FEniCS/docs"
           path: "docs"
@@ -143,71 +120,69 @@ jobs:
           git commit --allow-empty -m "Update Basix docs FEniCS/basix@${{ github.sha }}"
           git push
 
-  build-cmake:
-    name: Build using C++ and Python parts separately and run tests
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os: [ubuntu-22.04]
-        python-version: ["3.11"]
-
+  isolated-python-build:
+    name: Build Python using '--no-build-isolation'
+    runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: ${{ matrix.python-version }}
+          python-version: '3.11'
+      - name: Install dependencies
+        run: sudo apt-get install -y libopenblas-dev liblapack-dev ninja-build
+      - name: Install Python dependencies
+        run: pip install nanobind scikit-build-core[pyproject]
+      - name: Install Basix
+        run: pip install --no-build-isolation .
+
+  build-cmake:
+    name: Build using C++ and Python parts separately and run tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
       - name: Install dependencies
         run: sudo apt-get install -y libopenblas-dev liblapack-dev
-
       - name: Install Basix C++ library
         run: |
           cd cpp
           cmake -DCMAKE_BUILD_TYPE=Release -B build-dir -S . # Use make (not ninja)
           cmake --build build-dir
           sudo cmake --install build-dir
-
       - name: Install Basix Python wrapper
         run: |
           cd python
-          python3 -m pip install .[test]
-
+          pip install .[test]
       - name: Run units tests
         run: |
-          python3 -m pip install pytest-xdist # in ci extras, but most not needed.
-          python3 -m pytest -n auto --durations 20 test/
-
+          pip install pytest-xdist # in ci extras, but most not needed.
+          pytest -n auto --durations 20 test/
       - name: Run Python demos
-        run: |
-          python3 -m pytest demo/python/test.py
-
+        run: pytest demo/python/test.py
       - name: Run C++ demos
-        run: |
-          python3 -m pytest demo/cpp/test.py
+        run: pytest demo/cpp/test.py
 
   build-cpp-only:
     name: Build C++ only and run demos
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os: [ubuntu-22.04]
-
+    runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Install dependencies
         run: sudo apt-get install -y libopenblas-dev liblapack-dev ninja-build
-
       - name: Install Basix
         run: |
           cmake -G Ninja -DCMAKE_BUILD_TYPE=Release -B build-dir -S cpp
           cmake --build build-dir
           sudo cmake --install build-dir
-
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: "3.11"
-      - name: Run C++ demos
+      - name: Run tests
         run: |
-          python3 -m pip install pytest
-          python3 -m pytest demo/cpp/test.py
+          pip install pytest
+          pytest demo/cpp/test.py

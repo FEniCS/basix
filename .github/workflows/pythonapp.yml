@@ -27,7 +27,7 @@ jobs:
         os: [ubuntu-22.04]
         python-version: ["3.8", "3.9", "3.10", "3.11"]
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
@@ -98,7 +98,7 @@ jobs:
           python make_html.py --url https://docs.fenicsproject.org/basix/${{ env.VERSION_NAME }}
       - name: Checkout FEniCS/docs
         if: ${{ github.repository == 'FEniCS/basix' && ( github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/') ) && matrix.python-version == '3.11' }}
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           repository: "FEniCS/docs"
           path: "docs"
@@ -124,7 +124,7 @@ jobs:
     name: Build Python using '--no-build-isolation'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
@@ -140,7 +140,7 @@ jobs:
     name: Build using C++ and Python parts separately and run tests
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
@@ -170,7 +170,7 @@ jobs:
     name: Build C++ only and run demos
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Install dependencies
         run: sudo apt-get install -y libopenblas-dev liblapack-dev ninja-build
       - name: Install Basix

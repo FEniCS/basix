@@ -22,11 +22,9 @@ jobs:
     name: Build and test (Red Hat)
     runs-on: ubuntu-22.04
     container: rockylinux/rockylinux:9
-
     env:
       CC: gcc
       CXX: g++
-
     steps:
       - name: Install dependencies
         run: |
@@ -34,20 +32,14 @@ jobs:
           dnf install -y dnf-plugins-core
           dnf config-manager --set-enabled crb
           dnf install -y blas-devel cmake gcc gcc-c++ git lapack-devel python3 python3-devel python3-pip
-
-      - uses: actions/checkout@v3
-
+      - uses: actions/checkout@v4
       - name: Install Basix
-        run: |
-          python3 -m pip install .[test]
-
+        run: python3 -m pip install .[test]
       - name: Run units tests
         run: |
           python3 -m pip install pytest-xdist
           python3 -m pytest -n auto --durations 20 test/
-
       - name: Run Python demos
         run: python3 -m pytest demo/python/test.py
       - name: Run C++ demos
-        run: |
-          python3 -m pytest demo/cpp/test.py
+        run: python3 -m pytest demo/cpp/test.py

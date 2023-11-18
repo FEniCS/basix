@@ -62,6 +62,6 @@ jobs:
           repository: FEniCS/ffcx
           ref: ${{ github.event.inputs.ffcx_branch }}
       - name: Install FFCx
-        run: python3 -m pip install ./ffcx[ci]
+        run: pip install ./ffcx[ci]
       - name: Run FFCx tests
         run: python3 -m pytest -n auto --ignore=ffcx/test/test_lnodes.py ffcx/test

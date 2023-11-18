@@ -23,7 +23,8 @@ Basix is one of the components of FEniCSx, alongside
 [FFCx](https://github.com/fenics/ffcx), and
 [DOLFINx](https://github.com/fenics/dolfinx).
 
-## Installing Basix
+
+## Installation
 
 To install Basix:
 ```console

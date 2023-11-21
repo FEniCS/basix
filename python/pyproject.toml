@@ -16,7 +16,6 @@ authors = [
     { email = "fenics-dev@googlegroups.com" },
     { name = "FEniCS Project" },
 ]
-packages = ["basix"]
 dependencies = ["numpy>=1.21"]
 
 [project.optional-dependencies]

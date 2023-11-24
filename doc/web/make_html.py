@@ -267,5 +267,5 @@ with open(path("python/source/index.rst"), "a") as f:
     f.write("   demo/index")
 
 # Make python docs
-system(f"cd {path('python')} && python3 -m sphinx -b html source/ build/html")
+system(f"cd {path('python')} && python3 -m sphinx -W -b html source/ build/html")
 system(f"cp -r {path('python/build/html')} {path('html/python')}")

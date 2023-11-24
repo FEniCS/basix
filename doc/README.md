@@ -21,7 +21,7 @@ following commands:
 
 ```bash
 cd python
-python -m sphinx -b html source/ build/html/
+python -m sphinx -W -b html source/ build/html/
 ```
 
 The documentation will then be built in the folder `python/build/html`.

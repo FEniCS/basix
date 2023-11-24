@@ -64,7 +64,7 @@ jobs:
           cd doc/cpp
           doxygen
           cd ../python
-          python -m sphinx -b html source build/html
+          python -m sphinx -W -b html source build/html
       - name: Upload C++ documentation artifact
         uses: actions/upload-artifact@v3
         with:

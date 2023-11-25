@@ -40,6 +40,8 @@ jobs:
         run: pip -v install .[ci]
       - name: Lint/check with ruff
         run: ruff check test/ python/ demo/python
+      - name: Check doc with ruff
+        run: ruff check --select D python/
       - name: mypy checks
         run: mypy python/basix
       - name: Run units tests

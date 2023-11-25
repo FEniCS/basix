@@ -2,7 +2,7 @@
 
 import typing as _typing
 
-import numpy as _numpy
+import numpy as np
 import numpy.typing as _numpy_typing
 
 from basix._basixcpp import CellType as _CT
@@ -10,7 +10,7 @@ from basix._basixcpp import PolynomialType as _PT
 from basix._basixcpp import index as _index
 from basix._basixcpp import polynomials_dim as dim
 
-_nda_f64 = _numpy_typing.NDArray[_numpy.float64]
+_nda_f64 = _numpy_typing.NDArray[np.float64]
 
 
 def reshape_coefficients(
@@ -43,7 +43,7 @@ def reshape_coefficients(
         return coefficients
 
     pdim = dim(poly_type, cell_type, output_degree)
-    out = _numpy.zeros((coefficients.shape[0], pdim * value_size))
+    out = np.zeros((coefficients.shape[0], pdim * value_size))
 
     indices: _typing.List[_typing.Tuple[int, ...]] = []
 

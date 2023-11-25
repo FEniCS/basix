@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: MIT
 
 import basix
-import numpy
+import numpy as np
 import pytest
 import sympy
 
@@ -187,8 +187,8 @@ def sympy_lagrange(celltype, n):
 
 def test_point():
     lagrange = basix.create_element(basix.ElementFamily.P, basix.CellType.point, 0, discontinuous=True)
-    assert numpy.allclose(lagrange.tabulate(0, numpy.array([[]])), [[[1]]])
-    assert numpy.allclose(lagrange.tabulate(0, numpy.array([[], []])), [[[1, 1]]])
+    assert np.allclose(lagrange.tabulate(0, np.array([[]])), [[[1]]])
+    assert np.allclose(lagrange.tabulate(0, np.array([[], []])), [[[1, 1]]])
 
 
 @pytest.mark.parametrize("n", [1, 2, 3, 4, 5])
@@ -202,12 +202,12 @@ def test_line(n):
     nderiv = n
     wtab = lagrange.tabulate(nderiv, pts)
     for k in range(nderiv + 1):
-        wsym = numpy.zeros_like(wtab[k])
+        wsym = np.zeros_like(wtab[k])
         for i in range(n + 1):
             wd = sympy.diff(g[i], x, k)
             for j, p in enumerate(pts):
                 wsym[j, i] = wd.subs(x, p[0])
-        assert numpy.allclose(wtab[k], wsym)
+        assert np.allclose(wtab[k], wsym)
 
 
 @pytest.mark.parametrize("n", [1, 2])
@@ -220,12 +220,12 @@ def test_line_without_variant(n):
     nderiv = n
     wtab = lagrange.tabulate(nderiv, pts)
     for k in range(nderiv + 1):
-        wsym = numpy.zeros_like(wtab[k])
+        wsym = np.zeros_like(wtab[k])
         for i in range(n + 1):
             wd = sympy.diff(g[i], x, k)
             for j, p in enumerate(pts):
                 wsym[j, i] = wd.subs(x, p[0])
-        assert numpy.allclose(wtab[k], wsym)
+        assert np.allclose(wtab[k], wsym)
 
 
 @pytest.mark.parametrize("degree", [1, 2, 3, 4, 5])
@@ -241,12 +241,12 @@ def test_tri(degree):
     wtab = lagrange.tabulate(nderiv, pts)
     for kx in range(nderiv):
         for ky in range(0, nderiv - kx):
-            wsym = numpy.zeros_like(wtab[0])
+            wsym = np.zeros_like(wtab[0])
             for i in range(len(g)):
                 wd = sympy.diff(g[i], x, kx, y, ky)
                 for j, p in enumerate(pts):
                     wsym[j, i] = wd.subs([(x, p[0]), (y, p[1])])
-            assert numpy.allclose(wtab[basix.index(kx, ky)], wsym)
+            assert np.allclose(wtab[basix.index(kx, ky)], wsym)
 
 
 @pytest.mark.parametrize("degree", [1, 2, 3, 4])
@@ -267,14 +267,14 @@ def test_tet(degree):
             for kx in range(q + 1):
                 ky = q - kx
                 kz = k - q
-                wsym = numpy.zeros_like(wtab[0])
+                wsym = np.zeros_like(wtab[0])
                 for i in range(len(g)):
                     wd = sympy.diff(g[i], x, kx, y, ky, z, kz)
                     for j, p in enumerate(pts):
                         wsym[j, i] = wd.subs([(x, p[0]),
                                               (y, p[1]),
                                               (z, p[2])])
-                assert numpy.allclose(wtab[basix.index(kx, ky, kz)], wsym)
+                assert np.allclose(wtab[basix.index(kx, ky, kz)], wsym)
 
 
 @pytest.mark.parametrize("celltype", [(basix.CellType.interval, basix.CellType.interval),
@@ -286,7 +286,7 @@ def test_lagrange(celltype, degree):
                                     basix.LagrangeVariant.equispaced)
     pts = basix.create_lattice(celltype[0], 6, basix.LatticeType.equispaced, True)
     w = lagrange.tabulate(0, pts)[0]
-    assert numpy.isclose(numpy.sum(w, axis=1), 1.0).all()
+    assert np.isclose(np.sum(w, axis=1), 1.0).all()
 
 
 @pytest.mark.parametrize("degree", [1, 2, 3, 4])
@@ -317,13 +317,13 @@ def test_dof_transformations_triangle(degree):
     assert len(base_transformations) == 3
 
     for i, t in enumerate(base_transformations):
-        actual = numpy.zeros_like(t)
+        actual = np.zeros_like(t)
         for j, row in enumerate(t):
             if i in permuted and j in permuted[i]:
                 actual[j, permuted[i][j]] = 1
             else:
                 actual[j, j] = 1
-        assert numpy.allclose(t, actual)
+        assert np.allclose(t, actual)
 
 
 @pytest.mark.parametrize("degree", [1, 2, 3, 4])
@@ -360,13 +360,13 @@ def test_dof_transformations_tetrahedron(degree):
     base_transformations = lagrange.base_transformations()
     assert len(base_transformations) == 14
     for i, t in enumerate(base_transformations):
-        actual = numpy.zeros_like(t)
+        actual = np.zeros_like(t)
         for j, row in enumerate(t):
             if i in permuted and j in permuted[i]:
                 actual[j, permuted[i][j]] = 1
             else:
                 actual[j, j] = 1
-        assert numpy.allclose(t, actual)
+        assert np.allclose(t, actual)
 
 
 @pytest.mark.parametrize("degree", [1, 2, 3, 4])
@@ -381,11 +381,11 @@ def test_celltypes(degree, celltype):
                               basix.LagrangeVariant.equispaced)
     pts = basix.create_lattice(celltype, 5, basix.LatticeType.equispaced, True)
     w = tp.tabulate(0, pts)[0]
-    assert numpy.allclose(numpy.sum(w, axis=1), 1.0)
+    assert np.allclose(np.sum(w, axis=1), 1.0)
 
 
 def leq(a, b):
-    return a <= b or numpy.isclose(a, b)
+    return a <= b or np.isclose(a, b)
 
 
 def in_cell(celltype, p):
@@ -463,9 +463,9 @@ def test_vtk_element(celltype, degree):
     for i, p in enumerate(vtk.points):
         for j, q in enumerate(vtk.points):
             if i != j:
-                assert not numpy.allclose(p, q)
+                assert not np.allclose(p, q)
         for j, q in enumerate(equi.points):
-            if numpy.allclose(p, q):
+            if np.allclose(p, q):
                 perm.append(j)
                 break
         else:
@@ -573,11 +573,11 @@ def test_legendre_lagrange_variant(celltype, degree):
     values = e.tabulate(0, pts)[0, :, :, 0].T
     for i, row_i in enumerate(values):
         for j, row_j in enumerate(values):
-            integral = numpy.sum(row_i * row_j * wts)
+            integral = np.sum(row_i * row_j * wts)
             if i == j:
-                assert numpy.isclose(integral, 1)
+                assert np.isclose(integral, 1)
             else:
-                assert numpy.isclose(integral, 0)
+                assert np.isclose(integral, 0)
 
     # Test that the basis function span the correct set
     pts = basix.create_lattice(celltype, 2 * (degree + 1), basix.LatticeType.equispaced, True)
@@ -590,9 +590,9 @@ def test_legendre_lagrange_variant(celltype, degree):
         for px in range(degree + 1):
             evals = i_pts[:, 0] ** px
             coeffs = i_mat @ evals
-            computed_values = [numpy.dot(v, coeffs) for v in values]
+            computed_values = [np.dot(v, coeffs) for v in values]
             actual_values = pts[:, 0] ** px
-            assert numpy.allclose(computed_values, actual_values)
+            assert np.allclose(computed_values, actual_values)
 
     elif tdim == 2:
         powers = []
@@ -607,9 +607,9 @@ def test_legendre_lagrange_variant(celltype, degree):
         for px, py in powers:
             evals = i_pts[:, 0] ** px * i_pts[:, 1] ** py
             coeffs = i_mat @ evals
-            computed_values = [numpy.dot(v, coeffs) for v in values]
+            computed_values = [np.dot(v, coeffs) for v in values]
             actual_values = pts[:, 0] ** px * pts[:, 1] ** py
-            assert numpy.allclose(computed_values, actual_values)
+            assert np.allclose(computed_values, actual_values)
 
     else:
         assert tdim == 3
@@ -627,9 +627,9 @@ def test_legendre_lagrange_variant(celltype, degree):
         for px, py, pz in powers:
             evals = i_pts[:, 0] ** px * i_pts[:, 1] ** py * i_pts[:, 2] ** pz
             coeffs = i_mat @ evals
-            computed_values = [numpy.dot(v, coeffs) for v in values]
+            computed_values = [np.dot(v, coeffs) for v in values]
             actual_values = pts[:, 0] ** px * pts[:, 1] ** py * pts[:, 2] ** pz
-            assert numpy.allclose(computed_values, actual_values)
+            assert np.allclose(computed_values, actual_values)
 
 
 @pytest.mark.parametrize("celltype", [
@@ -645,11 +645,11 @@ def test_legendre_dpc_variant(celltype, degree):
     values = e.tabulate(0, pts)[0, :, :, 0].T
     for i, row_i in enumerate(values):
         for j, row_j in enumerate(values):
-            integral = numpy.sum(row_i * row_j * wts)
+            integral = np.sum(row_i * row_j * wts)
             if i == j:
-                assert numpy.isclose(integral, 1)
+                assert np.isclose(integral, 1)
             else:
-                assert numpy.isclose(integral, 0)
+                assert np.isclose(integral, 0)
 
     # Test that the basis function span the correct set
     pts = basix.create_lattice(celltype, 2 * (degree + 1), basix.LatticeType.equispaced, True)
@@ -663,9 +663,9 @@ def test_legendre_dpc_variant(celltype, degree):
             for py in range(degree + 1 - px):
                 evals = i_pts[:, 0] ** px * i_pts[:, 1] ** py
                 coeffs = i_mat @ evals
-                computed_values = [numpy.dot(v, coeffs) for v in values]
+                computed_values = [np.dot(v, coeffs) for v in values]
                 actual_values = pts[:, 0] ** px * pts[:, 1] ** py
-                assert numpy.allclose(computed_values, actual_values)
+                assert np.allclose(computed_values, actual_values)
     else:
         assert tdim == 3
         for px in range(degree + 1):
@@ -673,6 +673,6 @@ def test_legendre_dpc_variant(celltype, degree):
                 for pz in range(degree + 1 - px - py):
                     evals = i_pts[:, 0] ** px * i_pts[:, 1] ** py * i_pts[:, 2] ** pz
                     coeffs = i_mat @ evals
-                    computed_values = [numpy.dot(v, coeffs) for v in values]
+                    computed_values = [np.dot(v, coeffs) for v in values]
                     actual_values = pts[:, 0] ** px * pts[:, 1] ** py * pts[:, 2] ** pz
-                    assert numpy.allclose(computed_values, actual_values)
+                    assert np.allclose(computed_values, actual_values)

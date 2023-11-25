@@ -5,7 +5,6 @@
 from itertools import product
 
 import basix
-import numpy
 import numpy as np
 import pytest
 
@@ -101,17 +100,17 @@ def test_tensor_product_factorisation_quadrilateral(degree):
     Nq = P + 2
 
     # Compute derivative of basis function in the x direction
-    dphi_tensor = numpy.zeros([Nq, Nq, Nd, Nd])
+    dphi_tensor = np.zeros([Nq, Nq, Nd, Nd])
     for q0 in range(Nq):
         for q1 in range(Nq):
             for i0 in range(Nd):
                 for i1 in range(Nd):
                     dphi_tensor[q0, q1, i0, i1] = dphi0[q0, i0]*phi0[q1, i1]
     dphi_tensor = dphi_tensor.reshape([Nq*Nq, Nd*Nd])
-    assert numpy.allclose(dphi_x, dphi_tensor)
+    assert np.allclose(dphi_x, dphi_tensor)
 
     # Compute derivative of basis function in the y direction
-    dphi_tensor = numpy.zeros([Nq, Nq, Nd, Nd])
+    dphi_tensor = np.zeros([Nq, Nq, Nd, Nd])
     for q0 in range(Nq):
         for q1 in range(Nq):
             for i0 in range(Nd):
@@ -119,7 +118,7 @@ def test_tensor_product_factorisation_quadrilateral(degree):
                     dphi_tensor[q0, q1, i0, i1] = phi0[q0, i0]*dphi0[q1, i1]
 
     dphi_tensor = dphi_tensor.reshape([Nq*Nq, Nd*Nd])
-    assert numpy.allclose(dphi_y, dphi_tensor)
+    assert np.allclose(dphi_y, dphi_tensor)
 
 
 @pytest.mark.parametrize("degree", range(1, 6))
@@ -162,7 +161,7 @@ def test_tensor_product_factorisation_hexahedron(degree):
     Nq = P + 2
 
     # Compute derivative of basis function in the x direction
-    dphi_tensor = numpy.zeros([Nq, Nq, Nq, Nd, Nd, Nd])
+    dphi_tensor = np.zeros([Nq, Nq, Nq, Nd, Nd, Nd])
     for q0 in range(Nq):
         for q1 in range(Nq):
             for q2 in range(Nq):
@@ -172,10 +171,10 @@ def test_tensor_product_factorisation_hexahedron(degree):
                             dphi_tensor[q0, q1, q2, i0, i1, i2] = dphi0[q0, i0]*phi0[q1, i1]*phi0[q2, i2]
 
     dphi_tensor = dphi_tensor.reshape([Nq*Nq*Nq, Nd*Nd*Nd])
-    assert numpy.allclose(dphi_x, dphi_tensor)
+    assert np.allclose(dphi_x, dphi_tensor)
 
     # Compute derivative of basis function in the y direction
-    dphi_tensor = numpy.zeros([Nq, Nq, Nq, Nd, Nd, Nd])
+    dphi_tensor = np.zeros([Nq, Nq, Nq, Nd, Nd, Nd])
     for q0 in range(Nq):
         for q1 in range(Nq):
             for q2 in range(Nq):
@@ -185,10 +184,10 @@ def test_tensor_product_factorisation_hexahedron(degree):
                             dphi_tensor[q0, q1, q2, i0, i1, i2] = phi0[q0, i0]*dphi0[q1, i1]*phi0[q2, i2]
 
     dphi_tensor = dphi_tensor.reshape([Nq*Nq*Nq, Nd*Nd*Nd])
-    assert numpy.allclose(dphi_y, dphi_tensor)
+    assert np.allclose(dphi_y, dphi_tensor)
 
     # Compute the derivative of basis function in the z direction
-    dphi_tensor = numpy.zeros([Nq, Nq, Nq, Nd, Nd, Nd])
+    dphi_tensor = np.zeros([Nq, Nq, Nq, Nd, Nd, Nd])
     for q0 in range(Nq):
         for q1 in range(Nq):
             for q2 in range(Nq):
@@ -198,7 +197,7 @@ def test_tensor_product_factorisation_hexahedron(degree):
                             dphi_tensor[q0, q1, q2, i0, i1, i2] = phi0[q0, i0]*phi0[q1, i1]*dphi0[q2, i2]
 
     dphi_tensor = dphi_tensor.reshape([Nq*Nq*Nq, Nd*Nd*Nd])
-    assert numpy.allclose(dphi_z, dphi_tensor)
+    assert np.allclose(dphi_z, dphi_tensor)
 
 
 @pytest.mark.parametrize("cell_type", [

@@ -9,13 +9,13 @@ import typing as _typing
 from typing import Dict as _Dict
 from typing import List as _ListT
 
-import numpy as _np
+import numpy as np
 
 if _typing.TYPE_CHECKING:
     import numpy.typing as _npt
     _nda = _npt.NDArray
-    _nda_i32 = _npt.NDArray[_np.int32]
-    _nda_f64 = _npt.NDArray[_np.float64]
+    _nda_i32 = _npt.NDArray[np.int32]
+    _nda_f64 = _npt.NDArray[np.float64]
 else:
     _nda = None
     _nda_i32 = None
@@ -58,7 +58,7 @@ def pre_apply_dof_transformation(
             if edofs == 0:
                 continue
             if cell_info >> (face_start + e) & 1:
-                data[dofstart:dofstart+edofs] = _np.dot(edge_reflection, data[dofstart:dofstart+edofs])
+                data[dofstart:dofstart+edofs] = np.dot(edge_reflection, data[dofstart:dofstart+edofs])
             dofstart += edofs
 
         if tdim == 3:
@@ -69,9 +69,9 @@ def pre_apply_dof_transformation(
                 if fdofs == 0:
                     continue
                 if cell_info >> (3 * f) & 1:
-                    data[dofstart:dofstart+fdofs] = _np.dot(face_reflection, data[dofstart:dofstart+fdofs])
+                    data[dofstart:dofstart+fdofs] = np.dot(face_reflection, data[dofstart:dofstart+fdofs])
                 for _ in range(cell_info >> (3 * f + 1) & 3):
-                    data[dofstart:dofstart+fdofs] = _np.dot(face_rotation, data[dofstart:dofstart+fdofs])
+                    data[dofstart:dofstart+fdofs] = np.dot(face_rotation, data[dofstart:dofstart+fdofs])
                 dofstart += fdofs
 
 

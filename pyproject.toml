@@ -71,6 +71,9 @@ before-build = "export HOMEBREW_AUTO_UPDATING=0 && brew update && brew install n
 [tool.mypy]
 ignore_missing_imports = true
 
+[tool.black]
+line-length = 120
+
 [tool.ruff]
 line-length = 120
 indent-width = 4
@@ -78,12 +81,16 @@ indent-width = 4
 [tool.ruff.lint]
 select = [
     # "B",
-    # "D",
-    "E",
-    "F",
-    "I",
-    "RUF",
-    "UP",
+    # "D", # pydocstyle
+    "E",   # pycodestyle
+    "W",   # pycodestyle
+    "F",   # pyflakes
+    "I",   # isort
+    "RUF", # Ruff-specific rules
+    "UP",  # pyupgrade
+    # "ANN",
+    "ICN",
+    "SIM"
 ]
 ignore = []
 

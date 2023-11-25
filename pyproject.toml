@@ -73,14 +73,22 @@ ignore_missing_imports = true
 
 [tool.ruff]
 line-length = 120
+indent-width = 4
 
 [tool.ruff.lint]
-extend-select = [
-    "D", # pydocstyle
+select = [
+    # "B",
+    "D",
+    "E",
+    "F",
+    "I",
+    "RUF",
+    "UP",
 ]
+ignore = []
 
 [tool.ruff.lint.pydocstyle]
 convention = "google"
 
-[tool.ruff.lint.isort]
-known-first-party = ["my_module1", "my_module2"]
+[tool.ruff.lint.per-file-ignores]
+"_basixcpp.pyi" = ["E501", "UP006"]

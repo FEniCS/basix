@@ -8,7 +8,7 @@ import numpy.typing as _numpy_typing
 from basix._basixcpp import CellType as _CT
 from basix._basixcpp import PolynomialType as _PT
 from basix._basixcpp import index as _index
-from basix._basixcpp import polynomials_dim as dim  # noqa: F401
+from basix._basixcpp import polynomials_dim as dim
 
 _nda_f64 = _numpy_typing.NDArray[_numpy.float64]
 

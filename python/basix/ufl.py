@@ -53,7 +53,8 @@ def _ufl_sobolev_space_from_enum(s: _basix.SobolevSpace):
         UFL Sobolev space
     """
     if s not in _spacemap:
-        raise ValueError(f"Could not convert to UFL Sobolev space: {s.__name__}")
+        raise ValueError(
+            f"Could not convert to UFL Sobolev space: {s.__name__}")
     return _spacemap[s]
 
 
@@ -373,7 +374,8 @@ class _BasixElement(_ElementBase):
         repr += ")"
 
         super().__init__(
-            repr, element.cell_type.__name__, tuple(element.value_shape), element.degree,
+            repr, element.cell_type.__name__, tuple(
+                element.value_shape), element.degree,
             _ufl_pullback_from_enum(element.map_type), gdim=gdim)
 
         self.element = element
@@ -637,7 +639,7 @@ class _ComponentElement(_ElementBase):
         tables = self.element.tabulate(nderivs, points)
         output = []
         for tbl in tables:
-            shape = (points.shape[0],) + self.element._value_shape + (-1,)
+            shape = (points.shape[0], *self.element._value_shape, -1)
             tbl = tbl.reshape(shape)
             if len(self.element._value_shape) == 0:
                 output.append(tbl)
@@ -649,7 +651,8 @@ class _ComponentElement(_ElementBase):
                     output.append(tbl[:, self.component, :])
                 else:
                     vs0 = self.element._value_shape[0]
-                    output.append(tbl[:, self.component // vs0, self.component % vs0, :])
+                    output.append(
+                        tbl[:, self.component // vs0, self.component % vs0, :])
             else:
                 raise NotImplementedError()
         return _np.asarray(output, dtype=_np.float64)
@@ -857,7 +860,8 @@ class _MixedElement(_ElementBase):
             start = 0
             for e, t in zip(self._sub_elements, deriv_tables):
                 for i in range(0, e.dim, e.value_size):
-                    new_table[:, start: start + e.value_size] = t[:, i: i + e.value_size]
+                    new_table[:, start: start +
+                              e.value_size] = t[:, i: i + e.value_size]
                     start += self.value_size
             tables.append(new_table)
         return _np.asarray(tables, dtype=_np.float64)
@@ -880,11 +884,13 @@ class _MixedElement(_ElementBase):
 
         # Find index of sub element which corresponds to the current
         # flat component
-        component_element_index = _np.where(crange <= flat_component)[0].shape[0] - 1
+        component_element_index = _np.where(
+            crange <= flat_component)[0].shape[0] - 1
 
         sub_e = self._sub_elements[component_element_index]
 
-        e, offset, stride = sub_e.get_component_element(flat_component - crange[component_element_index])
+        e, offset, stride = sub_e.get_component_element(
+            flat_component - crange[component_element_index])
         # TODO: is this offset correct?
         return e, irange[component_element_index] + offset, stride
 
@@ -1052,7 +1058,8 @@ class _MixedElement(_ElementBase):
                 else:
                     p, w = e.custom_quadrature()
                     if not _np.allclose(p, custom_q[0]) or not _np.allclose(w, custom_q[1]):
-                        raise ValueError("Subelements of mixed element use different quadrature rules")
+                        raise ValueError(
+                            "Subelements of mixed element use different quadrature rules")
         if custom_q is not None:
             return custom_q
         raise ValueError("Element does not have custom quadrature")
@@ -1086,9 +1093,11 @@ class _BlockedElement(_ElementBase):
                              "Try using _MixedElement instead.")
         if symmetry is not None:
             if len(shape) != 2:
-                raise ValueError("symmetry argument can only be passed to elements of rank 2.")
+                raise ValueError(
+                    "symmetry argument can only be passed to elements of rank 2.")
             if shape[0] != shape[1]:
-                raise ValueError("symmetry argument can only be passed to square shaped elements.")
+                raise ValueError(
+                    "symmetry argument can only be passed to square shaped elements.")
 
         if symmetry:
             block_size = shape[0] * (shape[0] + 1) // 2
@@ -1128,7 +1137,8 @@ class _BlockedElement(_ElementBase):
     def __eq__(self, other) -> bool:
         """Check if two elements are equal."""
         return (
-            isinstance(other, _BlockedElement) and self._block_size == other._block_size
+            isinstance(
+                other, _BlockedElement) and self._block_size == other._block_size
             and self.block_shape == other.block_shape and self.sub_element == other.sub_element
             and self._gdim == other._gdim)
 
@@ -1192,7 +1202,8 @@ class _BlockedElement(_ElementBase):
     def reference_value_shape(self) -> _typing.Tuple[int, ...]:
         """Reference value shape of the element basis function."""
         if self._has_symmetry:
-            assert len(self.block_shape) == 2 and self.block_shape[0] == self.block_shape[1]
+            assert len(
+                self.block_shape) == 2 and self.block_shape[0] == self.block_shape[1]
             return (self.block_shape[0] * (self.block_shape[0] + 1) // 2, )
         return self._value_shape
 
@@ -1335,7 +1346,8 @@ class _BlockedElement(_ElementBase):
     def _wcoeffs(self) -> _npt.NDArray[_np.float64]:
         """Coefficients used to define the polynomial set."""
         sub_wc = self.sub_element._wcoeffs
-        wcoeffs = _np.zeros((sub_wc.shape[0] * self._block_size, sub_wc.shape[1] * self.block_size))
+        wcoeffs = _np.zeros(
+            (sub_wc.shape[0] * self._block_size, sub_wc.shape[1] * self.block_size))
         for i in range(self._block_size):
             wcoeffs[sub_wc.shape[0] * i: sub_wc.shape[0]
                     * (i + 1), sub_wc.shape[1] * i: sub_wc.shape[1] * (i + 1)] = sub_wc
@@ -1392,7 +1404,8 @@ class _QuadratureElement(_ElementBase):
         """Initialise the element."""
         self._points = points
         self._weights = weights
-        repr = f"QuadratureElement({cell.__name__}, {points!r}, {weights!r}, {pullback})".replace("\n", "")
+        repr = f"QuadratureElement({cell.__name__}, {points!r}, {weights!r}, {pullback})".replace(
+            "\n", "")
         self._cell_type = cell
         self._entity_counts = [len(i) for i in _basix.topology(cell)]
 
@@ -1434,7 +1447,8 @@ class _QuadratureElement(_ElementBase):
             raise ValueError("Cannot take derivatives of Quadrature element.")
 
         if points.shape != self._points.shape:
-            raise ValueError("Mismatch of tabulation points and element points.")
+            raise ValueError(
+                "Mismatch of tabulation points and element points.")
         tables = _np.asarray([_np.eye(points.shape[0], points.shape[0])])
         return tables
 
@@ -1596,7 +1610,8 @@ class _RealElement(_ElementBase):
         self._cell_type = cell
         tdim = len(_basix.topology(cell)) - 1
 
-        super().__init__(f"RealElement({cell.__name__}, {value_shape})", cell.__name__, value_shape, 0)
+        super().__init__(
+            f"RealElement({cell.__name__}, {value_shape})", cell.__name__, value_shape, 0)
 
         self._entity_counts = []
         if tdim >= 1:
@@ -1814,7 +1829,7 @@ def _compute_signature(element: _basix.finite_element.FiniteElement) -> str:
     return signature
 
 
-@_functools.lru_cache()
+@_functools.lru_cache
 def element(family: _typing.Union[_basix.ElementFamily, str], cell: _typing.Union[_basix.CellType, str], degree: int,
             lagrange_variant: _basix.LagrangeVariant = _basix.LagrangeVariant.unset,
             dpc_variant: _basix.DPCVariant = _basix.DPCVariant.unset, discontinuous: bool = False,
@@ -1877,12 +1892,14 @@ def element(family: _typing.Union[_basix.ElementFamily, str], cell: _typing.Unio
         elif family == EF.DPC:
             dpc_variant = _basix.DPCVariant.diagonal_gll
 
-    e = _basix.create_element(family, cell, degree, lagrange_variant, dpc_variant, discontinuous)
+    e = _basix.create_element(family, cell, degree,
+                              lagrange_variant, dpc_variant, discontinuous)
     ufl_e = _BasixElement(e, gdim=gdim)
 
     if shape is None or shape == tuple(e.value_shape):
         if symmetry is not None:
-            raise ValueError("Cannot pass a symmetry argument to this element.")
+            raise ValueError(
+                "Cannot pass a symmetry argument to this element.")
         return ufl_e
     else:
         return blocked_element(ufl_e, shape=shape, gdim=gdim, symmetry=symmetry)
@@ -1911,21 +1928,26 @@ def enriched_element(elements: _typing.List[_ElementBase],
         map_type = elements[0].map_type
         for e in elements:
             if e.map_type != map_type:
-                raise ValueError("Enriched elements on different map types not supported.")
+                raise ValueError(
+                    "Enriched elements on different map types not supported.")
 
     hcd = min(e.embedded_subdegree for e in elements)
     hd = max(e.embedded_superdegree for e in elements)
-    ss = _basix.sobolev_spaces.intersection([e.basix_sobolev_space for e in elements])
+    ss = _basix.sobolev_spaces.intersection(
+        [e.basix_sobolev_space for e in elements])
     discontinuous = True
     for e in elements:
         if not e.discontinuous:
             discontinuous = False
         if e.cell_type != ct:
-            raise ValueError("Enriched elements on different cell types not supported.")
+            raise ValueError(
+                "Enriched elements on different cell types not supported.")
         if e.polyset_type != ptype:
-            raise ValueError("Enriched elements on different polyset types not supported.")
+            raise ValueError(
+                "Enriched elements on different polyset types not supported.")
         if e.value_shape != vshape or e.value_size != vsize:
-            raise ValueError("Enriched elements on different value shapes not supported.")
+            raise ValueError(
+                "Enriched elements on different value shapes not supported.")
     nderivs = max(e.interpolation_nderivs for e in elements)
 
     x = []
@@ -1941,7 +1963,7 @@ def enriched_element(elements: _typing.List[_ElementBase],
             new_M = _np.zeros((ndofs, vsize, npts, deriv_dim))
             pt = 0
             dof = 0
-            for i, mat in enumerate(M_parts):
+            for mat in M_parts:
                 new_M[dof: dof + mat.shape[0], :, pt: pt + mat.shape[2], :mat.shape[3]] = mat
                 dof += mat.shape[0]
                 pt += mat.shape[2]
@@ -2102,11 +2124,10 @@ def real_element(cell: _typing.Union[_basix.CellType, str],
     return _RealElement(cell, value_shape)
 
 
-@_functools.lru_cache()
-def blocked_element(
-    sub_element: _ElementBase, shape: _typing.Tuple[int, ...],
-    symmetry: _typing.Optional[bool] = None, gdim: _typing.Optional[int] = None
-) -> _ElementBase:
+@_functools.lru_cache
+def blocked_element(sub_element: _ElementBase, shape: _typing.Tuple[int, ...],
+                    symmetry: _typing.Optional[bool] = None, gdim: _typing.Optional[int] = None
+                    ) -> _ElementBase:
     """Create a UFL compatible blocked element.
 
     Args:
@@ -2123,6 +2144,7 @@ def blocked_element(
 
     """
     if len(sub_element.value_shape) != 0:
-        raise ValueError("Cannot create a blocked element containing a non-scalar element.")
+        raise ValueError(
+            "Cannot create a blocked element containing a non-scalar element.")
 
     return _BlockedElement(sub_element, shape=shape, symmetry=symmetry, gdim=gdim)

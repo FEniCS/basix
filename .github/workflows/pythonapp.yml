@@ -38,12 +38,8 @@ jobs:
           sudo apt-get install -y doxygen graphviz libopenblas-dev liblapack-dev ninja-build
       - name: Install Basix
         run: pip -v install .[ci]
-      - name: Lint with ruff
+      - name: Lint/check with ruff
         run: ruff check test/ python/ demo/python
-      - name: ruff/isort checks
-        run: ruff check --select I .
-      - name: ruff/pydocstyle checks
-        run: ruff check --select D python/basix
       - name: mypy checks
         run: mypy python/basix
       - name: Run units tests

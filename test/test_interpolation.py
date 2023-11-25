@@ -21,15 +21,16 @@ def test_interpolation(cell_type, n, element_type):
 
 @parametrize_over_elements(5)
 def test_interpolation_matrix(cell_type, degree, element_type, element_args):
-    if degree > 4:
-        if cell_type in [
-            basix.CellType.quadrilateral, basix.CellType.hexahedron
-        ] and element_type in [
-            basix.ElementFamily.RT, basix.ElementFamily.N1E, basix.ElementFamily.BDM,
-            basix.ElementFamily.N2E
-        ]:
-            pytest.xfail("High degree Hdiv and Hcurl spaces on hexes based on "
-                         "Lagrange spaces with equally spaced points are unstable.")
+    if (
+        degree > 4
+        and cell_type in [basix.CellType.quadrilateral, basix.CellType.hexahedron]
+        and element_type
+        in [basix.ElementFamily.RT, basix.ElementFamily.N1E, basix.ElementFamily.BDM, basix.ElementFamily.N2E]
+    ):
+        pytest.xfail(
+            "High degree Hdiv and Hcurl spaces on hexes based on "
+            "Lagrange spaces with equally spaced points are unstable."
+        )
 
     element = basix.create_element(element_type, cell_type, degree, *element_args)
 
@@ -42,7 +43,7 @@ def test_interpolation_matrix(cell_type, degree, element_type, element_args):
     # Loop over dofs
     coeffs = np.zeros((i_m.shape[0], i_m.shape[0]))
     for i in range(i_m.shape[0]):
-        coeffs[i, :] = i_m @ tabulated[:, i::i_m.shape[0]].T.reshape(i_m.shape[1])
+        coeffs[i, :] = i_m @ tabulated[:, i :: i_m.shape[0]].T.reshape(i_m.shape[1])
 
     assert np.allclose(coeffs, np.identity(coeffs.shape[0]))
 

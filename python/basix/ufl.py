@@ -885,11 +885,9 @@ class _MixedElement(_ElementBase):
             len(self._sub_elements) == len(other._sub_elements)
             and self._gdim == other._gdim
         ):
-            for i, j in zip(self._sub_elements, other._sub_elements):
-                if i != j:
-                    return False
-            return True
-        return False
+            return all(i == j for i, j in zip(self._sub_elements, other._sub_elements))
+        else:
+            return False
 
     def __hash__(self) -> int:
         """Return a hash."""
@@ -1148,10 +1146,7 @@ class _MixedElement(_ElementBase):
     @property
     def has_custom_quadrature(self) -> bool:
         """True if the element has a custom quadrature rule."""
-        for e in self._sub_elements:
-            if e.has_custom_quadrature:
-                return True
-        return False
+        return any(e.has_custom_quadrature for e in self._sub_elements)
 
 
 class _BlockedElement(_ElementBase):
@@ -2051,9 +2046,7 @@ def element(
     if lagrange_variant == _basix.LagrangeVariant.unset:
         if family == EF.P:
             lagrange_variant = _basix.LagrangeVariant.gll_warped
-        elif family in [EF.RT, EF.N1E]:
-            lagrange_variant = _basix.LagrangeVariant.legendre
-        elif family in [EF.serendipity, EF.BDM, EF.N2E]:
+        elif family in [EF.RT, EF.N1E] or  family in [EF.serendipity, EF.BDM, EF.N2E]:
             lagrange_variant = _basix.LagrangeVariant.legendre
 
     if dpc_variant == _basix.DPCVariant.unset:

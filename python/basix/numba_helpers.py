@@ -43,10 +43,7 @@ def pre_apply_dof_transformation(
 
     """
     if tdim >= 2:
-        if tdim == 3:
-            face_start = 3 * face_count
-        else:
-            face_start = 0
+        face_start = 3 * face_count if tdim == 3 else 0
 
         dofstart = 0
         for i in entity_dofs[0]:

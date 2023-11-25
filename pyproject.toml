@@ -90,7 +90,8 @@ select = [
     "UP",  # pyupgrade
     # "ANN",
     "ICN",
-    "SIM"
+    # "SIM",
+    # "PL",
 ]
 ignore = []
 

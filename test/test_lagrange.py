@@ -2,11 +2,10 @@
 # FEniCS Project
 # SPDX-License-Identifier: MIT
 
+import basix
 import numpy
 import pytest
 import sympy
-
-import basix
 
 
 def sympy_lagrange(celltype, n):

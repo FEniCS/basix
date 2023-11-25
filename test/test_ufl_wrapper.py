@@ -1,8 +1,7 @@
-import numpy as np
-import pytest
-
 import basix
 import basix.ufl
+import numpy as np
+import pytest
 
 
 @pytest.mark.parametrize("inputs", [

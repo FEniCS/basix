@@ -2,10 +2,9 @@
 # FEniCS Project
 # SPDX-License-Identifier: MIT
 
+import basix
 import numpy
 import sympy
-
-import basix
 
 
 def test_hermite_interval():

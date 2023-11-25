@@ -2,10 +2,9 @@
 # FEniCS Project
 # SPDX-License-Identifier: MIT
 
+import basix
 import numpy as np
 import pytest
-
-import basix
 
 
 def test_lagrange_custom_triangle_degree1():

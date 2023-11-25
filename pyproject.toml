@@ -23,7 +23,7 @@ documentation = "https://docs.fenicsproject.org"
 
 [project.optional-dependencies]
 docs = ["markdown", "pylit3", "pyyaml", "sphinx==5.0.2", "sphinx_rtd_theme"]
-lint = ["flake8", "pydocstyle", "isort"]
+lint = ["ruff"]
 optional = ["numba", "fenics-ufl@git+https://github.com/fenics/ufl"]
 test = ["pytest", "sympy", "scipy", "matplotlib", "fenics-basix[optional]"]
 ci = ["mypy", "pytest-xdist", "fenics-basix[docs,lint,test,optional]"]
@@ -68,11 +68,19 @@ archs = [
 ] # Forces arm64 build on x86_64 runner using cross-compilation.
 before-build = "export HOMEBREW_AUTO_UPDATING=0 && brew update && brew install ninja"
 
-[tool.pydocstyle]
-convention = "google"
-
 [tool.mypy]
 ignore_missing_imports = true
 
-[tool.isort]
-line_length = 120
+[tool.ruff]
+line-length = 120
+
+[tool.ruff.lint]
+extend-select = [
+    "D", # pydocstyle
+]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.ruff.lint.isort]
+known-first-party = ["my_module1", "my_module2"]

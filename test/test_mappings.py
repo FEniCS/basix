@@ -4,10 +4,9 @@
 
 import random
 
+import basix
 import numpy as np
 import pytest
-
-import basix
 
 elements = [
     (basix.ElementFamily.P, [basix.LagrangeVariant.gll_warped]),  # identity

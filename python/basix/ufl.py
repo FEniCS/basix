@@ -61,7 +61,7 @@ def _ufl_pullback_from_enum(m: _basix.MapType) -> _AbstractPullback:
     """Convert map type to a UFL pull back.
 
     Args:
-        map_type: A map type.
+        m: A map type.
 
     Returns:
         UFL pull back.

@@ -31,10 +31,8 @@ jobs:
           dnf -y update
           dnf install -y dnf-plugins-core
           dnf config-manager --set-enabled crb
-          dnf install -y blas-devel cmake gcc gcc-c++ git lapack-devel python3 python3-devel python3-pip
+          dnf install -y openblas-devel cmake gcc gcc-c++ git lapack-devel python3 python3-devel python3-pip
       - uses: actions/checkout@v4
-      - name: Install Numpy
-        run: python3 -m pip install numpy --no-binary numpy
       - name: Install Basix
         run: python3 -m pip install .[test]
       - name: Run units tests

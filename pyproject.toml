@@ -38,10 +38,10 @@ wheel.packages = ["python/basix"]
 
 [tool.cibuildwheel]
 build = [
-    "cp{38,39,310}-manylinux_x86_64",
-    "cp{38,39,310}-manylinux_aarch64",
-    "cp{38,39,310}-macosx_x86_64",
-    "cp{38,39,310}-macosx_arm64",
+    "cp{38,39,310,311,312}-manylinux_x86_64",
+    "cp{38,39,310,311,312}-manylinux_aarch64",
+    "cp{38,39,310,311,312}-macosx_x86_64",
+    "cp{38,39,310,311,312}-macosx_arm64",
 ]
 test-command = [
     "cmake -G Ninja -DPython3_EXECUTABLE=$(which python) -B build-dir -S {project}/test/test_cmake",

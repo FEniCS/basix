@@ -21,7 +21,7 @@ jobs:
   build:
     name: Build and test (Red Hat)
     runs-on: ubuntu-22.04
-    container: rockylinux/rockylinux:9
+    container: rockylinux/rockylinux:9.2
     env:
       CC: gcc
       CXX: g++

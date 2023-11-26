@@ -20,8 +20,8 @@ on:
 jobs:
   build:
     name: Build and test (Red Hat)
-    runs-on: ubuntu-22.04
-    container: rockylinux/rockylinux:9
+    runs-on: ubuntu-latest
+    container: rockylinux/rockylinux:9.2
     env:
       CC: gcc
       CXX: g++
@@ -31,14 +31,14 @@ jobs:
           dnf -y update
           dnf install -y dnf-plugins-core
           dnf config-manager --set-enabled crb
-          dnf install -y blas-devel cmake gcc gcc-c++ git lapack-devel python3 python3-devel python3-pip
+          dnf install -y openblas-devel cmake gcc gcc-c++ git lapack-devel python3 python3-devel python3-pip
+      - name: Upgrade pip
+        run: python3 -m pip install pip --upgrade
       - uses: actions/checkout@v4
       - name: Install Basix
         run: python3 -m pip install .[test]
       - name: Run units tests
-        run: |
-          python3 -m pip install pytest-xdist
-          python3 -m pytest -n auto --durations 20 test/
+        run: python3 -m pytest --durations 20 test/
       - name: Run Python demos
         run: python3 -m pytest demo/python/test.py
       - name: Run C++ demos

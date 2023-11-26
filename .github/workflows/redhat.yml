@@ -34,7 +34,7 @@ jobs:
           dnf install -y openblas-devel cmake gcc gcc-c++ git lapack-devel python3 python3-devel python3-pip
       - uses: actions/checkout@v4
       - name: Install Basix
-        run: python3 -m pip install .[test]
+        run: python3 -m pip install --config-settings=cmake.build-type=Debug .[test]
       - name: Run units tests
         run: python3 -m pytest --durations 20 test/
       - name: Run Python demos

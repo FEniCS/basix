@@ -22,7 +22,7 @@ repository = "https://github.com/fenics/basix.git"
 documentation = "https://docs.fenicsproject.org"
 
 [project.optional-dependencies]
-docs = ["markdown", "pylit3", "pyyaml", "sphinx==5.0.2", "sphinx_rtd_theme"]
+docs = ["markdown", "pylit3", "pyyaml", "sphinx", "sphinx_rtd_theme"]
 lint = ["flake8", "pydocstyle", "isort"]
 optional = ["numba", "fenics-ufl@git+https://github.com/fenics/ufl"]
 test = ["pytest", "sympy", "scipy", "matplotlib", "fenics-basix[optional]"]

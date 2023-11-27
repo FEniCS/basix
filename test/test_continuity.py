@@ -1,6 +1,7 @@
-import basix
 import numpy as np
 import pytest
+
+import basix
 
 elements = [
     (basix.ElementFamily.P, [basix.LagrangeVariant.equispaced]),

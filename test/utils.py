@@ -4,6 +4,7 @@
 """Test utilities."""
 
 import pytest
+
 from basix import CellType, DPCVariant, ElementFamily, LagrangeVariant
 
 

@@ -2,8 +2,9 @@
 # FEniCS Project
 # SPDX-License-Identifier: MIT
 
-import basix
 import numpy as np
+
+import basix
 
 
 def test_element_equality():

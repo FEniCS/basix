@@ -2,8 +2,9 @@
 # FEniCS Project
 # SPDX-License-Identifier: MIT
 
-import basix
 import pytest
+
+import basix
 
 # from .utils import parametrize_over_elements
 

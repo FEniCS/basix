@@ -4,9 +4,10 @@
 
 import re
 
-import basix
 import pkg_resources
 import pytest
+
+import basix
 
 
 def is_canonical(version):

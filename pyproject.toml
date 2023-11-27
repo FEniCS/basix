@@ -95,6 +95,9 @@ select = [
 ]
 ignore = []
 
+[tool.ruff.lint.isort]
+known-first-party = ["basix"]
+
 [tool.ruff.lint.pydocstyle]
 convention = "google"
 

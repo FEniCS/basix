@@ -80,6 +80,8 @@ def jekyll(a):
         c, d = c.split("{% endif %}", 1)
         a = b + c + d
 
+    a = a.replace("{% if page.subtitle %}{% else %} lesstall{% endif %}", " lesstall")
+
     if "{{ page.title | default: site.title }}" in a:
         with open(path("template/title.html")) as f:
             a = a.replace("{{ page.title | default: site.title }}", f.read())

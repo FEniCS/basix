@@ -33,6 +33,7 @@ jobs:
           apt-get -y update
           apt-get install -y bzip2 curl file git gzip make patch python3-minimal tar xz-utils
           apt-get install -y g++ gfortran  # compilers
+
       - name: Get Spack
         if: github.event_name != 'workflow_dispatch'
         uses: actions/checkout@v4
@@ -46,7 +47,17 @@ jobs:
           path: ./spack
           repository: ${{ github.event.inputs.spack_repo }}
           ref: ${{ github.event.inputs.spack_ref }}
+
       - name: Install Basix and run tests
+        if: github.event_name != 'workflow_dispatch'
+        run: |
+          . ./spack/share/spack/setup-env.sh
+          spack env create main
+          spack env activate main
+          spack add py-fenics-basix
+          spack install --test=root
+      - name: Install Basix and run tests
+        if: github.event_name == 'workflow_dispatch'
         run: |
           . ./spack/share/spack/setup-env.sh
           spack env create main

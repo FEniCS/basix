@@ -69,7 +69,6 @@ def jekyll(a):
             this_c = c
             for j, k in i.items():
                 if j == "page" and k.startswith("/"):
-                    print(j, k)
                     this_c = this_c.replace(f"{{{{ link.{j} }}}}", f"https://fenicsproject.org{k}")
                 else:
                     this_c = this_c.replace(f"{{{{ link.{j} }}}}", k)
@@ -77,17 +76,17 @@ def jekyll(a):
         a += d
     if "{% if page.image %}" in a:
         b, c = a.split("{% if page.image %}")
-        _, c = c.split("{% else %}", 1)
+        _, c = c.split("\n{% else %}", 1)
         c, d = c.split("{% endif %}", 1)
         a = b + c + d
 
     if "{{ page.title | default: site.title }}" in a:
         with open(path("template/title.html")) as f:
             a = a.replace("{{ page.title | default: site.title }}", f.read())
-    if "\n{% if page.subtitle %}" in a:
-        b, c = a.split("\n{% if page.subtitle %}")
-        _, c = c.split("\n{% endif %}", 1)
-        a = b + c
+
+    while "{% if" in a:
+        asp = a.split("{% if")
+        a = "{% if".join(asp[:-1]) + asp[-1].split("{% endif %}", 1)[1]
 
     a = re.sub(r"\{\{[^}]+\| default: (?:'|\")([^}]+)(?:'|\") \}\}", r"\1", a)
     a = re.sub(r"\{\{ (?:'|\")\/assets\/css\/style\.css\?v=(?:'|\")[^\}]+\}\}", "/assets/css/style.css", a)

@@ -115,14 +115,14 @@ if args.clone == "true":
         system(f"rm -r {path('web')}")
     system(f"git clone http://github.com/FEniCS/web {path('web')}")
 
-with open(f"{path('web')}/template.md", "w") as f:
-    f.write("---\n")
-    f.write(insert_info("title: \"Basix {{VERSION}}\"\n"))
-    f.write("---\n")
-    f.write("\n")
-    f.write("!!CONTENT!!\n")
+    with open(f"{path('web')}/template.md", "w") as f:
+        f.write("---\n")
+        f.write(insert_info("title: \"Basix {{VERSION}}\"\n"))
+        f.write("---\n")
+        f.write("\n")
+        f.write("!!CONTENT!!\n")
 
-system(f"cd {path('web')} && bundle install && bundle exec jekyll build")
+    system(f"cd {path('web')} && bundle install && bundle exec jekyll build")
 
 with open(f"{path('web')}/_site/template.html") as f:
     template = f.read()
@@ -134,7 +134,6 @@ template = template.replace("(/assets", "(https://fenicsproject.org/assets")
 with open(f"{path('web')}/_site/template.html", "w") as f:
     f.write(template)
 intro, outro = template.split("!!CONTENT!!")
-
 
 with open(path("template/navbar.html")) as f:
     intro += f"<h2 id=\"project_subtitle\">{insert_info(f.read())}</h2>"

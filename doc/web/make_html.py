@@ -131,8 +131,6 @@ template = template.replace("!!</p>", "!!")
 template = template.replace("=\"/", "=\"https://fenicsproject.org/")
 template = template.replace("(/assets", "(https://fenicsproject.org/assets")
 
-with open(f"{path('web')}/_site/template.html", "w") as f:
-    f.write(template)
 intro, outro = template.split("!!CONTENT!!")
 
 with open(path("template/navbar.html")) as f:

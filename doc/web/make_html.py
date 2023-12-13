@@ -2,7 +2,6 @@ import argparse
 import os
 import re
 
-import yaml
 from markdown import markdown as _markdown
 
 import basix

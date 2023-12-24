@@ -64,7 +64,8 @@ jobs:
           cd doc/cpp
           doxygen
           cd ../python
-          make html
+          python -m sphinx -W -b html source build/html
+          rm -rf build/html/.doctrees
       - name: Upload C++ documentation artifact
         uses: actions/upload-artifact@v3
         with:
@@ -83,6 +84,7 @@ jobs:
           if-no-files-found: error
       - name: Build website documentation
         run: |
+          sudo apt-get install -y ruby-bundler ruby-dev
           export BASIX_VERSION=`python3 -c "import basix; print(basix.__version__)"`
           cd doc/web
           python make_html.py

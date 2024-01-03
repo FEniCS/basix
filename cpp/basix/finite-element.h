@@ -816,7 +816,7 @@ public:
   /// @param cell_info The permutation info for the cell
   template <typename T>
   void pre_apply_dof_transformation(std::span<T> data, int block_size,
-                                std::uint32_t cell_info) const;
+                                    std::uint32_t cell_info) const;
 
   /// Multiply data by transpose DOF transformation matrix from the left
   ///
@@ -828,7 +828,7 @@ public:
   /// @param cell_info The permutation info for the cell
   template <typename T>
   void pre_apply_transpose_dof_transformation(std::span<T> data, int block_size,
-                                          std::uint32_t cell_info) const;
+                                              std::uint32_t cell_info) const;
 
   /// Multiply data by inverse transpose DOF transformation matrix from the left
   ///
@@ -839,9 +839,8 @@ public:
   /// @param block_size The number of data points per DOF
   /// @param cell_info The permutation info for the cell
   template <typename T>
-  void
-  pre_apply_inverse_transpose_dof_transformation(std::span<T> data, int block_size,
-                                             std::uint32_t cell_info) const;
+  void pre_apply_inverse_transpose_dof_transformation(
+      std::span<T> data, int block_size, std::uint32_t cell_info) const;
 
   /// Multiply data by inverse DOF transformation matrix from the left
   ///
@@ -853,7 +852,7 @@ public:
   /// @param cell_info The permutation info for the cell
   template <typename T>
   void pre_apply_inverse_dof_transformation(std::span<T> data, int block_size,
-                                        std::uint32_t cell_info) const;
+                                            std::uint32_t cell_info) const;
 
   /// Multiply data by transpose DOF transformation matrix from the right
   ///
@@ -864,8 +863,9 @@ public:
   /// @param block_size The number of data points per DOF
   /// @param cell_info The permutation info for the cell
   template <typename T>
-  void post_apply_transpose_dof_transformation(std::span<T> data, int block_size,
-                                             std::uint32_t cell_info) const;
+  void post_apply_transpose_dof_transformation(std::span<T> data,
+                                               int block_size,
+                                               std::uint32_t cell_info) const;
 
   /// Multiply data by DOF transformation matrix from the right
   ///
@@ -876,8 +876,8 @@ public:
   /// @param block_size The number of data points per DOF
   /// @param cell_info The permutation info for the cell
   template <typename T>
-  void post_apply_dof_transformation(
-      std::span<T> data, int block_size, std::uint32_t cell_info) const;
+  void post_apply_dof_transformation(std::span<T> data, int block_size,
+                                     std::uint32_t cell_info) const;
 
   /// Multiply data by inverse DOF transformation matrix from the right
   ///
@@ -888,8 +888,8 @@ public:
   /// @param block_size The number of data points per DOF
   /// @param cell_info The permutation info for the cell
   template <typename T>
-  void post_apply_inverse_dof_transformation(
-      std::span<T> data, int block_size, std::uint32_t cell_info) const;
+  void post_apply_inverse_dof_transformation(std::span<T> data, int block_size,
+                                             std::uint32_t cell_info) const;
 
   /// Multiply data by inverse transpose DOF transformation matrix from the
   /// right
@@ -1375,7 +1375,7 @@ void FiniteElement<F>::permute_data(
         // Reverse an edge
         if (cell_info >> (face_start + e) & 1)
           precompute::pre_apply_permutation_mapped(trans, data, _edofs[1][e],
-                                               block_size);
+                                                   block_size);
       }
     }
 
@@ -1390,21 +1390,21 @@ void FiniteElement<F>::permute_data(
         if (!post and cell_info >> (3 * f) & 1)
         {
           precompute::pre_apply_permutation_mapped(trans[1], data, _edofs[2][f],
-                                               block_size);
+                                                   block_size);
         }
 
         // Rotate a face
         for (std::uint32_t r = 0; r < (cell_info >> (3 * f + 1) & 3); ++r)
         {
           precompute::pre_apply_permutation_mapped(trans[0], data, _edofs[2][f],
-                                               block_size);
+                                                   block_size);
         }
 
         // Reflect a face (post rotate)
         if (post and cell_info >> (3 * f) & 1)
         {
           precompute::pre_apply_permutation_mapped(trans[1], data, _edofs[2][f],
-                                               block_size);
+                                                   block_size);
         }
       }
     }
@@ -1490,9 +1490,8 @@ void FiniteElement<F>::transform_data(
 //-----------------------------------------------------------------------------
 template <std::floating_point F>
 template <typename T>
-void FiniteElement<F>::pre_apply_dof_transformation(std::span<T> data,
-                                                int block_size,
-                                                std::uint32_t cell_info) const
+void FiniteElement<F>::pre_apply_dof_transformation(
+    std::span<T> data, int block_size, std::uint32_t cell_info) const
 {
   if (_dof_transformations_are_identity)
     return;

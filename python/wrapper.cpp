@@ -80,182 +80,9 @@ auto as_nbarrayp(std::pair<V, std::array<std::size_t, U>>&& x)
   return as_nbarray(std::move(x.first), x.second.size(), x.second.data());
 }
 
-} // namespace
-
-NB_MODULE(_basixcpp, m)
+template <typename T>
+void declare_float(nb::module_& m, std::string /*type*/)
 {
-  m.doc() = "Interface to the Basix C++ library.";
-  m.attr("__version__") = basix::version();
-
-  m.def("topology", &cell::topology, basix::docstring::topology.c_str());
-  m.def(
-      "geometry",
-      [](cell::type celltype)
-      { return as_nbarrayp(cell::geometry<double>(celltype)); },
-      basix::docstring::geometry.c_str());
-  m.def("sub_entity_connectivity", &cell::sub_entity_connectivity,
-        basix::docstring::sub_entity_connectivity.c_str());
-  m.def(
-      "sub_entity_geometry",
-      [](cell::type celltype, int dim, int index)
-      {
-        return as_nbarrayp(
-            cell::sub_entity_geometry<double>(celltype, dim, index));
-      },
-      basix::docstring::sub_entity_geometry.c_str());
-
-  m.def("sobolev_space_intersection", &sobolev::space_intersection,
-        basix::docstring::space_intersection.c_str());
-
-  nb::enum_<lattice::type>(m, "LatticeType")
-      .value("equispaced", lattice::type::equispaced)
-      .value("gll", lattice::type::gll)
-      .value("chebyshev", lattice::type::chebyshev)
-      .value("gl", lattice::type::gl)
-      .def_prop_ro("name",
-                   [](nb::object obj) { return nb::getattr(obj, "__name__"); });
-  nb::enum_<lattice::simplex_method>(m, "LatticeSimplexMethod")
-      .value("none", lattice::simplex_method::none)
-      .value("warp", lattice::simplex_method::warp)
-      .value("isaac", lattice::simplex_method::isaac)
-      .value("centroid", lattice::simplex_method::centroid)
-      .def_prop_ro("name",
-                   [](nb::object obj) { return nb::getattr(obj, "__name__"); });
-
-  nb::enum_<polynomials::type>(m, "PolynomialType")
-      .value("legendre", polynomials::type::legendre)
-      .value("bernstein", polynomials::type::bernstein)
-      .def_prop_ro("name",
-                   [](nb::object obj) { return nb::getattr(obj, "__name__"); });
-
-  m.def(
-      "tabulate_polynomials",
-      [](polynomials::type polytype, cell::type celltype, int d,
-         nb::ndarray<const double, nb::ndim<2>, nb::c_contig> x)
-      {
-        mdspan_t<const double, 2> _x(x.data(), x.shape(0), x.shape(1));
-        return as_nbarrayp(polynomials::tabulate(polytype, celltype, d, _x));
-      },
-      basix::docstring::tabulate_polynomials.c_str());
-  m.def("polynomials_dim", &polynomials::dim,
-        basix::docstring::polynomials_dim.c_str());
-
-  m.def(
-      "create_lattice",
-      [](cell::type celltype, int n, lattice::type type, bool exterior)
-      {
-        return as_nbarrayp(lattice::create<double>(
-            celltype, n, type, exterior, lattice::simplex_method::none));
-      },
-      basix::docstring::create_lattice__celltype_n_type_exterior.c_str());
-
-  m.def(
-      "create_lattice",
-      [](cell::type celltype, int n, lattice::type type, bool exterior,
-         lattice::simplex_method method)
-      {
-        return as_nbarrayp(
-            lattice::create<double>(celltype, n, type, exterior, method));
-      },
-      basix::docstring::create_lattice__celltype_n_type_exterior_method
-          .c_str());
-
-  nb::enum_<maps::type>(m, "MapType")
-      .value("identity", maps::type::identity)
-      .value("L2Piola", maps::type::L2Piola)
-      .value("covariantPiola", maps::type::covariantPiola)
-      .value("contravariantPiola", maps::type::contravariantPiola)
-      .value("doubleCovariantPiola", maps::type::doubleCovariantPiola)
-      .value("doubleContravariantPiola", maps::type::doubleContravariantPiola)
-      .def_prop_ro("name",
-                   [](nb::object obj) { return nb::getattr(obj, "__name__"); });
-
-  nb::enum_<sobolev::space>(m, "SobolevSpace")
-      .value("L2", sobolev::space::L2)
-      .value("H1", sobolev::space::H1)
-      .value("H2", sobolev::space::H2)
-      .value("H3", sobolev::space::H3)
-      .value("HInf", sobolev::space::HInf)
-      .value("HDiv", sobolev::space::HDiv)
-      .value("HCurl", sobolev::space::HCurl)
-      .value("HEin", sobolev::space::HEin)
-      .value("HDivDiv", sobolev::space::HDivDiv)
-      .def_prop_ro("name",
-                   [](nb::object obj) { return nb::getattr(obj, "__name__"); });
-
-  nb::enum_<quadrature::type>(m, "QuadratureType")
-      .value("Default", quadrature::type::Default)
-      .value("gauss_jacobi", quadrature::type::gauss_jacobi)
-      .value("gll", quadrature::type::gll)
-      .value("xiao_gimbutas", quadrature::type::xiao_gimbutas)
-      .def_prop_ro("name",
-                   [](nb::object obj) { return nb::getattr(obj, "__name__"); });
-
-  nb::enum_<cell::type>(m, "CellType", nb::is_arithmetic())
-      .value("point", cell::type::point)
-      .value("interval", cell::type::interval)
-      .value("triangle", cell::type::triangle)
-      .value("tetrahedron", cell::type::tetrahedron)
-      .value("quadrilateral", cell::type::quadrilateral)
-      .value("hexahedron", cell::type::hexahedron)
-      .value("prism", cell::type::prism)
-      .value("pyramid", cell::type::pyramid)
-      .def_prop_ro("name",
-                   [](nb::object obj) { return nb::getattr(obj, "__name__"); });
-
-  m.def(
-      "cell_volume",
-      [](cell::type cell_type) -> double
-      { return cell::volume<double>(cell_type); },
-      basix::docstring::cell_volume.c_str());
-  m.def(
-      "cell_facet_normals",
-      [](cell::type cell_type)
-      { return as_nbarrayp(cell::facet_normals<double>(cell_type)); },
-      basix::docstring::cell_facet_normals.c_str());
-  m.def(
-      "cell_facet_reference_volumes",
-      [](cell::type cell_type)
-      { return as_nbarray(cell::facet_reference_volumes<double>(cell_type)); },
-      basix::docstring::cell_facet_reference_volumes.c_str());
-  m.def(
-      "cell_facet_outward_normals",
-      [](cell::type cell_type)
-      { return as_nbarrayp(cell::facet_outward_normals<double>(cell_type)); },
-      basix::docstring::cell_facet_outward_normals.c_str());
-  m.def(
-      "cell_facet_orientations",
-      [](cell::type cell_type)
-      {
-        std::vector<bool> c = cell::facet_orientations(cell_type);
-        std::vector<std::uint8_t> c8(c.begin(), c.end());
-        return c8;
-      },
-      basix::docstring::cell_facet_orientations.c_str());
-  m.def(
-      "cell_facet_jacobians",
-      [](cell::type cell_type)
-      { return as_nbarrayp(cell::facet_jacobians<double>(cell_type)); },
-      basix::docstring::cell_facet_jacobians.c_str());
-
-  nb::enum_<element::family>(m, "ElementFamily")
-      .value("custom", element::family::custom)
-      .value("P", element::family::P)
-      .value("BDM", element::family::BDM)
-      .value("RT", element::family::RT)
-      .value("N1E", element::family::N1E)
-      .value("N2E", element::family::N2E)
-      .value("Regge", element::family::Regge)
-      .value("HHJ", element::family::HHJ)
-      .value("bubble", element::family::bubble)
-      .value("serendipity", element::family::serendipity)
-      .value("DPC", element::family::DPC)
-      .value("CR", element::family::CR)
-      .value("Hermite", element::family::Hermite)
-      .value("iso", element::family::iso)
-      .def_prop_ro("name",
-                   [](nb::object obj) { return nb::getattr(obj, "__name__"); });
-
   nb::class_<FiniteElement<double>>(m, "FiniteElement")
       .def(
           "tabulate",
@@ -311,8 +138,8 @@ NB_MODULE(_basixcpp, m)
              nb::ndarray<double, nb::ndim<1>, nb::c_contig> data,
              int block_size, std::uint32_t cell_info)
           {
-            self.pre_apply_dof_transformation(std::span(data.data(), data.size()),
-                                          block_size, cell_info);
+            self.pre_apply_dof_transformation(
+                std::span(data.data(), data.size()), block_size, cell_info);
           },
           basix::docstring::FiniteElement__pre_apply_dof_transformation.c_str())
       .def(
@@ -324,8 +151,8 @@ NB_MODULE(_basixcpp, m)
             self.post_apply_transpose_dof_transformation(
                 std::span(data.data(), data.size()), block_size, cell_info);
           },
-          basix::docstring::FiniteElement__post_apply_transpose_dof_transformation
-              .c_str())
+          basix::docstring::
+              FiniteElement__post_apply_transpose_dof_transformation.c_str())
       .def(
           "pre_apply_inverse_transpose_dof_transformation",
           [](const FiniteElement<double>& self,
@@ -336,7 +163,8 @@ NB_MODULE(_basixcpp, m)
                 std::span(data.data(), data.size()), block_size, cell_info);
           },
           basix::docstring::
-              FiniteElement__pre_apply_inverse_transpose_dof_transformation.c_str())
+              FiniteElement__pre_apply_inverse_transpose_dof_transformation
+                  .c_str())
       .def(
           "base_transformations",
           [](const FiniteElement<double>& self)
@@ -513,6 +341,448 @@ NB_MODULE(_basixcpp, m)
                    &FiniteElement<double>::interpolation_nderivs, "TODO")
       .def_prop_ro("dof_ordering", &FiniteElement<double>::dof_ordering,
                    "TODO");
+}
+
+} // namespace
+
+NB_MODULE(_basixcpp, m)
+{
+  m.doc() = "Interface to the Basix C++ library.";
+  m.attr("__version__") = basix::version();
+
+  m.def("topology", &cell::topology, basix::docstring::topology.c_str());
+  m.def(
+      "geometry",
+      [](cell::type celltype)
+      { return as_nbarrayp(cell::geometry<double>(celltype)); },
+      basix::docstring::geometry.c_str());
+  m.def("sub_entity_connectivity", &cell::sub_entity_connectivity,
+        basix::docstring::sub_entity_connectivity.c_str());
+  m.def(
+      "sub_entity_geometry",
+      [](cell::type celltype, int dim, int index)
+      {
+        return as_nbarrayp(
+            cell::sub_entity_geometry<double>(celltype, dim, index));
+      },
+      basix::docstring::sub_entity_geometry.c_str());
+
+  m.def("sobolev_space_intersection", &sobolev::space_intersection,
+        basix::docstring::space_intersection.c_str());
+
+  nb::enum_<lattice::type>(m, "LatticeType")
+      .value("equispaced", lattice::type::equispaced)
+      .value("gll", lattice::type::gll)
+      .value("chebyshev", lattice::type::chebyshev)
+      .value("gl", lattice::type::gl)
+      .def_prop_ro("name",
+                   [](nb::object obj) { return nb::getattr(obj, "__name__"); });
+  nb::enum_<lattice::simplex_method>(m, "LatticeSimplexMethod")
+      .value("none", lattice::simplex_method::none)
+      .value("warp", lattice::simplex_method::warp)
+      .value("isaac", lattice::simplex_method::isaac)
+      .value("centroid", lattice::simplex_method::centroid)
+      .def_prop_ro("name",
+                   [](nb::object obj) { return nb::getattr(obj, "__name__"); });
+
+  nb::enum_<polynomials::type>(m, "PolynomialType")
+      .value("legendre", polynomials::type::legendre)
+      .value("bernstein", polynomials::type::bernstein)
+      .def_prop_ro("name",
+                   [](nb::object obj) { return nb::getattr(obj, "__name__"); });
+
+  m.def(
+      "tabulate_polynomials",
+      [](polynomials::type polytype, cell::type celltype, int d,
+         nb::ndarray<const double, nb::ndim<2>, nb::c_contig> x)
+      {
+        mdspan_t<const double, 2> _x(x.data(), x.shape(0), x.shape(1));
+        return as_nbarrayp(polynomials::tabulate(polytype, celltype, d, _x));
+      },
+      basix::docstring::tabulate_polynomials.c_str());
+  m.def("polynomials_dim", &polynomials::dim,
+        basix::docstring::polynomials_dim.c_str());
+
+  m.def(
+      "create_lattice",
+      [](cell::type celltype, int n, lattice::type type, bool exterior)
+      {
+        return as_nbarrayp(lattice::create<double>(
+            celltype, n, type, exterior, lattice::simplex_method::none));
+      },
+      basix::docstring::create_lattice__celltype_n_type_exterior.c_str());
+
+  m.def(
+      "create_lattice",
+      [](cell::type celltype, int n, lattice::type type, bool exterior,
+         lattice::simplex_method method)
+      {
+        return as_nbarrayp(
+            lattice::create<double>(celltype, n, type, exterior, method));
+      },
+      basix::docstring::create_lattice__celltype_n_type_exterior_method
+          .c_str());
+
+  nb::enum_<maps::type>(m, "MapType")
+      .value("identity", maps::type::identity)
+      .value("L2Piola", maps::type::L2Piola)
+      .value("covariantPiola", maps::type::covariantPiola)
+      .value("contravariantPiola", maps::type::contravariantPiola)
+      .value("doubleCovariantPiola", maps::type::doubleCovariantPiola)
+      .value("doubleContravariantPiola", maps::type::doubleContravariantPiola)
+      .def_prop_ro("name",
+                   [](nb::object obj) { return nb::getattr(obj, "__name__"); });
+
+  nb::enum_<sobolev::space>(m, "SobolevSpace")
+      .value("L2", sobolev::space::L2)
+      .value("H1", sobolev::space::H1)
+      .value("H2", sobolev::space::H2)
+      .value("H3", sobolev::space::H3)
+      .value("HInf", sobolev::space::HInf)
+      .value("HDiv", sobolev::space::HDiv)
+      .value("HCurl", sobolev::space::HCurl)
+      .value("HEin", sobolev::space::HEin)
+      .value("HDivDiv", sobolev::space::HDivDiv)
+      .def_prop_ro("name",
+                   [](nb::object obj) { return nb::getattr(obj, "__name__"); });
+
+  nb::enum_<quadrature::type>(m, "QuadratureType")
+      .value("Default", quadrature::type::Default)
+      .value("gauss_jacobi", quadrature::type::gauss_jacobi)
+      .value("gll", quadrature::type::gll)
+      .value("xiao_gimbutas", quadrature::type::xiao_gimbutas)
+      .def_prop_ro("name",
+                   [](nb::object obj) { return nb::getattr(obj, "__name__"); });
+
+  nb::enum_<cell::type>(m, "CellType", nb::is_arithmetic())
+      .value("point", cell::type::point)
+      .value("interval", cell::type::interval)
+      .value("triangle", cell::type::triangle)
+      .value("tetrahedron", cell::type::tetrahedron)
+      .value("quadrilateral", cell::type::quadrilateral)
+      .value("hexahedron", cell::type::hexahedron)
+      .value("prism", cell::type::prism)
+      .value("pyramid", cell::type::pyramid)
+      .def_prop_ro("name",
+                   [](nb::object obj) { return nb::getattr(obj, "__name__"); });
+
+  m.def(
+      "cell_volume",
+      [](cell::type cell_type) -> double
+      { return cell::volume<double>(cell_type); },
+      basix::docstring::cell_volume.c_str());
+  m.def(
+      "cell_facet_normals",
+      [](cell::type cell_type)
+      { return as_nbarrayp(cell::facet_normals<double>(cell_type)); },
+      basix::docstring::cell_facet_normals.c_str());
+  m.def(
+      "cell_facet_reference_volumes",
+      [](cell::type cell_type)
+      { return as_nbarray(cell::facet_reference_volumes<double>(cell_type)); },
+      basix::docstring::cell_facet_reference_volumes.c_str());
+  m.def(
+      "cell_facet_outward_normals",
+      [](cell::type cell_type)
+      { return as_nbarrayp(cell::facet_outward_normals<double>(cell_type)); },
+      basix::docstring::cell_facet_outward_normals.c_str());
+  m.def(
+      "cell_facet_orientations",
+      [](cell::type cell_type)
+      {
+        std::vector<bool> c = cell::facet_orientations(cell_type);
+        std::vector<std::uint8_t> c8(c.begin(), c.end());
+        return c8;
+      },
+      basix::docstring::cell_facet_orientations.c_str());
+  m.def(
+      "cell_facet_jacobians",
+      [](cell::type cell_type)
+      { return as_nbarrayp(cell::facet_jacobians<double>(cell_type)); },
+      basix::docstring::cell_facet_jacobians.c_str());
+
+  nb::enum_<element::family>(m, "ElementFamily")
+      .value("custom", element::family::custom)
+      .value("P", element::family::P)
+      .value("BDM", element::family::BDM)
+      .value("RT", element::family::RT)
+      .value("N1E", element::family::N1E)
+      .value("N2E", element::family::N2E)
+      .value("Regge", element::family::Regge)
+      .value("HHJ", element::family::HHJ)
+      .value("bubble", element::family::bubble)
+      .value("serendipity", element::family::serendipity)
+      .value("DPC", element::family::DPC)
+      .value("CR", element::family::CR)
+      .value("Hermite", element::family::Hermite)
+      .value("iso", element::family::iso)
+      .def_prop_ro("name",
+                   [](nb::object obj) { return nb::getattr(obj, "__name__"); });
+
+  // nb::class_<FiniteElement<double>>(m, "FiniteElement")
+  //     .def(
+  //         "tabulate",
+  //         [](const FiniteElement<double>& self, int n,
+  //            nb::ndarray<const double, nb::ndim<2>, nb::c_contig> x)
+  //         {
+  //           mdspan_t<const double, 2> _x(x.data(), x.shape(0), x.shape(1));
+  //           return as_nbarrayp(self.tabulate(n, _x));
+  //         },
+  //         basix::docstring::FiniteElement__tabulate.c_str())
+  //     .def("__eq__", &FiniteElement<double>::operator==)
+  //     .def(
+  //         "push_forward",
+  //         [](const FiniteElement<double>& self,
+  //            nb::ndarray<const double, nb::ndim<3>, nb::c_contig> U,
+  //            nb::ndarray<const double, nb::ndim<3>, nb::c_contig> J,
+  //            nb::ndarray<const double, nb::ndim<1>, nb::c_contig> detJ,
+  //            nb::ndarray<const double, nb::ndim<3>, nb::c_contig> K)
+  //         {
+  //           auto u = self.push_forward(
+  //               mdspan_t<const double, 3>(U.data(), U.shape(0), U.shape(1),
+  //                                         U.shape(2)),
+  //               mdspan_t<const double, 3>(J.data(), J.shape(0), J.shape(1),
+  //                                         J.shape(2)),
+  //               std::span<const double>(detJ.data(), detJ.shape(0)),
+  //               mdspan_t<const double, 3>(K.data(), K.shape(0), K.shape(1),
+  //                                         K.shape(2)));
+  //           return as_nbarrayp(std::move(u));
+  //         },
+  //         basix::docstring::FiniteElement__push_forward.c_str())
+  //     .def(
+  //         "pull_back",
+  //         [](const FiniteElement<double>& self,
+  //            nb::ndarray<const double, nb::ndim<3>, nb::c_contig> u,
+  //            nb::ndarray<const double, nb::ndim<3>, nb::c_contig> J,
+  //            nb::ndarray<const double, nb::ndim<1>, nb::c_contig> detJ,
+  //            nb::ndarray<const double, nb::ndim<3>, nb::c_contig> K)
+  //         {
+  //           auto U = self.pull_back(
+  //               mdspan_t<const double, 3>(u.data(), u.shape(0), u.shape(1),
+  //                                         u.shape(2)),
+  //               mdspan_t<const double, 3>(J.data(), J.shape(0), J.shape(1),
+  //                                         J.shape(2)),
+  //               std::span<const double>(detJ.data(), detJ.shape(0)),
+  //               mdspan_t<const double, 3>(K.data(), K.shape(0), K.shape(1),
+  //                                         K.shape(2)));
+  //           return as_nbarrayp(std::move(U));
+  //         },
+  //         basix::docstring::FiniteElement__pull_back.c_str())
+  //     .def(
+  //         "pre_apply_dof_transformation",
+  //         [](const FiniteElement<double>& self,
+  //            nb::ndarray<double, nb::ndim<1>, nb::c_contig> data,
+  //            int block_size, std::uint32_t cell_info)
+  //         {
+  //           self.pre_apply_dof_transformation(std::span(data.data(),
+  //           data.size()),
+  //                                         block_size, cell_info);
+  //         },
+  //         basix::docstring::FiniteElement__pre_apply_dof_transformation.c_str())
+  //     .def(
+  //         "post_apply_transpose_dof_transformation",
+  //         [](const FiniteElement<double>& self,
+  //            nb::ndarray<double, nb::ndim<1>, nb::c_contig> data,
+  //            int block_size, std::uint32_t cell_info)
+  //         {
+  //           self.post_apply_transpose_dof_transformation(
+  //               std::span(data.data(), data.size()), block_size, cell_info);
+  //         },
+  //         basix::docstring::FiniteElement__post_apply_transpose_dof_transformation
+  //             .c_str())
+  //     .def(
+  //         "pre_apply_inverse_transpose_dof_transformation",
+  //         [](const FiniteElement<double>& self,
+  //            nb::ndarray<double, nb::ndim<1>, nb::c_contig> data,
+  //            int block_size, std::uint32_t cell_info)
+  //         {
+  //           self.pre_apply_inverse_transpose_dof_transformation(
+  //               std::span(data.data(), data.size()), block_size, cell_info);
+  //         },
+  //         basix::docstring::
+  //             FiniteElement__pre_apply_inverse_transpose_dof_transformation.c_str())
+  //     .def(
+  //         "base_transformations",
+  //         [](const FiniteElement<double>& self)
+  //         { return as_nbarrayp(self.base_transformations()); },
+  //         basix::docstring::FiniteElement__base_transformations.c_str())
+  //     .def(
+  //         "entity_transformations",
+  //         [](const FiniteElement<double>& self)
+  //         {
+  //           nb::dict t;
+  //           for (auto& [key, data] : self.entity_transformations())
+  //             t[cell_type_to_str(key).c_str()] =
+  //             as_nbarrayp(std::move(data));
+  //           return t;
+  //         },
+  //         basix::docstring::FiniteElement__entity_transformations.c_str())
+  //     .def(
+  //         "get_tensor_product_representation",
+  //         [](const FiniteElement<double>& self)
+  //         { return self.get_tensor_product_representation(); },
+  //         basix::docstring::FiniteElement__get_tensor_product_representation
+  //             .c_str())
+  //     .def_prop_ro("degree", &FiniteElement<double>::degree)
+  //     .def_prop_ro("embedded_superdegree",
+  //                  &FiniteElement<double>::embedded_superdegree)
+  //     .def_prop_ro("embedded_subdegree",
+  //                  &FiniteElement<double>::embedded_subdegree)
+  //     .def_prop_ro("cell_type", &FiniteElement<double>::cell_type)
+  //     .def_prop_ro("polyset_type", &FiniteElement<double>::polyset_type)
+  //     .def_prop_ro("dim", &FiniteElement<double>::dim)
+  //     .def_prop_ro("num_entity_dofs",
+  //                  [](const FiniteElement<double>& self)
+  //                  {
+  //                    // TODO: remove this function. Information can
+  //                    // retrieved from entity_dofs.
+  //                    auto& edofs = self.entity_dofs();
+  //                    std::vector<std::vector<int>> num_edofs;
+  //                    for (auto& edofs_d : edofs)
+  //                    {
+  //                      auto& ndofs = num_edofs.emplace_back();
+  //                      for (auto& edofs : edofs_d)
+  //                        ndofs.push_back(edofs.size());
+  //                    }
+  //                    return num_edofs;
+  //                  })
+  //     .def_prop_ro("entity_dofs", &FiniteElement<double>::entity_dofs)
+  //     .def_prop_ro("num_entity_closure_dofs",
+  //                  [](const FiniteElement<double>& self)
+  //                  {
+  //                    // TODO: remove this function. Information can
+  //                    // retrieved from entity_closure_dofs.
+  //                    auto& edofs = self.entity_closure_dofs();
+  //                    std::vector<std::vector<int>> num_edofs;
+  //                    for (auto& edofs_d : edofs)
+  //                    {
+  //                      auto& ndofs = num_edofs.emplace_back();
+  //                      for (auto& edofs : edofs_d)
+  //                        ndofs.push_back(edofs.size());
+  //                    }
+  //                    return num_edofs;
+  //                  })
+  //     .def_prop_ro("entity_closure_dofs",
+  //                  &FiniteElement<double>::entity_closure_dofs)
+  //     .def_prop_ro("value_size",
+  //                  [](const FiniteElement<double>& self)
+  //                  {
+  //                    return std::accumulate(self.value_shape().begin(),
+  //                                           self.value_shape().end(), 1,
+  //                                           std::multiplies{});
+  //                  })
+  //     .def_prop_ro("value_shape", &FiniteElement<double>::value_shape)
+  //     .def_prop_ro("discontinuous", &FiniteElement<double>::discontinuous)
+  //     .def_prop_ro("family", &FiniteElement<double>::family)
+  //     .def_prop_ro("lagrange_variant",
+  //     &FiniteElement<double>::lagrange_variant) .def_prop_ro("dpc_variant",
+  //     &FiniteElement<double>::dpc_variant)
+  //     .def_prop_ro("dof_transformations_are_permutations",
+  //                  &FiniteElement<double>::dof_transformations_are_permutations)
+  //     .def_prop_ro("dof_transformations_are_identity",
+  //                  &FiniteElement<double>::dof_transformations_are_identity)
+  //     .def_prop_ro("interpolation_is_identity",
+  //                  &FiniteElement<double>::interpolation_is_identity)
+  //     .def_prop_ro("map_type", &FiniteElement<double>::map_type)
+  //     .def_prop_ro("sobolev_space", &FiniteElement<double>::sobolev_space)
+  //     .def_prop_ro(
+  //         "points",
+  //         [](const FiniteElement<double>& self)
+  //         {
+  //           auto& [x, shape] = self.points();
+  //           return nb::ndarray<const double, nb::ndim<2>, nb::numpy>(
+  //               x.data(), shape.size(), shape.data());
+  //         },
+  //         nb::rv_policy::reference_internal, "TODO")
+  //     .def_prop_ro(
+  //         "interpolation_matrix",
+  //         [](const FiniteElement<double>& self)
+  //         {
+  //           auto& [P, shape] = self.interpolation_matrix();
+  //           return nb::ndarray<const double, nb::ndim<2>, nb::numpy>(
+  //               P.data(), shape.size(), shape.data());
+  //         },
+  //         nb::rv_policy::reference_internal, "TODO")
+  //     .def_prop_ro(
+  //         "dual_matrix",
+  //         [](const FiniteElement<double>& self)
+  //         {
+  //           auto& [D, shape] = self.dual_matrix();
+  //           return nb::ndarray<const double, nb::ndim<2>, nb::numpy>(
+  //               D.data(), shape.size(), shape.data());
+  //         },
+  //         nb::rv_policy::reference_internal, "TODO")
+  //     .def_prop_ro(
+  //         "coefficient_matrix",
+  //         [](const FiniteElement<double>& self)
+  //         {
+  //           auto& [P, shape] = self.coefficient_matrix();
+  //           return nb::ndarray<const double, nb::ndim<2>, nb::numpy>(
+  //               P.data(), shape.size(), shape.data());
+  //         },
+  //         nb::rv_policy::reference_internal, "Coefficient matrix.")
+  //     .def_prop_ro(
+  //         "wcoeffs",
+  //         [](const FiniteElement<double>& self)
+  //         {
+  //           auto& [w, shape] = self.wcoeffs();
+  //           return nb::ndarray<const double, nb::ndim<2>, nb::numpy>(
+  //               w.data(), shape.size(), shape.data());
+  //         },
+  //         nb::rv_policy::reference_internal, "TODO")
+  //     .def_prop_ro(
+  //         "M",
+  //         [](const FiniteElement<double>& self)
+  //         {
+  //           const std::array<std::vector<std::pair<std::vector<double>,
+  //                                                  std::array<std::size_t,
+  //                                                  4>>>,
+  //                            4>& _M
+  //               = self.M();
+  //           std::vector<std::vector<nb::ndarray<const double, nb::numpy>>>
+  //           M(4); for (int i = 0; i < 4; ++i)
+  //           {
+  //             for (std::size_t j = 0; j < _M[i].size(); ++j)
+  //             {
+  //               auto& mat = _M[i][j];
+  //               M[i].emplace_back(mat.first.data(), mat.second.size(),
+  //                                 mat.second.data());
+  //             }
+  //           }
+  //           return M;
+  //         },
+  //         nb::rv_policy::reference_internal, "TODO")
+  //     .def_prop_ro(
+  //         "x",
+  //         [](const FiniteElement<double>& self)
+  //         {
+  //           const std::array<std::vector<std::pair<std::vector<double>,
+  //                                                  std::array<std::size_t,
+  //                                                  2>>>,
+  //                            4>& _x
+  //               = self.x();
+  //           std::vector<std::vector<nb::ndarray<const double, nb::numpy>>>
+  //           x(4); for (int i = 0; i < 4; ++i)
+  //           {
+  //             for (std::size_t j = 0; j < _x[i].size(); ++j)
+  //             {
+  //               auto& vec = _x[i][j];
+  //               x[i].emplace_back(vec.first.data(), vec.second.size(),
+  //                                 vec.second.data());
+  //             }
+  //           }
+  //           return x;
+  //         },
+  //         nb::rv_policy::reference_internal)
+  //     .def_prop_ro("has_tensor_product_factorisation",
+  //                  &FiniteElement<double>::has_tensor_product_factorisation,
+  //                  "TODO")
+  //     .def_prop_ro("interpolation_nderivs",
+  //                  &FiniteElement<double>::interpolation_nderivs, "TODO")
+  //     .def_prop_ro("dof_ordering", &FiniteElement<double>::dof_ordering,
+  //                  "TODO");
+
+  declare_float<double>(m, "float64");
 
   nb::enum_<element::lagrange_variant>(m, "LagrangeVariant")
       .value("unset", element::lagrange_variant::unset)

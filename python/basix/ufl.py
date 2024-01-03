@@ -352,8 +352,10 @@ class _ElementBase(_AbstractFiniteElement):
 class _BasixElement(_ElementBase):
     """A wrapper allowing Basix elements to be used directly with UFL.
 
-    This class allows elements created with `basix.create_element` to be wrapped as UFL compatible elements.
-    Users should not directly call this class's initiliser, but should use the `element` function instead.
+    This class allows elements created with `basix.create_element` to be
+    wrapped as UFL compatible elements. Users should not directly call
+    this class's initialiser, but should use the `element` function
+    instead.
     """
 
     element: _basix.finite_element.FiniteElement

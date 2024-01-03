@@ -801,6 +801,7 @@ NB_MODULE(_basixcpp, m)
   //     .def_prop_ro("dof_ordering", &FiniteElement<double>::dof_ordering,
   //                  "TODO");
 
+  declare_float<float>(m, "float32");
   declare_float<double>(m, "float64");
 
   nb::enum_<element::lagrange_variant>(m, "LagrangeVariant")

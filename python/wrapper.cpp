@@ -27,6 +27,8 @@
 #include <vector>
 
 namespace nb = nanobind;
+using namespace nb::literals;
+
 using namespace basix;
 
 template <typename T, std::size_t d>
@@ -359,6 +361,7 @@ void declare_float(nb::module_& m, std::string type)
         mdspan_t<const T, 2> _x(x.data(), x.shape(0), x.shape(1));
         return as_nbarrayp(polyset::tabulate(celltype, polytype, d, n, _x));
       },
+      "celltype"_a, "polytype"_a, "d"_a, "n"_a, "x"_a.noconvert(),
       basix::docstring::tabulate_polynomial_set.c_str());
 }
 

@@ -1,7 +1,7 @@
 """Functions for creating finite elements."""
 
 from basix._basixcpp import ElementFamily as _EF
-from basix._basixcpp import FiniteElement  # noqa: F401
+from basix._basixcpp import FiniteElement_float64  # noqa: F401
 
 
 def string_to_family(family: str, cell: str) -> _EF:

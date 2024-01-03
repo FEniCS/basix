@@ -358,9 +358,9 @@ class _BasixElement(_ElementBase):
     instead.
     """
 
-    element: _basix.finite_element.FiniteElement
+    element: _basix.finite_element.FiniteElement_float64
 
-    def __init__(self, element: _basix.finite_element.FiniteElement, gdim: _typing.Optional[int] = None):
+    def __init__(self, element: _basix.finite_element.FiniteElement_float64, gdim: _typing.Optional[int] = None):
         """Create a Basix element."""
         if element.family == _basix.ElementFamily.custom:
             self._is_custom = True
@@ -1780,7 +1780,7 @@ class _RealElement(_ElementBase):
         raise NotImplementedError()
 
 
-def _compute_signature(element: _basix.finite_element.FiniteElement) -> str:
+def _compute_signature(element: _basix.finite_element.FiniteElement_float64) -> str:
     """Compute a signature of a custom element.
 
     Args:

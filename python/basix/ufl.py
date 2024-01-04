@@ -360,8 +360,10 @@ class _ElementBase(_AbstractFiniteElement):
 class _BasixElement(_ElementBase):
     """A wrapper allowing Basix elements to be used directly with UFL.
 
-    This class allows elements created with `basix.create_element` to be wrapped as UFL compatible elements.
-    Users should not directly call this class's initiliser, but should use the `element` function instead.
+    This class allows elements created with `basix.create_element` to be
+    wrapped as UFL compatible elements. Users should not directly call
+    this class's initiliser, but should use the `element` function
+    instead.
     """
 
     _element: _basix.finite_element.FiniteElement
@@ -1841,7 +1843,8 @@ def element(family: _typing.Union[_basix.ElementFamily, str], cell: _typing.Unio
             lagrange_variant: _basix.LagrangeVariant = _basix.LagrangeVariant.unset,
             dpc_variant: _basix.DPCVariant = _basix.DPCVariant.unset, discontinuous: bool = False,
             shape: _typing.Optional[_typing.Tuple[int, ...]] = None,
-            symmetry: _typing.Optional[bool] = None, gdim: _typing.Optional[int] = None) -> _ElementBase:
+            symmetry: _typing.Optional[bool] = None, gdim: _typing.Optional[int] = None,
+            dtype: _npt.DTypeLike = _np.float64) -> _ElementBase:
     """Create a UFL compatible element using Basix.
 
     Args:
@@ -1899,7 +1902,8 @@ def element(family: _typing.Union[_basix.ElementFamily, str], cell: _typing.Unio
         elif family == EF.DPC:
             dpc_variant = _basix.DPCVariant.diagonal_gll
 
-    e = _basix.create_element(family, cell, degree, lagrange_variant, dpc_variant, discontinuous)
+    e = _basix.create_element(family, cell, degree, lagrange_variant, dpc_variant,
+                              discontinuous, dtype=dtype)
     ufl_e = _BasixElement(e, gdim=gdim)
 
     if shape is None or shape == tuple(e.value_shape):

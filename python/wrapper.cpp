@@ -318,7 +318,15 @@ void declare_float(nb::module_& m, std::string type)
                    &FiniteElement<T>::has_tensor_product_factorisation)
       .def_prop_ro("interpolation_nderivs",
                    &FiniteElement<T>::interpolation_nderivs)
-      .def_prop_ro("dof_ordering", &FiniteElement<T>::dof_ordering);
+      .def_prop_ro("dof_ordering", &FiniteElement<T>::dof_ordering)
+      .def_prop_ro("dtype",
+                   [](const FiniteElement<T>&) -> char
+                   {
+                     if constexpr (std::is_same_v<T, float>)
+                       return 'f';
+                     else
+                       return 'd';
+                   });
 
   // Create FiniteElement
   m.def(

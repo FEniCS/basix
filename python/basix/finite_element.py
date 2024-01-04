@@ -311,7 +311,7 @@ class FiniteElement:
         return self._e.entity_dofs
 
     @property
-    def num_entity_closure_dofs(self) ->  typing.List[typing.List[int]]:
+    def num_entity_closure_dofs(self) -> typing.List[typing.List[int]]:
         """TODO."""
         return self._e.num_entity_closure_dofs
 

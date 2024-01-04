@@ -185,14 +185,14 @@ class FiniteElement:
 
         .. code-block::
 
-            # |\
-            # | \
-            # |  \
-            # <-1   0
-            # |  / \
-            # | L ^ \
-            # |   |  \
-            #     ---2---
+             |\
+             | \
+             |  \
+           <-1   0
+             |  / \
+             | L ^ \
+             |   |  \
+              ---2---
 
         These DOFs are integrals of normal components over the edges: DOFs 0 and 2
         are oriented inward, DOF 1 is oriented outwards.
@@ -227,7 +227,7 @@ class FiniteElement:
             |   \     | | \
             | 0->\    | 1  \
             |     \   |     \
-            ------    ------
+             ------    ------
 
 
         For these DOFs, the subblocks of the base transformation matrices are:
@@ -235,10 +235,9 @@ class FiniteElement:
         .. code-block::
 
             rotation: [[-1, 1],
-                        [ 1, 0]]
+                       [ 1, 0]]
             reflection: [[0, 1],
-                            [1, 0]]
-
+                         [1, 0]]
 
         Returns:
             The base transformations for this element. The shape is

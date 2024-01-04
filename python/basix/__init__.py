@@ -5,15 +5,14 @@ functionality can be used via this Python interface.
 """
 from basix import cell, finite_element, lattice, polynomials, quadrature, sobolev_spaces, variants
 from basix._basixcpp import (CellType, DPCVariant, ElementFamily, LagrangeVariant, LatticeSimplexMethod, LatticeType,
-                             MapType, PolynomialType, PolysetType, QuadratureType, SobolevSpace, __version__,
-                             create_lattice,
-                             geometry, index)
+                             MapType, PolynomialType, PolysetType, QuadratureType, SobolevSpace, __version__)
+from basix._basixcpp import compute_interpolation_operator as _compute_interpolation_operator
+from basix._basixcpp import create_lattice, geometry, index
 from basix._basixcpp import restriction as polyset_restriction
 from basix._basixcpp import superset as polyset_superset
 from basix._basixcpp import tabulate_polynomials, topology
+from basix.finite_element import create_custom_element, create_element
 from basix.quadrature import make_quadrature
-from basix.finite_element import create_element, create_custom_element
-from basix._basixcpp import compute_interpolation_operator as _compute_interpolation_operator
 
 
 def compute_interpolation_operator(e0, e1):

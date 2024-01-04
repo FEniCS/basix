@@ -21,7 +21,6 @@ from ufl.pullback import UndefinedPullback as _UndefinedPullback
 
 import basix as _basix
 
-
 __all__ = ["element", "enriched_element", "custom_element", "mixed_element",
            "quadrature_element", "real_element", "blocked_element"]
 

@@ -9,7 +9,6 @@ from basix._basixcpp import cell_facet_reference_volumes as facet_reference_volu
 from basix._basixcpp import cell_volume as volume  # noqa: F401
 from basix._basixcpp import sub_entity_connectivity  # noqa: F401
 
-
 __all__ = ["string_to_type", "type_to_string"]
 
 

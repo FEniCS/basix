@@ -5,9 +5,7 @@ import typing
 import numpy as _np
 import numpy.typing as npt
 
-from basix._basixcpp import CellType, DPCVariant
-from basix._basixcpp import ElementFamily
-from basix._basixcpp import ElementFamily as _EF
+from basix._basixcpp import CellType, DPCVariant, ElementFamily
 from basix._basixcpp import FiniteElement_float32 as _FiniteElement_float32  # type: ignore
 from basix._basixcpp import FiniteElement_float64 as _FiniteElement_float64  # type: ignore
 from basix._basixcpp import LagrangeVariant, MapType, PolysetType, SobolevSpace
@@ -170,7 +168,6 @@ class FiniteElement:
             |    \
             0-7-8-1
 
-
         For this element, the base transformations are:
         [Matrix swapping 3 and 4,
         Matrix swapping 5 and 6,
@@ -185,6 +182,7 @@ class FiniteElement:
 
         .. code-block::
 
+<<<<<<< HEAD
              |\
              | \
              |  \
@@ -193,6 +191,16 @@ class FiniteElement:
              | L ^ \
              |   |  \
               ---2---
+=======
+              |\
+              | \
+              |  \
+            <-1   0
+              |  / \
+              | L ^ \
+              |   |  \
+               ---2---
+>>>>>>> origin/mscroggs/types
 
         These DOFs are integrals of normal components over the edges: DOFs 0 and 2
         are oriented inward, DOF 1 is oriented outwards.
@@ -228,7 +236,10 @@ class FiniteElement:
             | 0->\    | 1  \
             |     \   |     \
              ------    ------
+<<<<<<< HEAD
 
+=======
+>>>>>>> origin/mscroggs/types
 
         For these DOFs, the subblocks of the base transformation matrices are:
 
@@ -238,6 +249,10 @@ class FiniteElement:
                        [ 1, 0]]
             reflection: [[0, 1],
                          [1, 0]]
+<<<<<<< HEAD
+=======
+
+>>>>>>> origin/mscroggs/types
 
         Returns:
             The base transformations for this element. The shape is
@@ -497,7 +512,7 @@ def create_custom_element(cell_name: CellType, value_shape, wcoeffs, x, M, inter
                                                 embedded_superdegree, poly_type))
 
 
-def string_to_family(family: str, cell: str) -> _EF:
+def string_to_family(family: str, cell: str) -> ElementFamily:
     """Get a Basix ElementFamily enum representing the family type on the given cell.
 
     Args:
@@ -509,76 +524,76 @@ def string_to_family(family: str, cell: str) -> _EF:
     """
     # Family names that are valid for all cells
     families = {
-        "Lagrange": _EF.P,
-        "P": _EF.P,
-        "Bubble": _EF.bubble,
-        "bubble": _EF.bubble,
-        "iso": _EF.iso,
+        "Lagrange": ElementFamily.P,
+        "P": ElementFamily.P,
+        "Bubble": ElementFamily.bubble,
+        "bubble": ElementFamily.bubble,
+        "iso": ElementFamily.iso,
     }
 
     # Family names that are valid on non-interval cells
     if cell != "interval":
         families.update({
-            "RT": _EF.RT,
-            "Raviart-Thomas": _EF.RT,
-            "N1F": _EF.RT,
-            "N1div": _EF.RT,
-            "Nedelec 1st kind H(div)": _EF.RT,
-            "N1E": _EF.N1E,
-            "N1curl": _EF.N1E,
-            "Nedelec 1st kind H(curl)": _EF.N1E,
-            "BDM": _EF.BDM,
-            "Brezzi-Douglas-Marini": _EF.BDM,
-            "N2F": _EF.BDM,
-            "N2div": _EF.BDM,
-            "Nedelec 2nd kind H(div)": _EF.BDM,
-            "N2E": _EF.N2E,
-            "N2curl": _EF.N2E,
-            "Nedelec 2nd kind H(curl)": _EF.N2E,
+            "RT": ElementFamily.RT,
+            "Raviart-Thomas": ElementFamily.RT,
+            "N1F": ElementFamily.RT,
+            "N1div": ElementFamily.RT,
+            "Nedelec 1st kind H(div)": ElementFamily.RT,
+            "N1E": ElementFamily.N1E,
+            "N1curl": ElementFamily.N1E,
+            "Nedelec 1st kind H(curl)": ElementFamily.N1E,
+            "BDM": ElementFamily.BDM,
+            "Brezzi-Douglas-Marini": ElementFamily.BDM,
+            "N2F": ElementFamily.BDM,
+            "N2div": ElementFamily.BDM,
+            "Nedelec 2nd kind H(div)": ElementFamily.BDM,
+            "N2E": ElementFamily.N2E,
+            "N2curl": ElementFamily.N2E,
+            "Nedelec 2nd kind H(curl)": ElementFamily.N2E,
         })
 
     # Family names that are valid for intervals
     if cell == "interval":
         families.update({
-            "DPC": _EF.P,
+            "DPC": ElementFamily.P,
         })
 
     # Family names that are valid for tensor product cells
     if cell in ["interval", "quadrilateral", "hexahedron"]:
         families.update({
-            "Q": _EF.P,
-            "Serendipity": _EF.serendipity,
-            "serendipity": _EF.serendipity,
-            "S": _EF.serendipity,
+            "Q": ElementFamily.P,
+            "Serendipity": ElementFamily.serendipity,
+            "serendipity": ElementFamily.serendipity,
+            "S": ElementFamily.serendipity,
         })
 
     # Family names that are valid for quads and hexes
     if cell in ["quadrilateral", "hexahedron"]:
         families.update({
-            "RTCF": _EF.RT,
-            "DPC": _EF.DPC,
-            "NCF": _EF.RT,
-            "RTCE": _EF.N1E,
-            "NCE": _EF.N1E,
-            "BDMCF": _EF.BDM,
-            "BDMCE": _EF.N2E,
-            "AAF": _EF.BDM,
-            "AAE": _EF.N2E,
+            "RTCF": ElementFamily.RT,
+            "DPC": ElementFamily.DPC,
+            "NCF": ElementFamily.RT,
+            "RTCE": ElementFamily.N1E,
+            "NCE": ElementFamily.N1E,
+            "BDMCF": ElementFamily.BDM,
+            "BDMCE": ElementFamily.N2E,
+            "AAF": ElementFamily.BDM,
+            "AAE": ElementFamily.N2E,
         })
 
     # Family names that are valid for triangles and tetrahedra
     if cell in ["triangle", "tetrahedron"]:
         families.update({
-            "Regge": _EF.Regge,
-            "CR": _EF.CR,
-            "Crouzeix-Raviart": _EF.CR,
+            "Regge": ElementFamily.Regge,
+            "CR": ElementFamily.CR,
+            "Crouzeix-Raviart": ElementFamily.CR,
         })
 
     # Family names that are valid for triangles
     if cell in "triangle":
         families.update({
-            "HHJ": _EF.HHJ,
-            "Hellan-Herrmann-Johnson": _EF.HHJ,
+            "HHJ": ElementFamily.HHJ,
+            "Hellan-Herrmann-Johnson": ElementFamily.HHJ,
         })
 
     if family in families:

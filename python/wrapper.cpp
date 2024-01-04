@@ -25,6 +25,7 @@
 #include <nanobind/stl/vector.h>
 #include <span>
 #include <string>
+#include <type_traits>
 #include <variant>
 #include <vector>
 
@@ -322,9 +323,11 @@ void declare_float(nb::module_& m, std::string type)
       .def_prop_ro("dtype",
                    [](const FiniteElement<T>&) -> char
                    {
+                     static_assert(std::is_same_v<T, float>
+                                   or std::is_same_v<T, double>);
                      if constexpr (std::is_same_v<T, float>)
                        return 'f';
-                     else
+                     else if constexpr (std::is_same_v<T, double>)
                        return 'd';
                    });
 

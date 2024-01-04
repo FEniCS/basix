@@ -8,8 +8,9 @@ import numpy.typing as npt
 from basix._basixcpp import CellType, DPCVariant
 from basix._basixcpp import ElementFamily
 from basix._basixcpp import ElementFamily as _EF
+from basix._basixcpp import FiniteElement_float32 as _FiniteElement_float32  # type: ignore
+from basix._basixcpp import FiniteElement_float64 as _FiniteElement_float64  # type: ignore
 from basix._basixcpp import LagrangeVariant, MapType, PolysetType, SobolevSpace
-from basix._basixcpp import FiniteElement_float32, FiniteElement_float64  # type: ignore
 from basix._basixcpp import create_custom_element as _create_custom_element
 from basix._basixcpp import create_element as _create_element  # type: ignore
 
@@ -17,7 +18,7 @@ from basix._basixcpp import create_element as _create_element  # type: ignore
 class FiniteElement:
     """Finite element class."""
 
-    def __init__(self, e: typing.Union[FiniteElement_float32, FiniteElement_float32]):
+    def __init__(self, e: typing.Union[_FiniteElement_float32, _FiniteElement_float64]):
         """Initialise a finite element wrapper.
 
         Note:
@@ -430,8 +431,7 @@ def create_element(family_name: ElementFamily, cell_name: CellType, degree: int,
                    dvariant: typing.Optional[DPCVariant] = DPCVariant.unset,
                    discontinuous: typing.Optional[bool] = False,
                    dof_ordering:  typing.Optional[list[int]] = [],
-                   dtype: typing.Optional[npt.DTypeLike] = _np.float64) -> typing.Union[FiniteElement_float32,
-                                                                                        FiniteElement_float64]:
+                   dtype: typing.Optional[npt.DTypeLike] = _np.float64) -> FiniteElement:
     """Create a finite element.
 
     Args:
@@ -454,7 +454,7 @@ def create_element(family_name: ElementFamily, cell_name: CellType, degree: int,
 def create_custom_element(cell_name: CellType, value_shape, wcoeffs, x, M, interpolation_nderivs: int, map_type,
                           sobolev_space, discontinuous: bool,
                           embedded_subdegree: int, embedded_superdegree: int,
-                          poly_type: PolysetType) -> typing.Union[FiniteElement_float32, FiniteElement_float64]:
+                          poly_type: PolysetType) -> FiniteElement:
     """Create a custom finite element.
 
     Args:

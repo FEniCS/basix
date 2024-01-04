@@ -76,3 +76,4 @@ ignore_missing_imports = true
 
 [tool.isort]
 line_length = 120
+skip_glob = ["*.pyi"]

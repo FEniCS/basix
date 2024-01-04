@@ -9,6 +9,8 @@ from basix._basixcpp import cell_facet_reference_volumes as facet_reference_volu
 from basix._basixcpp import cell_volume as volume  # noqa: F401
 from basix._basixcpp import sub_entity_connectivity  # noqa: F401
 
+__all__ = ["string_to_type", "type_to_string"]
+
 
 def string_to_type(cell: str) -> _CT:
     """Convert a string to a Basix CellType.
@@ -18,7 +20,6 @@ def string_to_type(cell: str) -> _CT:
 
     Returns:
         The cell type.
-
     """
     if not hasattr(_CT, cell):
         raise ValueError(f"Unknown cell: {cell}")
@@ -33,6 +34,5 @@ def type_to_string(celltype: _CT) -> str:
 
     Returns:
         The name of the cell as a string.
-
     """
     return celltype.__name__

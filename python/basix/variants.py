@@ -3,6 +3,9 @@
 from basix._basixcpp import DPCVariant as _DV
 from basix._basixcpp import LagrangeVariant as _LV
 
+__all__ = ["string_to_lagrange_variant", "lagrange_variant_to_string",
+           "string_to_dpc_variant", "dpc_variant_to_string"]
+
 
 def string_to_lagrange_variant(variant: str) -> _LV:
     """Convert a string to a Basix LagrangeVariant enum.

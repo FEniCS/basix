@@ -1,37 +1,24 @@
 """Functions for creating finite elements."""
 
 import typing
+
 import numpy as _np
 import numpy.typing as npt
 
-from basix._basixcpp import create_element as _create_element  # type: ignore
-from basix._basixcpp import create_custom_element as _create_custom_element
+from basix._basixcpp import CellType, DPCVariant
+from basix._basixcpp import ElementFamily
 from basix._basixcpp import ElementFamily as _EF
+from basix._basixcpp import LagrangeVariant, MapType, PolysetType, SobolevSpace
 from basix._basixcpp import FiniteElement_float32, FiniteElement_float64  # type: ignore
-from basix._basixcpp import (
-    CellType,
-    DPCVariant,
-    ElementFamily,
-    LagrangeVariant,
-    # LatticeSimplexMethod,
-    # LatticeType,
-    MapType,
-    # PolynomialType,
-    PolysetType,
-    # QuadratureType,
-    SobolevSpace,
-    # # __version__,
-    # compute_interpolation_operator,
-    # create_custom_element,
-    # create_lattice,
-    # geometry,
-    # index
-)
+from basix._basixcpp import create_custom_element as _create_custom_element
+from basix._basixcpp import create_element as _create_element  # type: ignore
 
 
 class FiniteElement:
+    """Finite element class."""
+
     def __init__(self, e: typing.Union[FiniteElement_float32, FiniteElement_float32]):
-        """Initialise a finite element wrapper
+        """Initialise a finite element wrapper.
 
         Note:
             This initialiser is intended for internal library use.
@@ -125,18 +112,157 @@ class FiniteElement:
         self._e.pre_apply_dof_transformation(data, block_size, cell_info)
 
     def post_apply_transpose_dof_transformation(self, data, block_size, cell_info) -> None:
+        """Post-apply DOF transformations to some transposed data in-place.
+
+        Note:
+            This function is designed to be called at runtime, so its
+            performance is critical.
+
+        Args:
+            data: The data
+            block_size: The number of data points per DOF
+            cell_info: The permutation info for the cell
+        """
         self._e.post_apply_transpose_dof_transformation(data, block_size, cell_info)
 
     def pre_apply_inverse_transpose_dof_transformation(self, data, block_size, cell_info) -> None:
+        """Pre-apply inverse transpose DOF transformations to some data.
+
+        Note:
+            This function is designed to be called at runtime, so its
+            performance is critical.
+
+        Args:
+            data: The data
+            block_size: The number of data points per DOF
+            cell_info: The permutation info for the cell
+        """
         self._e.pre_apply_inverse_transpose_dof_transformation(data, block_size, cell_info)
 
     def base_transformations(self) -> npt.NDArray[_np.float_]:
+        r"""Get the base transformations.
+
+        The base transformations represent the effect of rotating or reflecting
+        a subentity of the cell on the numbering and orientation of the DOFs.
+        This returns a list of matrices with one matrix for each subentity
+        permutation in the following order:
+        Reversing edge 0, reversing edge 1, ...
+        Rotate face 0, reflect face 0, rotate face 1, reflect face 1, ...
+
+        *Example: Order 3 Lagrange on a triangle*
+
+        This space has 10 dofs arranged like:
+
+        .. code-block::
+
+        2
+        |\
+        6 4
+        |  \
+        5 9 3
+        |    \
+        0-7-8-1
+
+
+        For this element, the base transformations are:
+        [Matrix swapping 3 and 4,
+        Matrix swapping 5 and 6,
+        Matrix swapping 7 and 8]
+        The first row shows the effect of reversing the diagonal edge. The
+        second row shows the effect of reversing the vertical edge. The third
+        row shows the effect of reversing the horizontal edge.
+
+        *Example: Order 1 Raviart-Thomas on a triangle*
+
+        This space has 3 dofs arranged like:
+
+        .. code-block::
+
+        |\
+        | \
+        |  \
+        <-1   0
+        |  / \
+        | L ^ \
+        |   |  \
+            ---2---
+
+
+        These DOFs are integrals of normal components over the edges: DOFs 0 and 2
+        are oriented inward, DOF 1 is oriented outwards.
+        For this element, the base transformation matrices are:
+
+        .. code-block::
+
+        0: [[-1, 0, 0],
+            [ 0, 1, 0],
+            [ 0, 0, 1]]
+        1: [[1,  0, 0],
+            [0, -1, 0],
+            [0,  0, 1]]
+        2: [[1, 0,  0],
+            [0, 1,  0],
+            [0, 0, -1]]
+
+
+        The first matrix reverses DOF 0 (as this is on the first edge). The second
+        matrix reverses DOF 1 (as this is on the second edge). The third matrix
+        reverses DOF 2 (as this is on the third edge).
+
+        *Example: DOFs on the face of Order 2 Nedelec first kind on a tetrahedron*
+
+        On a face of this tetrahedron, this space has two face tangent DOFs:
+
+        .. code-block::
+
+        |\        |\
+        | \       | \
+        |  \      | ^\
+        |   \     | | \
+        | 0->\    | 1  \
+        |     \   |     \
+        ------    ------
+
+
+        For these DOFs, the subblocks of the base transformation matrices are:
+
+        .. code-block::
+
+        rotation: [[-1, 1],
+                    [ 1, 0]]
+        reflection: [[0, 1],
+                        [1, 0]]
+
+
+        Returns:
+            The base transformations for this element. The shape is
+            (ntranformations, ndofs, ndofs)
+        """
         return self._e.base_transformations()
 
     def entity_transformations(self) -> dict:
+        """Return the entity dof transformation matrices.
+
+        Returns:
+            The base transformations for this element. The shape is
+            (ntranformations, ndofs, ndofs).
+        """
         return self._e.entity_transformations()
 
     def get_tensor_product_representation(self):
+        """Get the tensor product representation of this element, or throw an error if no such factorisation exists.
+
+        The tensor product representation will be a vector of tuples.
+        Each tuple contains a vector of finite elements, and a vector of
+        integers. The vector of finite elements gives the elements on an
+        interval that appear in the tensor product representation. The
+        vector of integers gives the permutation between the numbering
+        of the tensor product DOFs and the number of the DOFs of this
+        Basix element.
+
+        Returns:
+            The tensor product representation
+        """
         return self._e.get_tensor_product_representation()
 
     # def get_tensor_product_representation(self) -> typing.List[typing.Tuple[typing.List[FiniteElement],
@@ -145,126 +271,157 @@ class FiniteElement:
 
     @property
     def degree(self) -> int:
+        """TODO."""
         return self._e.degree
 
     @property
     def embedded_superdegree(self) -> int:
+        """TODO."""
         return self._e.embedded_superdegree
 
     @property
     def embedded_subdegree(self) -> int:
+        """TODO."""
         return self._e.embedded_subdegree
 
     @property
     def cell_type(self) -> CellType:
+        """TODO."""
         return self._e.cell_type
 
     @property
     def polyset_type(self) -> PolysetType:
+        """TODO."""
         return self._e.polyset_type
 
     @property
     def dim(self) -> int:
+        """TODO."""
         return self._e.dim
 
     @property
     def num_entity_dofs(self) -> int:
+        """TODO."""
         return self._e.num_entity_dofs
 
     @property
     def entity_dofs(self) -> typing.List[typing.List[typing.List[int]]]:
+        """TODO."""
         return self._e.entity_dofs
 
     @property
     def num_entity_closure_dofs(self) -> int:
+        """TODO."""
         return self._e.num_entity_closure_dofs
 
     @property
     def entity_closure_dofs(self) -> typing.List[typing.List[typing.List[int]]]:
+        """TODO."""
         return self._e.entity_closure_dofs
 
     @property
     def value_size(self) -> int:
+        """TODO."""
         return self._e.value_size
 
     @property
     def value_shape(self) -> int:
+        """TODO."""
         return self._e.value_shape
 
     @property
     def discontinuous(self) -> bool:
+        """TODO."""
         return self._e.discontinuous
 
     @property
     def family(self) -> ElementFamily:
+        """TODO."""
         return self._e.family
 
     @property
     def lagrange_variant(self) -> LagrangeVariant:
+        """TODO."""
         return self._e.lagrange_variant
 
     @property
     def dpc_variant(self) -> DPCVariant:
+        """TODO."""
         return self._e.dpc_variant
 
     @property
     def dof_transformations_are_permutations(self) -> bool:
+        """TODO."""
         return self._e.dof_transformations_are_permutations
 
     @property
     def dof_transformations_are_identity(self) -> bool:
+        """TODO."""
         return self._e.dof_transformations_are_identity
 
     @property
     def interpolation_is_identity(self) -> bool:
+        """TODO."""
         return self._e.interpolation_is_identity
 
     @property
     def map_type(self) -> MapType:
+        """TODO."""
         return self._e.map_type
 
     @property
     def sobolev_space(self) -> SobolevSpace:
+        """TODO."""
         return self._e.sobolev_space
 
     @property
     def points(self):
+        """TODO."""
         return self._e.points
 
     @property
     def interpolation_matrix(self):
+        """TODO."""
         return self._e.interpolation_matrix
 
     @property
     def dual_matrix(self):
+        """TODO."""
         return self._e.dual_matrix
 
     @property
     def coefficient_matrix(self):
+        """TODO."""
         return self._e.coefficient_matrix
 
     @property
     def wcoeffs(self):
+        """TODO."""
         return self._e.wcoeffs
 
     @property
     def M(self):
+        """TODO."""
         return self._e.M
 
     @property
     def x(self):
+        """TODO."""
         return self._e.x
 
     @property
     def has_tensor_product_factorisation(self) -> bool:
+        """TODO."""
         return self._e.has_tensor_product_factorisation
 
     @property
     def interpolation_nderivs(self) -> int:
+        """TODO."""
         return self._e.interpolation_nderivs
 
     @property
     def dof_ordering(self) -> typing.List[int]:
+        """TODO."""
         return self._e.dof_ordering
 
 

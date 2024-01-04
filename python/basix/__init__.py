@@ -3,14 +3,10 @@
 The core of the library is written in C++, but the majority of Basix's
 functionality can be used via this Python interface.
 """
-from basix import (cell, finite_element, lattice, polynomials, quadrature,
-                   sobolev_spaces, variants)
-from basix._basixcpp import (CellType, DPCVariant, ElementFamily,
-                             LagrangeVariant, LatticeSimplexMethod,
-                             LatticeType, MapType, PolynomialType, PolysetType,
-                             QuadratureType, SobolevSpace, __version__)
-from basix._basixcpp import \
-    compute_interpolation_operator as _compute_interpolation_operator
+from basix import cell, finite_element, lattice, polynomials, quadrature, sobolev_spaces, variants
+from basix._basixcpp import (CellType, DPCVariant, ElementFamily, LagrangeVariant, LatticeSimplexMethod, LatticeType,
+                             MapType, PolynomialType, PolysetType, QuadratureType, SobolevSpace, __version__)
+from basix._basixcpp import compute_interpolation_operator as _compute_interpolation_operator
 from basix._basixcpp import create_lattice, geometry, index
 from basix._basixcpp import restriction as polyset_restriction
 from basix._basixcpp import superset as polyset_superset

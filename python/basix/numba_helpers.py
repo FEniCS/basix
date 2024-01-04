@@ -5,7 +5,6 @@ try:
 except ImportError:
     raise RuntimeError("You must have Numba installed to use the Numba helper functions.")
 
-import typing as _typing
 from typing import Dict as _Dict
 from typing import List as _ListT
 

@@ -484,6 +484,11 @@ class FiniteElement:
         """DOF layout."""
         return self._e.dof_ordering
 
+    @property
+    def dtype(self) -> npt.DTypeLike:
+        """Element float type."""
+        return _np.dtype(self._e.dtype)
+
 
 def create_element(family_name: ElementFamily, cell_name: CellType, degree: int,
                    lvariant: LagrangeVariant = LagrangeVariant.unset,

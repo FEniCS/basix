@@ -25,6 +25,7 @@
 #include <nanobind/stl/vector.h>
 #include <span>
 #include <string>
+#include <type_traits>
 #include <variant>
 #include <vector>
 
@@ -318,7 +319,17 @@ void declare_float(nb::module_& m, std::string type)
                    &FiniteElement<T>::has_tensor_product_factorisation)
       .def_prop_ro("interpolation_nderivs",
                    &FiniteElement<T>::interpolation_nderivs)
-      .def_prop_ro("dof_ordering", &FiniteElement<T>::dof_ordering);
+      .def_prop_ro("dof_ordering", &FiniteElement<T>::dof_ordering)
+      .def_prop_ro("dtype",
+                   [](const FiniteElement<T>&) -> char
+                   {
+                     static_assert(std::is_same_v<T, float>
+                                   or std::is_same_v<T, double>);
+                     if constexpr (std::is_same_v<T, float>)
+                       return 'f';
+                     else if constexpr (std::is_same_v<T, double>)
+                       return 'd';
+                   });
 
   // Create FiniteElement
   m.def(

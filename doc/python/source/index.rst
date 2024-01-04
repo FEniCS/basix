@@ -19,8 +19,7 @@ Using Basix
 ===========
 A Basix element can be created using the function
 :meth:`basix.create_element`. This function will return a
-:class:`basix.finite_element.FiniteElement_float32` or
-:class:`basix.finite_element.FiniteElement_float64` object.
+:class:`basix.finite_element.FiniteElement` object.
 
 The element can be tabulated using the function
 :meth:`basix.finite_element.FiniteElement.tabulate`.

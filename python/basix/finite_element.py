@@ -301,7 +301,7 @@ class FiniteElement:
         return self._e.dim
 
     @property
-    def num_entity_dofs(self) -> int:
+    def num_entity_dofs(self) -> typing.List[typing.List[int]]:
         """TODO."""
         return self._e.num_entity_dofs
 
@@ -311,7 +311,7 @@ class FiniteElement:
         return self._e.entity_dofs
 
     @property
-    def num_entity_closure_dofs(self) -> int:
+    def num_entity_closure_dofs(self) ->  typing.List[typing.List[int]]:
         """TODO."""
         return self._e.num_entity_closure_dofs
 
@@ -326,7 +326,7 @@ class FiniteElement:
         return self._e.value_size
 
     @property
-    def value_shape(self) -> int:
+    def value_shape(self) -> typing.List[int]:
         """TODO."""
         return self._e.value_shape
 

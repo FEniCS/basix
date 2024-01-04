@@ -96,8 +96,7 @@ void declare_float(nb::module_& m, std::string type)
           {
             mdspan_t<const T, 2> _x(x.data(), x.shape(0), x.shape(1));
             return as_nbarrayp(self.tabulate(n, _x));
-          },
-          basix::docstring::FiniteElement__tabulate.c_str())
+          })
       .def("__eq__", &FiniteElement<T>::operator==)
       .def(
           "push_forward",
@@ -116,8 +115,7 @@ void declare_float(nb::module_& m, std::string type)
                 mdspan_t<const T, 3>(K.data(), K.shape(0), K.shape(1),
                                      K.shape(2)));
             return as_nbarrayp(std::move(u));
-          },
-          basix::docstring::FiniteElement__push_forward.c_str())
+          })
       .def(
           "pull_back",
           [](const FiniteElement<T>& self,
@@ -135,8 +133,7 @@ void declare_float(nb::module_& m, std::string type)
                                  mdspan_t<const T, 3>(K.data(), K.shape(0),
                                                       K.shape(1), K.shape(2)));
             return as_nbarrayp(std::move(U));
-          },
-          basix::docstring::FiniteElement__pull_back.c_str())
+          })
       .def(
           "pre_apply_dof_transformation",
           [](const FiniteElement<T>& self,
@@ -145,8 +142,7 @@ void declare_float(nb::module_& m, std::string type)
           {
             self.pre_apply_dof_transformation(
                 std::span(data.data(), data.size()), block_size, cell_info);
-          },
-          basix::docstring::FiniteElement__pre_apply_dof_transformation.c_str())
+          })
       .def(
           "post_apply_transpose_dof_transformation",
           [](const FiniteElement<T>& self,
@@ -155,9 +151,7 @@ void declare_float(nb::module_& m, std::string type)
           {
             self.post_apply_transpose_dof_transformation(
                 std::span(data.data(), data.size()), block_size, cell_info);
-          },
-          basix::docstring::
-              FiniteElement__post_apply_transpose_dof_transformation.c_str())
+          })
       .def(
           "pre_apply_inverse_transpose_dof_transformation",
           [](const FiniteElement<T>& self,
@@ -166,15 +160,11 @@ void declare_float(nb::module_& m, std::string type)
           {
             self.pre_apply_inverse_transpose_dof_transformation(
                 std::span(data.data(), data.size()), block_size, cell_info);
-          },
-          basix::docstring::
-              FiniteElement__pre_apply_inverse_transpose_dof_transformation
-                  .c_str())
+          })
       .def(
           "base_transformations",
           [](const FiniteElement<T>& self)
-          { return as_nbarrayp(self.base_transformations()); },
-          basix::docstring::FiniteElement__base_transformations.c_str())
+          { return as_nbarrayp(self.base_transformations()); })
       .def(
           "entity_transformations",
           [](const FiniteElement<T>& self)
@@ -183,14 +173,11 @@ void declare_float(nb::module_& m, std::string type)
             for (auto& [key, data] : self.entity_transformations())
               t[cell_type_to_str(key).c_str()] = as_nbarrayp(std::move(data));
             return t;
-          },
-          basix::docstring::FiniteElement__entity_transformations.c_str())
+          })
       .def(
           "get_tensor_product_representation",
           [](const FiniteElement<T>& self)
-          { return self.get_tensor_product_representation(); },
-          basix::docstring::FiniteElement__get_tensor_product_representation
-              .c_str())
+          { return self.get_tensor_product_representation(); })
       .def_prop_ro("degree", &FiniteElement<T>::degree)
       .def_prop_ro("embedded_superdegree",
                    &FiniteElement<T>::embedded_superdegree)
@@ -655,10 +642,7 @@ NB_MODULE(_basixcpp, m)
       "family_name"_a, "cell_name"_a, "degree"_a, "dtype"_a,
       "lagrange_variant"_a = element::lagrange_variant::unset,
       "dpc_variant"_a = element::dpc_variant::unset, "discontinuous"_a = false,
-      "dof_ordering"_a = std::vector<int>(),
-      basix::docstring::
-          create_element__family_cell_degree_lvariant_dvariant_discontinuous_dof_ordering
-              .c_str());
+      "dof_ordering"_a = std::vector<int>());
 
   nb::enum_<polyset::type>(m, "PolysetType")
       .value("standard", polyset::type::standard)

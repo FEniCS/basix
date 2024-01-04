@@ -62,7 +62,10 @@ class FiniteElement:
 
     def __eq__(self, other) -> bool:
         """Test element for equality."""
-        return self._e == other._e
+        try:
+            return self._e == other._e
+        except TypeError:
+            return False
 
     def push_forward(self, U, J, detJ, K) -> npt.NDArray[_np.float_]:
         """Map function values from the reference to a physical cell.

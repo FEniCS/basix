@@ -430,7 +430,8 @@ def create_element(family_name: ElementFamily, cell_name: CellType, degree: int,
                    lvariant: typing.Optional[LagrangeVariant] = LagrangeVariant.unset,
                    dpc_variant: typing.Optional[DPCVariant] = DPCVariant.unset,
                    discontinuous: typing.Optional[bool] = False,
-                   dof_ordering:  typing.Optional[list[int]] = [],
+                   # dof_ordering: typing.Optional[list[int]] = [],
+                   dof_ordering=[],
                    dtype: typing.Optional[npt.DTypeLike] = _np.float64) -> FiniteElement:
     """Create a finite element.
 

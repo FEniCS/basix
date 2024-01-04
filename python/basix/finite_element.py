@@ -17,6 +17,7 @@ from basix._basixcpp import create_element as _create_element  # type: ignore
 
 __all__ = ["FiniteElement", "create_element", "create_custom_element", "string_to_family"]
 
+
 class FiniteElement:
     """Finite element class."""
 
@@ -316,7 +317,7 @@ class FiniteElement:
         return self._e.entity_dofs
 
     @property
-    def num_entity_closure_dofs(self) ->  typing.List[typing.List[int]]:
+    def num_entity_closure_dofs(self) -> typing.List[typing.List[int]]:
         """TODO."""
         return self._e.num_entity_closure_dofs
 

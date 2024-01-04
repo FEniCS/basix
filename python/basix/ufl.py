@@ -1402,7 +1402,7 @@ class _BlockedElement(_ElementBase):
     @property
     def basix_element(self):
         """Return the underlying Basix element."""
-        return self._sub_element.basix_element()
+        return self._sub_element.basix_element
 
 
 class _QuadratureElement(_ElementBase):

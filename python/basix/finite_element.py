@@ -182,16 +182,6 @@ class FiniteElement:
 
         .. code-block::
 
-<<<<<<< HEAD
-             |\
-             | \
-             |  \
-           <-1   0
-             |  / \
-             | L ^ \
-             |   |  \
-              ---2---
-=======
               |\
               | \
               |  \
@@ -200,7 +190,6 @@ class FiniteElement:
               | L ^ \
               |   |  \
                ---2---
->>>>>>> origin/mscroggs/types
 
         These DOFs are integrals of normal components over the edges: DOFs 0 and 2
         are oriented inward, DOF 1 is oriented outwards.
@@ -236,10 +225,6 @@ class FiniteElement:
             | 0->\    | 1  \
             |     \   |     \
              ------    ------
-<<<<<<< HEAD
-
-=======
->>>>>>> origin/mscroggs/types
 
         For these DOFs, the subblocks of the base transformation matrices are:
 
@@ -249,10 +234,6 @@ class FiniteElement:
                        [ 1, 0]]
             reflection: [[0, 1],
                          [1, 0]]
-<<<<<<< HEAD
-=======
-
->>>>>>> origin/mscroggs/types
 
         Returns:
             The base transformations for this element. The shape is

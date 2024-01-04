@@ -246,12 +246,17 @@ class FiniteElement:
 
         Returns:
             The base transformations for this element. The shape is
-            (ntranformations, ndofs, ndofs).
+            ``(ntranformations, ndofs, ndofs)``.
         """
         return self._e.entity_transformations()
 
-    def get_tensor_product_representation(self):
-        """Get the tensor product representation of this element, or throw an error if no such factorisation exists.
+    def get_tensor_product_representation(self) -> typing.List[typing.Tuple[typing.List[
+            typing.Union[_FiniteElement_float32,
+                         _FiniteElement_float64]],
+            typing.List[int]]]:
+        """Get the tensor product representation of this element.
+
+        Raises an exception if no such factorisation exists.
 
         The tensor product representation will be a vector of tuples.
         Each tuple contains a vector of finite elements, and a vector of
@@ -265,10 +270,6 @@ class FiniteElement:
             The tensor product representation
         """
         return self._e.get_tensor_product_representation()
-
-    # def get_tensor_product_representation(self) -> typing.List[typing.Tuple[typing.List[FiniteElement],
-    #                                                                         typing.List[int]]]:
-    #     return self._e.get_tensor_product_representation()
 
     @property
     def degree(self) -> int:

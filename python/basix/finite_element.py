@@ -223,7 +223,7 @@ class FiniteElement:
             |   \     | | \
             | 0->\    | 1  \
             |     \   |     \
-            ------    ------
+             ------    ------
 
         For these DOFs, the subblocks of the base transformation matrices are:
 

@@ -14,3 +14,6 @@
 
 .fenicsnav {display:inline-block;font-size:20px;padding:0px 15px}
 
+.sphinxsidebarwrapper {
+    overflow: scroll
+}

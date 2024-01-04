@@ -10,7 +10,6 @@ from basix._basixcpp import PolynomialType as _PT
 from basix._basixcpp import index as _index
 from basix._basixcpp import polynomials_dim as dim  # noqa: F401
 
-
 __all__ = ["reshape_coefficients"]
 
 

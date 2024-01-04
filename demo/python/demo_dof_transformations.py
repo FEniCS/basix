@@ -44,7 +44,7 @@ from basix import CellType, ElementFamily, LagrangeVariant, LatticeType
 # DOF map.
 
 lagrange = basix.create_element(
-    ElementFamily.P, CellType.triangle, 5, np.float64, LagrangeVariant.equispaced)
+    ElementFamily.P, CellType.triangle, 5, LagrangeVariant.equispaced)
 print(lagrange.dof_transformations_are_identity)
 print(lagrange.dof_transformations_are_permutations)
 

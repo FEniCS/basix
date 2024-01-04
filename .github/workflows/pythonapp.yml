@@ -32,20 +32,22 @@ jobs:
         uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
+
+      - name: Lint with flake8
+        run: flake8 --statistics test/ python/ demo/python
+      - name: pydocstyle checks
+        run: pydocstyle python/basix
+      - name: isort checks
+        run: isort --check .
+
       - name: Install dependencies
         run: |
           sudo apt-get update
           sudo apt-get install -y doxygen graphviz libopenblas-dev liblapack-dev ninja-build
       - name: Install Basix
         run: pip -v install .[ci]
-      - name: Lint with flake8
-        run: flake8 --statistics test/ python/ demo/python
       - name: Run mypy checks
         run: mypy python/basix
-      - name: pydocstyle checks
-        run: pydocstyle python/basix
-      - name: isort checks
-        run: isort --check .
       - name: Run units tests
         run: pytest -n auto --durations 20 test/
       - name: Run simple CMake integration test

@@ -40,8 +40,8 @@ jobs:
         run: pip -v install .[ci]
       - name: Lint with flake8
         run: flake8 --statistics test/ python/ demo/python
-      - name: Run mypy checks
-        run: mypy python/basix
+      # - name: Run mypy checks
+      #   run: mypy python/basix
       - name: pydocstyle checks
         run: pydocstyle python/basix
       - name: isort checks

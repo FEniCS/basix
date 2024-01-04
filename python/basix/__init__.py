@@ -12,6 +12,7 @@ from basix._basixcpp import (CellType, DPCVariant, ElementFamily, LagrangeVarian
                              compute_interpolation_operator, create_custom_element, create_lattice,
                              geometry, index)
 from basix._basixcpp import create_element as _create_element
+from basix._basixcpp import FiniteElement_float32, FiniteElement_float64
 from basix._basixcpp import restriction as polyset_restriction
 from basix._basixcpp import superset as polyset_superset
 from basix._basixcpp import tabulate_polynomials, topology
@@ -23,7 +24,7 @@ def create_element(family_name: ElementFamily, cell_name: CellType, degree: int,
                    dvariant: typing.Optional[DPCVariant] = DPCVariant.unset,
                    discontinuous: typing.Optional[bool] = False,
                    dof_ordering:  typing.Optional[list[int]] = [],
-                   dtype: typing.Optional[npt.DTypeLike] = _np.float64):
+                   dtype: typing.Optional[npt.DTypeLike] = _np.float64) -> typing.Union[FiniteElement_float32, FiniteElement_float64]:
     """Create a finite element.
 
     Args:

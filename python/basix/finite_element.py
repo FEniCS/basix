@@ -4,7 +4,7 @@ import typing
 import numpy as _np
 import numpy.typing as npt
 
-from basix._basixcpp import create_element as _create_element
+from basix._basixcpp import create_element as _create_element  # type: ignore
 from basix._basixcpp import create_custom_element as _create_custom_element
 from basix._basixcpp import ElementFamily as _EF
 from basix._basixcpp import FiniteElement_float32, FiniteElement_float64  # type: ignore
@@ -30,7 +30,7 @@ from basix._basixcpp import (
 
 
 class FiniteElement:
-    def __init__(self, e):
+    def __init__(self, e: typing.Union[FiniteElement_float32, FiniteElement_float32]):
         self._e = e
 
     def tabulate(self, n: int, x: npt.NDArray) -> npt.NDArray[_np.float_]:
@@ -112,13 +112,13 @@ class FiniteElement:
     def pre_apply_inverse_transpose_dof_transformation(self, data, block_size, cell_info) -> None:
         self._e.pre_apply_inverse_transpose_dof_transformation(data, block_size, cell_info)
 
-    def base_transformations(self) -> npt.NDArray:
+    def base_transformations(self) -> npt.NDArray[_np.float_]:
         return self._e.base_transformations()
 
-    def entity_transformations(self) -> npt.NDArray:
+    def entity_transformations(self) -> dict:
         return self._e.entity_transformations()
 
-    def get_tensor_product_representation(self):
+    def get_tensor_product_representation(self) -> typing.List[typing.Tuple[typing.List[FiniteElement], typing.List[int]]]:
         return self._e.get_tensor_product_representation()
 
     # def get_tensor_product_representation(self) -> typing.List[typing.Tuple[typing.List[FiniteElement],

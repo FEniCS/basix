@@ -393,6 +393,10 @@ void declare_float(nb::module_& m, std::string type)
             _x, _M, interpolation_nderivs, map_type, sobolev_space,
             discontinuous, embedded_subdegree, embedded_superdegree, poly_type);
       },
+      "cell_type"_a, "value_shape"_a, "wcoeffs"_a.noconvert(),
+      "x"_a.noconvert(), "M"_a.noconvert(), "interpolation_nderivs"_a,
+      "map_type"_a, "sobolev_space"_a, "discontinuous"_a,
+      "embedded_subdegree"_a, "embedded_superdegree"_a, "poly_type"_a,
       basix::docstring::create_custom_element.c_str());
 
   // Interpolate between elements

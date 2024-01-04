@@ -428,7 +428,7 @@ class FiniteElement:
 
 def create_element(family_name: ElementFamily, cell_name: CellType, degree: int,
                    lvariant: typing.Optional[LagrangeVariant] = LagrangeVariant.unset,
-                   dvariant: typing.Optional[DPCVariant] = DPCVariant.unset,
+                   dpc_variant: typing.Optional[DPCVariant] = DPCVariant.unset,
                    discontinuous: typing.Optional[bool] = False,
                    dof_ordering:  typing.Optional[list[int]] = [],
                    dtype: typing.Optional[npt.DTypeLike] = _np.float64) -> FiniteElement:
@@ -436,18 +436,21 @@ def create_element(family_name: ElementFamily, cell_name: CellType, degree: int,
 
     Args:
         family_name: Finite element family.
-        cell_name: Cell shape.
-        degree: Polynomial degree.
+        cell_name: Reference cell type that the element is defined on
+        degree: Polynomial degree of the element.
         lvariant: Lagrange variant type.
-        dvariant: DPC variant type/
-        discontinuous: If `True`, make element discontinuous
-        dof_ordering:
+        dvariant: DPC variant type.
+        discontinuous: If `True` element is discontinuous. The
+            discontinuous element will have the same DOFs as a
+            continuous element, but the DOFs will all be associated with
+            the interior of the cell.
+        dof_ordering: Ordering of dofs for ElementDofLayout
         dtype: Element scalar type.
 
     Returns:
         A finite element.
     """
-    return FiniteElement(_create_element(family_name, cell_name, degree, lvariant, dvariant,
+    return FiniteElement(_create_element(family_name, cell_name, degree, lvariant, dpc_variant,
                                          discontinuous, dof_ordering, _np.dtype(dtype).char))
 
 
@@ -458,21 +461,31 @@ def create_custom_element(cell_name: CellType, value_shape, wcoeffs, x, M, inter
     """Create a custom finite element.
 
     Args:
-        cell_name:
-        value_shape:
-        wcoeffs: A
-        x:
-        M:
-        interpolation_nderivs:
-        map_type:
-        sobolev_space:
-        discontinuous:
-        embedded_subdegree:
-        embedded_superdegree:
-        poly_type:
+        cell_type: The cell type
+        value_shape: The value shape of the element
+        wcoeffs: Matrices for the kth value index containing the
+            expansion coefficients defining a polynomial basis spanning the
+            polynomial space for this element. Shape is (dim(finite element
+            polyset), dim(Legendre polynomials))
+        x: Interpolation points. Indices are (tdim, entity index, point
+            index, dim)
+        M: The interpolation matrices. Indices are (tdim, entity index,
+            dof, vs, point_index, derivative)
+        interpolation_nderivs: The number of derivatives that need to be
+        used during interpolation map_type: The type of map to be used
+        to map values from the reference to a cell
+        sobolev_space: The underlying Sobolev space for the element
+        discontinuous: Indicates whether or not this is the
+            discontinuous version of the element
+        embedded_subdegree: The highest degree n such that a Lagrange
+            (or vector Lagrange) element of degree n is a subspace of
+            this element
+        embedded_superdegree: The degree of a polynomial in this
+            element's polyset
+        poly_type: The type of polyset to use for this element
 
     Returns:
-        A finite element.
+        A custom finite element
     """
     return FiniteElement(_create_custom_element(cell_name, value_shape, wcoeffs, x, M,
                                                 interpolation_nderivs, map_type,
@@ -489,7 +502,6 @@ def string_to_family(family: str, cell: str) -> _EF:
 
     Returns:
         The element family.
-
     """
     # Family names that are valid for all cells
     families = {

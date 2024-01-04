@@ -15,6 +15,14 @@ from basix.finite_element import create_custom_element, create_element
 from basix.quadrature import make_quadrature
 
 
+__all__ = ["cell", "finite_element", "lattice", "polynomials", "quadrature", "sobolev_spaces", "variants",
+           "CellType", "DPCVariant", "ElementFamily", "LagrangeVariant", "LatticeSimplexMethod", "LatticeType",
+           "MapType", "PolynomialType", "PolysetType", "QuadratureType", "SobolevSpace", "__version__",
+           "create_lattice", "geometry", "index", "polyset_restriction", "polyset_superset",
+           "tabulate_polynomials", "topology", "create_custom_element", "create_element",
+           "make_quadrature", "compute_interpolation_operator"]
+
+
 def compute_interpolation_operator(e0, e1):
     """Compute a matrix that represents the interpolation between two elements.
 

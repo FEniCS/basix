@@ -17,6 +17,7 @@ __all__ = ["FiniteElement", "create_element", "create_custom_element", "string_t
 
 class FiniteElement:
     """Finite element class."""
+    _e: typing.Union[_FiniteElement_float32, _FiniteElement_float64]
 
     def __init__(self, e: typing.Union[_FiniteElement_float32, _FiniteElement_float64]):
         """Initialise a finite element wrapper.

@@ -379,7 +379,6 @@ class _BasixElement(_ElementBase):
             repr = (f"Basix element ({element.family.__name__}, {element.cell_type.__name__}, {element.degree}, "
                     f"{element.lagrange_variant.__name__}, {element.dpc_variant.__name__}, {element.discontinuous}, "
                     f"{element.dtype}, {element.dof_ordering}")
-            print(repr)
         if gdim != _cellname_to_tdim(element.cell_type.__name__):
             repr += _repr_optional_args(gdim=gdim)
         repr += ")"
@@ -1839,7 +1838,6 @@ def _compute_signature(element: _basix.finite_element.FiniteElement) -> str:
         data += "__"
     signature += _hashlib.sha1(data.encode('utf-8')).hexdigest()
 
-    print("Custom sig:", signature)
     return signature
 
 

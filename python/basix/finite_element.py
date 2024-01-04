@@ -15,6 +15,8 @@ from basix._basixcpp import create_custom_element as _create_custom_element
 from basix._basixcpp import create_element as _create_element  # type: ignore
 
 
+__all__ = ["FiniteElement", "create_element", "create_custom_element", "string_to_family"]
+
 class FiniteElement:
     """Finite element class."""
 
@@ -43,15 +45,19 @@ class FiniteElement:
         Returns:
             The basis functions (and derivatives). The shape is
             (derivative, point, basis fn index, value index).
-            - The first index is the derivative, with higher derivatives
-            are stored in triangular (2D) or tetrahedral (3D) ordering,
-            ie for the (x,y) derivatives in 2D: (0,0), (1,0), (0,1),
-            (2,0), (1,1), (0,2), (3,0)... The function
-            basix::indexing::idx can be used to find the appropriate
-            derivative.
-            - The second index is the point index
-            - The fourth index is the basis function component. Its has size
-            - The third index is the basis function index one for scalar
+
+            * The first index is the derivative, with higher derivatives
+                are stored in triangular (2D) or tetrahedral (3D) ordering,
+                ie for the (x,y) derivatives in 2D: (0,0), (1,0), (0,1),
+                (2,0), (1,1), (0,2), (3,0)... The function
+                basix::indexing::idx can be used to find the appropriate
+                derivative.
+
+            * The second index is the point index
+
+            * The fourth index is the basis function component. Its has size
+
+            * The third index is the basis function index one for scalar
                 basis functions.
         """
         return self._e.tabulate(n, x)
@@ -156,13 +162,13 @@ class FiniteElement:
 
         .. code-block::
 
-        2
-        |\
-        6 4
-        |  \
-        5 9 3
-        |    \
-        0-7-8-1
+            2
+            |\
+            6 4
+            |  \
+            5 9 3
+            |    \
+            0-7-8-1
 
 
         For this element, the base transformations are:
@@ -179,15 +185,14 @@ class FiniteElement:
 
         .. code-block::
 
-        |\
-        | \
-        |  \
-        <-1   0
-        |  / \
-        | L ^ \
-        |   |  \
-            ---2---
-
+            # |\
+            # | \
+            # |  \
+            # <-1   0
+            # |  / \
+            # | L ^ \
+            # |   |  \
+            #     ---2---
 
         These DOFs are integrals of normal components over the edges: DOFs 0 and 2
         are oriented inward, DOF 1 is oriented outwards.
@@ -195,15 +200,15 @@ class FiniteElement:
 
         .. code-block::
 
-        0: [[-1, 0, 0],
-            [ 0, 1, 0],
-            [ 0, 0, 1]]
-        1: [[1,  0, 0],
-            [0, -1, 0],
-            [0,  0, 1]]
-        2: [[1, 0,  0],
-            [0, 1,  0],
-            [0, 0, -1]]
+            0: [[-1, 0, 0],
+                [ 0, 1, 0],
+                [ 0, 0, 1]]
+            1: [[1,  0, 0],
+                [0, -1, 0],
+                [0,  0, 1]]
+            2: [[1, 0,  0],
+                [0, 1,  0],
+                [0, 0, -1]]
 
 
         The first matrix reverses DOF 0 (as this is on the first edge). The second
@@ -216,23 +221,23 @@ class FiniteElement:
 
         .. code-block::
 
-        |\        |\
-        | \       | \
-        |  \      | ^\
-        |   \     | | \
-        | 0->\    | 1  \
-        |     \   |     \
-        ------    ------
+            |\        |\
+            | \       | \
+            |  \      | ^\
+            |   \     | | \
+            | 0->\    | 1  \
+            |     \   |     \
+            ------    ------
 
 
         For these DOFs, the subblocks of the base transformation matrices are:
 
         .. code-block::
 
-        rotation: [[-1, 1],
-                    [ 1, 0]]
-        reflection: [[0, 1],
-                        [1, 0]]
+            rotation: [[-1, 1],
+                        [ 1, 0]]
+            reflection: [[0, 1],
+                            [1, 0]]
 
 
         Returns:
@@ -311,7 +316,7 @@ class FiniteElement:
         return self._e.entity_dofs
 
     @property
-    def num_entity_closure_dofs(self) -> typing.List[typing.List[int]]:
+    def num_entity_closure_dofs(self) ->  typing.List[typing.List[int]]:
         """TODO."""
         return self._e.num_entity_closure_dofs
 

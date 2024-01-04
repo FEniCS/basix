@@ -3,6 +3,9 @@
 from basix._basixcpp import LatticeSimplexMethod as _LSM
 from basix._basixcpp import LatticeType as _LT
 
+__all__ = ["string_to_type", "type_to_string", "string_to_simplex_method",
+           "simplex_method_to_string"]
+
 
 def string_to_type(lattice: str) -> _LT:
     """Convert a string to a Basix LatticeType enum.

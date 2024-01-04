@@ -10,6 +10,8 @@ from basix._basixcpp import PolysetType as _PT
 from basix._basixcpp import QuadratureType as _QT
 from basix._basixcpp import make_quadrature as _mq
 
+__all__ = ["string_to_type", "type_to_string", "make_quadrature"]
+
 
 def string_to_type(rule: str) -> _QT:
     """Convert a string to a Basix QuadratureType enum.

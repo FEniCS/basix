@@ -413,7 +413,12 @@ class FiniteElement:
 
     @property
     def points(self):
-        """TODO."""
+        """Interpolation points.
+
+        Coordinates on the reference element where a function need to be
+        evaluated in order to interpolate it in the finite element
+        space. Shape is ``(num_points, tdim)``.
+        """
         return self._e.points
 
     @property
@@ -428,7 +433,10 @@ class FiniteElement:
 
     @property
     def dual_matrix(self):
-        """Matrix $BD^{T}$, as described in the documentation of the `FiniteElement()` constructor."""
+        """Matrix $BD^{T}$.
+
+        See C++ documentation.
+        """
         return self._e.dual_matrix
 
     @property

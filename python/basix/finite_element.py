@@ -27,7 +27,7 @@ class FiniteElement:
         """
         self._e = e
 
-    def tabulate(self, n: int, x: npt.NDArray) -> npt.NDArray[_np.float_]:
+    def tabulate(self, n: int, x: npt.NDArray) -> npt.NDArray[_np.floating]:
         """Compute basis values and derivatives at set of points.
 
         Note:
@@ -68,7 +68,7 @@ class FiniteElement:
         except TypeError:
             return False
 
-    def push_forward(self, U, J, detJ, K) -> npt.NDArray[_np.float_]:
+    def push_forward(self, U, J, detJ, K) -> npt.NDArray[_np.floating]:
         """Map function values from the reference to a physical cell.
 
         This function can perform the mapping for multiple points,
@@ -90,7 +90,7 @@ class FiniteElement:
         return self._e.push_forward(U, J, detJ, K)
 
     def pull_back(self, u: npt.NDArray, J: npt.NDArray,
-                  detJ: npt.NDArray, K: npt.NDArray) -> npt.NDArray[_np.float_]:
+                  detJ: npt.NDArray, K: npt.NDArray) -> npt.NDArray[_np.floating]:
         """Map function values from a physical cell to the reference.
 
         Args:
@@ -148,7 +148,7 @@ class FiniteElement:
         """
         self._e.pre_apply_inverse_transpose_dof_transformation(data, block_size, cell_info)
 
-    def base_transformations(self) -> npt.NDArray[_np.float_]:
+    def base_transformations(self) -> npt.NDArray[_np.floating]:
         r"""Get the base transformations.
 
         The base transformations represent the effect of rotating or reflecting
@@ -416,7 +416,7 @@ class FiniteElement:
         return self._e.sobolev_space
 
     @property
-    def points(self) -> npt.NDArray[_np.float_]:
+    def points(self) -> npt.NDArray[_np.floating]:
         """Interpolation points.
 
         Coordinates on the reference element where a function need to be
@@ -426,7 +426,7 @@ class FiniteElement:
         return self._e.points
 
     @property
-    def interpolation_matrix(self) -> npt.NDArray[_np.float_]:
+    def interpolation_matrix(self) -> npt.NDArray[_np.floating]:
         """Interpolation points.
 
         Coordinates on the reference element where a function need to be
@@ -436,7 +436,7 @@ class FiniteElement:
         return self._e.interpolation_matrix
 
     @property
-    def dual_matrix(self) -> npt.NDArray[_np.float_]:
+    def dual_matrix(self) -> npt.NDArray[_np.floating]:
         """Matrix $BD^{T}$.
 
         See C++ documentation.
@@ -444,12 +444,12 @@ class FiniteElement:
         return self._e.dual_matrix
 
     @property
-    def coefficient_matrix(self) -> npt.NDArray[_np.float_]:
+    def coefficient_matrix(self) -> npt.NDArray[_np.floating]:
         """Matrix of coefficients.."""
         return self._e.coefficient_matrix
 
     @property
-    def wcoeffs(self) -> npt.NDArray[_np.float_]:
+    def wcoeffs(self) -> npt.NDArray[_np.floating]:
         """Coefficients that define the polynomial set in terms of the orthonormal polynomials.
 
         See C++ documentation for details.
@@ -457,7 +457,7 @@ class FiniteElement:
         return self._e.wcoeffs
 
     @property
-    def M(self) -> typing.List[typing.List[npt.NDArray[_np.float_]]]:
+    def M(self) -> typing.List[typing.List[npt.NDArray[_np.floating]]]:
         """Interpolation matrices for each subentity.
 
         See C++ documentation for details.
@@ -465,7 +465,7 @@ class FiniteElement:
         return self._e.M
 
     @property
-    def x(self) -> typing.List[typing.List[npt.NDArray[_np.float_]]]:
+    def x(self) -> typing.List[typing.List[npt.NDArray[_np.floating]]]:
         """Interpolation points for each sub-entity.
 
         The indices of this data are (tdim, entity index, point index,

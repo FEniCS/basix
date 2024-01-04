@@ -99,8 +99,9 @@ def _cellname_to_tdim(cellname: str) -> int:
 class _ElementBase(_AbstractFiniteElement):
     """A base wrapper to allow elements to be used with UFL.
 
-    This class includes methods and properties needed by UFL and FFCx. This is a base class containing
-    functions common to all the element types defined in this file.
+    This class includes methods and properties needed by UFL and FFCx.
+    This is a base class containing functions common to all the element
+    types defined in this file.
     """
 
     def __init__(self, repr: str, cellname: str, value_shape: _typing.Tuple[int, ...],
@@ -376,7 +377,9 @@ class _BasixElement(_ElementBase):
         else:
             self._is_custom = False
             repr = (f"Basix element ({element.family.__name__}, {element.cell_type.__name__}, {element.degree}, "
-                    f"{element.lagrange_variant.__name__}, {element.dpc_variant.__name__}, {element.discontinuous}")
+                    f"{element.lagrange_variant.__name__}, {element.dpc_variant.__name__}, {element.discontinuous}, "
+                    f"{element.dtype}, {element.dof_ordering}")
+            print(repr)
         if gdim != _cellname_to_tdim(element.cell_type.__name__):
             repr += _repr_optional_args(gdim=gdim)
         repr += ")"
@@ -1815,7 +1818,8 @@ def _compute_signature(element: _basix.finite_element.FiniteElement) -> str:
     """
     assert element.family == _basix.ElementFamily.custom
     signature = (f"{element.cell_type.__name__}, {element.value_shape}, {element.map_type.__name__}, "
-                 f"{element.discontinuous}, {element.embedded_subdegree}, {element.embedded_superdegree}, ")
+                 f"{element.discontinuous}, {element.embedded_subdegree}, {element.embedded_superdegree}, "
+                 f"{element.dtype}, {element.dof_ordering}")
     data = ",".join([f"{i}" for row in element.wcoeffs for i in row])
     data += "__"
     for entity in element.x:

@@ -29,4 +29,5 @@ cmake.minimum-version = "3.19.0"
 wheel.packages = ["basix"]
 
 [tool.isort]
+line_length = 120
 skip_glob = ["*.pyi"]

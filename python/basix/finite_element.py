@@ -17,6 +17,7 @@ __all__ = ["FiniteElement", "create_element", "create_custom_element", "string_t
 
 class FiniteElement:
     """Finite element class."""
+    _e: typing.Union[_FiniteElement_float32, _FiniteElement_float64]
 
     def __init__(self, e: typing.Union[_FiniteElement_float32, _FiniteElement_float64]):
         """Initialise a finite element wrapper.
@@ -415,7 +416,7 @@ class FiniteElement:
         return self._e.sobolev_space
 
     @property
-    def points(self):
+    def points(self) -> npt.NDArray[_np.float_]:
         """Interpolation points.
 
         Coordinates on the reference element where a function need to be
@@ -425,7 +426,7 @@ class FiniteElement:
         return self._e.points
 
     @property
-    def interpolation_matrix(self):
+    def interpolation_matrix(self) -> npt.NDArray[_np.float_]:
         """Interpolation points.
 
         Coordinates on the reference element where a function need to be
@@ -435,7 +436,7 @@ class FiniteElement:
         return self._e.interpolation_matrix
 
     @property
-    def dual_matrix(self):
+    def dual_matrix(self) -> npt.NDArray[_np.float_]:
         """Matrix $BD^{T}$.
 
         See C++ documentation.
@@ -443,12 +444,12 @@ class FiniteElement:
         return self._e.dual_matrix
 
     @property
-    def coefficient_matrix(self):
+    def coefficient_matrix(self) -> npt.NDArray[_np.float_]:
         """Matrix of coefficients.."""
         return self._e.coefficient_matrix
 
     @property
-    def wcoeffs(self):
+    def wcoeffs(self) -> npt.NDArray[_np.float_]:
         """Coefficients that define the polynomial set in terms of the orthonormal polynomials.
 
         See C++ documentation for details.
@@ -456,16 +457,16 @@ class FiniteElement:
         return self._e.wcoeffs
 
     @property
-    def M(self):
-        """Interpolation matrices for each subentit.
+    def M(self) -> typing.List[typing.List[npt.NDArray[_np.float_]]]:
+        """Interpolation matrices for each subentity.
 
         See C++ documentation for details.
         """
         return self._e.M
 
     @property
-    def x(self):
-        """Interpolation points for each subentity.
+    def x(self) -> typing.List[typing.List[npt.NDArray[_np.float_]]]:
+        """Interpolation points for each sub-entity.
 
         The indices of this data are (tdim, entity index, point index,
         dim).
@@ -474,7 +475,7 @@ class FiniteElement:
 
     @property
     def has_tensor_product_factorisation(self) -> bool:
-        """True if element has tensor-product structure ."""
+        """True if element has tensor-product structure."""
         return self._e.has_tensor_product_factorisation
 
     @property

@@ -31,6 +31,11 @@ from basix._basixcpp import (
 
 class FiniteElement:
     def __init__(self, e: typing.Union[FiniteElement_float32, FiniteElement_float32]):
+        """Initialise a finite element wrapper
+
+        Note:
+            This initialiser is intended for internal library use.
+        """
         self._e = e
 
     def tabulate(self, n: int, x: npt.NDArray) -> npt.NDArray[_np.float_]:
@@ -63,7 +68,8 @@ class FiniteElement:
         """
         return self._e.tabulate(n, x)
 
-    def __eq__(self, other):
+    def __eq__(self, other) -> bool:
+        """Test element for equality."""
         return self._e == other._e
 
     def push_forward(self, U, J, detJ, K) -> npt.NDArray[_np.float_]:
@@ -104,6 +110,18 @@ class FiniteElement:
         return self._e.pull_back(u, J, detJ, K)
 
     def pre_apply_dof_transformation(self, data, block_size, cell_info) -> None:
+        """Pre-apply DOF transformations to some data in-place.
+
+        Note:
+            This function is designed to be called at runtime, so its
+            performance is critical.
+
+        Args:
+            data: The data
+            block_size: The number of data points per DOF
+            cell_info: The permutation info for the cell
+
+        """
         self._e.pre_apply_dof_transformation(data, block_size, cell_info)
 
     def post_apply_transpose_dof_transformation(self, data, block_size, cell_info) -> None:
@@ -118,11 +136,11 @@ class FiniteElement:
     def entity_transformations(self) -> dict:
         return self._e.entity_transformations()
 
-    def get_tensor_product_representation(self) -> typing.List[typing.Tuple[typing.List[FiniteElement], typing.List[int]]]:
+    def get_tensor_product_representation(self):
         return self._e.get_tensor_product_representation()
 
     # def get_tensor_product_representation(self) -> typing.List[typing.Tuple[typing.List[FiniteElement],
-    # typing.List[int]]]:
+    #                                                                         typing.List[int]]]:
     #     return self._e.get_tensor_product_representation()
 
     @property

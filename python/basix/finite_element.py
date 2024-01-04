@@ -292,7 +292,7 @@ class FiniteElement:
 
         Highest degree `n` such that a Lagrange (or vector Lagrange)
         element of degree n is a subspace of this element.
-      """
+        """
         return self._e.embedded_subdegree
 
     @property
@@ -334,7 +334,7 @@ class FiniteElement:
 
     @property
     def num_entity_closure_dofs(self) -> typing.List[typing.List[int]]:
-        """Number of entity closure dofs
+        """Number of entity closure dofs.
 
         Warning:
             This property may be removed.
@@ -378,12 +378,12 @@ class FiniteElement:
 
     @property
     def lagrange_variant(self) -> LagrangeVariant:
-        """ Lagrange variant of the element."""
+        """Lagrange variant of the element."""
         return self._e.lagrange_variant
 
     @property
     def dpc_variant(self) -> DPCVariant:
-        """DPC variant of the elementD."""
+        """DPC variant of the element."""
         return self._e.dpc_variant
 
     @property
@@ -403,7 +403,7 @@ class FiniteElement:
 
     @property
     def map_type(self) -> MapType:
-        """ Map type for this element."""
+        """Map type for this element."""
         return self._e.map_type
 
     @property
@@ -418,7 +418,7 @@ class FiniteElement:
 
     @property
     def interpolation_matrix(self):
-        """Interpolation points,
+        """Interpolation points.
 
         Coordinates on the reference element where a function need to be
         evaluated in order to interpolate it in the finite element

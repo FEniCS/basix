@@ -22,6 +22,16 @@ else:
     _nda_f64 = None
 
 
+__all__ = ["pre_apply_dof_transformation", "pre_apply_dof_transformation_interval",
+           "pre_apply_dof_transformation_triangle", "pre_apply_dof_transformation_quadrilateral",
+           "pre_apply_dof_transformation_tetrahedron",  "pre_apply_dof_transformation_hexahedron",
+           "pre_apply_dof_transformation_prism", "pre_apply_dof_transformation_pyramid",
+           "post_apply_transpose_dof_transformation", "post_apply_transpose_dof_transformation_interval",
+           "post_apply_transpose_dof_transformation_triangle", "post_apply_transpose_dof_transformation_quadrilateral",
+           "post_apply_transpose_dof_transformation_tetrahedron", "post_apply_transpose_dof_transformation_hexahedron",
+           "post_apply_transpose_dof_transformation_prism", "post_apply_transpose_dof_transformation_pyramid"]
+
+
 @_numba.jit(nopython=True)
 def pre_apply_dof_transformation(
     tdim: int, edge_count: int, face_count: int, entity_transformations: _Dict[str, _nda],

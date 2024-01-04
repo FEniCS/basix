@@ -12,6 +12,8 @@ from basix._basixcpp import polynomials_dim as dim  # noqa: F401
 
 _nda_f64 = _numpy_typing.NDArray[_numpy.float64]
 
+__all__ = ["reshape_coefficients"]
+
 
 def reshape_coefficients(
     poly_type: _PT, cell_type: _CT, coefficients: _nda_f64, value_size: int, input_degree: int, output_degree: int

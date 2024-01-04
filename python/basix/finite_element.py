@@ -273,107 +273,142 @@ class FiniteElement:
 
     @property
     def degree(self) -> int:
-        """TODO."""
+        """Element polynomial degree."""
         return self._e.degree
 
     @property
     def embedded_superdegree(self) -> int:
-        """TODO."""
+        """Embedded polynomial degree.
+
+        Lowest degree `n` such that the highest degree polynomial in
+        this element is contained in a Lagrange (or vector Lagrange)
+        element of degree `n`.
+        """
         return self._e.embedded_superdegree
 
     @property
     def embedded_subdegree(self) -> int:
-        """TODO."""
+        """Embedded polynomial sub-degree.
+
+        Highest degree `n` such that a Lagrange (or vector Lagrange)
+        element of degree n is a subspace of this element.
+      """
         return self._e.embedded_subdegree
 
     @property
     def cell_type(self) -> CellType:
-        """TODO."""
+        """Element cell type."""
         return self._e.cell_type
 
     @property
     def polyset_type(self) -> PolysetType:
-        """TODO."""
+        """Element polyset type."""
         return self._e.polyset_type
 
     @property
     def dim(self) -> int:
-        """TODO."""
+        """Dimension of the finite element space.
+
+        Number of degrees-of-freedom for the element.
+        """
         return self._e.dim
 
     @property
     def num_entity_dofs(self) -> typing.List[typing.List[int]]:
-        """TODO."""
+        """Number of entity dofs.
+
+        Warning:
+            This property may be removed.
+        """
         return self._e.num_entity_dofs
 
     @property
     def entity_dofs(self) -> typing.List[typing.List[typing.List[int]]]:
-        """TODO."""
+        """Get the dofs on each topological entity.
+
+        Data is order (vertices, edges, faces, cell). For example,
+        Lagrange degree 2 on a triangle has vertices: ``[[0], [1], [2]]``,
+        edges: ``[[3], [4], [5]]``, cell: ``[[]]``.
+        """
         return self._e.entity_dofs
 
     @property
     def num_entity_closure_dofs(self) -> typing.List[typing.List[int]]:
-        """TODO."""
+        """Number of entity closure dofs
+
+        Warning:
+            This property may be removed.
+        """
         return self._e.num_entity_closure_dofs
 
     @property
     def entity_closure_dofs(self) -> typing.List[typing.List[typing.List[int]]]:
-        """TODO."""
+        """Get the dofs on the closure of each topological entity.
+
+        Data is in the order (vertices, edges, faces, cell). For
+        example, Lagrange degree 2 on a triangle has vertices: ``[[0],
+        [1], [2]]``, edges: ``[[1, 2, 3], [0, 2, 4], [0, 1, 5]]``, cell:
+        ``[[0, 1, 2, 3, 4, 5]]``.
+        """
         return self._e.entity_closure_dofs
 
     @property
     def value_size(self) -> int:
-        """TODO."""
+        """Value size."""
         return self._e.value_size
 
     @property
     def value_shape(self) -> typing.List[int]:
-        """TODO."""
+        """Element value tensor shape.
+
+        E.g., returning ``(,)`` for scalars, ``(3,)`` for vectors in 3D,
+        ``(2, 2)`` for a rank-2 tensor in 2D.
+        """
         return self._e.value_shape
 
     @property
     def discontinuous(self) -> bool:
-        """TODO."""
+        """True is element is the discontinuous variant."""
         return self._e.discontinuous
 
     @property
     def family(self) -> ElementFamily:
-        """TODO."""
+        """Finite element family."""
         return self._e.family
 
     @property
     def lagrange_variant(self) -> LagrangeVariant:
-        """TODO."""
+        """ Lagrange variant of the element."""
         return self._e.lagrange_variant
 
     @property
     def dpc_variant(self) -> DPCVariant:
-        """TODO."""
+        """DPC variant of the elementD."""
         return self._e.dpc_variant
 
     @property
     def dof_transformations_are_permutations(self) -> bool:
-        """TODO."""
+        """True if the dof transformations are all permutations."""
         return self._e.dof_transformations_are_permutations
 
     @property
     def dof_transformations_are_identity(self) -> bool:
-        """TODO."""
+        """True if DOF transformations are all the identity."""
         return self._e.dof_transformations_are_identity
 
     @property
     def interpolation_is_identity(self) -> bool:
-        """TODO."""
+        """True if interpolation matrix for this element is the identity."""
         return self._e.interpolation_is_identity
 
     @property
     def map_type(self) -> MapType:
-        """TODO."""
+        """ Map type for this element."""
         return self._e.map_type
 
     @property
     def sobolev_space(self) -> SobolevSpace:
-        """TODO."""
+        """Underlying Sobolev space for this element."""
         return self._e.sobolev_space
 
     @property
@@ -383,12 +418,17 @@ class FiniteElement:
 
     @property
     def interpolation_matrix(self):
-        """TODO."""
+        """Interpolation points,
+
+        Coordinates on the reference element where a function need to be
+        evaluated in order to interpolate it in the finite element
+        space.
+        """
         return self._e.interpolation_matrix
 
     @property
     def dual_matrix(self):
-        """TODO."""
+        """Matrix $BD^{T}$, as described in the documentation of the `FiniteElement()` constructor."""
         return self._e.dual_matrix
 
     @property

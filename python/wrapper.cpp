@@ -89,95 +89,84 @@ void declare_float(nb::module_& m, std::string type)
 {
   std::string name = "FiniteElement_" + type;
   nb::class_<FiniteElement<T>>(m, name.c_str())
-      .def(
-          "tabulate",
-          [](const FiniteElement<T>& self, int n,
-             nb::ndarray<const T, nb::ndim<2>, nb::c_contig> x)
-          {
-            mdspan_t<const T, 2> _x(x.data(), x.shape(0), x.shape(1));
-            return as_nbarrayp(self.tabulate(n, _x));
-          })
+      .def("tabulate",
+           [](const FiniteElement<T>& self, int n,
+              nb::ndarray<const T, nb::ndim<2>, nb::c_contig> x)
+           {
+             mdspan_t<const T, 2> _x(x.data(), x.shape(0), x.shape(1));
+             return as_nbarrayp(self.tabulate(n, _x));
+           })
       .def("__eq__", &FiniteElement<T>::operator==)
-      .def(
-          "push_forward",
-          [](const FiniteElement<T>& self,
-             nb::ndarray<const T, nb::ndim<3>, nb::c_contig> U,
-             nb::ndarray<const T, nb::ndim<3>, nb::c_contig> J,
-             nb::ndarray<const T, nb::ndim<1>, nb::c_contig> detJ,
-             nb::ndarray<const T, nb::ndim<3>, nb::c_contig> K)
-          {
-            auto u = self.push_forward(
-                mdspan_t<const T, 3>(U.data(), U.shape(0), U.shape(1),
-                                     U.shape(2)),
-                mdspan_t<const T, 3>(J.data(), J.shape(0), J.shape(1),
-                                     J.shape(2)),
-                std::span<const T>(detJ.data(), detJ.shape(0)),
-                mdspan_t<const T, 3>(K.data(), K.shape(0), K.shape(1),
-                                     K.shape(2)));
-            return as_nbarrayp(std::move(u));
-          })
-      .def(
-          "pull_back",
-          [](const FiniteElement<T>& self,
-             nb::ndarray<const T, nb::ndim<3>, nb::c_contig> u,
-             nb::ndarray<const T, nb::ndim<3>, nb::c_contig> J,
-             nb::ndarray<const T, nb::ndim<1>, nb::c_contig> detJ,
-             nb::ndarray<const T, nb::ndim<3>, nb::c_contig> K)
-          {
-            auto U
-                = self.pull_back(mdspan_t<const T, 3>(u.data(), u.shape(0),
-                                                      u.shape(1), u.shape(2)),
-                                 mdspan_t<const T, 3>(J.data(), J.shape(0),
-                                                      J.shape(1), J.shape(2)),
-                                 std::span<const T>(detJ.data(), detJ.shape(0)),
-                                 mdspan_t<const T, 3>(K.data(), K.shape(0),
-                                                      K.shape(1), K.shape(2)));
-            return as_nbarrayp(std::move(U));
-          })
-      .def(
-          "pre_apply_dof_transformation",
-          [](const FiniteElement<T>& self,
-             nb::ndarray<T, nb::ndim<1>, nb::c_contig> data, int block_size,
-             std::uint32_t cell_info)
-          {
-            self.pre_apply_dof_transformation(
-                std::span(data.data(), data.size()), block_size, cell_info);
-          })
-      .def(
-          "post_apply_transpose_dof_transformation",
-          [](const FiniteElement<T>& self,
-             nb::ndarray<T, nb::ndim<1>, nb::c_contig> data, int block_size,
-             std::uint32_t cell_info)
-          {
-            self.post_apply_transpose_dof_transformation(
-                std::span(data.data(), data.size()), block_size, cell_info);
-          })
-      .def(
-          "pre_apply_inverse_transpose_dof_transformation",
-          [](const FiniteElement<T>& self,
-             nb::ndarray<T, nb::ndim<1>, nb::c_contig> data, int block_size,
-             std::uint32_t cell_info)
-          {
-            self.pre_apply_inverse_transpose_dof_transformation(
-                std::span(data.data(), data.size()), block_size, cell_info);
-          })
-      .def(
-          "base_transformations",
-          [](const FiniteElement<T>& self)
-          { return as_nbarrayp(self.base_transformations()); })
-      .def(
-          "entity_transformations",
-          [](const FiniteElement<T>& self)
-          {
-            nb::dict t;
-            for (auto& [key, data] : self.entity_transformations())
-              t[cell_type_to_str(key).c_str()] = as_nbarrayp(std::move(data));
-            return t;
-          })
-      .def(
-          "get_tensor_product_representation",
-          [](const FiniteElement<T>& self)
-          { return self.get_tensor_product_representation(); })
+      .def("push_forward",
+           [](const FiniteElement<T>& self,
+              nb::ndarray<const T, nb::ndim<3>, nb::c_contig> U,
+              nb::ndarray<const T, nb::ndim<3>, nb::c_contig> J,
+              nb::ndarray<const T, nb::ndim<1>, nb::c_contig> detJ,
+              nb::ndarray<const T, nb::ndim<3>, nb::c_contig> K)
+           {
+             auto u = self.push_forward(
+                 mdspan_t<const T, 3>(U.data(), U.shape(0), U.shape(1),
+                                      U.shape(2)),
+                 mdspan_t<const T, 3>(J.data(), J.shape(0), J.shape(1),
+                                      J.shape(2)),
+                 std::span<const T>(detJ.data(), detJ.shape(0)),
+                 mdspan_t<const T, 3>(K.data(), K.shape(0), K.shape(1),
+                                      K.shape(2)));
+             return as_nbarrayp(std::move(u));
+           })
+      .def("pull_back",
+           [](const FiniteElement<T>& self,
+              nb::ndarray<const T, nb::ndim<3>, nb::c_contig> u,
+              nb::ndarray<const T, nb::ndim<3>, nb::c_contig> J,
+              nb::ndarray<const T, nb::ndim<1>, nb::c_contig> detJ,
+              nb::ndarray<const T, nb::ndim<3>, nb::c_contig> K)
+           {
+             auto U = self.pull_back(
+                 mdspan_t<const T, 3>(u.data(), u.shape(0), u.shape(1),
+                                      u.shape(2)),
+                 mdspan_t<const T, 3>(J.data(), J.shape(0), J.shape(1),
+                                      J.shape(2)),
+                 std::span<const T>(detJ.data(), detJ.shape(0)),
+                 mdspan_t<const T, 3>(K.data(), K.shape(0), K.shape(1),
+                                      K.shape(2)));
+             return as_nbarrayp(std::move(U));
+           })
+      .def("pre_apply_dof_transformation",
+           [](const FiniteElement<T>& self,
+              nb::ndarray<T, nb::ndim<1>, nb::c_contig> data, int block_size,
+              std::uint32_t cell_info)
+           {
+             self.pre_apply_dof_transformation(
+                 std::span(data.data(), data.size()), block_size, cell_info);
+           })
+      .def("post_apply_transpose_dof_transformation",
+           [](const FiniteElement<T>& self,
+              nb::ndarray<T, nb::ndim<1>, nb::c_contig> data, int block_size,
+              std::uint32_t cell_info)
+           {
+             self.post_apply_transpose_dof_transformation(
+                 std::span(data.data(), data.size()), block_size, cell_info);
+           })
+      .def("pre_apply_inverse_transpose_dof_transformation",
+           [](const FiniteElement<T>& self,
+              nb::ndarray<T, nb::ndim<1>, nb::c_contig> data, int block_size,
+              std::uint32_t cell_info)
+           {
+             self.pre_apply_inverse_transpose_dof_transformation(
+                 std::span(data.data(), data.size()), block_size, cell_info);
+           })
+      .def("base_transformations", [](const FiniteElement<T>& self)
+           { return as_nbarrayp(self.base_transformations()); })
+      .def("entity_transformations",
+           [](const FiniteElement<T>& self)
+           {
+             nb::dict t;
+             for (auto& [key, data] : self.entity_transformations())
+               t[cell_type_to_str(key).c_str()] = as_nbarrayp(std::move(data));
+             return t;
+           })
+      .def("get_tensor_product_representation", [](const FiniteElement<T>& self)
+           { return self.get_tensor_product_representation(); })
       .def_prop_ro("degree", &FiniteElement<T>::degree)
       .def_prop_ro("embedded_superdegree",
                    &FiniteElement<T>::embedded_superdegree)
@@ -246,7 +235,7 @@ void declare_float(nb::module_& m, std::string type)
             return nb::ndarray<const T, nb::ndim<2>, nb::numpy>(
                 x.data(), shape.size(), shape.data());
           },
-          nb::rv_policy::reference_internal, "TODO")
+          nb::rv_policy::reference_internal)
       .def_prop_ro(
           "interpolation_matrix",
           [](const FiniteElement<T>& self)
@@ -255,7 +244,7 @@ void declare_float(nb::module_& m, std::string type)
             return nb::ndarray<const T, nb::ndim<2>, nb::numpy>(
                 P.data(), shape.size(), shape.data());
           },
-          nb::rv_policy::reference_internal, "TODO")
+          nb::rv_policy::reference_internal)
       .def_prop_ro(
           "dual_matrix",
           [](const FiniteElement<T>& self)
@@ -264,7 +253,7 @@ void declare_float(nb::module_& m, std::string type)
             return nb::ndarray<const T, nb::ndim<2>, nb::numpy>(
                 D.data(), shape.size(), shape.data());
           },
-          nb::rv_policy::reference_internal, "TODO")
+          nb::rv_policy::reference_internal)
       .def_prop_ro(
           "coefficient_matrix",
           [](const FiniteElement<T>& self)
@@ -282,7 +271,7 @@ void declare_float(nb::module_& m, std::string type)
             return nb::ndarray<const T, nb::ndim<2>, nb::numpy>(
                 w.data(), shape.size(), shape.data());
           },
-          nb::rv_policy::reference_internal, "TODO")
+          nb::rv_policy::reference_internal)
       .def_prop_ro(
           "M",
           [](const FiniteElement<T>& self)
@@ -303,7 +292,7 @@ void declare_float(nb::module_& m, std::string type)
             }
             return M;
           },
-          nb::rv_policy::reference_internal, "TODO")
+          nb::rv_policy::reference_internal)
       .def_prop_ro(
           "x",
           [](const FiniteElement<T>& self)
@@ -326,10 +315,10 @@ void declare_float(nb::module_& m, std::string type)
           },
           nb::rv_policy::reference_internal)
       .def_prop_ro("has_tensor_product_factorisation",
-                   &FiniteElement<T>::has_tensor_product_factorisation, "TODO")
+                   &FiniteElement<T>::has_tensor_product_factorisation)
       .def_prop_ro("interpolation_nderivs",
-                   &FiniteElement<T>::interpolation_nderivs, "TODO")
-      .def_prop_ro("dof_ordering", &FiniteElement<T>::dof_ordering, "TODO");
+                   &FiniteElement<T>::interpolation_nderivs)
+      .def_prop_ro("dof_ordering", &FiniteElement<T>::dof_ordering);
 
   // Create FiniteElement
   m.def(
@@ -386,14 +375,13 @@ void declare_float(nb::module_& m, std::string type)
       "embedded_subdegree"_a, "embedded_superdegree"_a, "poly_type"_a);
 
   // Interpolate between elements
-  m.def(
-      "compute_interpolation_operator",
-      [](const FiniteElement<T>& element_from,
-         const FiniteElement<T>& element_to)
-      {
-        return as_nbarrayp(
-            basix::compute_interpolation_operator(element_from, element_to));
-      });
+  m.def("compute_interpolation_operator",
+        [](const FiniteElement<T>& element_from,
+           const FiniteElement<T>& element_to)
+        {
+          return as_nbarrayp(
+              basix::compute_interpolation_operator(element_from, element_to));
+        });
 
   m.def(
       "tabulate_polynomial_set",

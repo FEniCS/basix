@@ -694,6 +694,6 @@ NB_MODULE(_basixcpp, m)
   m.def("index", nb::overload_cast<int, int, int>(&basix::indexing::idx),
         basix::docstring::index__p_q_r.c_str());
 
-  // declare_float<float>(m, "float32");
+  declare_float<float>(m, "float32");
   declare_float<double>(m, "float64");
 }

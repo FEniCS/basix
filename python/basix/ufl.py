@@ -1839,6 +1839,7 @@ def _compute_signature(element: _basix.finite_element.FiniteElement) -> str:
         data += "__"
     signature += _hashlib.sha1(data.encode('utf-8')).hexdigest()
 
+    print("Custom sig:", signature)
     return signature
 
 

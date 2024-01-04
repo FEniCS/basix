@@ -433,37 +433,47 @@ class FiniteElement:
 
     @property
     def coefficient_matrix(self):
-        """TODO."""
+        """Matrix of coefficients.."""
         return self._e.coefficient_matrix
 
     @property
     def wcoeffs(self):
-        """TODO."""
+        """Coefficients that define the polynomial set in terms of the orthonormal polynomials.
+
+        See C++ documentation for details.
+        """
         return self._e.wcoeffs
 
     @property
     def M(self):
-        """TODO."""
+        """Interpolation matrices for each subentit.
+
+        See C++ documentation for details.
+        """
         return self._e.M
 
     @property
     def x(self):
-        """TODO."""
+        """Interpolation points for each subentity.
+
+        The indices of this data are (tdim, entity index, point index,
+        dim).
+        """
         return self._e.x
 
     @property
     def has_tensor_product_factorisation(self) -> bool:
-        """TODO."""
+        """True if element has tensor-product structure ."""
         return self._e.has_tensor_product_factorisation
 
     @property
     def interpolation_nderivs(self) -> int:
-        """TODO."""
+        """Number of derivatives needed when interpolating."""
         return self._e.interpolation_nderivs
 
     @property
     def dof_ordering(self) -> typing.List[int]:
-        """TODO."""
+        """DOF layout."""
         return self._e.dof_ordering
 
 

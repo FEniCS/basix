@@ -1084,13 +1084,15 @@ public:
     return _coeffs;
   }
 
-  /// Indicates whether or not this element can be represented as a product of
-  /// elements defined on lower-dimensional reference cells. If the product
-  /// exists, this element's basis functions can be computed as a tensor product
-  /// of the basis elements of the elements in the product.
+  /// Indicates whether or not this element can be represented as a
+  /// product of elements defined on lower-dimensional reference cells.
+  /// If the product exists, this element's basis functions can be
+  /// computed as a tensor product of the basis elements of the elements
+  /// in the product.
   ///
-  /// If such a factorisation exists, `get_tensor_product_representation()` can
-  /// be used to get these elements.
+  /// If such a factorisation exists,
+  /// `get_tensor_product_representation()` can be used to get these
+  /// elements.
   bool has_tensor_product_factorisation() const
   {
     return _tensor_factors.size() > 0;

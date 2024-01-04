@@ -393,8 +393,7 @@ void declare_float(nb::module_& m, std::string type)
       {
         return as_nbarrayp(
             basix::compute_interpolation_operator(element_from, element_to));
-      },
-      basix::docstring::compute_interpolation_operator.c_str());
+      });
 
   m.def(
       "tabulate_polynomial_set",

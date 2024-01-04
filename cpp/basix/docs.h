@@ -168,254 +168,6 @@ Returns:
     The jacobians of the facets. Shape is (nfacets, gdim, gdim - 1)
 )";
 
-const std::string FiniteElement__tabulate = R"(
-Compute basis values and derivatives at set of points.
-
-NOTE: The version of `FiniteElement::tabulate` with the basis data
-as an out argument should be preferred for repeated call where
-performance is critical
-
-Args:
-    nd: The order of derivatives, up to and including, to compute. Use 0 for the basis functions only.
-    x: The points at which to compute the basis functions. The shape of x is (number of points, geometric dimension).
-
-Returns:
-    The basis functions (and derivatives). The shape is
-    (derivative, point, basis fn index, value index).
-    - The first index is the derivative, with higher derivatives are
-    stored in triangular (2D) or tetrahedral (3D) ordering, ie for
-    the (x,y) derivatives in 2D: (0,0), (1,0), (0,1), (2,0), (1,1),
-    (0,2), (3,0)... The function basix::indexing::idx can be used to find the
-    appropriate derivative.
-    - The second index is the point index
-    - The third index is the basis function index
-    - The fourth index is the basis function component. Its has size
-    one for scalar basis functions.
-)";
-
-const std::string FiniteElement__push_forward = R"(
-Map function values from the reference to a physical cell. This
-function can perform the mapping for multiple points, grouped by
-points that share a common Jacobian.
-
-Args:
-    U: The function values on the reference. The indices are [Jacobian index, point index, components].
-    J: The Jacobian of the mapping. The indices are [Jacobian index, J_i, J_j].
-    detJ: The determinant of the Jacobian of the mapping. It has length `J.shape(0)`
-    K: The inverse of the Jacobian of the mapping. The indices are [Jacobian index, K_i, K_j].
-
-Returns:
-    The function values on the cell. The indices are [Jacobian
-    index, point index, components].
-)";
-
-const std::string FiniteElement__pull_back = R"(
-Map function values from a physical cell to the reference
-
-Args:
-    u: The function values on the cell
-    J: The Jacobian of the mapping
-    detJ: The determinant of the Jacobian of the mapping
-    K: The inverse of the Jacobian of the mapping
-
-Returns:
-    The function values on the reference. The indices are
-    [Jacobian index, point index, components].
-)";
-
-const std::string FiniteElement__pre_apply_dof_transformation = R"(
-Pre-apply DOF transformations to some data
-
-NOTE: This function is designed to be called at runtime, so its
-performance is critical.
-
-Args:
-    data: The data
-    block_size: The number of data points per DOF
-    cell_info: The permutation info for the cell
-
-Returns:
-    data: The data
-)";
-
-const std::string FiniteElement__post_apply_transpose_dof_transformation = R"(
-Post-apply DOF transformations to some transposed data
-
-NOTE: This function is designed to be called at runtime, so its
-performance is critical.
-
-Args:
-    data: The data
-    block_size: The number of data points per DOF
-    cell_info: The permutation info for the cell
-
-Returns:
-    data: The data
-)";
-
-const std::string FiniteElement__pre_apply_inverse_transpose_dof_transformation
-    = R"(
-Pre-apply inverse transpose DOF transformations to some data
-
-NOTE: This function is designed to be called at runtime, so its
-performance is critical.
-
-Args:
-    data: The data
-    block_size: The number of data points per DOF
-    cell_info: The permutation info for the cell
-
-Returns:
-    data: The data
-)";
-
-const std::string FiniteElement__base_transformations = R"(
-Get the base transformations.
-
-The base transformations represent the effect of rotating or reflecting
-a subentity of the cell on the numbering and orientation of the DOFs.
-This returns a list of matrices with one matrix for each subentity
-permutation in the following order:
-Reversing edge 0, reversing edge 1, ...
-Rotate face 0, reflect face 0, rotate face 1, reflect face 1, ...
-
-*Example: Order 3 Lagrange on a triangle*
-
-This space has 10 dofs arranged like:
-
-.. code-block::
-
- 2
- |\
- 6 4
- |  \
- 5 9 3
- |    \
- 0-7-8-1
-
-
-For this element, the base transformations are:
-[Matrix swapping 3 and 4,
-Matrix swapping 5 and 6,
-Matrix swapping 7 and 8]
-The first row shows the effect of reversing the diagonal edge. The
-second row shows the effect of reversing the vertical edge. The third
-row shows the effect of reversing the horizontal edge.
-
-*Example: Order 1 Raviart-Thomas on a triangle*
-
-This space has 3 dofs arranged like:
-
-.. code-block::
-
-   |\
-   | \
-   |  \
- <-1   0
-   |  / \
-   | L ^ \
-   |   |  \
-    ---2---
-
-
-These DOFs are integrals of normal components over the edges: DOFs 0 and 2
-are oriented inward, DOF 1 is oriented outwards.
-For this element, the base transformation matrices are:
-
-.. code-block::
-
-   0: [[-1, 0, 0],
-       [ 0, 1, 0],
-       [ 0, 0, 1]]
-   1: [[1,  0, 0],
-       [0, -1, 0],
-       [0,  0, 1]]
-   2: [[1, 0,  0],
-       [0, 1,  0],
-       [0, 0, -1]]
-
-
-The first matrix reverses DOF 0 (as this is on the first edge). The second
-matrix reverses DOF 1 (as this is on the second edge). The third matrix
-reverses DOF 2 (as this is on the third edge).
-
-*Example: DOFs on the face of Order 2 Nedelec first kind on a tetrahedron*
-
-On a face of this tetrahedron, this space has two face tangent DOFs:
-
-.. code-block::
-
- |\        |\
- | \       | \
- |  \      | ^\
- |   \     | | \
- | 0->\    | 1  \
- |     \   |     \
-  ------    ------
-
-
-For these DOFs, the subblocks of the base transformation matrices are:
-
-.. code-block::
-
-   rotation: [[-1, 1],
-              [ 1, 0]]
-   reflection: [[0, 1],
-                [1, 0]]
-
-
-
-Returns:
-    The base transformations for this element. The shape is
-    (ntranformations, ndofs, ndofs)
-)";
-
-const std::string FiniteElement__entity_transformations = R"(
-Return the entity dof transformation matrices
-
-Returns:
-    The base transformations for this element. The shape is
-    (ntranformations, ndofs, ndofs)
-)";
-
-const std::string FiniteElement__get_tensor_product_representation = R"(
-Get the tensor product representation of this element, or throw an
-error if no such factorisation exists.
-
-The tensor product representation will be a vector of tuples. Each
-tuple contains a vector of finite elements, and a vector of
-integers. The vector of finite elements gives the elements on an
-interval that appear in the tensor product representation. The
-vector of integers gives the permutation between the numbering of
-the tensor product DOFs and the number of the DOFs of this Basix
-element.
-
-Returns:
-    The tensor product representation
-)";
-
-const std::string create_custom_element = R"(
-Create a custom finite element
-
-Args:
-    cell_type: The cell type
-    value_shape: The value shape of the element
-    wcoeffs: Matrices for the kth value index containing the expansion coefficients defining a polynomial basis spanning the polynomial space for this element. Shape is (dim(finite element polyset), dim(Legendre polynomials))
-    x: Interpolation points. Indices are (tdim, entity index, point index, dim)
-    M: The interpolation matrices. Indices are (tdim, entity index, dof, vs, point_index, derivative)
-    interpolation_nderivs: The number of derivatives that need to be used during interpolation
-    map_type: The type of map to be used to map values from the reference to a cell
-    sobolev_space: The underlying Sobolev space for the element
-    discontinuous: Indicates whether or not this is the discontinuous version of the element
-    embedded_subdegree: The highest degree n such that a Lagrange (or vector Lagrange) element of degree n is a subspace of this element
-    embedded_superdegree: The degree of a polynomial in this element's polyset
-    poly_type: The type of polyset to use for this element
-
-Returns:
-    A custom finite element
-)";
-
-
 const std::string
     create_element__family_cell_degree_lvariant_dvariant_discontinuous_dof_ordering
     = R"(
@@ -432,42 +184,6 @@ Args:
 
 Returns:
     A finite element
-)";
-
-const std::string compute_interpolation_operator = R"(
-Compute a matrix that represents the interpolation between
-two elements.
-
-If the two elements have the same value size, this function returns
-the interpolation between them.
-
-If element_from has value size 1 and element_to has value size > 1,
-then this function returns a matrix to interpolate from a blocked
-element_from (ie multiple copies of element_from) into element_to.
-
-If element_to has value size 1 and element_from has value size > 1,
-then this function returns a matrix that interpolates the components
-of element_from into copies of element_to.
-
-NOTE: If the elements have different value sizes and both are
-greater than 1, this function throws a runtime error
-
-In order to interpolate functions between finite element spaces on
-arbitrary cells, the functions must be pulled back to the reference
-element (this pull back includes applying DOF transformations). The
-matrix that this function returns can then be applied, then the
-result pushed forward to the cell. If element_from and element_to
-have the same map type, then only the DOF transformations need to be
-applied, as the pull back and push forward cancel each other out.
-
-Args:
-    element_from: The element to interpolate from
-    element_to: The element to interpolate to
-
-Returns:
-    Matrix operator that maps the 'from' degrees-of-freedom to
-    the 'to' degrees-of-freedom. Shape is (ndofs(element_to),
-    ndofs(element_from))
 )";
 
 const std::string tabulate_polynomial_set = R"(
@@ -496,7 +212,7 @@ Returns:
     Polynomial sets, for each derivative, tabulated at points.
     The shape is `(number of derivatives computed, number of points,
     basis index)`.
-    
+
     - The first index is the derivative. The first entry is the basis
     itself. Derivatives are stored in triangular (2D) or tetrahedral
     (3D) ordering, eg if `(p, q)` denotes `p` order derivative with
@@ -505,10 +221,10 @@ Returns:
     [5] -> (0, 2), [6] -> (3, 0),...
     The function basix::indexing::idx maps tuples `(p, q, r)` to the
     array index.
-    
+
     - The second index is the point, with index `i` corresponding to the
     point in row `i` of @p x.
-    
+
     - The third index is the basis function index.
     TODO: Does the order for the third index need to be documented?
 )";
@@ -627,7 +343,5 @@ Args:
 Returns::
     The restricted polyset type
 )";
-
-
 
 } // namespace basix::docstring

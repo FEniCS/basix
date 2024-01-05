@@ -1,20 +1,25 @@
 """Functions to get cell geometry information and manipulate cell types."""
 
 from enum import Enum
+import typing
+import numpy.typing as npy
 
 from basix._basixcpp import CellType as _CT
-from basix._basixcpp import cell_facet_jacobians as facet_jacobians  # noqa: F401
-from basix._basixcpp import cell_facet_normals as facet_normals  # noqa: F401
-from basix._basixcpp import cell_facet_orientations as facet_orientations  # noqa: F401
-from basix._basixcpp import cell_facet_outward_normals as facet_outward_normals  # noqa: F401
-from basix._basixcpp import cell_facet_reference_volumes as facet_reference_volumes  # noqa: F401
-from basix._basixcpp import cell_volume as volume  # noqa: F401
-from basix._basixcpp import sub_entity_connectivity  # noqa: F401
+from basix._basixcpp import cell_facet_jacobians as _cfj
+from basix._basixcpp import cell_facet_normals as _cfn
+from basix._basixcpp import cell_facet_orientations as _fo
+from basix._basixcpp import cell_facet_outward_normals as _fon
+from basix._basixcpp import cell_facet_reference_volumes as _frv
+from basix._basixcpp import cell_volume as _v
+from basix._basixcpp import sub_entity_connectivity as _sec
 
-__all__ = ["string_to_type", "type_to_string"]
+__all__ = ["string_to_type", "type_to_string", "sub_entity_connectivity", "volume",
+           "facet_jacobians", "facet_normals", "facet_orientations", "facet_outward_normals",
+           "facet_reference_volumes"]
 
 
 class CellType(Enum):
+    """TODO."""
     point = _CT.point
     interval = _CT.interval
     triangle = _CT.triangle
@@ -49,3 +54,38 @@ def type_to_string(celltype: CellType) -> str:
         The name of the cell as a string.
     """
     return celltype.name
+
+
+def sub_entity_connectivity(celltype: CellType) -> typing.List[typing.List[typing.List[int]]]:
+    """TODO."""
+    return _sec(celltype.value)
+
+
+def volume(celltype: CellType) -> float:
+    """TODO."""
+    return _v(celltype.value)
+
+
+def facet_jacobians(celltype: CellType) -> npt.NDArray:
+    """TODO."""
+    return _fj(celltype.value)
+
+
+def facet_normals(celltype: CellType) -> npt.NDArray:
+    """TODO."""
+    return _fn(celltype.value)
+
+
+def facet_orientations(celltype: CellType) -> typing.List[int]:
+    """TODO."""
+    return _fo(celltype.value)
+
+
+def facet_outward_normals(celltype: CellType) -> npt.NDArray:
+    """TODO."""
+    return _fon(celltype.value)
+
+
+def facet_reference_volumes(celltype: CellType) -> npt.NDArray:
+    """TODO."""
+    return _frv(celltype.value)

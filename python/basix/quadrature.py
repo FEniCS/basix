@@ -68,4 +68,4 @@ def make_quadrature(cell: CellType, degree: int, rule: _QT = _QT.Default,
         The quadrature points and weights.
 
     """
-    return _mq(rule, cell, polyset_type, degree)
+    return _mq(rule, cell.value, polyset_type, degree)

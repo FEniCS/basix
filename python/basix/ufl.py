@@ -517,7 +517,7 @@ class _BasixElement(_ElementBase):
     @property
     def cell_type(self) -> _basix.CellType:
         """Basix cell type used to initialise the element."""
-        return _basix.cell.string_to_type(self._element.cell_type.name)
+        return self._element.cell_type
 
     @property
     def discontinuous(self) -> bool:

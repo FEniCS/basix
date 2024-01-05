@@ -41,7 +41,7 @@ def reshape_coefficients(poly_type: _PT, cell_type: CellType, coefficients: npt.
     if output_degree == input_degree:
         return coefficients
 
-    pdim = dim(poly_type, cell_type, output_degree)
+    pdim = dim(poly_type, cell_type.value, output_degree)
     out = _np.zeros((coefficients.shape[0], pdim * value_size))
 
     indices: _typing.List[_typing.Tuple[int, ...]] = []
@@ -97,7 +97,7 @@ def reshape_coefficients(poly_type: _PT, cell_type: CellType, coefficients: npt.
     else:
         raise ValueError("Unsupported cell type")
 
-    pdim_in = dim(poly_type, cell_type, input_degree)
+    pdim_in = dim(poly_type, cell_type.value, input_degree)
     for v in range(value_size):
         for i in indices:
             out[:, v * pdim + idx(output_degree, i)] = coefficients[:, v * pdim_in + idx(input_degree, i)]

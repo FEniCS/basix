@@ -11,7 +11,7 @@ from basix._basixcpp import FiniteElement_float64 as _FiniteElement_float64  # t
 from basix._basixcpp import LagrangeVariant, MapType, PolysetType, SobolevSpace
 from basix._basixcpp import create_custom_element as _create_custom_element
 from basix._basixcpp import create_element as _create_element  # type: ignore
-from basix.cell import CellType
+from basix.cell import CellType, string_to_type
 
 __all__ = ["FiniteElement", "create_element", "create_custom_element", "string_to_family"]
 
@@ -303,7 +303,7 @@ class FiniteElement:
     @property
     def cell_type(self) -> CellType:
         """Element cell type."""
-        return self._e.cell_type
+        return string_to_type(self._e.cell_type.name)
 
     @property
     def polyset_type(self) -> PolysetType:
@@ -495,7 +495,7 @@ class FiniteElement:
         return _np.dtype(self._e.dtype)
 
 
-def create_element(family_name: ElementFamily, cell_name: CellType, degree: int,
+def create_element(family_name: ElementFamily, celltype: CellType, degree: int,
                    lvariant: LagrangeVariant = LagrangeVariant.unset,
                    dpc_variant: DPCVariant = DPCVariant.unset,
                    discontinuous: bool = False,
@@ -519,7 +519,7 @@ def create_element(family_name: ElementFamily, cell_name: CellType, degree: int,
     Returns:
         A finite element.
     """
-    return FiniteElement(_create_element(family_name, cell_name, degree, lvariant, dpc_variant,
+    return FiniteElement(_create_element(family_name, celltype.value, degree, lvariant, dpc_variant,
                                          discontinuous, dof_ordering, _np.dtype(dtype).char))
 
 

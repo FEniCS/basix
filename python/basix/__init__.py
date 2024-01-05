@@ -75,29 +75,29 @@ def create_lattice(
     method: LatticeSimplexMethod = LatticeSimplexMethod.none
 ) -> npt.NDArray:
     """TODO."""
-    return _create_lattice(celltype, n, ltype, exterior, method)
+    return _create_lattice(celltype.value, n, ltype, exterior, method)
 
 
 def polyset_restriction(
     ptype: PolysetType, cell: CellType, restriction_cell: CellType
 ) -> PolysetType:
     """TODO."""
-    return _restriction(ptype, cell, restriction_cell)
+    return _restriction(ptype, cell.value, restriction_cell)
 
 
 def polyset_superset(cell: CellType, type1: PolysetType, type2: PolysetType) -> PolysetType:
     """TODO."""
-    return _superset(cell, type1, type2)
+    return _superset(cell.value, type1, type2)
 
 
 def geometry(celltype: CellType) -> npt.NDArray:
     """TODO."""
-    return _geometry(celltype)
+    return _geometry(celltype.value)
 
 
 def topology(celltype: CellType) -> typing.List[typing.List[typing.List[int]]]:
     """TODO."""
-    return _topology(celltype)
+    return _topology(celltype.value)
 
 
 def index(p: int, q: typing.Optional[int] = None, r: typing.Optional[int] = None) -> int:
@@ -115,4 +115,4 @@ def tabulate_polynomials(
     ptype: PolynomialType, celltype: CellType, d: int
 ) -> npt.NDArray:
     """TODO."""
-    return _tabulate_polynomials(ptype, celltype, d)
+    return _tabulate_polynomials(ptype, celltype.value, d)

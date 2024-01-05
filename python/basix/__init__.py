@@ -3,16 +3,22 @@
 The core of the library is written in C++, but the majority of Basix's
 functionality can be used via this Python interface.
 """
+import typing
+
 from basix import cell, finite_element, lattice, polynomials, quadrature, sobolev_spaces, variants
 from basix._basixcpp import (CellType, DPCVariant, ElementFamily, LagrangeVariant, LatticeSimplexMethod, LatticeType,
                              MapType, PolynomialType, PolysetType, QuadratureType, SobolevSpace, __version__)
 from basix._basixcpp import compute_interpolation_operator as _compute_interpolation_operator
-from basix._basixcpp import create_lattice, geometry, index
-from basix._basixcpp import restriction as polyset_restriction
-from basix._basixcpp import superset as polyset_superset
-from basix._basixcpp import tabulate_polynomials, topology
+from basix._basixcpp import create_lattice as _create_lattice
+from basix._basixcpp import geometry as _geometry
+from basix._basixcpp import index as _index
+from basix._basixcpp import restriction as _restriction
+from basix._basixcpp import superset as _superset
+from basix._basixcpp import tabulate_polynomials as _tabulate_polynomials
+from basix._basixcpp import topology as _topology
 from basix.finite_element import create_custom_element, create_element
 from basix.quadrature import make_quadrature
+import numpy.typing as npt
 
 __all__ = ["cell", "finite_element", "lattice", "polynomials", "quadrature", "sobolev_spaces", "variants",
            "CellType", "DPCVariant", "ElementFamily", "LagrangeVariant", "LatticeSimplexMethod", "LatticeType",
@@ -22,7 +28,9 @@ __all__ = ["cell", "finite_element", "lattice", "polynomials", "quadrature", "so
            "make_quadrature", "compute_interpolation_operator"]
 
 
-def compute_interpolation_operator(e0, e1):
+def compute_interpolation_operator(
+    e0: finite_element.FiniteElement, e1: finite_element.FiniteElement,
+) -> npt.NDArray:
     """Compute a matrix that represents the interpolation between two elements.
 
     If the two elements have the same value size, this function returns
@@ -58,3 +66,51 @@ def compute_interpolation_operator(e0, e1):
         ndofs(element_from))
     """
     return _compute_interpolation_operator(e0._e, e1._e)
+
+
+def create_lattice(
+    celltype: CellType, n: int, ltype: LatticeType, exterior: bool,
+    method: LatticeSimplexMethod = LatticeSimplexMethod.none
+) -> npt.NDArray:
+    """TODO."""
+    return _create_lattice(celltype, n, ltype, exterior, method)
+
+
+def polyset_restriction(
+    ptype: PolysetType, cell: CellType, restriction_cell: CellType
+) -> PolysetType:
+    """TODO."""
+    return _restriction(ptype, cell, restriction_cell)
+
+
+def polyset_superset(cell: CellType, type1: PolysetType, type2: PolysetType) -> PolysetType:
+    """TODO."""
+    return _superset(cell, type1, type2)
+
+
+def geometry(celltype: CellType) -> npt.NDArray:
+    """TODO."""
+    return _geometry(celltype)
+
+
+def topology(celltype: CellType) -> typing.List[typing.List[typing.List[int]]]:
+    """TODO."""
+    return _topology(celltype)
+
+
+def index(p: int, q: typing.Optional[int] = None, r: typing.Optional[int] = None) -> int:
+    """TODO."""
+    if q is None:
+        assert r is None
+        return _index(p)
+    elif r is None:
+        return _index(p, q)
+    else:
+        return _index(p, q, r)
+
+
+def tabulate_polynomials(
+    ptype: PolynomialType, celltype: CellType, d: int
+) -> npt.NDArray:
+    """TODO."""
+    return _tabulate_polynomials(ptype, celltype, d)

@@ -3,7 +3,6 @@
 // SPDX-License-Identifier:    MIT
 
 #include <basix/cell.h>
-#include <basix/docs.h>
 #include <basix/element-families.h>
 #include <basix/finite-element.h>
 #include <basix/indexing.h>
@@ -402,8 +401,7 @@ void declare_float(nb::module_& m, std::string type)
         mdspan_t<const T, 2> _x(x.data(), x.shape(0), x.shape(1));
         return as_nbarrayp(polyset::tabulate(celltype, polytype, d, n, _x));
       },
-      "celltype"_a, "polytype"_a, "d"_a, "n"_a, "x"_a.noconvert(),
-      basix::docstring::tabulate_polynomial_set.c_str());
+      "celltype"_a, "polytype"_a, "d"_a, "n"_a, "x"_a.noconvert());
 }
 
 } // namespace
@@ -413,25 +411,21 @@ NB_MODULE(_basixcpp, m)
   m.doc() = "Interface to the Basix C++ library.";
   m.attr("__version__") = basix::version();
 
-  m.def("topology", &cell::topology, basix::docstring::topology.c_str());
+  m.def("topology", &cell::topology);
   m.def(
       "geometry",
       [](cell::type celltype)
-      { return as_nbarrayp(cell::geometry<double>(celltype)); },
-      basix::docstring::geometry.c_str());
-  m.def("sub_entity_connectivity", &cell::sub_entity_connectivity,
-        basix::docstring::sub_entity_connectivity.c_str());
+      { return as_nbarrayp(cell::geometry<double>(celltype)); });
+  m.def("sub_entity_connectivity", &cell::sub_entity_connectivity);
   m.def(
       "sub_entity_geometry",
       [](cell::type celltype, int dim, int index)
       {
         return as_nbarrayp(
             cell::sub_entity_geometry<double>(celltype, dim, index));
-      },
-      basix::docstring::sub_entity_geometry.c_str());
+      });
 
-  m.def("sobolev_space_intersection", &sobolev::space_intersection,
-        basix::docstring::space_intersection.c_str());
+  m.def("sobolev_space_intersection", &sobolev::space_intersection);
 
   nb::enum_<lattice::type>(m, "LatticeType")
       .value("equispaced", lattice::type::equispaced)
@@ -461,20 +455,8 @@ NB_MODULE(_basixcpp, m)
       {
         mdspan_t<const double, 2> _x(x.data(), x.shape(0), x.shape(1));
         return as_nbarrayp(polynomials::tabulate(polytype, celltype, d, _x));
-      },
-      basix::docstring::tabulate_polynomials.c_str());
-  m.def("polynomials_dim", &polynomials::dim,
-        basix::docstring::polynomials_dim.c_str());
-
-  m.def(
-      "create_lattice",
-      [](cell::type celltype, int n, lattice::type type, bool exterior)
-      {
-        return as_nbarrayp(lattice::create<double>(
-            celltype, n, type, exterior, lattice::simplex_method::none));
-      },
-      basix::docstring::create_lattice__celltype_n_type_exterior.c_str());
-
+      });
+  m.def("polynomials_dim", &polynomials::dim);
   m.def(
       "create_lattice",
       [](cell::type celltype, int n, lattice::type type, bool exterior,
@@ -482,9 +464,7 @@ NB_MODULE(_basixcpp, m)
       {
         return as_nbarrayp(
             lattice::create<double>(celltype, n, type, exterior, method));
-      },
-      basix::docstring::create_lattice__celltype_n_type_exterior_method
-          .c_str());
+      });
 
   nb::enum_<maps::type>(m, "MapType")
       .value("identity", maps::type::identity)
@@ -532,23 +512,19 @@ NB_MODULE(_basixcpp, m)
   m.def(
       "cell_volume",
       [](cell::type cell_type) -> double
-      { return cell::volume<double>(cell_type); },
-      basix::docstring::cell_volume.c_str());
+      { return cell::volume<double>(cell_type); });
   m.def(
       "cell_facet_normals",
       [](cell::type cell_type)
-      { return as_nbarrayp(cell::facet_normals<double>(cell_type)); },
-      basix::docstring::cell_facet_normals.c_str());
+      { return as_nbarrayp(cell::facet_normals<double>(cell_type)); });
   m.def(
       "cell_facet_reference_volumes",
       [](cell::type cell_type)
-      { return as_nbarray(cell::facet_reference_volumes<double>(cell_type)); },
-      basix::docstring::cell_facet_reference_volumes.c_str());
+      { return as_nbarray(cell::facet_reference_volumes<double>(cell_type)); });
   m.def(
       "cell_facet_outward_normals",
       [](cell::type cell_type)
-      { return as_nbarrayp(cell::facet_outward_normals<double>(cell_type)); },
-      basix::docstring::cell_facet_outward_normals.c_str());
+      { return as_nbarrayp(cell::facet_outward_normals<double>(cell_type)); });
   m.def(
       "cell_facet_orientations",
       [](cell::type cell_type)
@@ -556,13 +532,11 @@ NB_MODULE(_basixcpp, m)
         std::vector<bool> c = cell::facet_orientations(cell_type);
         std::vector<std::uint8_t> c8(c.begin(), c.end());
         return c8;
-      },
-      basix::docstring::cell_facet_orientations.c_str());
+      });
   m.def(
       "cell_facet_jacobians",
       [](cell::type cell_type)
-      { return as_nbarrayp(cell::facet_jacobians<double>(cell_type)); },
-      basix::docstring::cell_facet_jacobians.c_str());
+      { return as_nbarrayp(cell::facet_jacobians<double>(cell_type)); });
 
   nb::enum_<element::family>(m, "ElementFamily")
       .value("custom", element::family::custom)
@@ -650,14 +624,12 @@ NB_MODULE(_basixcpp, m)
   m.def(
       "superset",
       [](cell::type cell, polyset::type type1, polyset::type type2)
-      { return polyset::superset(cell, type1, type2); },
-      basix::docstring::superset.c_str());
+      { return polyset::superset(cell, type1, type2); });
 
   m.def(
       "restriction",
       [](polyset::type ptype, cell::type cell, cell::type restriction_cell)
-      { return polyset::restriction(ptype, cell, restriction_cell); },
-      basix::docstring::restriction.c_str());
+      { return polyset::restriction(ptype, cell, restriction_cell); });
 
   m.def(
       "make_quadrature",
@@ -669,15 +641,11 @@ NB_MODULE(_basixcpp, m)
         std::array shape{w.size(), pts.size() / w.size()};
         return std::pair(as_nbarray(std::move(pts), shape.size(), shape.data()),
                          as_nbarray(std::move(w)));
-      },
-      basix::docstring::make_quadrature__rule_celltype_polytype_m.c_str());
+      });
 
-  m.def("index", nb::overload_cast<int>(&basix::indexing::idx),
-        basix::docstring::index__p.c_str());
-  m.def("index", nb::overload_cast<int, int>(&basix::indexing::idx),
-        basix::docstring::index__p_q.c_str());
-  m.def("index", nb::overload_cast<int, int, int>(&basix::indexing::idx),
-        basix::docstring::index__p_q_r.c_str());
+  m.def("index", nb::overload_cast<int>(&basix::indexing::idx));
+  m.def("index", nb::overload_cast<int, int>(&basix::indexing::idx));
+  m.def("index", nb::overload_cast<int, int, int>(&basix::indexing::idx));
 
   declare_float<float>(m, "float32");
   declare_float<double>(m, "float64");

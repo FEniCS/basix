@@ -4,10 +4,14 @@ The core of the library is written in C++, but the majority of Basix's
 functionality can be used via this Python interface.
 """
 import typing
+from enum import Enum
+
+import numpy.typing as npt
 
 from basix import cell, finite_element, lattice, polynomials, quadrature, sobolev_spaces, variants
-from basix._basixcpp import (CellType, DPCVariant, ElementFamily, LagrangeVariant, LatticeSimplexMethod, LatticeType,
-                             MapType, PolynomialType, PolysetType, QuadratureType, SobolevSpace, __version__)
+from basix._basixcpp import CellType as _CT
+from basix._basixcpp import (DPCVariant, ElementFamily, LagrangeVariant, LatticeSimplexMethod, LatticeType, MapType,
+                             PolynomialType, PolysetType, QuadratureType, SobolevSpace, __version__)
 from basix._basixcpp import compute_interpolation_operator as _compute_interpolation_operator
 from basix._basixcpp import create_lattice as _create_lattice
 from basix._basixcpp import geometry as _geometry
@@ -18,7 +22,6 @@ from basix._basixcpp import tabulate_polynomials as _tabulate_polynomials
 from basix._basixcpp import topology as _topology
 from basix.finite_element import create_custom_element, create_element
 from basix.quadrature import make_quadrature
-import numpy.typing as npt
 
 __all__ = ["cell", "finite_element", "lattice", "polynomials", "quadrature", "sobolev_spaces", "variants",
            "CellType", "DPCVariant", "ElementFamily", "LagrangeVariant", "LatticeSimplexMethod", "LatticeType",
@@ -26,6 +29,17 @@ __all__ = ["cell", "finite_element", "lattice", "polynomials", "quadrature", "so
            "create_lattice", "geometry", "index", "polyset_restriction", "polyset_superset",
            "tabulate_polynomials", "topology", "create_custom_element", "create_element",
            "make_quadrature", "compute_interpolation_operator"]
+
+
+class CellType(Enum):
+    point = _CT.point
+    interval = _CT.interval
+    triangle = _CT.triangle
+    tetrahedron = _CT.tetrahedron
+    quadrilateral = _CT.quadrilateral
+    hexahedron = _CT.hexahedron
+    prism = _CT.prism
+    pyramid = _CT.pyramid
 
 
 def compute_interpolation_operator(

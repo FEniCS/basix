@@ -29,7 +29,7 @@ def test_symbolic_interval():
     cell = basix.CellType.interval
     pts0 = basix.create_lattice(cell, 10, basix.LatticeType.equispaced, True)
     wtab = basix._basixcpp.tabulate_polynomial_set(
-        cell, basix.PolysetType.standard, n, nderiv, pts0)
+        cell.value, basix.PolysetType.standard, n, nderiv, pts0)
 
     for k in range(nderiv + 1):
         wsym = np.zeros_like(wtab[k])
@@ -54,7 +54,7 @@ def test_symbolic_quad():
     cell = basix.CellType.quadrilateral
     pts0 = basix.create_lattice(cell, 2, basix.LatticeType.equispaced, True)
     wtab = basix._basixcpp.tabulate_polynomial_set(
-        cell, basix.PolysetType.standard, n, nderiv, pts0)
+        cell.value, basix.PolysetType.standard, n, nderiv, pts0)
 
     for kx in range(nderiv):
         for ky in range(0, nderiv - kx):

@@ -19,7 +19,7 @@ def test_quad(order):
             Qwts.append(u * v)
     Qpts = np.array(Qpts)
     basis = basix._basixcpp.tabulate_polynomial_set(
-        basix.CellType.quadrilateral, basix.PolysetType.standard, order, 0, Qpts)[0]
+        basix.CellType.quadrilateral.value, basix.PolysetType.standard, order, 0, Qpts)[0]
     ndofs = basis.shape[0]
 
     mat = np.zeros((ndofs, ndofs))
@@ -43,7 +43,7 @@ def test_pyramid(order):
                 Qwts.append(u * v * sc * sc * w)
     Qpts = np.array(Qpts)
     basis = basix._basixcpp.tabulate_polynomial_set(
-        basix.CellType.pyramid, basix.PolysetType.standard,  order, 0, Qpts)[0]
+        basix.CellType.pyramid.value, basix.PolysetType.standard,  order, 0, Qpts)[0]
     ndofs = basis.shape[0]
 
     mat = np.zeros((ndofs, ndofs))
@@ -66,7 +66,7 @@ def test_hex(order):
                 Qwts.append(u * v * w)
     Qpts = np.array(Qpts)
     basis = basix._basixcpp.tabulate_polynomial_set(
-        basix.CellType.hexahedron, basix.PolysetType.standard, order, 0, Qpts)[0]
+        basix.CellType.hexahedron.value, basix.PolysetType.standard, order, 0, Qpts)[0]
     ndofs = basis.shape[0]
 
     mat = np.zeros((ndofs, ndofs))
@@ -89,7 +89,7 @@ def test_prism(order):
             Qwts.append(u * v)
     Qpts = np.array(Qpts)
     basis = basix._basixcpp.tabulate_polynomial_set(
-        basix.CellType.prism, basix.PolysetType.standard, order, 0, Qpts)[0]
+        basix.CellType.prism.value, basix.PolysetType.standard, order, 0, Qpts)[0]
     ndofs = basis.shape[0]
 
     mat = np.zeros((ndofs, ndofs))
@@ -112,7 +112,7 @@ def test_prism(order):
 def test_standard(cell_type, order):
     Qpts, Qwts = basix.make_quadrature(cell_type, 2*order + 1)
     basis = basix._basixcpp.tabulate_polynomial_set(
-        cell_type, basix.PolysetType.standard, order, 0, Qpts)[0]
+        cell_type.value, basix.PolysetType.standard, order, 0, Qpts)[0]
 
     ndofs = basis.shape[0]
     mat = np.zeros((ndofs, ndofs))
@@ -139,7 +139,7 @@ def test_macroedge(cell_type, order):
 
     Qpts, Qwts = basix.make_quadrature(cell_type, 2*order + 1, polyset_type=basix.PolysetType.macroedge)
     basis = basix._basixcpp.tabulate_polynomial_set(
-        cell_type, basix.PolysetType.macroedge, order, 0, Qpts)[0]
+        cell_type.value, basix.PolysetType.macroedge, order, 0, Qpts)[0]
 
     ndofs = basis.shape[0]
     mat = np.zeros((ndofs, ndofs))

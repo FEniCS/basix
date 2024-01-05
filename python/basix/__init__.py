@@ -8,7 +8,7 @@ import typing
 import numpy.typing as npt
 
 from basix import cell, finite_element, lattice, polynomials, quadrature, sobolev_spaces, variants
-from basix._basixcpp import (DPCVariant, ElementFamily, LagrangeVariant, LatticeSimplexMethod, LatticeType, MapType,
+from basix._basixcpp import (DPCVariant, LagrangeVariant, LatticeSimplexMethod, LatticeType, MapType,
                              PolynomialType, PolysetType, QuadratureType, SobolevSpace, __version__)
 from basix._basixcpp import compute_interpolation_operator as _compute_interpolation_operator
 from basix._basixcpp import create_lattice as _create_lattice
@@ -19,7 +19,7 @@ from basix._basixcpp import superset as _superset
 from basix._basixcpp import tabulate_polynomials as _tabulate_polynomials
 from basix._basixcpp import topology as _topology
 from basix.cell import CellType
-from basix.finite_element import create_custom_element, create_element
+from basix.finite_element import create_custom_element, create_element, ElementFamily
 from basix.quadrature import make_quadrature
 
 __all__ = ["cell", "finite_element", "lattice", "polynomials", "quadrature", "sobolev_spaces", "variants",

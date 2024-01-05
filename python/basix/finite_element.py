@@ -2,10 +2,12 @@
 
 import typing
 
+from enum import Enum
 import numpy as _np
 import numpy.typing as npt
 
-from basix._basixcpp import DPCVariant, ElementFamily
+from basix._basixcpp import DPCVariant
+from basix._basixcpp import ElementFamily as _EF
 from basix._basixcpp import FiniteElement_float32 as _FiniteElement_float32  # type: ignore
 from basix._basixcpp import FiniteElement_float64 as _FiniteElement_float64  # type: ignore
 from basix._basixcpp import LagrangeVariant, MapType, PolysetType, SobolevSpace
@@ -14,6 +16,24 @@ from basix._basixcpp import create_element as _create_element  # type: ignore
 from basix.cell import CellType, string_to_type
 
 __all__ = ["FiniteElement", "create_element", "create_custom_element", "string_to_family"]
+
+
+class ElementFamily(Enum):
+    """TODO."""
+    custom = _EF.custom
+    P = _EF.P
+    BDM = _EF.BDM
+    RT = _EF.RT
+    N1E = _EF.N1E
+    N2E = _EF.N2E
+    Regge = _EF.Regge
+    HHJ = _EF.HHJ
+    bubble = _EF.bubble
+    serendipity = _EF.serendipity
+    DPC = _EF.DPC
+    CR = _EF.CR
+    Hermite = _EF.Hermite
+    iso = _EF.iso
 
 
 class FiniteElement:
@@ -379,7 +399,7 @@ class FiniteElement:
     @property
     def family(self) -> ElementFamily:
         """Finite element family."""
-        return self._e.family
+        return string_to_family(self._e.family.name)
 
     @property
     def lagrange_variant(self) -> LagrangeVariant:
@@ -495,7 +515,7 @@ class FiniteElement:
         return _np.dtype(self._e.dtype)
 
 
-def create_element(family_name: ElementFamily, celltype: CellType, degree: int,
+def create_element(family: ElementFamily, celltype: CellType, degree: int,
                    lvariant: LagrangeVariant = LagrangeVariant.unset,
                    dpc_variant: DPCVariant = DPCVariant.unset,
                    discontinuous: bool = False,
@@ -504,8 +524,8 @@ def create_element(family_name: ElementFamily, celltype: CellType, degree: int,
     """Create a finite element.
 
     Args:
-        family_name: Finite element family.
-        cell_name: Reference cell type that the element is defined on
+        family: Finite element family.
+        celltype: Reference cell type that the element is defined on
         degree: Polynomial degree of the element.
         lvariant: Lagrange variant type.
         dvariant: DPC variant type.
@@ -519,7 +539,7 @@ def create_element(family_name: ElementFamily, celltype: CellType, degree: int,
     Returns:
         A finite element.
     """
-    return FiniteElement(_create_element(family_name, celltype.value, degree, lvariant, dpc_variant,
+    return FiniteElement(_create_element(family.value, celltype.value, degree, lvariant, dpc_variant,
                                          discontinuous, dof_ordering, _np.dtype(dtype).char))
 
 

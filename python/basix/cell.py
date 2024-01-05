@@ -1,5 +1,7 @@
 """Functions to get cell geometry information and manipulate cell types."""
 
+from enum import Enum
+
 from basix._basixcpp import CellType as _CT
 from basix._basixcpp import cell_facet_jacobians as facet_jacobians  # noqa: F401
 from basix._basixcpp import cell_facet_normals as facet_normals  # noqa: F401
@@ -12,7 +14,18 @@ from basix._basixcpp import sub_entity_connectivity  # noqa: F401
 __all__ = ["string_to_type", "type_to_string"]
 
 
-def string_to_type(cell: str) -> _CT:
+class CellType(Enum):
+    point = _CT.point
+    interval = _CT.interval
+    triangle = _CT.triangle
+    tetrahedron = _CT.tetrahedron
+    quadrilateral = _CT.quadrilateral
+    hexahedron = _CT.hexahedron
+    prism = _CT.prism
+    pyramid = _CT.pyramid
+
+
+def string_to_type(cell: str) -> CellType:
     """Convert a string to a Basix CellType.
 
     Args:
@@ -21,12 +34,12 @@ def string_to_type(cell: str) -> _CT:
     Returns:
         The cell type.
     """
-    if not hasattr(_CT, cell):
+    if not hasattr(CellType, cell):
         raise ValueError(f"Unknown cell: {cell}")
-    return getattr(_CT, cell)
+    return getattr(CellType, cell)
 
 
-def type_to_string(celltype: _CT) -> str:
+def type_to_string(celltype: CellType) -> str:
     """Convert a Basix CellType to a string.
 
     Args:

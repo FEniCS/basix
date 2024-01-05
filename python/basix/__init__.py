@@ -4,12 +4,10 @@ The core of the library is written in C++, but the majority of Basix's
 functionality can be used via this Python interface.
 """
 import typing
-from enum import Enum
 
 import numpy.typing as npt
 
 from basix import cell, finite_element, lattice, polynomials, quadrature, sobolev_spaces, variants
-from basix._basixcpp import CellType as _CT
 from basix._basixcpp import (DPCVariant, ElementFamily, LagrangeVariant, LatticeSimplexMethod, LatticeType, MapType,
                              PolynomialType, PolysetType, QuadratureType, SobolevSpace, __version__)
 from basix._basixcpp import compute_interpolation_operator as _compute_interpolation_operator
@@ -20,6 +18,7 @@ from basix._basixcpp import restriction as _restriction
 from basix._basixcpp import superset as _superset
 from basix._basixcpp import tabulate_polynomials as _tabulate_polynomials
 from basix._basixcpp import topology as _topology
+from basix.cell import CellType
 from basix.finite_element import create_custom_element, create_element
 from basix.quadrature import make_quadrature
 
@@ -29,17 +28,6 @@ __all__ = ["cell", "finite_element", "lattice", "polynomials", "quadrature", "so
            "create_lattice", "geometry", "index", "polyset_restriction", "polyset_superset",
            "tabulate_polynomials", "topology", "create_custom_element", "create_element",
            "make_quadrature", "compute_interpolation_operator"]
-
-
-class CellType(Enum):
-    point = _CT.point
-    interval = _CT.interval
-    triangle = _CT.triangle
-    tetrahedron = _CT.tetrahedron
-    quadrilateral = _CT.quadrilateral
-    hexahedron = _CT.hexahedron
-    prism = _CT.prism
-    pyramid = _CT.pyramid
 
 
 def compute_interpolation_operator(

@@ -5,15 +5,15 @@ import typing as _typing
 import numpy as _np
 import numpy.typing as npt
 
-from basix._basixcpp import CellType as _CT
 from basix._basixcpp import PolynomialType as _PT
 from basix._basixcpp import index as _index
 from basix._basixcpp import polynomials_dim as dim  # noqa: F401
+from basix.cell import CellType
 
 __all__ = ["reshape_coefficients"]
 
 
-def reshape_coefficients(poly_type: _PT, cell_type: _CT, coefficients: npt.NDArray[_np.float64],
+def reshape_coefficients(poly_type: _PT, cell_type: CellType, coefficients: npt.NDArray[_np.float64],
                          value_size: int, input_degree: int, output_degree: int) -> npt.NDArray[_np.float64]:
     """Reshape the coefficients.
 
@@ -46,39 +46,39 @@ def reshape_coefficients(poly_type: _PT, cell_type: _CT, coefficients: npt.NDArr
 
     indices: _typing.List[_typing.Tuple[int, ...]] = []
 
-    if cell_type == _CT.interval:
+    if cell_type == CellType.interval:
         indices = [(i, ) for i in range(input_degree + 1)]
 
         def idx(d, i):
             return _index(i[0])
 
-    elif cell_type == _CT.triangle:
+    elif cell_type == CellType.triangle:
         indices = [(i, j) for i in range(input_degree + 1) for j in range(input_degree + 1 - i)]
 
         def idx(d, i):
             return _index(i[1], i[0])
 
-    elif cell_type == _CT.tetrahedron:
+    elif cell_type == CellType.tetrahedron:
         indices = [(i, j, k) for i in range(input_degree + 1) for j in range(input_degree + 1 - i)
                    for k in range(input_degree + 1 - i - j)]
 
         def idx(d, i):
             return _index(i[2], i[1], i[0])
 
-    elif cell_type == _CT.quadrilateral:
+    elif cell_type == CellType.quadrilateral:
         indices = [(i, j) for i in range(input_degree + 1) for j in range(input_degree + 1)]
 
         def idx(d, i):
             return (d + 1) * i[0] + i[1]
 
-    elif cell_type == _CT.hexahedron:
+    elif cell_type == CellType.hexahedron:
         indices = [(i, j, k) for i in range(input_degree + 1) for j in range(input_degree + 1)
                    for k in range(input_degree + 1)]
 
         def idx(d, i):
             return (d + 1) ** 2 * i[0] + (d + 1) * i[1] + i[2]
 
-    elif cell_type == _CT.pyramid:
+    elif cell_type == CellType.pyramid:
         indices = [(i, j, k) for k in range(input_degree + 1) for i in range(input_degree + 1 - k)
                    for j in range(input_degree + 1 - k)]
 
@@ -87,7 +87,7 @@ def reshape_coefficients(poly_type: _PT, cell_type: _CT, coefficients: npt.NDArr
             r0 = i[2] * (d + 1) * (d - i[2] + 2) + (2 * i[2] - 1) * (i[2] - 1) * i[2] // 6
             return r0 + i[0] * rv + i[1]
 
-    elif cell_type == _CT.prism:
+    elif cell_type == CellType.prism:
         indices = [(i, j, k) for i in range(input_degree + 1) for j in range(input_degree + 1 - i)
                    for k in range(input_degree + 1)]
 

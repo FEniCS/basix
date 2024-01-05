@@ -5,10 +5,10 @@ import typing as _typing
 import numpy as _np
 import numpy.typing as _npt
 
-from basix._basixcpp import CellType as _CT
 from basix._basixcpp import PolysetType as _PT
 from basix._basixcpp import QuadratureType as _QT
 from basix._basixcpp import make_quadrature as _mq
+from basix.cell import CellType
 
 __all__ = ["string_to_type", "type_to_string", "make_quadrature"]
 
@@ -51,7 +51,7 @@ def type_to_string(quadraturetype: _QT) -> str:
     return quadraturetype.__name__
 
 
-def make_quadrature(cell: _CT, degree: int, rule: _QT = _QT.Default,
+def make_quadrature(cell: CellType, degree: int, rule: _QT = _QT.Default,
                     polyset_type: _PT = _PT.standard) -> _typing.Tuple[_npt.NDArray[_np.float64],
                                                                        _npt.NDArray[_np.float64]]:
     """Create a quadrature rule.

@@ -93,7 +93,7 @@ def _repr_optional_args(**kwargs: _typing.Any) -> str:
 
 def _cellname_to_tdim(cellname: str) -> int:
     """Get the tdim of a cell."""
-    return len(_basix.topology(getattr(_basix.CellType, cellname))) - 1
+    return len(_basix.topology(_basix.cell.string_to_type(cellname))) - 1
 
 
 class _ElementBase(_AbstractFiniteElement):
@@ -517,7 +517,7 @@ class _BasixElement(_ElementBase):
     @property
     def cell_type(self) -> _basix.CellType:
         """Basix cell type used to initialise the element."""
-        return self._element.cell_type
+        return _basix.cell.string_to_type(self._element.cell_type.name)
 
     @property
     def discontinuous(self) -> bool:

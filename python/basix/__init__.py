@@ -112,7 +112,7 @@ def index(p: int, q: typing.Optional[int] = None, r: typing.Optional[int] = None
 
 
 def tabulate_polynomials(
-    ptype: PolynomialType, celltype: CellType, d: int
+    ptype: PolynomialType, celltype: CellType, d: int, x: npt.NDArray
 ) -> npt.NDArray:
     """TODO."""
-    return _tabulate_polynomials(ptype, celltype.value, d)
+    return _tabulate_polynomials(ptype, celltype.value, d, x)

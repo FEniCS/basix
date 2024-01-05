@@ -399,7 +399,7 @@ class FiniteElement:
     @property
     def family(self) -> ElementFamily:
         """Finite element family."""
-        return string_to_family(self._e.family.name)
+        return string_to_family(self._e.family.name, self._e.cell_type.name)
 
     @property
     def lagrange_variant(self) -> LagrangeVariant:

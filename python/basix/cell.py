@@ -1,7 +1,8 @@
 """Functions to get cell geometry information and manipulate cell types."""
 
-from enum import Enum
 import typing
+from enum import Enum
+
 import numpy.typing as npt
 
 from basix._basixcpp import CellType as _CT

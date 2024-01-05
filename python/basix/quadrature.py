@@ -48,7 +48,7 @@ def type_to_string(quadraturetype: _QT) -> str:
         The quadrature rule as a string.
 
     """
-    return quadraturetype.__name__
+    return quadraturetype.name
 
 
 def make_quadrature(cell: CellType, degree: int, rule: _QT = _QT.Default,

@@ -2,11 +2,11 @@
 
 from enum import Enum
 import typing
-import numpy.typing as npy
+import numpy.typing as npt
 
 from basix._basixcpp import CellType as _CT
-from basix._basixcpp import cell_facet_jacobians as _cfj
-from basix._basixcpp import cell_facet_normals as _cfn
+from basix._basixcpp import cell_facet_jacobians as _fj
+from basix._basixcpp import cell_facet_normals as _fn
 from basix._basixcpp import cell_facet_orientations as _fo
 from basix._basixcpp import cell_facet_outward_normals as _fon
 from basix._basixcpp import cell_facet_reference_volumes as _frv

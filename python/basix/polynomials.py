@@ -15,8 +15,6 @@ from basix._basixcpp import tabulate_polynomials as _tabulate_polynomials
 from basix.cell import CellType
 from basix.utils import Enum, index
 
-__all__ = ["reshape_coefficients", "dim"]
-
 
 class PolynomialType(Enum):
     """Polynomial type."""

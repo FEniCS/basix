@@ -5,8 +5,6 @@ from enum import Enum as _Enum
 
 from basix._basixcpp import index as _index
 
-__all__ = ["Enum"]
-
 
 class Enum(_Enum):
     """An enum with comparisons implemented."""

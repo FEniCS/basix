@@ -2,7 +2,7 @@
 
 from enum import Enum as _Enum
 
-__all__ = []
+__all__ = ["Enum"]
 
 
 class Enum(_Enum):

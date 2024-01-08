@@ -166,7 +166,7 @@ def restriction(
     Returns:
         The restricted polyset type
     """
-    return _restriction(ptype.value, cell.value, restriction_cell.value)
+    return getattr(PolysetType, _restriction(ptype.value, cell.value, restriction_cell.value).name)
 
 
 def superset(cell: CellType, type1: PolysetType, type2: PolysetType) -> PolysetType:
@@ -212,4 +212,4 @@ def tabulate_polynomial_set(
     Returns:
         Tabulated polynomial set
     """
-    return getattr(PolysetType, _tps(celltype.value, ptype.value, degree, nderiv, pts).name)
+    return _tps(celltype.value, ptype.value, degree, nderiv, pts)

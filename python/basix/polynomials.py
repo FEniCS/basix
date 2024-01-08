@@ -196,6 +196,18 @@ def string_to_polyset_type(pname: str) -> PolysetType:
 
 
 def tabulate_polynomial_set(
-    celltype: CellType, ptype: PolysetType, n: int, nderiv: int, pts: npt.NDArray
+    celltype: CellType, ptype: PolysetType, degree: int, nderiv: int, pts: npt.NDArray
 ) -> npt.NDArray:
-    return _tps(celltype.value, ptype.value, n, nderiv, pts)
+    """Tabulate a polynomial set.
+
+    Args:
+        celltype: The cell type
+        ptype: The polyset type
+        n: The polynomial degree
+        nderiv: The number of derivatives
+        pts: The points to tabulat at
+
+    Returns:
+        Tabulated polynomial set
+    """
+    return _tps(celltype.value, ptype.value, degree, nderiv, pts)

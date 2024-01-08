@@ -1,9 +1,9 @@
 """Utility funcitons."""
 
 import typing
+from enum import Enum as _Enum
 
 from basix._basixcpp import index as _index
-from enum import Enum as _Enum
 
 __all__ = ["Enum"]
 

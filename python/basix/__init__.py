@@ -7,7 +7,6 @@ from basix import cell, finite_element, lattice, polynomials, quadrature, sobole
 from basix._basixcpp import __version__
 from basix.cell import CellType, geometry, topology
 from basix.finite_element import DPCVariant, ElementFamily, LagrangeVariant, create_custom_element, create_element
-from basix.utils import index
 from basix.interpolation import compute_interpolation_operator
 from basix.lattice import LatticeSimplexMethod, LatticeType, create_lattice
 from basix.maps import MapType
@@ -17,6 +16,7 @@ from basix.polynomials import superset as polyset_superset
 from basix.polynomials import tabulate_polynomials
 from basix.quadrature import QuadratureType, make_quadrature
 from basix.sobolev_spaces import SobolevSpace
+from basix.utils import index
 
 __all__ = ["cell", "finite_element", "lattice", "polynomials", "quadrature", "sobolev_spaces",
            "CellType", "DPCVariant", "ElementFamily", "LagrangeVariant", "LatticeSimplexMethod", "LatticeType",

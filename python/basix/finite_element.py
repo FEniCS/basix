@@ -13,10 +13,10 @@ from basix._basixcpp import LagrangeVariant as _LV
 from basix._basixcpp import create_custom_element as _create_custom_element
 from basix._basixcpp import create_element as _create_element  # type: ignore
 from basix.cell import CellType
-from basix.utils import Enum
 from basix.maps import MapType
 from basix.polynomials import PolysetType
 from basix.sobolev_spaces import SobolevSpace
+from basix.utils import Enum
 
 __all__ = ["FiniteElement", "create_element", "create_custom_element", "string_to_family",
            "string_to_lagrange_variant", "string_to_dpc_variant"]

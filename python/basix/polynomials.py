@@ -124,6 +124,7 @@ def reshape_coefficients(poly_type: PolynomialType, cell_type: CellType, coeffic
 
 
 def dim(ptype: PolynomialType, celltype: CellType, degree: int) -> int:
+    """TODO."""
     return _pd(ptype.value, celltype.value, degree)
 
 

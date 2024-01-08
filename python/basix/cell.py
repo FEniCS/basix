@@ -4,8 +4,6 @@ import typing
 
 import numpy.typing as npt
 
-from basix._basixcpp import geometry as _geometry
-from basix._basixcpp import topology as _topology
 from basix._basixcpp import CellType as _CT
 from basix._basixcpp import cell_facet_jacobians as _fj
 from basix._basixcpp import cell_facet_normals as _fn
@@ -13,7 +11,9 @@ from basix._basixcpp import cell_facet_orientations as _fo
 from basix._basixcpp import cell_facet_outward_normals as _fon
 from basix._basixcpp import cell_facet_reference_volumes as _frv
 from basix._basixcpp import cell_volume as _v
+from basix._basixcpp import geometry as _geometry
 from basix._basixcpp import sub_entity_connectivity as _sec
+from basix._basixcpp import topology as _topology
 from basix.enums import Enum
 
 __all__ = ["string_to_type", "sub_entity_connectivity", "volume",

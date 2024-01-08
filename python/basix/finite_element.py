@@ -2,18 +2,18 @@
 
 import typing
 
-from basix.enums import Enum
 import numpy as _np
 import numpy.typing as npt
 
 from basix._basixcpp import DPCVariant as _DPCV
-from basix._basixcpp import LagrangeVariant as _LV
 from basix._basixcpp import ElementFamily as _EF
 from basix._basixcpp import FiniteElement_float32 as _FiniteElement_float32  # type: ignore
 from basix._basixcpp import FiniteElement_float64 as _FiniteElement_float64  # type: ignore
+from basix._basixcpp import LagrangeVariant as _LV
 from basix._basixcpp import create_custom_element as _create_custom_element
 from basix._basixcpp import create_element as _create_element  # type: ignore
 from basix.cell import CellType
+from basix.enums import Enum
 from basix.maps import MapType
 from basix.polynomials import PolysetType
 from basix.sobolev_spaces import SobolevSpace

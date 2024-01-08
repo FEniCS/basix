@@ -1,7 +1,7 @@
 """Maps."""
 
-from basix.enums import Enum
 from basix._basixcpp import MapType as _MT
+from basix.enums import Enum
 
 
 class MapType(Enum):

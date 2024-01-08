@@ -5,11 +5,11 @@ import typing as _typing
 import numpy as _np
 import numpy.typing as _npt
 
-from basix.polynomials import PolysetType
 from basix._basixcpp import QuadratureType as _QT
 from basix._basixcpp import make_quadrature as _mq
 from basix.cell import CellType
 from basix.enums import Enum
+from basix.polynomials import PolysetType
 
 __all__ = ["string_to_type", "make_quadrature"]
 

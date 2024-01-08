@@ -7,14 +7,14 @@ import numpy.typing as npt
 
 from basix._basixcpp import PolynomialType as _PT
 from basix._basixcpp import PolysetType as _PST
+from basix._basixcpp import index as _index
+from basix._basixcpp import polynomials_dim as _pd
 from basix._basixcpp import restriction as _restriction
 from basix._basixcpp import superset as _superset
-from basix._basixcpp import index as _index
 from basix._basixcpp import tabulate_polynomial_set as _tps
-from basix._basixcpp import polynomials_dim as _pd
+from basix._basixcpp import tabulate_polynomials as _tabulate_polynomials
 from basix.cell import CellType
 from basix.enums import Enum
-from basix._basixcpp import tabulate_polynomials as _tabulate_polynomials
 
 __all__ = ["reshape_coefficients", "dim"]
 

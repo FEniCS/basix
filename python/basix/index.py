@@ -4,6 +4,8 @@ import typing
 
 from basix._basixcpp import index as _index
 
+__all__: typing.List[str] = []
+
 
 def index(p: int, q: typing.Optional[int] = None, r: typing.Optional[int] = None) -> int:
     """TODO."""

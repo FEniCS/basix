@@ -123,26 +123,63 @@ def reshape_coefficients(poly_type: PolynomialType, cell_type: CellType, coeffic
 
 
 def dim(ptype: PolynomialType, celltype: CellType, degree: int) -> int:
-    """TODO."""
+    """Dimension of a polynomial space.
+
+    Args:
+        ptype: The polynomial type
+        celltype: The cell type
+        degree: The polynomial degree
+
+    Returns:
+        The dimension of the polynomial space
+    """
     return _pd(ptype.value, celltype.value, degree)
 
 
 def tabulate_polynomials(
-    ptype: PolynomialType, celltype: CellType, d: int, x: npt.NDArray
+    ptype: PolynomialType, celltype: CellType, degree: int, pts: npt.NDArray
 ) -> npt.NDArray:
-    """TODO."""
-    return _tabulate_polynomials(ptype.value, celltype.value, d, x)
+    """Tabulate a set of polynomials on a reference cell.
+
+    Args:
+        ptype: The polynomial type
+        celltype: The cell type
+        degree: The polynomial degree
+        pts: The points
+
+    Returns:
+        Tabulated polynomials
+    """
+    return _tabulate_polynomials(ptype.value, celltype.value, degree, pts)
 
 
 def restriction(
     ptype: PolysetType, cell: CellType, restriction_cell: CellType
 ) -> PolysetType:
-    """TODO."""
+    """Get the polyset type that represents the restrictions of a type on a subentity.
+
+    Args:
+        ptype: The polynomial type
+        cell: The cell type
+        restriction_cell: The cell type if the subentity
+
+    Returns:
+        The restricted polyset type
+    """
     return _restriction(ptype.value, cell.value, restriction_cell.value)
 
 
 def superset(cell: CellType, type1: PolysetType, type2: PolysetType) -> PolysetType:
-    """TODO."""
+    """Get the polyset type that is a superset of two types on the given cell.
+
+    Args:
+        cell: The cell type
+        type1: The first polyset type
+        type2: The second polyset type
+
+    Returns:
+        The superset type
+    """
     return _superset(cell.value, type1.value, type2.value)
 
 

@@ -37,7 +37,16 @@ class Enum(_Enum):
 
 
 def index(p: int, q: typing.Optional[int] = None, r: typing.Optional[int] = None) -> int:
-    """TODO."""
+    """Compute the indexing in a 1D, 2D or 3D simplex.
+
+    Args:
+        p: Index in x
+        q: Index in y
+        r: Index in z
+
+    Returns:
+        The index in a flattened 1D array
+    """
     if q is None:
         assert r is None
         return _index(p)

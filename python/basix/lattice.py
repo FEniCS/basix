@@ -61,5 +61,16 @@ def create_lattice(
     celltype: CellType, n: int, ltype: LatticeType, exterior: bool,
     method: LatticeSimplexMethod = LatticeSimplexMethod.none
 ) -> npt.NDArray:
-    """TODO."""
+    """Create a lattice of points on a reference cell.
+
+    Args:
+        celltype: The cell type
+        n: The size in each direction. There will be n+1 points along each edge of the cell
+        ltype: The lattice type
+        exterior: If True, the points on the edges will be included
+        method: The simplex method used to generate points on simplices
+
+    Returns:
+        Lattice points
+    """
     return _create_lattice(celltype.value, n, ltype.value, exterior, method.value)

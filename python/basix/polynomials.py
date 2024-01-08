@@ -180,7 +180,7 @@ def superset(cell: CellType, type1: PolysetType, type2: PolysetType) -> PolysetT
     Returns:
         The superset type
     """
-    return _superset(cell.value, type1.value, type2.value)
+    return getattr(PolysetType, _superset(cell.value, type1.value, type2.value).name)
 
 
 def string_to_polyset_type(pname: str) -> PolysetType:
@@ -212,4 +212,4 @@ def tabulate_polynomial_set(
     Returns:
         Tabulated polynomial set
     """
-    return _tps(celltype.value, ptype.value, degree, nderiv, pts)
+    return getattr(PolysetType, _tps(celltype.value, ptype.value, degree, nderiv, pts).name)

@@ -1,10 +1,11 @@
 """Functions to get cell geometry information and manipulate cell types."""
 
 import typing
-from enum import Enum
 
 import numpy.typing as npt
 
+from basix._basixcpp import geometry as _geometry
+from basix._basixcpp import topology as _topology
 from basix._basixcpp import CellType as _CT
 from basix._basixcpp import cell_facet_jacobians as _fj
 from basix._basixcpp import cell_facet_normals as _fn
@@ -13,8 +14,9 @@ from basix._basixcpp import cell_facet_outward_normals as _fon
 from basix._basixcpp import cell_facet_reference_volumes as _frv
 from basix._basixcpp import cell_volume as _v
 from basix._basixcpp import sub_entity_connectivity as _sec
+from basix.enums import Enum
 
-__all__ = ["string_to_type", "type_to_string", "sub_entity_connectivity", "volume",
+__all__ = ["string_to_type", "sub_entity_connectivity", "volume",
            "facet_jacobians", "facet_normals", "facet_orientations", "facet_outward_normals",
            "facet_reference_volumes"]
 
@@ -45,19 +47,7 @@ def string_to_type(cell: str) -> CellType:
     return getattr(CellType, cell)
 
 
-def type_to_string(celltype: CellType) -> str:
-    """Convert a Basix CellType to a string.
-
-    Args:
-        celltype: Cell type.
-
-    Returns:
-        The name of the cell as a string.
-    """
-    return celltype.name
-
-
-def sub_entity_connectivity(celltype: CellType) -> typing.List[typing.List[typing.List[int]]]:
+def sub_entity_connectivity(celltype: CellType) -> typing.List[typing.List[typing.List[typing.List[int]]]]:
     """TODO."""
     return _sec(celltype.value)
 
@@ -77,7 +67,7 @@ def facet_normals(celltype: CellType) -> npt.NDArray:
     return _fn(celltype.value)
 
 
-def facet_orientations(celltype: CellType) -> typing.List[int]:
+def facet_orientations(celltype: CellType) -> typing.List[bool]:
     """TODO."""
     return _fo(celltype.value)
 
@@ -90,3 +80,13 @@ def facet_outward_normals(celltype: CellType) -> npt.NDArray:
 def facet_reference_volumes(celltype: CellType) -> npt.NDArray:
     """TODO."""
     return _frv(celltype.value)
+
+
+def geometry(celltype: CellType) -> npt.NDArray:
+    """TODO."""
+    return _geometry(celltype.value)
+
+
+def topology(celltype: CellType) -> typing.List[typing.List[typing.List[int]]]:
+    """TODO."""
+    return _topology(celltype.value)

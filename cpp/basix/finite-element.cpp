@@ -957,8 +957,8 @@ FiniteElement<F>::FiniteElement(
 }
 /// @endcond
 //-----------------------------------------------------------------------------
-template <std::floating_point F>
-bool FiniteElement<F>::operator==(const FiniteElement& e) const
+template <std::floating_point F, std::floating_points F2>
+bool FiniteElement<F>::operator==(const FiniteElement<F2>& e) const
 {
   if (this == &e)
     return true;

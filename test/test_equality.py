@@ -25,7 +25,7 @@ def test_element_equality():
     assert p1 != p1_quad
     assert p1 != rt1
 
-    assert p1 == p1_f32
+    assert p1 != p1_f32
 
 
 def test_custom_element_equality():

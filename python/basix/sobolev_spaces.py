@@ -35,7 +35,7 @@ def intersection(spaces: _typing.List[SobolevSpace]) -> SobolevSpace:
     space = spaces[0].value
     for s in spaces[1:]:
         space = _ssi(space, s.value)
-    return string_to_sobolev_space(space.name)
+    return getattr(SobolevSpace, space.name)
 
 
 def string_to_sobolev_space(space: str) -> SobolevSpace:

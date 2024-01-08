@@ -23,6 +23,8 @@
 #include <limits>
 #include <numeric>
 
+#include <iostream>
+
 #define str_macro(X) #X
 #define str(X) str_macro(X)
 
@@ -957,8 +959,8 @@ FiniteElement<F>::FiniteElement(
 }
 /// @endcond
 //-----------------------------------------------------------------------------
-template <std::floating_point F, std::floating_points F2>
-bool FiniteElement<F>::operator==(const FiniteElement<F2>& e) const
+template <std::floating_point F>
+bool FiniteElement<F>::operator==(const FiniteElement& e) const
 {
   if (this == &e)
     return true;
@@ -982,7 +984,8 @@ bool FiniteElement<F>::operator==(const FiniteElement<F2>& e) const
            and value_shape() == e.value_shape()
            and embedded_superdegree() == e.embedded_superdegree()
            and embedded_subdegree() == e.embedded_subdegree() and coeff_equal
-           and entity_dofs() == e.entity_dofs();
+           and entity_dofs() == e.entity_dofs()
+           and dof_ordering() == e.dof_ordering();
   }
   else
   {
@@ -990,7 +993,8 @@ bool FiniteElement<F>::operator==(const FiniteElement<F2>& e) const
            and degree() == e.degree() and discontinuous() == e.discontinuous()
            and lagrange_variant() == e.lagrange_variant()
            and dpc_variant() == e.dpc_variant() and map_type() == e.map_type()
-           and sobolev_space() == e.sobolev_space();
+           and sobolev_space() == e.sobolev_space()
+           and dof_ordering() == e.dof_ordering();
   }
 }
 //-----------------------------------------------------------------------------

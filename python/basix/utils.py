@@ -33,6 +33,10 @@ class Enum(_Enum):
             return NotImplemented
         return self.value >= other.value
 
+    def __int__(self) -> int:
+        """Convert to int."""
+        return int(self.value)
+
 
 def index(p: int, q: typing.Optional[int] = None, r: typing.Optional[int] = None) -> int:
     """Compute the indexing in a 1D, 2D or 3D simplex.

@@ -1,7 +1,7 @@
 """Maps."""
 
 from basix._basixcpp import MapType as _MT
-from basix.enums import Enum
+from basix.utils import Enum
 
 __all__ = ["string_to_type"]
 

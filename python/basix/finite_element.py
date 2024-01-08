@@ -13,7 +13,7 @@ from basix._basixcpp import LagrangeVariant as _LV
 from basix._basixcpp import create_custom_element as _create_custom_element
 from basix._basixcpp import create_element as _create_element  # type: ignore
 from basix.cell import CellType
-from basix.enums import Enum
+from basix.utils import Enum
 from basix.maps import MapType
 from basix.polynomials import PolysetType
 from basix.sobolev_spaces import SobolevSpace

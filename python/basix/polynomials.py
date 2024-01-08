@@ -7,14 +7,13 @@ import numpy.typing as npt
 
 from basix._basixcpp import PolynomialType as _PT
 from basix._basixcpp import PolysetType as _PST
-from basix._basixcpp import index as _index
 from basix._basixcpp import polynomials_dim as _pd
 from basix._basixcpp import restriction as _restriction
 from basix._basixcpp import superset as _superset
 from basix._basixcpp import tabulate_polynomial_set as _tps
 from basix._basixcpp import tabulate_polynomials as _tabulate_polynomials
 from basix.cell import CellType
-from basix.enums import Enum
+from basix.utils import Enum, index
 
 __all__ = ["reshape_coefficients", "dim"]
 
@@ -68,20 +67,20 @@ def reshape_coefficients(poly_type: PolynomialType, cell_type: CellType, coeffic
         indices = [(i, ) for i in range(input_degree + 1)]
 
         def idx(d, i):
-            return _index(i[0])
+            return index(i[0])
 
     elif cell_type == CellType.triangle:
         indices = [(i, j) for i in range(input_degree + 1) for j in range(input_degree + 1 - i)]
 
         def idx(d, i):
-            return _index(i[1], i[0])
+            return index(i[1], i[0])
 
     elif cell_type == CellType.tetrahedron:
         indices = [(i, j, k) for i in range(input_degree + 1) for j in range(input_degree + 1 - i)
                    for k in range(input_degree + 1 - i - j)]
 
         def idx(d, i):
-            return _index(i[2], i[1], i[0])
+            return index(i[2], i[1], i[0])
 
     elif cell_type == CellType.quadrilateral:
         indices = [(i, j) for i in range(input_degree + 1) for j in range(input_degree + 1)]
@@ -110,7 +109,7 @@ def reshape_coefficients(poly_type: PolynomialType, cell_type: CellType, coeffic
                    for k in range(input_degree + 1)]
 
         def idx(d, i):
-            return (d + 1) * _index(i[1], i[0]) + i[2]
+            return (d + 1) * index(i[1], i[0]) + i[2]
 
     else:
         raise ValueError("Unsupported cell type")

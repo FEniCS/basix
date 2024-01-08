@@ -6,7 +6,7 @@ from basix._basixcpp import LatticeSimplexMethod as _LSM
 from basix._basixcpp import LatticeType as _LT
 from basix._basixcpp import create_lattice as _create_lattice
 from basix.cell import CellType
-from basix.enums import Enum
+from basix.utils import Enum
 
 __all__ = ["string_to_type", "string_to_simplex_method"]
 

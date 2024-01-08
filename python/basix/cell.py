@@ -14,7 +14,7 @@ from basix._basixcpp import cell_volume as _v
 from basix._basixcpp import geometry as _geometry
 from basix._basixcpp import sub_entity_connectivity as _sec
 from basix._basixcpp import topology as _topology
-from basix.enums import Enum
+from basix.utils import Enum
 
 __all__ = ["string_to_type", "sub_entity_connectivity", "volume",
            "facet_jacobians", "facet_normals", "facet_orientations", "facet_outward_normals",

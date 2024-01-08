@@ -16,6 +16,8 @@ def test_element_equality():
     p4_equi = basix.create_element(basix.ElementFamily.P, basix.CellType.triangle, 4, basix.LagrangeVariant.equispaced)
 
     p1_f32 = basix.create_element(basix.ElementFamily.P, basix.CellType.triangle, 1, dtype=np.float32)
+    p1_dofs = basix.create_element(basix.ElementFamily.P, basix.CellType.triangle, 1, dtype=np.float64, dof_ordering=[0, 1, 2])
+    p1_reverse_dofs = basix.create_element(basix.ElementFamily.P, basix.CellType.triangle, 1, dtype=np.float64, dof_ordering=[2, 1, 0])
 
     assert p1 == p1
     assert p1 == p1_again
@@ -26,6 +28,10 @@ def test_element_equality():
     assert p1 != rt1
 
     assert p1 != p1_f32
+
+    assert p1 == p1_dofs
+    assert p1 != p1_reverse_dofs
+    assert p1_dofs != p1_reverse_dofs
 
 
 def test_custom_element_equality():

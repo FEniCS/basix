@@ -164,4 +164,3 @@ def tabulate_polynomial_set(
     celltype: CellType, ptype: PolysetType, n: int, nderiv: int, pts: npt.NDArray
 ) -> npt.NDArray:
     return _tps(celltype.value, ptype.value, n, nderiv, pts)
-

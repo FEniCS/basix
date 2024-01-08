@@ -20,7 +20,7 @@ __all__ = ["reshape_coefficients", "dim"]
 
 
 class PolynomialType(Enum):
-    """Polynomail type."""
+    """Polynomial type."""
     legendre = _PT.legendre
     bernstein = _PT.bernstein
 

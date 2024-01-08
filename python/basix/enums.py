@@ -2,6 +2,8 @@
 
 from enum import Enum as _Enum
 
+__all__ = []
+
 
 class Enum(_Enum):
     """An enum with comparisons implemented."""

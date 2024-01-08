@@ -23,7 +23,7 @@ __all__ = ["FiniteElement", "create_element", "create_custom_element", "string_t
 
 
 class ElementFamily(Enum):
-    """TODO."""
+    """Element family."""
     custom = _EF.custom
     P = _EF.P
     BDM = _EF.BDM

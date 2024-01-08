@@ -11,6 +11,8 @@ from basix.cell import CellType
 from basix.polynomials import PolysetType
 from basix.utils import Enum
 
+__all__ = ["string_to_type", "make_quadrature"]
+
 
 class QuadratureType(Enum):
     """Quadrature type."""

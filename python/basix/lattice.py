@@ -8,6 +8,8 @@ from basix._basixcpp import create_lattice as _create_lattice
 from basix.cell import CellType
 from basix.utils import Enum
 
+__all__ = ["string_to_type", "string_to_simplex_method"]
+
 
 class LatticeType(Enum):
     """Lattice type."""

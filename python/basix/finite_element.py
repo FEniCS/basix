@@ -18,6 +18,9 @@ from basix.polynomials import PolysetType
 from basix.sobolev_spaces import SobolevSpace
 from basix.utils import Enum
 
+__all__ = ["FiniteElement", "create_element", "create_custom_element", "string_to_family",
+           "string_to_lagrange_variant", "string_to_dpc_variant"]
+
 
 class ElementFamily(Enum):
     """Element family."""

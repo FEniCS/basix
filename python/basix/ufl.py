@@ -55,12 +55,12 @@ def _ufl_sobolev_space_from_enum(s: _basix.SobolevSpace):
         UFL Sobolev space
     """
     if s not in _spacemap:
-        raise ValueError(f"Could not convert to UFL Sobolev space: {s.__name__}")
+        raise ValueError(f"Could not convert to UFL Sobolev space: {s.name}")
     return _spacemap[s]
 
 
-def _ufl_pullback_from_enum(m: _basix.MapType) -> _AbstractPullback:
-    """Convert map type to a UFL pull back.
+def _ufl_pullback_from_enum(m: _basix.maps.MapType) -> _AbstractPullback:
+    """Convert an enum to a UFL pull back.
 
     Args:
         map_type: A map type.
@@ -70,7 +70,7 @@ def _ufl_pullback_from_enum(m: _basix.MapType) -> _AbstractPullback:
 
     """
     if m not in _pullbackmap:
-        raise ValueError(f"Could not convert to UFL pull back: {m.__name__}")
+        raise ValueError(f"Could not convert to UFL pull back: {m.name}")
     return _pullbackmap[m]
 
 
@@ -93,7 +93,7 @@ def _repr_optional_args(**kwargs: _typing.Any) -> str:
 
 def _cellname_to_tdim(cellname: str) -> int:
     """Get the tdim of a cell."""
-    return len(_basix.topology(getattr(_basix.CellType, cellname))) - 1
+    return len(_basix.topology(_basix.cell.string_to_type(cellname))) - 1
 
 
 class _ElementBase(_AbstractFiniteElement):
@@ -376,15 +376,15 @@ class _BasixElement(_ElementBase):
             repr = f"custom Basix element ({_compute_signature(element)}"
         else:
             self._is_custom = False
-            repr = (f"Basix element ({element.family.__name__}, {element.cell_type.__name__}, {element.degree}, "
-                    f"{element.lagrange_variant.__name__}, {element.dpc_variant.__name__}, {element.discontinuous}, "
+            repr = (f"Basix element ({element.family.name}, {element.cell_type.name}, {element.degree}, "
+                    f"{element.lagrange_variant.name}, {element.dpc_variant.name}, {element.discontinuous}, "
                     f"{element.dtype}, {element.dof_ordering}")
-        if gdim != _cellname_to_tdim(element.cell_type.__name__):
+        if gdim != _cellname_to_tdim(element.cell_type.name):
             repr += _repr_optional_args(gdim=gdim)
         repr += ")"
 
         super().__init__(
-            repr, element.cell_type.__name__, tuple(element.value_shape), element.degree,
+            repr, element.cell_type.name, tuple(element.value_shape), element.degree,
             _ufl_pullback_from_enum(element.map_type), gdim=gdim)
 
         self._element = element
@@ -497,7 +497,7 @@ class _BasixElement(_ElementBase):
     @property
     def family_name(self) -> str:
         """Family name of the element."""
-        return self._element.family.__name__
+        return self._element.family.name
 
     @property
     def element_family(self) -> _typing.Union[_basix.ElementFamily, None]:
@@ -620,10 +620,10 @@ class _ComponentElement(_ElementBase):
         self._element = element
         self._component = component
         repr = f"component element ({element!r}, {component}"
-        if gdim != _cellname_to_tdim(element.cell_type.__name__):
+        if gdim != _cellname_to_tdim(element.cell_type.name):
             repr += _repr_optional_args(gdim=gdim)
         repr += ")"
-        super().__init__(repr, element.cell_type.__name__, (1, ), element._degree, gdim=gdim)
+        super().__init__(repr, element.cell_type.name, (1, ), element._degree, gdim=gdim)
 
     def __eq__(self, other) -> bool:
         """Check if two elements are equal."""
@@ -835,10 +835,10 @@ class _MixedElement(_ElementBase):
             pullback = _MixedPullback(self)
 
         repr = "mixed element (" + ", ".join(i._repr for i in sub_elements)
-        if gdim != _cellname_to_tdim(sub_elements[0].cell_type.__name__):
+        if gdim != _cellname_to_tdim(sub_elements[0].cell_type.name):
             repr += _repr_optional_args(gdim=gdim)
         repr += ")"
-        super().__init__(repr, sub_elements[0].cell_type.__name__,
+        super().__init__(repr, sub_elements[0].cell_type.name,
                          (sum(i.value_size for i in sub_elements), ), pullback=pullback, gdim=gdim)
 
     def __eq__(self, other) -> bool:
@@ -1126,13 +1126,13 @@ class _BlockedElement(_ElementBase):
         self._block_shape = shape
 
         repr = f"blocked element ({sub_element!r}, {shape}"
-        if gdim != _cellname_to_tdim(sub_element.cell_type.__name__):
+        if gdim != _cellname_to_tdim(sub_element.cell_type.name):
             repr += _repr_optional_args(symmetry=symmetry, gdim=gdim)
         else:
             repr += _repr_optional_args(symmetry=symmetry)
         repr += ")"
 
-        super().__init__(repr, sub_element.cell_type.__name__, shape,
+        super().__init__(repr, sub_element.cell_type.name, shape,
                          sub_element._degree, sub_element._pullback, gdim=gdim)
 
         if symmetry:
@@ -1418,14 +1418,14 @@ class _QuadratureElement(_ElementBase):
         """Initialise the element."""
         self._points = points
         self._weights = weights
-        repr = f"QuadratureElement({cell.__name__}, {points!r}, {weights!r}, {pullback})".replace("\n", "")
+        repr = f"QuadratureElement({cell.name}, {points!r}, {weights!r}, {pullback})".replace("\n", "")
         self._cell_type = cell
         self._entity_counts = [len(i) for i in _basix.topology(cell)]
 
         if degree is None:
             degree = len(points)
 
-        super().__init__(repr, cell.__name__, (), degree, pullback=pullback)
+        super().__init__(repr, cell.name, (), degree, pullback=pullback)
 
     def basix_sobolev_space(self):
         """Return the underlying Sobolev space."""
@@ -1622,7 +1622,7 @@ class _RealElement(_ElementBase):
         self._cell_type = cell
         tdim = len(_basix.topology(cell)) - 1
 
-        super().__init__(f"RealElement({cell.__name__}, {value_shape})", cell.__name__, value_shape, 0)
+        super().__init__(f"RealElement({cell.name}, {value_shape})", cell.name, value_shape, 0)
 
         self._entity_counts = []
         if tdim >= 1:
@@ -1816,7 +1816,7 @@ def _compute_signature(element: _basix.finite_element.FiniteElement) -> str:
 
     """
     assert element.family == _basix.ElementFamily.custom
-    signature = (f"{element.cell_type.__name__}, {element.value_shape}, {element.map_type.__name__}, "
+    signature = (f"{element.cell_type.name}, {element.value_shape}, {element.map_type.name}, "
                  f"{element.discontinuous}, {element.embedded_subdegree}, {element.embedded_superdegree}, "
                  f"{element.dtype}, {element.dof_ordering}")
     data = ",".join([f"{i}" for row in element.wcoeffs for i in row])
@@ -1887,7 +1887,7 @@ def element(family: _typing.Union[_basix.ElementFamily, str], cell: _typing.Unio
         if family == "DPC":
             discontinuous = True
 
-        family = _basix.finite_element.string_to_family(family, cell.__name__)
+        family = _basix.finite_element.string_to_family(family, cell.name)
 
     # Default variant choices
     EF = _basix.ElementFamily

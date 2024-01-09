@@ -5,14 +5,69 @@ import typing
 import numpy as _np
 import numpy.typing as npt
 
-from basix._basixcpp import CellType, DPCVariant, ElementFamily
-from basix._basixcpp import FiniteElement_float32 as _FiniteElement_float32  # type: ignore
-from basix._basixcpp import FiniteElement_float64 as _FiniteElement_float64  # type: ignore
-from basix._basixcpp import LagrangeVariant, MapType, PolysetType, SobolevSpace
+from basix._basixcpp import DPCVariant as _DPCV
+from basix._basixcpp import ElementFamily as _EF
+from basix._basixcpp import FiniteElement_float32 as _FiniteElement_float32
+from basix._basixcpp import FiniteElement_float64 as _FiniteElement_float64
+from basix._basixcpp import LagrangeVariant as _LV
 from basix._basixcpp import create_custom_element as _create_custom_element
-from basix._basixcpp import create_element as _create_element  # type: ignore
+from basix._basixcpp import create_element as _create_element
+from basix.cell import CellType
+from basix.maps import MapType
+from basix.polynomials import PolysetType
+from basix.sobolev_spaces import SobolevSpace
+from basix.utils import Enum
 
-__all__ = ["FiniteElement", "create_element", "create_custom_element", "string_to_family"]
+__all__ = ["FiniteElement", "create_element", "create_custom_element", "string_to_family",
+           "string_to_lagrange_variant", "string_to_dpc_variant"]
+
+
+class ElementFamily(Enum):
+    """Element family."""
+    custom = _EF.custom
+    P = _EF.P
+    BDM = _EF.BDM
+    RT = _EF.RT
+    N1E = _EF.N1E
+    N2E = _EF.N2E
+    Regge = _EF.Regge
+    HHJ = _EF.HHJ
+    bubble = _EF.bubble
+    serendipity = _EF.serendipity
+    DPC = _EF.DPC
+    CR = _EF.CR
+    Hermite = _EF.Hermite
+    iso = _EF.iso
+
+
+class LagrangeVariant(Enum):
+    """Lagrange variant."""
+    unset = _LV.unset
+    equispaced = _LV.equispaced
+    gll_warped = _LV.gll_warped
+    gll_isaac = _LV.gll_isaac
+    gll_centroid = _LV.gll_centroid
+    chebyshev_warped = _LV.chebyshev_warped
+    chebyshev_isaac = _LV.chebyshev_isaac
+    chebyshev_centroid = _LV.chebyshev_centroid
+    gl_warped = _LV.gl_warped
+    gl_isaac = _LV.gl_isaac
+    gl_centroid = _LV.gl_centroid
+    legendre = _LV.legendre
+    bernstein = _LV.bernstein
+    vtk = _LV.vtk
+
+
+class DPCVariant(Enum):
+    """DPC variant."""
+    unset = _DPCV.unset
+    simplex_equispaced = _DPCV.simplex_equispaced
+    simplex_gll = _DPCV.simplex_gll
+    horizontal_equispaced = _DPCV.horizontal_equispaced
+    horizontal_gll = _DPCV.horizontal_gll
+    diagonal_equispaced = _DPCV.diagonal_equispaced
+    diagonal_gll = _DPCV.diagonal_gll
+    legendre = _DPCV.legendre
 
 
 class FiniteElement:
@@ -254,10 +309,9 @@ class FiniteElement:
         """
         return self._e.entity_transformations()
 
-    def get_tensor_product_representation(self) -> typing.List[typing.Tuple[typing.List[
-            typing.Union[_FiniteElement_float32,
-                         _FiniteElement_float64]],
-            typing.List[int]]]:
+    def get_tensor_product_representation(self) -> typing.List[
+        typing.Tuple[typing.List["FiniteElement"], typing.List[int]]
+    ]:
         """Get the tensor product representation of this element.
 
         Raises an exception if no such factorisation exists.
@@ -273,7 +327,8 @@ class FiniteElement:
         Returns:
             The tensor product representation
         """
-        return self._e.get_tensor_product_representation()
+        factors = self._e.get_tensor_product_representation()
+        return [([FiniteElement(e) for e in elements], perm) for elements, perm in factors]
 
     @property
     def degree(self) -> int:
@@ -302,12 +357,12 @@ class FiniteElement:
     @property
     def cell_type(self) -> CellType:
         """Element cell type."""
-        return self._e.cell_type
+        return getattr(CellType, self._e.cell_type.name)
 
     @property
     def polyset_type(self) -> PolysetType:
         """Element polyset type."""
-        return self._e.polyset_type
+        return getattr(PolysetType, self._e.polyset_type.name)
 
     @property
     def dim(self) -> int:
@@ -378,17 +433,17 @@ class FiniteElement:
     @property
     def family(self) -> ElementFamily:
         """Finite element family."""
-        return self._e.family
+        return getattr(ElementFamily, self._e.family.name)
 
     @property
     def lagrange_variant(self) -> LagrangeVariant:
         """Lagrange variant of the element."""
-        return self._e.lagrange_variant
+        return getattr(LagrangeVariant, self._e.lagrange_variant.name)
 
     @property
     def dpc_variant(self) -> DPCVariant:
         """DPC variant of the element."""
-        return self._e.dpc_variant
+        return getattr(DPCVariant, self._e.dpc_variant.name)
 
     @property
     def dof_transformations_are_permutations(self) -> bool:
@@ -408,12 +463,12 @@ class FiniteElement:
     @property
     def map_type(self) -> MapType:
         """Map type for this element."""
-        return self._e.map_type
+        return getattr(MapType, self._e.map_type.name)
 
     @property
     def sobolev_space(self) -> SobolevSpace:
         """Underlying Sobolev space for this element."""
-        return self._e.sobolev_space
+        return getattr(SobolevSpace, self._e.sobolev_space.name)
 
     @property
     def points(self) -> npt.NDArray[_np.floating]:
@@ -494,7 +549,7 @@ class FiniteElement:
         return _np.dtype(self._e.dtype)
 
 
-def create_element(family_name: ElementFamily, cell_name: CellType, degree: int,
+def create_element(family: ElementFamily, celltype: CellType, degree: int,
                    lvariant: LagrangeVariant = LagrangeVariant.unset,
                    dpc_variant: DPCVariant = DPCVariant.unset,
                    discontinuous: bool = False,
@@ -503,8 +558,8 @@ def create_element(family_name: ElementFamily, cell_name: CellType, degree: int,
     """Create a finite element.
 
     Args:
-        family_name: Finite element family.
-        cell_name: Reference cell type that the element is defined on
+        family: Finite element family.
+        celltype: Reference cell type that the element is defined on
         degree: Polynomial degree of the element.
         lvariant: Lagrange variant type.
         dvariant: DPC variant type.
@@ -518,11 +573,12 @@ def create_element(family_name: ElementFamily, cell_name: CellType, degree: int,
     Returns:
         A finite element.
     """
-    return FiniteElement(_create_element(family_name, cell_name, degree, lvariant, dpc_variant,
-                                         discontinuous, dof_ordering, _np.dtype(dtype).char))
+    return FiniteElement(_create_element(
+        family.value, celltype.value, degree, lvariant.value, dpc_variant.value, discontinuous,
+        dof_ordering, _np.dtype(dtype).char))
 
 
-def create_custom_element(cell_name: CellType, value_shape, wcoeffs, x, M, interpolation_nderivs: int, map_type,
+def create_custom_element(cell_type: CellType, value_shape, wcoeffs, x, M, interpolation_nderivs: int, map_type,
                           sobolev_space, discontinuous: bool,
                           embedded_subdegree: int, embedded_superdegree: int,
                           poly_type: PolysetType) -> FiniteElement:
@@ -555,10 +611,10 @@ def create_custom_element(cell_name: CellType, value_shape, wcoeffs, x, M, inter
     Returns:
         A custom finite element
     """
-    return FiniteElement(_create_custom_element(cell_name, value_shape, wcoeffs, x, M,
-                                                interpolation_nderivs, map_type,
-                                                sobolev_space, discontinuous, embedded_subdegree,
-                                                embedded_superdegree, poly_type))
+    return FiniteElement(_create_custom_element(cell_type.value, value_shape, wcoeffs, x, M,
+                                                interpolation_nderivs, map_type.value,
+                                                sobolev_space.value, discontinuous, embedded_subdegree,
+                                                embedded_superdegree, poly_type.value))
 
 
 def string_to_family(family: str, cell: str) -> ElementFamily:
@@ -649,3 +705,40 @@ def string_to_family(family: str, cell: str) -> ElementFamily:
         return families[family]
 
     raise ValueError(f"Unknown element family: {family} with cell type {cell}")
+
+
+def string_to_lagrange_variant(variant: str) -> LagrangeVariant:
+    """Convert a string to a Basix LagrangeVariant enum.
+
+    Args:
+        variant: Lagrange variant as a string.
+
+    Returns:
+        The Lagrange variant.
+
+    """
+    if variant.lower() == "gll":
+        return LagrangeVariant.gll_warped
+    if variant.lower() == "chebyshev":
+        return LagrangeVariant.chebyshev_isaac
+    if variant.lower() == "gl":
+        return LagrangeVariant.gl_isaac
+
+    if not hasattr(LagrangeVariant, variant.lower()):
+        raise ValueError(f"Unknown variant: {variant}")
+    return getattr(LagrangeVariant, variant.lower())
+
+
+def string_to_dpc_variant(variant: str) -> DPCVariant:
+    """Convert a string to a Basix DPCVariant enum.
+
+    Args:
+        variant: DPC variant as a string.
+
+    Returns:
+        The DPC variant.
+
+    """
+    if not hasattr(DPCVariant, variant.lower()):
+        raise ValueError(f"Unknown variant: {variant}")
+    return getattr(DPCVariant, variant.lower())

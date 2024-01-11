@@ -55,7 +55,6 @@ class LagrangeVariant(Enum):
     gl_centroid = _LV.gl_centroid
     legendre = _LV.legendre
     bernstein = _LV.bernstein
-    vtk = _LV.vtk
 
 
 class DPCVariant(Enum):

@@ -23,7 +23,6 @@ enum class lagrange_variant
   gl_centroid = 9,
   legendre = 10,
   bernstein = 11,
-  vtk = 20,
 };
 
 /// Variants of a DPC (discontinuous polynomial cubical) space that can

@@ -571,7 +571,6 @@ NB_MODULE(_basixcpp, m)
       .value("gl_centroid", element::lagrange_variant::gl_centroid)
       .value("legendre", element::lagrange_variant::legendre)
       .value("bernstein", element::lagrange_variant::bernstein)
-      .value("vtk", element::lagrange_variant::vtk)
       .def_prop_ro("name",
                    [](nb::object obj) { return nb::getattr(obj, "__name__"); });
 

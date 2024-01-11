@@ -415,7 +415,6 @@ def in_cell(celltype, p):
     basix.LagrangeVariant.gl_warped,
     basix.LagrangeVariant.gl_isaac,
     basix.LagrangeVariant.gl_centroid,
-    basix.LagrangeVariant.vtk
 ])
 @pytest.mark.parametrize("celltype", [
     basix.CellType.triangle,
@@ -444,85 +443,6 @@ def test_continuous_lagrange(celltype, variant):
     # Lagrange, so trying to create them should throw a runtime error
     with pytest.raises(RuntimeError):
         basix.create_element(basix.ElementFamily.P, celltype, 4, variant, discontinuous=False)
-
-
-@pytest.mark.parametrize("celltype", [
-    basix.CellType.interval, basix.CellType.triangle, basix.CellType.tetrahedron,
-    basix.CellType.quadrilateral, basix.CellType.hexahedron,
-])
-@pytest.mark.parametrize("degree", range(1, 9))
-def test_vtk_element(celltype, degree):
-    if degree > 5 and celltype == basix.CellType.hexahedron:
-        pytest.skip("Skipping slow test on hexahedron")
-    equi = basix.create_element(basix.ElementFamily.P, celltype, degree,
-                                basix.LagrangeVariant.equispaced, discontinuous=True)
-    vtk = basix.create_element(basix.ElementFamily.P, celltype, degree,
-                               basix.LagrangeVariant.vtk, discontinuous=True)
-    assert vtk.points.shape == equi.points.shape
-
-    perm = []
-    for i, p in enumerate(vtk.points):
-        for j, q in enumerate(vtk.points):
-            if i != j:
-                assert not numpy.allclose(p, q)
-        for j, q in enumerate(equi.points):
-            if numpy.allclose(p, q):
-                perm.append(j)
-                break
-        else:
-            raise ValueError(f"Incorrect point in VTK variant: {p}")
-
-    # Test against permutations that were previously in DOLFINx
-    if celltype == basix.CellType.triangle:
-        if degree <= 9:
-            target = [0, 1, 2]
-            j = 3
-            target += [2 * degree + k for k in range(1, degree)]
-            target += [2 + k for k in range(1, degree)]
-            target += [2 * degree + 1 - k for k in range(1, degree)]
-            if degree == 3:
-                target += [len(target) + i for i in [0]]
-            elif degree == 4:
-                target += [len(target) + i for i in [0, 1, 2]]
-            elif degree == 5:
-                target += [len(target) + i for i in [0, 2, 5, 1, 4, 3]]
-            elif degree == 6:
-                target += [len(target) + i for i in [0, 3, 9, 1, 2, 6, 8, 7, 4, 5]]
-            elif degree == 7:
-                target += [len(target) + i for i in [0, 4, 14, 1, 2, 3, 8, 11, 13, 12, 9, 5, 6, 7, 10]]
-            elif degree == 8:
-                target += [len(target) + i for i in [0, 5, 20, 1, 2, 3, 4, 10, 14, 17, 19,
-                                                     18, 15, 11, 6, 7, 9, 16, 8, 13, 12]]
-            elif degree == 9:
-                target += [len(target) + i for i in [0, 6, 27, 1, 2, 3, 4, 5, 12, 17, 21, 24, 26, 25,
-                                                     22, 18, 13, 7, 8, 11, 23, 9, 10, 16, 20, 19, 14, 15]]
-
-            assert perm == target
-
-    elif celltype == basix.CellType.tetrahedron:
-        if degree == 1:
-            assert perm == [0, 1, 2, 3]
-        elif degree == 2:
-            assert perm == [0, 1, 2, 3, 9, 6, 8, 7, 5, 4]
-        elif degree == 3:
-            assert perm == [0, 1, 2, 3, 14, 15, 8, 9, 13, 12,
-                            10, 11, 6, 7, 4, 5, 18, 16, 17, 19]
-
-    elif celltype == basix.CellType.quadrilateral:
-        target = [0, 1, 3, 2]
-        target += [4 + k for k in range(degree - 1)]
-        target += [4 + 2 * (degree - 1) + k for k in range(degree - 1)]
-        target += [4 + 3 * (degree - 1) + k for k in range(degree - 1)]
-        target += [4 + (degree - 1) + k for k in range(degree - 1)]
-        target += [4 + (degree - 1) * 4 + k for k in range((degree - 1) ** 2)]
-        assert target == perm
-
-    elif celltype == basix.CellType.hexahedron:
-        if degree == 1:
-            assert perm == [0, 1, 3, 2, 4, 5, 7, 6]
-        elif degree == 2:
-            assert perm == [0, 1, 3, 2, 4, 5, 7, 6, 8, 11, 13, 9, 16, 18,
-                            19, 17, 10, 12, 15, 14, 22, 23, 21, 24, 20, 25, 26]
 
 
 @pytest.mark.parametrize("variant", [

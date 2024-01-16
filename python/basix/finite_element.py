@@ -549,7 +549,7 @@ class FiniteElement:
 
 
 def create_element(family: ElementFamily, celltype: CellType, degree: int,
-                   lvariant: LagrangeVariant = LagrangeVariant.unset,
+                   lagrange_variant: LagrangeVariant = LagrangeVariant.unset,
                    dpc_variant: DPCVariant = DPCVariant.unset,
                    discontinuous: bool = False,
                    dof_ordering: typing.List[int] = [],
@@ -573,8 +573,8 @@ def create_element(family: ElementFamily, celltype: CellType, degree: int,
         A finite element.
     """
     return FiniteElement(_create_element(
-        family.value, celltype.value, degree, lvariant.value, dpc_variant.value, discontinuous,
-        dof_ordering, _np.dtype(dtype).char))
+        family.value, celltype.value, degree, lagrange_variant.value, dpc_variant.value,
+        discontinuous, dof_ordering, _np.dtype(dtype).char))
 
 
 def create_custom_element(cell_type: CellType, value_shape, wcoeffs, x, M, interpolation_nderivs: int, map_type,

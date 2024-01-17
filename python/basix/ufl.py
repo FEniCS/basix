@@ -405,7 +405,7 @@ class _BasixElement(_ElementBase):
             component element, offset of the component, stride of the component
 
         """
-        assert flat_component < self.value_size
+        assert flat_component < self.reference_value_size
         return _ComponentElement(self, flat_component), 0, 1
 
     def get_tensor_product_representation(self):

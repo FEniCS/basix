@@ -37,7 +37,7 @@ jobs:
         run: sudo apt-get install -y libopenblas-dev liblapack-dev graphviz libgraphviz-dev ninja-build
       - name: Install UFL (default branch)
         if: github.event_name != 'workflow_dispatch'
-        run: pip install git+https://github.com/FEniCS/ufl.git
+        run: pip install git+https://github.com/FEniCS/ufl.git@mscroggs/gdim
       - name: Install UFL (specified branch)
         if: github.event_name == 'workflow_dispatch'
         run: pip install git+https://github.com/FEniCS/ufl.git@${{ github.event.inputs.ufl_branch }}

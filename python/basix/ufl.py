@@ -11,7 +11,6 @@ from warnings import warn as _warn
 import numpy as _np
 import numpy.typing as _npt
 import ufl as _ufl
-# TODO: remove gdim arguments once UFL handles cells better
 from ufl.finiteelement import AbstractFiniteElement as _AbstractFiniteElement
 from ufl.pullback import AbstractPullback as _AbstractPullback
 from ufl.pullback import IdentityPullback as _IdentityPullback
@@ -74,28 +73,6 @@ def _ufl_pullback_from_enum(m: _basix.maps.MapType) -> _AbstractPullback:
     return _pullbackmap[m]
 
 
-def _repr_optional_args(**kwargs: _typing.Any) -> str:
-    """Augment an element `repr` by appending non-None optional arguments.
-
-    Args:
-        kwargs: Optional arguments to include in repr. All arguments for which
-            `value is not None` will be appended to `partial_repr`.
-
-    Returns:
-        A string representation of a finite element
-    """
-    out = ""
-    for name, value in kwargs.items():
-        if value is not None:
-            out += f", {name}={value}"
-    return out
-
-
-def _cellname_to_tdim(cellname: str) -> int:
-    """Get the tdim of a cell."""
-    return len(_basix.topology(_basix.cell.string_to_type(cellname))) - 1
-
-
 class _ElementBase(_AbstractFiniteElement):
     """A base wrapper to allow elements to be used with UFL.
 
@@ -105,15 +82,13 @@ class _ElementBase(_AbstractFiniteElement):
     """
 
     def __init__(self, repr: str, cellname: str, value_shape: _typing.Tuple[int, ...],
-                 degree: int = -1, pullback: _AbstractPullback = _UndefinedPullback(),
-                 gdim: _typing.Optional[int] = None):
+                 degree: int = -1, pullback: _AbstractPullback = _UndefinedPullback()):
         """Initialise the element."""
         self._repr = repr
         self._cellname = cellname
         self._value_shape = value_shape
         self._degree = degree
         self._pullback = pullback
-        self._gdim = _cellname_to_tdim(cellname) if gdim is None else gdim
 
     # Implementation of methods for UFL AbstractFiniteElement
     def __repr__(self):
@@ -173,7 +148,7 @@ class _ElementBase(_AbstractFiniteElement):
     @property
     def cell(self) -> _ufl.Cell:
         """Return the cell of the finite element."""
-        return _ufl.cell.Cell(self._cellname, self._gdim)
+        return _ufl.cell.Cell(self._cellname)
 
     @property
     def reference_value_shape(self) -> _typing.Tuple[int, ...]:
@@ -369,7 +344,7 @@ class _BasixElement(_ElementBase):
 
     _element: _basix.finite_element.FiniteElement
 
-    def __init__(self, element: _basix.finite_element.FiniteElement, gdim: _typing.Optional[int] = None):
+    def __init__(self, element: _basix.finite_element.FiniteElement):
         """Create a Basix element."""
         if element.family == _basix.ElementFamily.custom:
             self._is_custom = True
@@ -379,19 +354,17 @@ class _BasixElement(_ElementBase):
             repr = (f"Basix element ({element.family.name}, {element.cell_type.name}, {element.degree}, "
                     f"{element.lagrange_variant.name}, {element.dpc_variant.name}, {element.discontinuous}, "
                     f"{element.dtype}, {element.dof_ordering}")
-        if gdim != _cellname_to_tdim(element.cell_type.name):
-            repr += _repr_optional_args(gdim=gdim)
         repr += ")"
 
         super().__init__(
             repr, element.cell_type.name, tuple(element.value_shape), element.degree,
-            _ufl_pullback_from_enum(element.map_type), gdim=gdim)
+            _ufl_pullback_from_enum(element.map_type))
 
         self._element = element
 
     def __eq__(self, other) -> bool:
         """Check if two elements are equal."""
-        return isinstance(other, _BasixElement) and (self._element == other._element and self._gdim == other._gdim)
+        return isinstance(other, _BasixElement) and self._element == other._element
 
     def __hash__(self) -> int:
         """Return a hash."""
@@ -615,20 +588,18 @@ class _ComponentElement(_ElementBase):
     _element: _ElementBase
     _component: int
 
-    def __init__(self, element: _ElementBase, component: int, gdim: _typing.Optional[int] = None):
+    def __init__(self, element: _ElementBase, component: int):
         """Initialise the element."""
         self._element = element
         self._component = component
         repr = f"component element ({element!r}, {component}"
-        if gdim != _cellname_to_tdim(element.cell_type.name):
-            repr += _repr_optional_args(gdim=gdim)
         repr += ")"
-        super().__init__(repr, element.cell_type.name, (1, ), element._degree, gdim=gdim)
+        super().__init__(repr, element.cell_type.name, (1, ), element._degree)
 
     def __eq__(self, other) -> bool:
         """Check if two elements are equal."""
         return (isinstance(other, _ComponentElement) and self._element == other._element
-                and self._component == other._component and self._gdim == other._gdim)
+                and self._component == other._component)
 
     def __hash__(self) -> int:
         """Return a hash."""
@@ -825,7 +796,7 @@ class _MixedElement(_ElementBase):
 
     _sub_elements: _typing.List[_ElementBase]
 
-    def __init__(self, sub_elements: _typing.List[_ElementBase], gdim: _typing.Optional[int] = None):
+    def __init__(self, sub_elements: _typing.List[_ElementBase]):
         """Initialise the element."""
         assert len(sub_elements) > 0
         self._sub_elements = sub_elements
@@ -834,17 +805,13 @@ class _MixedElement(_ElementBase):
         else:
             pullback = _MixedPullback(self)
 
-        repr = "mixed element (" + ", ".join(i._repr for i in sub_elements)
-        if gdim != _cellname_to_tdim(sub_elements[0].cell_type.name):
-            repr += _repr_optional_args(gdim=gdim)
-        repr += ")"
+        repr = "mixed element (" + ", ".join(i._repr for i in sub_elements) + ")"
         super().__init__(repr, sub_elements[0].cell_type.name,
-                         (sum(i.value_size for i in sub_elements), ), pullback=pullback, gdim=gdim)
+                         (sum(i.reference_value_size for i in sub_elements), ), pullback=pullback)
 
     def __eq__(self, other) -> bool:
         """Check if two elements are equal."""
-        if isinstance(other, _MixedElement) and (len(self._sub_elements) == len(other._sub_elements)
-                                                 and self._gdim == other._gdim):
+        if isinstance(other, _MixedElement) and len(self._sub_elements) == len(other._sub_elements):
             for i, j in zip(self._sub_elements, other._sub_elements):
                 if i != j:
                     return False
@@ -874,12 +841,12 @@ class _MixedElement(_ElementBase):
         tables = []
         results = [e.tabulate(nderivs, points) for e in self._sub_elements]
         for deriv_tables in zip(*results):
-            new_table = _np.zeros((len(points), self.value_size * self.dim))
+            new_table = _np.zeros((len(points), self.reference_value_size * self.dim))
             start = 0
             for e, t in zip(self._sub_elements, deriv_tables):
-                for i in range(0, e.dim, e.value_size):
-                    new_table[:, start: start + e.value_size] = t[:, i: i + e.value_size]
-                    start += self.value_size
+                for i in range(0, e.dim, e.reference_value_size):
+                    new_table[:, start: start + e.reference_value_size] = t[:, i: i + e.reference_value_size]
+                    start += self.reference_value_size
             tables.append(new_table)
         return _np.asarray(tables, dtype=_np.float64)
 
@@ -1100,9 +1067,9 @@ class _BlockedElement(_ElementBase):
     _block_size: int
 
     def __init__(self, sub_element: _ElementBase, shape: _typing.Tuple[int, ...],
-                 symmetry: _typing.Optional[bool] = None, gdim: _typing.Optional[int] = None,):
+                 symmetry: _typing.Optional[bool] = None):
         """Initialise the element."""
-        if sub_element.value_size != 1:
+        if sub_element.reference_value_size != 1:
             raise ValueError("Blocked elements of non-scalar elements are not supported. "
                              "Try using _MixedElement instead.")
         if symmetry is not None:
@@ -1126,14 +1093,12 @@ class _BlockedElement(_ElementBase):
         self._block_shape = shape
 
         repr = f"blocked element ({sub_element!r}, {shape}"
-        if gdim != _cellname_to_tdim(sub_element.cell_type.name):
-            repr += _repr_optional_args(symmetry=symmetry, gdim=gdim)
-        else:
-            repr += _repr_optional_args(symmetry=symmetry)
+        if symmetry is not None:
+            repr += f", symmetry={symmetry}"
         repr += ")"
 
         super().__init__(repr, sub_element.cell_type.name, shape,
-                         sub_element._degree, sub_element._pullback, gdim=gdim)
+                         sub_element._degree, sub_element._pullback)
 
         if symmetry:
             n = 0
@@ -1150,8 +1115,7 @@ class _BlockedElement(_ElementBase):
         """Check if two elements are equal."""
         return (
             isinstance(other, _BlockedElement) and self._block_size == other._block_size
-            and self._block_shape == other._block_shape and self._sub_element == other._sub_element
-            and self._gdim == other._gdim)
+            and self._block_shape == other._block_shape and self._sub_element == other._sub_element)
 
     def __hash__(self) -> int:
         """Return a hash."""
@@ -1169,7 +1133,7 @@ class _BlockedElement(_ElementBase):
 
         """
         assert len(self._block_shape) == 1  # TODO: block shape
-        assert self.value_size == self._block_size  # TODO: remove this assumption
+        assert self.reference_value_size == self._block_size  # TODO: remove this assumption
         output = []
         for table in self._sub_element.tabulate(nderivs, points):
             # Repeat sub element horizontally
@@ -1653,9 +1617,9 @@ class _RealElement(_ElementBase):
             Tabulated basis functions
 
         """
-        out = _np.zeros((nderivs + 1, len(points), self.value_size**2))
-        for v in range(self.value_size):
-            out[0, :, self.value_size * v + v] = 1.
+        out = _np.zeros((nderivs + 1, len(points), self.reference_value_size**2))
+        for v in range(self.reference_value_size):
+            out[0, :, self.reference_value_size * v + v] = 1.
         return out
 
     def get_component_element(self, flat_component: int) -> _typing.Tuple[_ElementBase, int, int]:
@@ -1668,7 +1632,7 @@ class _RealElement(_ElementBase):
             component element, offset of the component, stride of the component
 
         """
-        assert flat_component < self.value_size
+        assert flat_component < self.reference_value_size
         return self, 0, 1
 
     @property
@@ -1846,8 +1810,7 @@ def element(family: _typing.Union[_basix.ElementFamily, str], cell: _typing.Unio
             lagrange_variant: _basix.LagrangeVariant = _basix.LagrangeVariant.unset,
             dpc_variant: _basix.DPCVariant = _basix.DPCVariant.unset, discontinuous: bool = False,
             shape: _typing.Optional[_typing.Tuple[int, ...]] = None,
-            symmetry: _typing.Optional[bool] = None, gdim: _typing.Optional[int] = None,
-            dtype: _npt.DTypeLike = _np.float64) -> _ElementBase:
+            symmetry: _typing.Optional[bool] = None, dtype: _npt.DTypeLike = _np.float64) -> _ElementBase:
     """Create a UFL compatible element using Basix.
 
     Args:
@@ -1862,8 +1825,7 @@ def element(family: _typing.Union[_basix.ElementFamily, str], cell: _typing.Unio
             this can be used to create vector and tensor elements.
         symmetry: Set to ``True`` if the tensor is symmetric. Valid for
             rank 2 elements only.
-        gdim: Geometric dimension. If not set the geometric dimension is
-            set equal to the topological dimension of the cell.
+        dtype: The data type
 
     Returns:
         A finite element.
@@ -1907,26 +1869,23 @@ def element(family: _typing.Union[_basix.ElementFamily, str], cell: _typing.Unio
 
     e = _basix.create_element(family, cell, degree, lagrange_variant, dpc_variant,
                               discontinuous, dtype=dtype)
-    ufl_e = _BasixElement(e, gdim=gdim)
+    ufl_e = _BasixElement(e)
 
     if shape is None or shape == tuple(e.value_shape):
         if symmetry is not None:
             raise ValueError("Cannot pass a symmetry argument to this element.")
         return ufl_e
     else:
-        return blocked_element(ufl_e, shape=shape, gdim=gdim, symmetry=symmetry)
+        return blocked_element(ufl_e, shape=shape, symmetry=symmetry)
 
 
 def enriched_element(elements: _typing.List[_ElementBase],
-                     map_type: _typing.Optional[_basix.MapType] = None,
-                     gdim: _typing.Optional[int] = None) -> _ElementBase:
+                     map_type: _typing.Optional[_basix.MapType] = None) -> _ElementBase:
     """Create an UFL compatible enriched element from a list of elements.
 
     Args:
         elements: The list of elements
         map_type: The map type for the enriched element.
-        gdim: Geometric dimension. If not set the geometric dimension is
-            set equal to the topological dimension of the cell.
 
     Returns:
         An enriched finite element.
@@ -1934,8 +1893,8 @@ def enriched_element(elements: _typing.List[_ElementBase],
     """
     ct = elements[0].cell_type
     ptype = elements[0].polyset_type
-    vshape = elements[0].value_shape
-    vsize = elements[0].value_size
+    vshape = elements[0].reference_value_shape
+    vsize = elements[0].reference_value_size
     if map_type is None:
         map_type = elements[0].map_type
         for e in elements:
@@ -1953,7 +1912,7 @@ def enriched_element(elements: _typing.List[_ElementBase],
             raise ValueError("Enriched elements on different cell types not supported.")
         if e.polyset_type != ptype:
             raise ValueError("Enriched elements on different polyset types not supported.")
-        if e.value_shape != vshape or e.value_size != vsize:
+        if e.reference_value_shape != vshape or e.reference_value_size != vsize:
             raise ValueError("Enriched elements on different value shapes not supported.")
     nderivs = max(e.interpolation_nderivs for e in elements)
 
@@ -1986,7 +1945,7 @@ def enriched_element(elements: _typing.List[_ElementBase],
         row += e.dim
 
     return custom_element(ct, list(vshape), wcoeffs, x, M, nderivs,
-                          map_type, ss, discontinuous, hcd, hd, ptype, gdim=gdim)
+                          map_type, ss, discontinuous, hcd, hd, ptype)
 
 
 def custom_element(cell_type: _basix.CellType, value_shape: _typing.Union[_typing.List[int], _typing.Tuple[int, ...]],
@@ -1994,8 +1953,7 @@ def custom_element(cell_type: _basix.CellType, value_shape: _typing.Union[_typin
                    M: _typing.List[_typing.List[_npt.NDArray[_np.float64]]], interpolation_nderivs: int,
                    map_type: _basix.MapType, sobolev_space: _basix.SobolevSpace, discontinuous: bool,
                    embedded_subdegree: int, embedded_superdegree: int,
-                   polyset_type: _basix.PolysetType = _basix.PolysetType.standard,
-                   gdim: _typing.Optional[int] = None) -> _ElementBase:
+                   polyset_type: _basix.PolysetType = _basix.PolysetType.standard) -> _ElementBase:
     """Create a UFL compatible custom Basix element.
 
     Args:
@@ -2022,8 +1980,6 @@ def custom_element(cell_type: _basix.CellType, value_shape: _typing.Union[_typin
         embedded_superdegree: The highest degree of a polynomial in this element's
             polyset.
         polyset_type: Polyset type for the element.
-        gdim: Geometric dimension. If not set the geometric dimension is
-            set equal to the topological dimension of the cell.
 
     Returns:
         A custom finite element.
@@ -2043,27 +1999,20 @@ def custom_element(cell_type: _basix.CellType, value_shape: _typing.Union[_typin
         embedded_superdegree,
         polyset_type
     )
-    return _BasixElement(e, gdim=gdim)
+    return _BasixElement(e)
 
 
-def mixed_element(elements: _typing.List[_ElementBase], gdim: _typing.Optional[int] = None) -> _ElementBase:
+def mixed_element(elements: _typing.List[_ElementBase]) -> _ElementBase:
     """Create a UFL compatible mixed element from a list of elements.
 
     Args:
         elements: The list of elements
-        gdim: Geometric dimension. If not set the geometric dimension is
-            set equal to the topological dimension of the cell.
 
     Returns:
         A mixed finite element.
 
     """
-    if gdim is None:
-        gdim = elements[0]._gdim
-        for e in elements:
-            if e._gdim != gdim:
-                raise ValueError("Incompatible gdim in sub-elements.")
-    return _MixedElement(elements, gdim=gdim)
+    return _MixedElement(elements)
 
 
 def quadrature_element(cell: _typing.Union[str, _basix.CellType],
@@ -2134,7 +2083,7 @@ def real_element(cell: _typing.Union[_basix.CellType, str],
 @_functools.lru_cache()
 def blocked_element(
     sub_element: _ElementBase, shape: _typing.Tuple[int, ...],
-    symmetry: _typing.Optional[bool] = None, gdim: _typing.Optional[int] = None
+    symmetry: _typing.Optional[bool] = None
 ) -> _ElementBase:
     """Create a UFL compatible blocked element.
 
@@ -2144,14 +2093,12 @@ def blocked_element(
             this can be used to create vector and tensor elements.
         symmetry: Set to ``True`` if the tensor is symmetric. Valid for
             rank 2 elements only.
-        gdim: Geometric dimension. If not set the geometric dimension is
-            set equal to the topological dimension of the cell.
 
     Returns:
         A blocked finite element.
 
     """
-    if len(sub_element.value_shape) != 0:
+    if len(sub_element.reference_value_shape) != 0:
         raise ValueError("Cannot create a blocked element containing a non-scalar element.")
 
-    return _BlockedElement(sub_element, shape=shape, symmetry=symmetry, gdim=gdim)
+    return _BlockedElement(sub_element, shape=shape, symmetry=symmetry)

@@ -25,7 +25,7 @@ def test_finite_element(inputs):
 def test_vector_element(inputs):
     e = basix.ufl.element(*inputs, shape=(2, ))
     table = e.tabulate(0, np.array([[0, 0]]))
-    assert table.shape == (1, 1, e.value_size, e.dim)
+    assert table.shape == (1, 1, e.reference_value_size, e.dim)
 
 
 @pytest.mark.parametrize("inputs", [
@@ -96,49 +96,45 @@ def test_quadrature_element(cell, degree, shape):
     for i in shape:
         size *= i
 
-    assert e.value_size == scalar_e.value_size * size
+    assert e.reference_value_size == scalar_e.reference_value_size * size
     assert e.dim == scalar_e.dim * size
 
 
-@pytest.mark.parametrize("family,cell,degree,shape,gdim", [
-    ("Lagrange", "triangle", 1, None, None),
-    ("Discontinuous Lagrange", "triangle", 1, None, None),
-    ("Lagrange", "quadrilateral", 1, None, None),
-    ("Lagrange", "triangle", 2, None, None),
-    ("Lagrange", "triangle", 1, (2,), None),
-    ("Lagrange", "triangle", 1, None, 2)
+@pytest.mark.parametrize("family,cell,degree,shape", [
+    ("Lagrange", "triangle", 1, None),
+    ("Discontinuous Lagrange", "triangle", 1, None),
+    ("Lagrange", "quadrilateral", 1, None),
+    ("Lagrange", "triangle", 2, None),
+    ("Lagrange", "triangle", 1, (2,)),
+    ("Lagrange", "triangle", 1, None)
 ])
-def test_finite_element_eq_hash(family, cell, degree, shape, gdim):
-    e1 = basix.ufl.element("Lagrange", "triangle", 1, shape=None, gdim=None)
-    e2 = basix.ufl.element(family, cell, degree, shape=shape, gdim=gdim)
+def test_finite_element_eq_hash(family, cell, degree, shape):
+    e1 = basix.ufl.element("Lagrange", "triangle", 1, shape=None)
+    e2 = basix.ufl.element(family, cell, degree, shape=shape)
     assert (e1 == e2) == (hash(e1) == hash(e2))
 
 
-@pytest.mark.parametrize("component,gdim", [(0, None), (1, None), (0, 2)])
-def test_component_element_eq_hash(component, gdim):
+@pytest.mark.parametrize("component", [0, 1, 0])
+def test_component_element_eq_hash(component):
     base_el = basix.ufl.element("Lagrange", "triangle", 1)
-    e1 = basix.ufl._ComponentElement(base_el, component=0, gdim=None)
-    e2 = basix.ufl._ComponentElement(base_el, component=component, gdim=gdim)
+    e1 = basix.ufl._ComponentElement(base_el, component=0)
+    e2 = basix.ufl._ComponentElement(base_el, component=component)
     assert (e1 == e2) == (hash(e1) == hash(e2))
 
 
-@pytest.mark.parametrize("e1,e2,gdim", [
+@pytest.mark.parametrize("e1,e2", [
     (basix.ufl.element("Lagrange", "triangle", 1),
-     basix.ufl.element("Lagrange", "triangle", 1, shape=(2, 2), symmetry=True),
-     None),
+     basix.ufl.element("Lagrange", "triangle", 1, shape=(2, 2), symmetry=True)),
     (basix.ufl.element("Lagrange", "triangle", 1),
-     basix.ufl.element("Lagrange", "triangle", 1, shape=(2, 2)),
-     None),
+     basix.ufl.element("Lagrange", "triangle", 1, shape=(2, 2))),
     (basix.ufl.element("Lagrange", "triangle", 1),
-     basix.ufl.element("Lagrange", "triangle", 1, shape=(2, 2), symmetry=True),
-     2)
+     basix.ufl.element("Lagrange", "triangle", 1, shape=(2, 2), symmetry=True)),
 ])
-def test_mixed_element_eq_hash(e1, e2, gdim):
+def test_mixed_element_eq_hash(e1, e2):
     mixed1 = basix.ufl.mixed_element(
         [basix.ufl.element("Lagrange", "triangle", 1),
-         basix.ufl.element("Lagrange", "triangle", 1, shape=(2, 2), symmetry=True)],
-        gdim=None)
-    mixed2 = basix.ufl.mixed_element([e1, e2], gdim=gdim)
+         basix.ufl.element("Lagrange", "triangle", 1, shape=(2, 2), symmetry=True)])
+    mixed2 = basix.ufl.mixed_element([e1, e2])
     assert (mixed1 == mixed2) == (hash(mixed1) == hash(mixed2))
 
 

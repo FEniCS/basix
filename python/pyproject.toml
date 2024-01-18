@@ -10,8 +10,8 @@ readme = "../README.md"
 requires-python = ">=3.8.0"
 license = { file = "../LICENSE" }
 authors = [
-    { email = "fenics-dev@googlegroups.com" },
-    { name = "FEniCS Project" },
+    { email = "fenics-steering-council@googlegroups.com" },
+    { name = "FEniCS Steering Council" },
 ]
 packages = ["basix"]
 dependencies = ["numpy>=1.21"]

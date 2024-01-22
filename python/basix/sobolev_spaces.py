@@ -1,6 +1,5 @@
 """Functions for handling Sobolev spaces."""
 
-import typing as _typing
 
 from basix._basixcpp import SobolevSpace as _SS
 from basix._basixcpp import sobolev_space_intersection as _ssi
@@ -22,7 +21,7 @@ class SobolevSpace(Enum):
     HDivDiv = _SS.HDivDiv
 
 
-def intersection(spaces: _typing.List[SobolevSpace]) -> SobolevSpace:
+def intersection(spaces: list[SobolevSpace]) -> SobolevSpace:
     """Compute the intersection of a list of Sobolev spaces.
 
     Args:

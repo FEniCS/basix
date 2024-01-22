@@ -2,7 +2,7 @@
 
 import typing
 
-import numpy as _np
+import numpy as np
 import numpy.typing as npt
 
 from basix._basixcpp import DPCVariant as _DPCV
@@ -81,7 +81,7 @@ class FiniteElement:
         """
         self._e = e
 
-    def tabulate(self, n: int, x: npt.NDArray) -> npt.NDArray[_np.floating]:
+    def tabulate(self, n: int, x: npt.NDArray) -> npt.NDArray[np.floating]:
         """Compute basis values and derivatives at set of points.
 
         Note:
@@ -122,7 +122,7 @@ class FiniteElement:
         except TypeError:
             return False
 
-    def push_forward(self, U, J, detJ, K) -> npt.NDArray[_np.floating]:
+    def push_forward(self, U, J, detJ, K) -> npt.NDArray[np.floating]:
         """Map function values from the reference to a physical cell.
 
         This function can perform the mapping for multiple points,
@@ -144,7 +144,7 @@ class FiniteElement:
         return self._e.push_forward(U, J, detJ, K)
 
     def pull_back(self, u: npt.NDArray, J: npt.NDArray,
-                  detJ: npt.NDArray, K: npt.NDArray) -> npt.NDArray[_np.floating]:
+                  detJ: npt.NDArray, K: npt.NDArray) -> npt.NDArray[np.floating]:
         """Map function values from a physical cell to the reference.
 
         Args:
@@ -202,7 +202,7 @@ class FiniteElement:
         """
         self._e.pre_apply_inverse_transpose_dof_transformation(data, block_size, cell_info)
 
-    def base_transformations(self) -> npt.NDArray[_np.floating]:
+    def base_transformations(self) -> npt.NDArray[np.floating]:
         r"""Get the base transformations.
 
         The base transformations represent the effect of rotating or reflecting
@@ -308,8 +308,8 @@ class FiniteElement:
         """
         return self._e.entity_transformations()
 
-    def get_tensor_product_representation(self) -> typing.List[
-        typing.Tuple[typing.List["FiniteElement"], typing.List[int]]
+    def get_tensor_product_representation(self) -> list[
+        tuple[list["FiniteElement"], list[int]]
     ]:
         """Get the tensor product representation of this element.
 
@@ -372,7 +372,7 @@ class FiniteElement:
         return self._e.dim
 
     @property
-    def num_entity_dofs(self) -> typing.List[typing.List[int]]:
+    def num_entity_dofs(self) -> list[list[int]]:
         """Number of entity dofs.
 
         Warning:
@@ -381,7 +381,7 @@ class FiniteElement:
         return self._e.num_entity_dofs
 
     @property
-    def entity_dofs(self) -> typing.List[typing.List[typing.List[int]]]:
+    def entity_dofs(self) -> list[list[list[int]]]:
         """Get the dofs on each topological entity.
 
         Data is order (vertices, edges, faces, cell). For example,
@@ -391,7 +391,7 @@ class FiniteElement:
         return self._e.entity_dofs
 
     @property
-    def num_entity_closure_dofs(self) -> typing.List[typing.List[int]]:
+    def num_entity_closure_dofs(self) -> list[list[int]]:
         """Number of entity closure dofs.
 
         Warning:
@@ -400,7 +400,7 @@ class FiniteElement:
         return self._e.num_entity_closure_dofs
 
     @property
-    def entity_closure_dofs(self) -> typing.List[typing.List[typing.List[int]]]:
+    def entity_closure_dofs(self) -> list[list[list[int]]]:
         """Get the dofs on the closure of each topological entity.
 
         Data is in the order (vertices, edges, faces, cell). For
@@ -416,7 +416,7 @@ class FiniteElement:
         return self._e.value_size
 
     @property
-    def value_shape(self) -> typing.List[int]:
+    def value_shape(self) -> list[int]:
         """Element value tensor shape.
 
         E.g., returning ``(,)`` for scalars, ``(3,)`` for vectors in 3D,
@@ -470,7 +470,7 @@ class FiniteElement:
         return getattr(SobolevSpace, self._e.sobolev_space.name)
 
     @property
-    def points(self) -> npt.NDArray[_np.floating]:
+    def points(self) -> npt.NDArray[np.floating]:
         """Interpolation points.
 
         Coordinates on the reference element where a function need to be
@@ -480,7 +480,7 @@ class FiniteElement:
         return self._e.points
 
     @property
-    def interpolation_matrix(self) -> npt.NDArray[_np.floating]:
+    def interpolation_matrix(self) -> npt.NDArray[np.floating]:
         """Interpolation points.
 
         Coordinates on the reference element where a function need to be
@@ -490,7 +490,7 @@ class FiniteElement:
         return self._e.interpolation_matrix
 
     @property
-    def dual_matrix(self) -> npt.NDArray[_np.floating]:
+    def dual_matrix(self) -> npt.NDArray[np.floating]:
         """Matrix $BD^{T}$.
 
         See C++ documentation.
@@ -498,12 +498,12 @@ class FiniteElement:
         return self._e.dual_matrix
 
     @property
-    def coefficient_matrix(self) -> npt.NDArray[_np.floating]:
+    def coefficient_matrix(self) -> npt.NDArray[np.floating]:
         """Matrix of coefficients.."""
         return self._e.coefficient_matrix
 
     @property
-    def wcoeffs(self) -> npt.NDArray[_np.floating]:
+    def wcoeffs(self) -> npt.NDArray[np.floating]:
         """Coefficients that define the polynomial set in terms of the orthonormal polynomials.
 
         See C++ documentation for details.
@@ -511,7 +511,7 @@ class FiniteElement:
         return self._e.wcoeffs
 
     @property
-    def M(self) -> typing.List[typing.List[npt.NDArray[_np.floating]]]:
+    def M(self) -> list[list[npt.NDArray[np.floating]]]:
         """Interpolation matrices for each subentity.
 
         See C++ documentation for details.
@@ -519,7 +519,7 @@ class FiniteElement:
         return self._e.M
 
     @property
-    def x(self) -> typing.List[typing.List[npt.NDArray[_np.floating]]]:
+    def x(self) -> list[list[npt.NDArray[np.floating]]]:
         """Interpolation points for each sub-entity.
 
         The indices of this data are (tdim, entity index, point index,
@@ -538,22 +538,22 @@ class FiniteElement:
         return self._e.interpolation_nderivs
 
     @property
-    def dof_ordering(self) -> typing.List[int]:
+    def dof_ordering(self) -> list[int]:
         """DOF layout."""
         return self._e.dof_ordering
 
     @property
     def dtype(self) -> npt.DTypeLike:
         """Element float type."""
-        return _np.dtype(self._e.dtype)
+        return np.dtype(self._e.dtype)
 
 
 def create_element(family: ElementFamily, celltype: CellType, degree: int,
                    lagrange_variant: LagrangeVariant = LagrangeVariant.unset,
                    dpc_variant: DPCVariant = DPCVariant.unset,
                    discontinuous: bool = False,
-                   dof_ordering: typing.List[int] = [],
-                   dtype: npt.DTypeLike = _np.float64) -> FiniteElement:
+                   dof_ordering: list[int] = [],
+                   dtype: npt.DTypeLike = np.float64) -> FiniteElement:
     """Create a finite element.
 
     Args:
@@ -574,7 +574,7 @@ def create_element(family: ElementFamily, celltype: CellType, degree: int,
     """
     return FiniteElement(_create_element(
         family.value, celltype.value, degree, lagrange_variant.value, dpc_variant.value,
-        discontinuous, dof_ordering, _np.dtype(dtype).char))
+        discontinuous, dof_ordering, np.dtype(dtype).char))
 
 
 def create_custom_element(cell_type: CellType, value_shape, wcoeffs, x, M, interpolation_nderivs: int, map_type,

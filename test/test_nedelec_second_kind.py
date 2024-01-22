@@ -2,7 +2,7 @@
 # FEniCS Project
 # SPDX-License-Identifier: MIT
 
-import numpy
+import numpy as np
 import pytest
 import sympy
 
@@ -127,13 +127,13 @@ def test_tri(degree):
     wtab = nedelec.tabulate(nderiv, pts)
     for kx in range(nderiv + 1):
         for ky in range(nderiv + 1 - kx):
-            wsym = numpy.zeros_like(wtab[0])
+            wsym = np.zeros_like(wtab[0])
             for i, gi in enumerate(g):
                 for j, gij in enumerate(gi):
                     wd = sympy.diff(gij, x, kx, y, ky)
                     for k, p in enumerate(pts):
                         wsym[k, i, j] = wd.subs([(x, p[0]), (y, p[1])])
-            assert numpy.isclose(wtab[basix.index(kx, ky)], wsym).all()
+            assert np.isclose(wtab[basix.index(kx, ky)], wsym).all()
 
 
 @pytest.mark.parametrize("degree", [1, 2])
@@ -151,10 +151,10 @@ def test_tet(degree):
     for kx in range(nderiv + 1):
         for ky in range(nderiv + 1 - kx):
             for kz in range(nderiv + 1 - kx - ky):
-                wsym = numpy.zeros_like(wtab[0])
+                wsym = np.zeros_like(wtab[0])
                 for i, gi in enumerate(g):
                     for j, gij in enumerate(gi):
                         wd = sympy.diff(gij, x, kx, y, ky, z, kz)
                         for k, p in enumerate(pts):
                             wsym[k, i, j] = wd.subs([(x, p[0]), (y, p[1]), (z, p[2])])
-                assert numpy.isclose(wtab[basix.index(kx, ky, kz)], wsym).all()
+                assert np.isclose(wtab[basix.index(kx, ky, kz)], wsym).all()

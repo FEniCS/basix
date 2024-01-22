@@ -1,8 +1,7 @@
 """Functions to manipulate quadrature types."""
 
-import typing as _typing
 
-import numpy as _np
+import numpy as np
 import numpy.typing as _npt
 
 from basix._basixcpp import QuadratureType as _QT
@@ -50,7 +49,7 @@ def string_to_type(rule: str) -> QuadratureType:
 def make_quadrature(
     cell: CellType, degree: int, rule: QuadratureType = QuadratureType.Default,
     polyset_type: PolysetType = PolysetType.standard
-) -> _typing.Tuple[_npt.NDArray[_np.float64], _npt.NDArray[_np.float64]]:
+) -> tuple[_npt.NDArray[np.float64], _npt.NDArray[np.float64]]:
     """Create a quadrature rule.
 
     Args:

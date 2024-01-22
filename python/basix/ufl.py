@@ -1841,7 +1841,7 @@ def _compute_signature(element: _basix.finite_element.FiniteElement) -> str:
     return signature
 
 
-@_functools.lru_cache()
+@_functools.lru_cache
 def element(family: _typing.Union[_basix.ElementFamily, str], cell: _typing.Union[_basix.CellType, str], degree: int,
             lagrange_variant: _basix.LagrangeVariant = _basix.LagrangeVariant.unset,
             dpc_variant: _basix.DPCVariant = _basix.DPCVariant.unset, discontinuous: bool = False,
@@ -2131,7 +2131,7 @@ def real_element(cell: _typing.Union[_basix.CellType, str],
     return _RealElement(cell, value_shape)
 
 
-@_functools.lru_cache()
+@_functools.lru_cache
 def blocked_element(
     sub_element: _ElementBase, shape: _typing.Tuple[int, ...],
     symmetry: _typing.Optional[bool] = None, gdim: _typing.Optional[int] = None

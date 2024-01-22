@@ -46,7 +46,7 @@ def markdown(txt):
 
 
 def unicode_to_html(txt):
-    txt = txt.replace(u"\xe9", "&eacute;")
+    txt = txt.replace("\xe9", "&eacute;")
     return txt
 
 

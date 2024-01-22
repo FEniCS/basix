@@ -68,12 +68,31 @@ archs = [
 ] # Forces arm64 build on x86_64 runner using cross-compilation.
 before-build = "export HOMEBREW_AUTO_UPDATING=0 && brew update && brew install ninja"
 
-[tool.pydocstyle]
-convention = "google"
-
 [tool.mypy]
 ignore_missing_imports = true
 
 [tool.isort]
 line_length = 120
 skip_glob = ["*.pyi"]
+
+[tool.ruff]
+line-length = 120
+indent-width = 4
+
+[tool.ruff.lint]
+select = [
+    "E",   # pycodestyle
+    "W",   # pycodestyle
+    "D",   # pydocstyle - used only in python/
+    "F",   # pyflakes
+    # "I",   # isort - use standalone isort
+    "RUF", # Ruff-specific rules
+    "UP",  # pyupgrade
+    "ICN", # flake8-import-conventions
+    "NPY", # numpy-specific rules
+    "FLY", # use f-string not static joins
+]
+ignore = ["UP007", "RUF012"]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"

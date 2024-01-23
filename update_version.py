@@ -42,13 +42,13 @@ print(f"    C++ version: {version}")
 print(f"    Python version: {pyversion}")
 
 answer = None
-while answer not in ["Y", "N"]:
+while answer not in ["y", "n"]:
     if answer is None:
-        answer = input("Do you want to proceed? [Y/N] ").upper()
+        answer = input("Do you want to proceed? [y/n] ").lower()
     else:
-        answer = input("Please enter Y or N: ").upper()
+        answer = input("Please enter y or n: ").lower()
 
-if answer == "N":
+if answer == "n":
     print("Aborting.")
     exit()
 
@@ -56,14 +56,14 @@ if answer == "N":
 path = os.path.dirname(os.path.realpath(__file__))
 
 for file in ["CMakeLists.txt", "cpp/CMakeLists.txt", "python/CMakeLists.txt"]:
-    print(f"Replacing version numbers in {file}.")
+    print(f"Replacing C++-style version numbers in {file}.")
     with open(os.path.join(path, file)) as f:
         content = f.read()
     with open(os.path.join(path, file), "w") as f:
         f.write(replace_version(content, version))
 
-for file in ["pyproject.toml", "python/setup.py"]:
-    print(f"Replacing version numbers in {file}.")
+for file in ["pyproject.toml", "python/pyproject.toml"]:
+    print(f"Replacing Python-style version numbers in {file}.")
     with open(os.path.join(path, file)) as f:
         content = f.read()
     with open(os.path.join(path, file), "w") as f:

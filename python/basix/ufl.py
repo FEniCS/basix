@@ -21,6 +21,9 @@ from ufl.pullback import UndefinedPullback as _UndefinedPullback
 
 import basix as _basix
 
+__all__ = ["element", "enriched_element", "custom_element", "mixed_element",
+           "quadrature_element", "real_element", "blocked_element"]
+
 _spacemap = {
     _basix.SobolevSpace.L2: _ufl.sobolevspace.L2,
     _basix.SobolevSpace.H1: _ufl.sobolevspace.H1,
@@ -52,12 +55,12 @@ def _ufl_sobolev_space_from_enum(s: _basix.SobolevSpace):
         UFL Sobolev space
     """
     if s not in _spacemap:
-        raise ValueError(f"Could not convert to UFL Sobolev space: {s.__name__}")
+        raise ValueError(f"Could not convert to UFL Sobolev space: {s.name}")
     return _spacemap[s]
 
 
-def _ufl_pullback_from_enum(m: _basix.MapType) -> _AbstractPullback:
-    """Convert map type to a UFL pull back.
+def _ufl_pullback_from_enum(m: _basix.maps.MapType) -> _AbstractPullback:
+    """Convert an enum to a UFL pull back.
 
     Args:
         map_type: A map type.
@@ -67,7 +70,7 @@ def _ufl_pullback_from_enum(m: _basix.MapType) -> _AbstractPullback:
 
     """
     if m not in _pullbackmap:
-        raise ValueError(f"Could not convert to UFL pull back: {m.__name__}")
+        raise ValueError(f"Could not convert to UFL pull back: {m.name}")
     return _pullbackmap[m]
 
 
@@ -90,14 +93,15 @@ def _repr_optional_args(**kwargs: _typing.Any) -> str:
 
 def _cellname_to_tdim(cellname: str) -> int:
     """Get the tdim of a cell."""
-    return len(_basix.topology(getattr(_basix.CellType, cellname))) - 1
+    return len(_basix.topology(_basix.cell.string_to_type(cellname))) - 1
 
 
 class _ElementBase(_AbstractFiniteElement):
     """A base wrapper to allow elements to be used with UFL.
 
-    This class includes methods and properties needed by UFL and FFCx. This is a base class containing
-    functions common to all the element types defined in this file.
+    This class includes methods and properties needed by UFL and FFCx.
+    This is a base class containing functions common to all the element
+    types defined in this file.
     """
 
     def __init__(self, repr: str, cellname: str, value_shape: _typing.Tuple[int, ...],
@@ -348,15 +352,22 @@ class _ElementBase(_AbstractFiniteElement):
         """True if the element has a custom quadrature rule."""
         return False
 
+    @property
+    def basix_element(self):
+        """Return the underlying Basix element."""
+        raise NotImplementedError()
+
 
 class _BasixElement(_ElementBase):
     """A wrapper allowing Basix elements to be used directly with UFL.
 
-    This class allows elements created with `basix.create_element` to be wrapped as UFL compatible elements.
-    Users should not directly call this class's initiliser, but should use the `element` function instead.
+    This class allows elements created with `basix.create_element` to be
+    wrapped as UFL compatible elements. Users should not directly call
+    this class's initiliser, but should use the `element` function
+    instead.
     """
 
-    element: _basix.finite_element.FiniteElement
+    _element: _basix.finite_element.FiniteElement
 
     def __init__(self, element: _basix.finite_element.FiniteElement, gdim: _typing.Optional[int] = None):
         """Create a Basix element."""
@@ -365,21 +376,22 @@ class _BasixElement(_ElementBase):
             repr = f"custom Basix element ({_compute_signature(element)}"
         else:
             self._is_custom = False
-            repr = (f"Basix element ({element.family.__name__}, {element.cell_type.__name__}, {element.degree}, "
-                    f"{element.lagrange_variant.__name__}, {element.dpc_variant.__name__}, {element.discontinuous}")
-        if gdim != _cellname_to_tdim(element.cell_type.__name__):
+            repr = (f"Basix element ({element.family.name}, {element.cell_type.name}, {element.degree}, "
+                    f"{element.lagrange_variant.name}, {element.dpc_variant.name}, {element.discontinuous}, "
+                    f"{element.dtype}, {element.dof_ordering}")
+        if gdim != _cellname_to_tdim(element.cell_type.name):
             repr += _repr_optional_args(gdim=gdim)
         repr += ")"
 
         super().__init__(
-            repr, element.cell_type.__name__, tuple(element.value_shape), element.degree,
+            repr, element.cell_type.name, tuple(element.value_shape), element.degree,
             _ufl_pullback_from_enum(element.map_type), gdim=gdim)
 
-        self.element = element
+        self._element = element
 
     def __eq__(self, other) -> bool:
         """Check if two elements are equal."""
-        return isinstance(other, _BasixElement) and (self.element == other.element and self._gdim == other._gdim)
+        return isinstance(other, _BasixElement) and (self._element == other._element and self._gdim == other._gdim)
 
     def __hash__(self) -> int:
         """Return a hash."""
@@ -396,7 +408,7 @@ class _BasixElement(_ElementBase):
             Tabulated basis functions
 
         """
-        tab = self.element.tabulate(nderivs, points)
+        tab = self._element.tabulate(nderivs, points)
         # TODO: update FFCx to remove the need for transposing here
         return tab.transpose((0, 1, 3, 2)).reshape((tab.shape[0], tab.shape[1], -1))
 
@@ -427,12 +439,12 @@ class _BasixElement(_ElementBase):
         """Get the element's tensor product factorisation."""
         if not self.has_tensor_product_factorisation:
             return None
-        return self.element.get_tensor_product_representation()
+        return self._element.get_tensor_product_representation()
 
     @property
     def basix_sobolev_space(self):
         """Return a Basix enum representing the underlying Sobolev space."""
-        return self.element.sobolev_space
+        return self._element.sobolev_space
 
     @property
     def ufcx_element_type(self) -> str:
@@ -445,27 +457,27 @@ class _BasixElement(_ElementBase):
     @property
     def dim(self) -> int:
         """Number of DOFs the element has."""
-        return self.element.dim
+        return self._element.dim
 
     @property
     def num_entity_dofs(self) -> _typing.List[_typing.List[int]]:
         """Number of DOFs associated with each entity."""
-        return self.element.num_entity_dofs
+        return self._element.num_entity_dofs
 
     @property
     def entity_dofs(self) -> _typing.List[_typing.List[_typing.List[int]]]:
         """DOF numbers associated with each entity."""
-        return self.element.entity_dofs
+        return self._element.entity_dofs
 
     @property
     def num_entity_closure_dofs(self) -> _typing.List[_typing.List[int]]:
         """Number of DOFs associated with the closure of each entity."""
-        return self.element.num_entity_closure_dofs
+        return self._element.num_entity_closure_dofs
 
     @property
     def entity_closure_dofs(self) -> _typing.List[_typing.List[_typing.List[int]]]:
         """DOF numbers associated with the closure of each entity."""
-        return self.element.entity_closure_dofs
+        return self._element.entity_closure_dofs
 
     @property
     def num_global_support_dofs(self) -> int:
@@ -475,47 +487,47 @@ class _BasixElement(_ElementBase):
     @property
     def reference_topology(self) -> _typing.List[_typing.List[_typing.List[int]]]:
         """Topology of the reference element."""
-        return _basix.topology(self.element.cell_type)
+        return _basix.topology(self._element.cell_type)
 
     @property
     def reference_geometry(self) -> _npt.NDArray[_np.float64]:
         """Geometry of the reference element."""
-        return _basix.geometry(self.element.cell_type)
+        return _basix.geometry(self._element.cell_type)
 
     @property
     def family_name(self) -> str:
         """Family name of the element."""
-        return self.element.family.__name__
+        return self._element.family.name
 
     @property
     def element_family(self) -> _typing.Union[_basix.ElementFamily, None]:
         """Basix element family used to initialise the element."""
-        return self.element.family
+        return self._element.family
 
     @property
     def lagrange_variant(self) -> _typing.Union[_basix.LagrangeVariant, None]:
         """Basix Lagrange variant used to initialise the element."""
-        return self.element.lagrange_variant
+        return self._element.lagrange_variant
 
     @property
     def dpc_variant(self) -> _typing.Union[_basix.DPCVariant, None]:
         """Basix DPC variant used to initialise the element."""
-        return self.element.dpc_variant
+        return self._element.dpc_variant
 
     @property
     def cell_type(self) -> _basix.CellType:
         """Basix cell type used to initialise the element."""
-        return self.element.cell_type
+        return self._element.cell_type
 
     @property
     def discontinuous(self) -> bool:
         """True if the discontinuous version of the element is used."""
-        return self.element.discontinuous
+        return self._element.discontinuous
 
     @property
     def interpolation_nderivs(self) -> int:
         """The number of derivatives needed when interpolating."""
-        return self.element.interpolation_nderivs
+        return self._element.interpolation_nderivs
 
     @property
     def is_custom_element(self) -> bool:
@@ -525,7 +537,7 @@ class _BasixElement(_ElementBase):
     @property
     def map_type(self) -> _basix.MapType:
         """The Basix map type."""
-        return self.element.map_type
+        return self._element.map_type
 
     @property
     def embedded_superdegree(self) -> int:
@@ -540,7 +552,7 @@ class _BasixElement(_ElementBase):
         space, but on other cells this is not true. For example, on quadrilateral cells, the degree 1
         Lagrange space includes the degree 2 polynomial xy.
         """
-        return self.element.embedded_superdegree
+        return self._element.embedded_superdegree
 
     @property
     def embedded_subdegree(self) -> int:
@@ -555,26 +567,26 @@ class _BasixElement(_ElementBase):
         space, but on other cells this is not true. For example, on quadrilateral cells, the degree 1
         Lagrange space includes the degree 2 polynomial xy.
         """
-        return self.element.embedded_subdegree
+        return self._element.embedded_subdegree
 
     @property
     def polyset_type(self) -> _basix.PolysetType:
-        return self.element.polyset_type
+        return self._element.polyset_type
 
     @property
     def _wcoeffs(self) -> _npt.NDArray[_np.float64]:
         """The coefficients used to define the polynomial set."""
-        return self.element.wcoeffs
+        return self._element.wcoeffs
 
     @property
     def _x(self) -> _typing.List[_typing.List[_npt.NDArray[_np.float64]]]:
         """The points used to define interpolation."""
-        return self.element.x
+        return self._element.x
 
     @property
     def _M(self) -> _typing.List[_typing.List[_npt.NDArray[_np.float64]]]:
         """The matrices used to define interpolation."""
-        return self.element.M
+        return self._element.M
 
     @property
     def has_tensor_product_factorisation(self) -> bool:
@@ -585,7 +597,12 @@ class _BasixElement(_ElementBase):
         elements in the factorisation.
 
         """
-        return self.element.has_tensor_product_factorisation
+        return self._element.has_tensor_product_factorisation
+
+    @property
+    def basix_element(self):
+        """Return the underlying Basix element."""
+        return self._element
 
 
 class _ComponentElement(_ElementBase):
@@ -595,23 +612,23 @@ class _ComponentElement(_ElementBase):
     function is called.
 
     """
-    element: _ElementBase
-    component: int
+    _element: _ElementBase
+    _component: int
 
     def __init__(self, element: _ElementBase, component: int, gdim: _typing.Optional[int] = None):
         """Initialise the element."""
-        self.element = element
-        self.component = component
+        self._element = element
+        self._component = component
         repr = f"component element ({element!r}, {component}"
-        if gdim != _cellname_to_tdim(element.cell_type.__name__):
+        if gdim != _cellname_to_tdim(element.cell_type.name):
             repr += _repr_optional_args(gdim=gdim)
         repr += ")"
-        super().__init__(repr, element.cell_type.__name__, (1, ), element._degree, gdim=gdim)
+        super().__init__(repr, element.cell_type.name, (1, ), element._degree, gdim=gdim)
 
     def __eq__(self, other) -> bool:
         """Check if two elements are equal."""
-        return (isinstance(other, _ComponentElement) and self.element == other.element
-                and self.component == other.component and self._gdim == other._gdim)
+        return (isinstance(other, _ComponentElement) and self._element == other._element
+                and self._component == other._component and self._gdim == other._gdim)
 
     def __hash__(self) -> int:
         """Return a hash."""
@@ -633,22 +650,22 @@ class _ComponentElement(_ElementBase):
             Tabulated basis functions.
 
         """
-        tables = self.element.tabulate(nderivs, points)
+        tables = self._element.tabulate(nderivs, points)
         output = []
         for tbl in tables:
-            shape = (points.shape[0],) + self.element._value_shape + (-1,)
+            shape = (points.shape[0],) + self._element._value_shape + (-1,)
             tbl = tbl.reshape(shape)
-            if len(self.element._value_shape) == 0:
+            if len(self._element._value_shape) == 0:
                 output.append(tbl)
-            elif len(self.element._value_shape) == 1:
-                output.append(tbl[:, self.component, :])
-            elif len(self.element._value_shape) == 2:
-                if isinstance(self.element, _BlockedElement) and self.element._has_symmetry:
+            elif len(self._element._value_shape) == 1:
+                output.append(tbl[:, self._component, :])
+            elif len(self._element._value_shape) == 2:
+                if isinstance(self._element, _BlockedElement) and self._element._has_symmetry:
                     # FIXME: check that this behaves as expected
-                    output.append(tbl[:, self.component, :])
+                    output.append(tbl[:, self._component, :])
                 else:
-                    vs0 = self.element._value_shape[0]
-                    output.append(tbl[:, self.component // vs0, self.component % vs0, :])
+                    vs0 = self._element._value_shape[0]
+                    output.append(tbl[:, self._component // vs0, self._component % vs0, :])
             else:
                 raise NotImplementedError()
         return _np.asarray(output, dtype=_np.float64)
@@ -670,7 +687,7 @@ class _ComponentElement(_ElementBase):
     @property
     def basix_sobolev_space(self):
         """Return a Basix enum representing the underlying Sobolev space."""
-        return self.element.basix_sobolev_space
+        return self._element.basix_sobolev_space
 
     @property
     def dim(self) -> int:
@@ -720,36 +737,36 @@ class _ComponentElement(_ElementBase):
     @property
     def element_family(self) -> _typing.Union[_basix.ElementFamily, None]:
         """Basix element family used to initialise the element."""
-        return self.element.element_family
+        return self._element.element_family
 
     @property
     def lagrange_variant(self) -> _typing.Union[_basix.LagrangeVariant, None]:
         """Basix Lagrange variant used to initialise the element."""
-        return self.element.lagrange_variant
+        return self._element.lagrange_variant
 
     @property
     def dpc_variant(self) -> _typing.Union[_basix.DPCVariant, None]:
         """Basix DPC variant used to initialise the element."""
-        return self.element.dpc_variant
+        return self._element.dpc_variant
 
     @property
     def cell_type(self) -> _basix.CellType:
         """Basix cell type used to initialise the element."""
-        return self.element.cell_type
+        return self._element.cell_type
 
     @property
     def polyset_type(self) -> _basix.PolysetType:
-        return self.element.polyset_type
+        return self._element.polyset_type
 
     @property
     def discontinuous(self) -> bool:
         """True if the discontinuous version of the element is used."""
-        return self.element.discontinuous
+        return self._element.discontinuous
 
     @property
     def interpolation_nderivs(self) -> int:
         """The number of derivatives needed when interpolating."""
-        return self.element.interpolation_nderivs
+        return self._element.interpolation_nderivs
 
     @property
     def ufcx_element_type(self) -> str:
@@ -774,7 +791,7 @@ class _ComponentElement(_ElementBase):
         space, but on other cells this is not true. For example, on quadrilateral cells, the degree 1
         Lagrange space includes the degree 2 polynomial xy.
         """
-        return self.element.embedded_superdegree
+        return self._element.embedded_superdegree
 
     @property
     def embedded_subdegree(self) -> int:
@@ -789,7 +806,12 @@ class _ComponentElement(_ElementBase):
         space, but on other cells this is not true. For example, on quadrilateral cells, the degree 1
         Lagrange space includes the degree 2 polynomial xy.
         """
-        return self.element.embedded_subdegree
+        return self._element.embedded_subdegree
+
+    @property
+    def basix_element(self):
+        """Return the underlying Basix element."""
+        return self._element
 
 
 class _MixedElement(_ElementBase):
@@ -813,10 +835,10 @@ class _MixedElement(_ElementBase):
             pullback = _MixedPullback(self)
 
         repr = "mixed element (" + ", ".join(i._repr for i in sub_elements)
-        if gdim != _cellname_to_tdim(sub_elements[0].cell_type.__name__):
+        if gdim != _cellname_to_tdim(sub_elements[0].cell_type.name):
             repr += _repr_optional_args(gdim=gdim)
         repr += ")"
-        super().__init__(repr, sub_elements[0].cell_type.__name__,
+        super().__init__(repr, sub_elements[0].cell_type.name,
                          (sum(i.value_size for i in sub_elements), ), pullback=pullback, gdim=gdim)
 
     def __eq__(self, other) -> bool:
@@ -1073,8 +1095,8 @@ class _BlockedElement(_ElementBase):
     but should use the `blocked_element` function instead.
 
     """
-    block_shape: _typing.Tuple[int, ...]
-    sub_element: _ElementBase
+    _block_shape: _typing.Tuple[int, ...]
+    _sub_element: _ElementBase
     _block_size: int
 
     def __init__(self, sub_element: _ElementBase, shape: _typing.Tuple[int, ...],
@@ -1099,18 +1121,18 @@ class _BlockedElement(_ElementBase):
             self._has_symmetry = False
         assert block_size > 0
 
-        self.sub_element = sub_element
+        self._sub_element = sub_element
         self._block_size = block_size
-        self.block_shape = shape
+        self._block_shape = shape
 
         repr = f"blocked element ({sub_element!r}, {shape}"
-        if gdim != _cellname_to_tdim(sub_element.cell_type.__name__):
+        if gdim != _cellname_to_tdim(sub_element.cell_type.name):
             repr += _repr_optional_args(symmetry=symmetry, gdim=gdim)
         else:
             repr += _repr_optional_args(symmetry=symmetry)
         repr += ")"
 
-        super().__init__(repr, sub_element.cell_type.__name__, shape,
+        super().__init__(repr, sub_element.cell_type.name, shape,
                          sub_element._degree, sub_element._pullback, gdim=gdim)
 
         if symmetry:
@@ -1128,7 +1150,7 @@ class _BlockedElement(_ElementBase):
         """Check if two elements are equal."""
         return (
             isinstance(other, _BlockedElement) and self._block_size == other._block_size
-            and self.block_shape == other.block_shape and self.sub_element == other.sub_element
+            and self._block_shape == other._block_shape and self._sub_element == other._sub_element
             and self._gdim == other._gdim)
 
     def __hash__(self) -> int:
@@ -1146,15 +1168,15 @@ class _BlockedElement(_ElementBase):
             Tabulated basis functions
 
         """
-        assert len(self.block_shape) == 1  # TODO: block shape
+        assert len(self._block_shape) == 1  # TODO: block shape
         assert self.value_size == self._block_size  # TODO: remove this assumption
         output = []
-        for table in self.sub_element.tabulate(nderivs, points):
+        for table in self._sub_element.tabulate(nderivs, points):
             # Repeat sub element horizontally
             assert len(table.shape) == 2
-            new_table = _np.zeros((table.shape[0], *self.block_shape,
+            new_table = _np.zeros((table.shape[0], *self._block_shape,
                                    self._block_size * table.shape[1]))
-            for i, j in enumerate(_itertools.product(*[range(s) for s in self.block_shape])):
+            for i, j in enumerate(_itertools.product(*[range(s) for s in self._block_shape])):
                 if len(j) == 1:
                     new_table[:, j[0], i::self._block_size] = table
                 elif len(j) == 2:
@@ -1174,13 +1196,13 @@ class _BlockedElement(_ElementBase):
             component element, offset of the component, stride of the component
 
         """
-        return self.sub_element, flat_component, self._block_size
+        return self._sub_element, flat_component, self._block_size
 
     def get_tensor_product_representation(self):
         """Get the element's tensor product factorisation."""
         if not self.has_tensor_product_factorisation:
             return None
-        return self.sub_element.get_tensor_product_representation()
+        return self._sub_element.get_tensor_product_representation()
 
     @property
     def block_size(self) -> int:
@@ -1191,34 +1213,34 @@ class _BlockedElement(_ElementBase):
     def reference_value_shape(self) -> _typing.Tuple[int, ...]:
         """Reference value shape of the element basis function."""
         if self._has_symmetry:
-            assert len(self.block_shape) == 2 and self.block_shape[0] == self.block_shape[1]
-            return (self.block_shape[0] * (self.block_shape[0] + 1) // 2, )
+            assert len(self._block_shape) == 2 and self._block_shape[0] == self._block_shape[1]
+            return (self._block_shape[0] * (self._block_shape[0] + 1) // 2, )
         return self._value_shape
 
     @property
     def basix_sobolev_space(self):
         """Basix enum representing the underlying Sobolev space."""
-        return self.sub_element.basix_sobolev_space
+        return self._sub_element.basix_sobolev_space
 
     @property
     def sub_elements(self) -> _typing.List[_ElementBase]:
         """List of sub elements."""
-        return [self.sub_element for _ in range(self._block_size)]
+        return [self._sub_element for _ in range(self._block_size)]
 
     @property
     def ufcx_element_type(self) -> str:
         """Element type."""
-        return self.sub_element.ufcx_element_type
+        return self._sub_element.ufcx_element_type
 
     @property
     def dim(self) -> int:
         """Number of DOFs the element has."""
-        return self.sub_element.dim * self._block_size
+        return self._sub_element.dim * self._block_size
 
     @property
     def num_entity_dofs(self) -> _typing.List[_typing.List[int]]:
         """Number of DOFs associated with each entity."""
-        return [[j * self._block_size for j in i] for i in self.sub_element.num_entity_dofs]
+        return [[j * self._block_size for j in i] for i in self._sub_element.num_entity_dofs]
 
     @property
     def entity_dofs(self) -> _typing.List[_typing.List[_typing.List[int]]]:
@@ -1226,12 +1248,12 @@ class _BlockedElement(_ElementBase):
         # TODO: should this return this, or should it take blocks into
         # account?
         return [[[k * self._block_size + b for k in j for b in range(self._block_size)]
-                 for j in i] for i in self.sub_element.entity_dofs]
+                 for j in i] for i in self._sub_element.entity_dofs]
 
     @property
     def num_entity_closure_dofs(self) -> _typing.List[_typing.List[int]]:
         """Number of DOFs associated with the closure of each entity."""
-        return [[j * self._block_size for j in i] for i in self.sub_element.num_entity_closure_dofs]
+        return [[j * self._block_size for j in i] for i in self._sub_element.num_entity_closure_dofs]
 
     @property
     def entity_closure_dofs(self) -> _typing.List[_typing.List[_typing.List[int]]]:
@@ -1239,62 +1261,62 @@ class _BlockedElement(_ElementBase):
         # TODO: should this return this, or should it take blocks into
         # account?
         return [[[k * self._block_size + b for k in j for b in range(self._block_size)]
-                 for j in i] for i in self.sub_element.entity_closure_dofs]
+                 for j in i] for i in self._sub_element.entity_closure_dofs]
 
     @property
     def num_global_support_dofs(self) -> int:
         """Get the number of global support DOFs."""
-        return self.sub_element.num_global_support_dofs * self._block_size
+        return self._sub_element.num_global_support_dofs * self._block_size
 
     @property
     def family_name(self) -> str:
         """Family name of the element."""
-        return self.sub_element.family_name
+        return self._sub_element.family_name
 
     @property
     def reference_topology(self) -> _typing.List[_typing.List[_typing.List[int]]]:
         """Topology of the reference element."""
-        return self.sub_element.reference_topology
+        return self._sub_element.reference_topology
 
     @property
     def reference_geometry(self) -> _npt.NDArray[_np.float64]:
         """Geometry of the reference element."""
-        return self.sub_element.reference_geometry
+        return self._sub_element.reference_geometry
 
     @property
     def lagrange_variant(self) -> _typing.Union[_basix.LagrangeVariant, None]:
         """Basix Lagrange variant used to initialise the element."""
-        return self.sub_element.lagrange_variant
+        return self._sub_element.lagrange_variant
 
     @property
     def dpc_variant(self) -> _typing.Union[_basix.DPCVariant, None]:
         """Basix DPC variant used to initialise the element."""
-        return self.sub_element.dpc_variant
+        return self._sub_element.dpc_variant
 
     @property
     def element_family(self) -> _typing.Union[_basix.ElementFamily, None]:
         """Basix element family used to initialise the element."""
-        return self.sub_element.element_family
+        return self._sub_element.element_family
 
     @property
     def cell_type(self) -> _basix.CellType:
         """Basix cell type used to initialise the element."""
-        return self.sub_element.cell_type
+        return self._sub_element.cell_type
 
     @property
     def discontinuous(self) -> bool:
         """True if the discontinuous version of the element is used."""
-        return self.sub_element.discontinuous
+        return self._sub_element.discontinuous
 
     @property
     def interpolation_nderivs(self) -> int:
         """The number of derivatives needed when interpolating."""
-        return self.sub_element.interpolation_nderivs
+        return self._sub_element.interpolation_nderivs
 
     @property
     def map_type(self) -> _basix.MapType:
         """The Basix map type."""
-        return self.sub_element.map_type
+        return self._sub_element.map_type
 
     @property
     def embedded_superdegree(self) -> int:
@@ -1309,7 +1331,7 @@ class _BlockedElement(_ElementBase):
         space, but on other cells this is not true. For example, on quadrilateral cells, the degree 1
         Lagrange space includes the degree 2 polynomial xy.
         """
-        return self.sub_element.embedded_superdegree
+        return self._sub_element.embedded_superdegree
 
     @property
     def embedded_subdegree(self) -> int:
@@ -1324,17 +1346,17 @@ class _BlockedElement(_ElementBase):
         space, but on other cells this is not true. For example, on quadrilateral cells, the degree 1
         Lagrange space includes the degree 2 polynomial xy.
         """
-        return self.sub_element.embedded_subdegree
+        return self._sub_element.embedded_subdegree
 
     @property
     def polyset_type(self) -> _basix.PolysetType:
-        return self.sub_element.polyset_type
+        return self._sub_element.polyset_type
 
     @property
     def _wcoeffs(self) -> _npt.NDArray[_np.float64]:
         """Coefficients used to define the polynomial set."""
-        sub_wc = self.sub_element._wcoeffs
-        wcoeffs = _np.zeros((sub_wc.shape[0] * self._block_size, sub_wc.shape[1] * self.block_size))
+        sub_wc = self._sub_element._wcoeffs
+        wcoeffs = _np.zeros((sub_wc.shape[0] * self._block_size, sub_wc.shape[1] * self._block_size))
         for i in range(self._block_size):
             wcoeffs[sub_wc.shape[0] * i: sub_wc.shape[0]
                     * (i + 1), sub_wc.shape[1] * i: sub_wc.shape[1] * (i + 1)] = sub_wc
@@ -1343,13 +1365,13 @@ class _BlockedElement(_ElementBase):
     @property
     def _x(self) -> _typing.List[_typing.List[_npt.NDArray[_np.float64]]]:
         """Points used to define interpolation."""
-        return self.sub_element._x
+        return self._sub_element._x
 
     @property
     def _M(self) -> _typing.List[_typing.List[_npt.NDArray[_np.float64]]]:
         """Matrices used to define interpolation."""
         M = []
-        for M_list in self.sub_element._M:
+        for M_list in self._sub_element._M:
             M_row = []
             for mat in M_list:
                 new_mat = _np.zeros((mat.shape[0] * self._block_size, mat.shape[1]
@@ -1370,16 +1392,21 @@ class _BlockedElement(_ElementBase):
         elements in the factoriaation.
 
         """
-        return self.sub_element.has_tensor_product_factorisation
+        return self._sub_element.has_tensor_product_factorisation
 
     def custom_quadrature(self) -> _typing.Tuple[_npt.NDArray[_np.float64], _npt.NDArray[_np.float64]]:
         """Return custom quadrature rule or raise a ValueError."""
-        return self.sub_element.custom_quadrature()
+        return self._sub_element.custom_quadrature()
 
     @property
     def has_custom_quadrature(self) -> bool:
         """True if the element has a custom quadrature rule."""
-        return self.sub_element.has_custom_quadrature
+        return self._sub_element.has_custom_quadrature
+
+    @property
+    def basix_element(self):
+        """Return the underlying Basix element."""
+        return self._sub_element.basix_element
 
 
 class _QuadratureElement(_ElementBase):
@@ -1391,14 +1418,14 @@ class _QuadratureElement(_ElementBase):
         """Initialise the element."""
         self._points = points
         self._weights = weights
-        repr = f"QuadratureElement({cell.__name__}, {points!r}, {weights!r}, {pullback})".replace("\n", "")
+        repr = f"QuadratureElement({cell.name}, {points!r}, {weights!r}, {pullback})".replace("\n", "")
         self._cell_type = cell
         self._entity_counts = [len(i) for i in _basix.topology(cell)]
 
         if degree is None:
             degree = len(points)
 
-        super().__init__(repr, cell.__name__, (), degree, pullback=pullback)
+        super().__init__(repr, cell.name, (), degree, pullback=pullback)
 
     def basix_sobolev_space(self):
         """Return the underlying Sobolev space."""
@@ -1595,7 +1622,7 @@ class _RealElement(_ElementBase):
         self._cell_type = cell
         tdim = len(_basix.topology(cell)) - 1
 
-        super().__init__(f"RealElement({cell.__name__}, {value_shape})", cell.__name__, value_shape, 0)
+        super().__init__(f"RealElement({cell.name}, {value_shape})", cell.name, value_shape, 0)
 
         self._entity_counts = []
         if tdim >= 1:
@@ -1789,8 +1816,9 @@ def _compute_signature(element: _basix.finite_element.FiniteElement) -> str:
 
     """
     assert element.family == _basix.ElementFamily.custom
-    signature = (f"{element.cell_type.__name__}, {element.value_shape}, {element.map_type.__name__}, "
-                 f"{element.discontinuous}, {element.embedded_subdegree}, {element.embedded_superdegree}, ")
+    signature = (f"{element.cell_type.name}, {element.value_shape}, {element.map_type.name}, "
+                 f"{element.discontinuous}, {element.embedded_subdegree}, {element.embedded_superdegree}, "
+                 f"{element.dtype}, {element.dof_ordering}")
     data = ",".join([f"{i}" for row in element.wcoeffs for i in row])
     data += "__"
     for entity in element.x:
@@ -1818,7 +1846,8 @@ def element(family: _typing.Union[_basix.ElementFamily, str], cell: _typing.Unio
             lagrange_variant: _basix.LagrangeVariant = _basix.LagrangeVariant.unset,
             dpc_variant: _basix.DPCVariant = _basix.DPCVariant.unset, discontinuous: bool = False,
             shape: _typing.Optional[_typing.Tuple[int, ...]] = None,
-            symmetry: _typing.Optional[bool] = None, gdim: _typing.Optional[int] = None) -> _ElementBase:
+            symmetry: _typing.Optional[bool] = None, gdim: _typing.Optional[int] = None,
+            dtype: _npt.DTypeLike = _np.float64) -> _ElementBase:
     """Create a UFL compatible element using Basix.
 
     Args:
@@ -1858,7 +1887,7 @@ def element(family: _typing.Union[_basix.ElementFamily, str], cell: _typing.Unio
         if family == "DPC":
             discontinuous = True
 
-        family = _basix.finite_element.string_to_family(family, cell.__name__)
+        family = _basix.finite_element.string_to_family(family, cell.name)
 
     # Default variant choices
     EF = _basix.ElementFamily
@@ -1876,7 +1905,8 @@ def element(family: _typing.Union[_basix.ElementFamily, str], cell: _typing.Unio
         elif family == EF.DPC:
             dpc_variant = _basix.DPCVariant.diagonal_gll
 
-    e = _basix.create_element(family, cell, degree, lagrange_variant, dpc_variant, discontinuous)
+    e = _basix.create_element(family, cell, degree, lagrange_variant, dpc_variant,
+                              discontinuous, dtype=dtype)
     ufl_e = _BasixElement(e, gdim=gdim)
 
     if shape is None or shape == tuple(e.value_shape):

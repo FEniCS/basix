@@ -2,7 +2,6 @@ import argparse
 import os
 import re
 
-import yaml
 from markdown import markdown as _markdown
 
 import basix
@@ -44,59 +43,6 @@ def markdown(txt):
             out += part
         code = not code
     return _markdown(out)
-
-
-def jekyll(a):
-    """
-    Convert Jekyll to HTML.
-
-    This is used to convert template pages from the FEniCS website to the format needed
-    here.
-    """
-    while "{% include" in a:
-        b, c = a.split("{% include", 1)
-        c, d = c.split("%}", 1)
-        with open(path(f"web/_includes/{c.strip()}")) as f:
-            a = b + f.read() + d
-
-    while "{% for link in site.data.navbar %}" in a:
-        b, c = a.split("{% for link in site.data.navbar %}", 1)
-        c, d = c.split("{% endfor %}", 1)
-        with open(path("web/_data/navbar.yml")) as f:
-            data = yaml.load(f, Loader=yaml.FullLoader)
-        a = b
-        for i in data:
-            this_c = c
-            for j, k in i.items():
-                if j == "page" and k.startswith("/"):
-                    print(j, k)
-                    this_c = this_c.replace(f"{{{{ link.{j} }}}}", f"https://fenicsproject.org{k}")
-                else:
-                    this_c = this_c.replace(f"{{{{ link.{j} }}}}", k)
-            a += this_c
-        a += d
-    if "{% if page.image %}" in a:
-        b, c = a.split("{% if page.image %}")
-        _, c = c.split("{% else %}", 1)
-        c, d = c.split("{% endif %}", 1)
-        a = b + c + d
-
-    if "{{ page.title | default: site.title }}" in a:
-        with open(path("template/title.html")) as f:
-            a = a.replace("{{ page.title | default: site.title }}", f.read())
-    if "\n{% if page.subtitle %}" in a:
-        b, c = a.split("\n{% if page.subtitle %}")
-        _, c = c.split("\n{% endif %}", 1)
-        a = b + c
-
-    a = re.sub(r"\{\{[^}]+\| default: (?:'|\")([^}]+)(?:'|\") \}\}", r"\1", a)
-    a = re.sub(r"\{\{ (?:'|\")\/assets\/css\/style\.css\?v=(?:'|\")[^\}]+\}\}", "/assets/css/style.css", a)
-    a = a.replace("{% seo %}", "{{SEO}}")
-    a = re.sub(r"([\"'\(])/assets", r"\1https://fenicsproject.org/assets", a)
-
-    assert "{%" not in a
-
-    return a
 
 
 def unicode_to_html(txt):
@@ -169,27 +115,43 @@ if args.clone == "true":
         system(f"rm -r {path('web')}")
     system(f"git clone http://github.com/FEniCS/web {path('web')}")
 
-with open(path('web/_layouts/default.html')) as f:
-    intro, outro = f.read().split("\n    {{ title }}\n    {{ content }}\n")
-    intro = insert_info(jekyll(intro))
-    outro = insert_info(jekyll(outro))
+    with open(f"{path('web')}/template.md", "w") as f:
+        f.write("---\n")
+        f.write(insert_info("title: \"Basix {{VERSION}}\"\n"))
+        f.write("---\n")
+        f.write("\n")
+        f.write("!!CONTENT!!\n")
+
+    system(f"cd {path('web')} && bundle install && bundle exec jekyll build")
+
+with open(f"{path('web')}/_site/template.html") as f:
+    template = f.read()
+template = template.replace("<p>!!", "!!")
+template = template.replace("!!</p>", "!!")
+template = template.replace("=\"/", "=\"https://fenicsproject.org/")
+template = template.replace("(/assets", "(https://fenicsproject.org/assets")
+template = template.replace(
+    "/assets/css/customsty.css\">",
+    "/assets/css/customsty.css\">\n"
+    "   <link rel=\"stylesheet\" type=\"text/css\" href=\"/assets/sty.css\">")
+
+intro, outro = template.split("!!CONTENT!!")
 
 with open(path("template/navbar.html")) as f:
     intro += f"<h2 id=\"project_subtitle\">{insert_info(f.read())}</h2>"
 
 with open(os.path.join(temp, "intro.html"), "w") as f:
-    f.write(intro.replace("{{SEO}}", "<title>Basix documentation</title>"))
+    f.write(intro)
 with open(os.path.join(temp, "outro.html"), "w") as f:
     f.write(outro)
-
-intro += "\n".join(outro.split("\n")[:2])
-outro = "\n".join(outro.split("\n")[2:])
 
 with open(path("cpp/footer.html"), "w") as f:
     f.write(outro)
 with open(path("cpp/header.html"), "w") as f:
+    f.write(intro.split("<!-- Begin Jekyll SEO tag")[0])
     with open(path("cpp-seo.html")) as f2:
-        f.write(insert_info(intro.replace("{{SEO}}", f2.read())))
+        f.write(insert_info(f2.read()))
+    f.write(intro.split("<!-- End Jekyll SEO tag -->")[1])
     with open(path("cpp-header.html")) as f2:
         f.write(insert_info(f2.read()))
 
@@ -267,5 +229,5 @@ with open(path("python/source/index.rst"), "a") as f:
     f.write("   demo/index")
 
 # Make python docs
-system(f"cd {path('python')} && make html")
+system(f"cd {path('python')} && python3 -m sphinx -W -b html source/ build/html && rm -rf build/html/.doctrees")
 system(f"cp -r {path('python/build/html')} {path('html/python')}")

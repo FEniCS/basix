@@ -10,8 +10,8 @@ readme = "README.md"
 requires-python = ">=3.8.0"
 license = { file = "LICENSE" }
 authors = [
-    { email = "fenics-dev@googlegroups.com" },
-    { name = "FEniCS Project" },
+    { email = "fenics-steering-council@googlegroups.com" },
+    { name = "FEniCS Steering Council" },
 ]
 dependencies = ["numpy>=1.21"]
 
@@ -21,7 +21,7 @@ repository = "https://github.com/fenics/basix.git"
 documentation = "https://docs.fenicsproject.org"
 
 [project.optional-dependencies]
-docs = ["markdown", "pylit3", "pyyaml", "sphinx==5.0.2", "sphinx_rtd_theme"]
+docs = ["markdown", "pylit3", "pyyaml", "sphinx", "sphinx_rtd_theme"]
 lint = ["flake8", "pydocstyle", "isort"]
 optional = ["numba", "fenics-ufl@git+https://github.com/fenics/ufl"]
 test = ["pytest", "sympy", "scipy", "matplotlib", "fenics-basix[optional]"]
@@ -37,10 +37,10 @@ wheel.packages = ["python/basix"]
 
 [tool.cibuildwheel]
 build = [
-    "cp{38,39,310}-manylinux_x86_64",
-    "cp{38,39,310}-manylinux_aarch64",
-    "cp{38,39,310}-macosx_x86_64",
-    "cp{38,39,310}-macosx_arm64",
+    "cp{38,39,310,311,312}-manylinux_x86_64",
+    "cp{38,39,310,311,312}-manylinux_aarch64",
+    "cp{38,39,310,311,312}-macosx_x86_64",
+    "cp{38,39,310,311,312}-macosx_arm64",
 ]
 test-command = [
     "cmake -G Ninja -DPython3_EXECUTABLE=$(which python) -B build-dir -S {project}/test/test_cmake",
@@ -75,3 +75,4 @@ ignore_missing_imports = true
 
 [tool.isort]
 line_length = 120
+skip_glob = ["*.pyi"]

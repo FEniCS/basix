@@ -26,7 +26,7 @@ ci = ["mypy", "pytest-xdist", "fenics-basix[docs,lint,test,optional]"]
 minimum-version = "0.5"
 cmake.minimum-version = "3.19.0"
 wheel.packages = ["basix"]
-wheel.license = ["../LICENSE"]
+wheel.license-files = ["../LICENSE"]
 
 [tool.isort]
 line_length = 120

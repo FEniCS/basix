@@ -38,10 +38,10 @@ def intersection(spaces: list[SobolevSpace]) -> SobolevSpace:
 
 
 def string_to_sobolev_space(space: str) -> SobolevSpace:
-    """Convert a string to a Basix CellType.
+    """Convert a string to a Basix SobolevSpace.
 
     Args:
-        cell: Name of the cell as a string.
+        space: Name of the space.
 
     Returns:
         The cell type.

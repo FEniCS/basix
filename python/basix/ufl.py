@@ -63,7 +63,7 @@ def _ufl_pullback_from_enum(m: _basix.maps.MapType) -> _AbstractPullback:
     """Convert an enum to a UFL pull back.
 
     Args:
-        map_type: A map type.
+        m: A map type.
 
     Returns:
         UFL pull back.
@@ -1864,6 +1864,7 @@ def element(family: _typing.Union[_basix.ElementFamily, str], cell: _typing.Unio
             rank 2 elements only.
         gdim: Geometric dimension. If not set the geometric dimension is
             set equal to the topological dimension of the cell.
+        dtype: Floating point data type.
 
     Returns:
         A finite element.

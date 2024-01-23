@@ -129,13 +129,14 @@ class FiniteElement:
         grouped by points that share a common Jacobian.
 
         Args:
-            U: The function values on the reference. The indices are
+            U: The function values on the reference cell. The indices are
                 [Jacobian index, point index, components].
             J: The Jacobian of the mapping. The indices are [Jacobian
                 index, J_i, J_j].
             detJ: The determinant of the Jacobian of the mapping. It has
-                length `J.shape(0)` K: The inverse of the Jacobian of the
-            mapping. The indices are [Jacobian index, K_i, K_j].
+                length `J.shape(0)`
+            K: The inverse of the Jacobian of the
+               mapping. The indices are [Jacobian index, K_i, K_j].
 
         Returns:
             The function values on the cell. The indices are [Jacobian
@@ -560,8 +561,8 @@ def create_element(family: ElementFamily, celltype: CellType, degree: int,
         family: Finite element family.
         celltype: Reference cell type that the element is defined on
         degree: Polynomial degree of the element.
-        lvariant: Lagrange variant type.
-        dvariant: DPC variant type.
+        lagrange_variant: Lagrange variant type.
+        dpc_variant: DPC variant type.
         discontinuous: If `True` element is discontinuous. The
             discontinuous element will have the same DOFs as a
             continuous element, but the DOFs will all be associated with
@@ -595,8 +596,9 @@ def create_custom_element(cell_type: CellType, value_shape, wcoeffs, x, M, inter
         M: The interpolation matrices. Indices are (tdim, entity index,
             dof, vs, point_index, derivative)
         interpolation_nderivs: The number of derivatives that need to be
-        used during interpolation map_type: The type of map to be used
-        to map values from the reference to a cell
+            used during interpolation
+        map_type: The type of map to be used to map values from the reference
+                   to a physical cell
         sobolev_space: The underlying Sobolev space for the element
         discontinuous: Indicates whether or not this is the
             discontinuous version of the element

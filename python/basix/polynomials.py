@@ -204,7 +204,7 @@ def tabulate_polynomial_set(
     Args:
         celltype: The cell type
         ptype: The polyset type
-        n: The polynomial degree
+        degree: The polynomial degree
         nderiv: The number of derivatives
         pts: The points to tabulat at
 

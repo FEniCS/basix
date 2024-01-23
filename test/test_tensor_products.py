@@ -4,7 +4,7 @@
 
 from itertools import product
 
-import np as np
+import numpy as np
 import pytest
 
 import basix

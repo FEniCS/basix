@@ -3,7 +3,6 @@
 // SPDX-License-Identifier:    MIT
 
 #include <basix/cell.h>
-#include <basix/docs.h>
 #include <basix/element-families.h>
 #include <basix/finite-element.h>
 #include <basix/indexing.h>
@@ -21,12 +20,17 @@
 #include <nanobind/stl/pair.h>
 #include <nanobind/stl/string.h>
 #include <nanobind/stl/tuple.h>
+#include <nanobind/stl/variant.h>
 #include <nanobind/stl/vector.h>
 #include <span>
 #include <string>
+#include <type_traits>
+#include <variant>
 #include <vector>
 
 namespace nb = nanobind;
+using namespace nb::literals;
+
 using namespace basix;
 
 template <typename T, std::size_t d>
@@ -80,6 +84,326 @@ auto as_nbarrayp(std::pair<V, std::array<std::size_t, U>>&& x)
   return as_nbarray(std::move(x.first), x.second.size(), x.second.data());
 }
 
+template <typename T>
+void declare_float(nb::module_& m, std::string type)
+{
+  std::string name = "FiniteElement_" + type;
+  nb::class_<FiniteElement<T>>(m, name.c_str())
+      .def("tabulate",
+           [](const FiniteElement<T>& self, int n,
+              nb::ndarray<const T, nb::ndim<2>, nb::c_contig> x)
+           {
+             mdspan_t<const T, 2> _x(x.data(), x.shape(0), x.shape(1));
+             return as_nbarrayp(self.tabulate(n, _x));
+           })
+      .def("__eq__", &FiniteElement<T>::operator==)
+      .def("push_forward",
+           [](const FiniteElement<T>& self,
+              nb::ndarray<const T, nb::ndim<3>, nb::c_contig> U,
+              nb::ndarray<const T, nb::ndim<3>, nb::c_contig> J,
+              nb::ndarray<const T, nb::ndim<1>, nb::c_contig> detJ,
+              nb::ndarray<const T, nb::ndim<3>, nb::c_contig> K)
+           {
+             auto u = self.push_forward(
+                 mdspan_t<const T, 3>(U.data(), U.shape(0), U.shape(1),
+                                      U.shape(2)),
+                 mdspan_t<const T, 3>(J.data(), J.shape(0), J.shape(1),
+                                      J.shape(2)),
+                 std::span<const T>(detJ.data(), detJ.shape(0)),
+                 mdspan_t<const T, 3>(K.data(), K.shape(0), K.shape(1),
+                                      K.shape(2)));
+             return as_nbarrayp(std::move(u));
+           })
+      .def("pull_back",
+           [](const FiniteElement<T>& self,
+              nb::ndarray<const T, nb::ndim<3>, nb::c_contig> u,
+              nb::ndarray<const T, nb::ndim<3>, nb::c_contig> J,
+              nb::ndarray<const T, nb::ndim<1>, nb::c_contig> detJ,
+              nb::ndarray<const T, nb::ndim<3>, nb::c_contig> K)
+           {
+             auto U = self.pull_back(
+                 mdspan_t<const T, 3>(u.data(), u.shape(0), u.shape(1),
+                                      u.shape(2)),
+                 mdspan_t<const T, 3>(J.data(), J.shape(0), J.shape(1),
+                                      J.shape(2)),
+                 std::span<const T>(detJ.data(), detJ.shape(0)),
+                 mdspan_t<const T, 3>(K.data(), K.shape(0), K.shape(1),
+                                      K.shape(2)));
+             return as_nbarrayp(std::move(U));
+           })
+      .def("pre_apply_dof_transformation",
+           [](const FiniteElement<T>& self,
+              nb::ndarray<T, nb::ndim<1>, nb::c_contig> data, int block_size,
+              std::uint32_t cell_info)
+           {
+             self.pre_apply_dof_transformation(
+                 std::span(data.data(), data.size()), block_size, cell_info);
+           })
+      .def("post_apply_transpose_dof_transformation",
+           [](const FiniteElement<T>& self,
+              nb::ndarray<T, nb::ndim<1>, nb::c_contig> data, int block_size,
+              std::uint32_t cell_info)
+           {
+             self.post_apply_transpose_dof_transformation(
+                 std::span(data.data(), data.size()), block_size, cell_info);
+           })
+      .def("pre_apply_inverse_transpose_dof_transformation",
+           [](const FiniteElement<T>& self,
+              nb::ndarray<T, nb::ndim<1>, nb::c_contig> data, int block_size,
+              std::uint32_t cell_info)
+           {
+             self.pre_apply_inverse_transpose_dof_transformation(
+                 std::span(data.data(), data.size()), block_size, cell_info);
+           })
+      .def("base_transformations", [](const FiniteElement<T>& self)
+           { return as_nbarrayp(self.base_transformations()); })
+      .def("entity_transformations",
+           [](const FiniteElement<T>& self)
+           {
+             nb::dict t;
+             for (auto& [key, data] : self.entity_transformations())
+               t[cell_type_to_str(key).c_str()] = as_nbarrayp(std::move(data));
+             return t;
+           })
+      .def("get_tensor_product_representation", [](const FiniteElement<T>& self)
+           { return self.get_tensor_product_representation(); })
+      .def_prop_ro("degree", &FiniteElement<T>::degree)
+      .def_prop_ro("embedded_superdegree",
+                   &FiniteElement<T>::embedded_superdegree)
+      .def_prop_ro("embedded_subdegree", &FiniteElement<T>::embedded_subdegree)
+      .def_prop_ro("cell_type", &FiniteElement<T>::cell_type)
+      .def_prop_ro("polyset_type", &FiniteElement<T>::polyset_type)
+      .def_prop_ro("dim", &FiniteElement<T>::dim)
+      .def_prop_ro("num_entity_dofs",
+                   [](const FiniteElement<T>& self)
+                   {
+                     // TODO: remove this function. Information can
+                     // retrieved from entity_dofs.
+                     auto& edofs = self.entity_dofs();
+                     std::vector<std::vector<int>> num_edofs;
+                     for (auto& edofs_d : edofs)
+                     {
+                       auto& ndofs = num_edofs.emplace_back();
+                       for (auto& edofs : edofs_d)
+                         ndofs.push_back(edofs.size());
+                     }
+                     return num_edofs;
+                   })
+      .def_prop_ro("entity_dofs", &FiniteElement<T>::entity_dofs)
+      .def_prop_ro("num_entity_closure_dofs",
+                   [](const FiniteElement<T>& self)
+                   {
+                     // TODO: remove this function. Information can
+                     // retrieved from entity_closure_dofs.
+                     auto& edofs = self.entity_closure_dofs();
+                     std::vector<std::vector<int>> num_edofs;
+                     for (auto& edofs_d : edofs)
+                     {
+                       auto& ndofs = num_edofs.emplace_back();
+                       for (auto& edofs : edofs_d)
+                         ndofs.push_back(edofs.size());
+                     }
+                     return num_edofs;
+                   })
+      .def_prop_ro("entity_closure_dofs",
+                   &FiniteElement<T>::entity_closure_dofs)
+      .def_prop_ro("value_size",
+                   [](const FiniteElement<T>& self)
+                   {
+                     return std::accumulate(self.value_shape().begin(),
+                                            self.value_shape().end(), 1,
+                                            std::multiplies{});
+                   })
+      .def_prop_ro("value_shape", &FiniteElement<T>::value_shape)
+      .def_prop_ro("discontinuous", &FiniteElement<T>::discontinuous)
+      .def_prop_ro("family", &FiniteElement<T>::family)
+      .def_prop_ro("lagrange_variant", &FiniteElement<T>::lagrange_variant)
+      .def_prop_ro("dpc_variant", &FiniteElement<T>::dpc_variant)
+      .def_prop_ro("dof_transformations_are_permutations",
+                   &FiniteElement<T>::dof_transformations_are_permutations)
+      .def_prop_ro("dof_transformations_are_identity",
+                   &FiniteElement<T>::dof_transformations_are_identity)
+      .def_prop_ro("interpolation_is_identity",
+                   &FiniteElement<T>::interpolation_is_identity)
+      .def_prop_ro("map_type", &FiniteElement<T>::map_type)
+      .def_prop_ro("sobolev_space", &FiniteElement<T>::sobolev_space)
+      .def_prop_ro(
+          "points",
+          [](const FiniteElement<T>& self)
+          {
+            auto& [x, shape] = self.points();
+            return nb::ndarray<const T, nb::ndim<2>, nb::numpy>(
+                x.data(), shape.size(), shape.data());
+          },
+          nb::rv_policy::reference_internal)
+      .def_prop_ro(
+          "interpolation_matrix",
+          [](const FiniteElement<T>& self)
+          {
+            auto& [P, shape] = self.interpolation_matrix();
+            return nb::ndarray<const T, nb::ndim<2>, nb::numpy>(
+                P.data(), shape.size(), shape.data());
+          },
+          nb::rv_policy::reference_internal)
+      .def_prop_ro(
+          "dual_matrix",
+          [](const FiniteElement<T>& self)
+          {
+            auto& [D, shape] = self.dual_matrix();
+            return nb::ndarray<const T, nb::ndim<2>, nb::numpy>(
+                D.data(), shape.size(), shape.data());
+          },
+          nb::rv_policy::reference_internal)
+      .def_prop_ro(
+          "coefficient_matrix",
+          [](const FiniteElement<T>& self)
+          {
+            auto& [P, shape] = self.coefficient_matrix();
+            return nb::ndarray<const T, nb::ndim<2>, nb::numpy>(
+                P.data(), shape.size(), shape.data());
+          },
+          nb::rv_policy::reference_internal, "Coefficient matrix.")
+      .def_prop_ro(
+          "wcoeffs",
+          [](const FiniteElement<T>& self)
+          {
+            auto& [w, shape] = self.wcoeffs();
+            return nb::ndarray<const T, nb::ndim<2>, nb::numpy>(
+                w.data(), shape.size(), shape.data());
+          },
+          nb::rv_policy::reference_internal)
+      .def_prop_ro(
+          "M",
+          [](const FiniteElement<T>& self)
+          {
+            const std::array<std::vector<std::pair<std::vector<T>,
+                                                   std::array<std::size_t, 4>>>,
+                             4>& _M
+                = self.M();
+            std::vector<std::vector<nb::ndarray<const T, nb::numpy>>> M(4);
+            for (int i = 0; i < 4; ++i)
+            {
+              for (std::size_t j = 0; j < _M[i].size(); ++j)
+              {
+                auto& mat = _M[i][j];
+                M[i].emplace_back(mat.first.data(), mat.second.size(),
+                                  mat.second.data());
+              }
+            }
+            return M;
+          },
+          nb::rv_policy::reference_internal)
+      .def_prop_ro(
+          "x",
+          [](const FiniteElement<T>& self)
+          {
+            const std::array<std::vector<std::pair<std::vector<T>,
+                                                   std::array<std::size_t, 2>>>,
+                             4>& _x
+                = self.x();
+            std::vector<std::vector<nb::ndarray<const T, nb::numpy>>> x(4);
+            for (int i = 0; i < 4; ++i)
+            {
+              for (std::size_t j = 0; j < _x[i].size(); ++j)
+              {
+                auto& vec = _x[i][j];
+                x[i].emplace_back(vec.first.data(), vec.second.size(),
+                                  vec.second.data());
+              }
+            }
+            return x;
+          },
+          nb::rv_policy::reference_internal)
+      .def_prop_ro("has_tensor_product_factorisation",
+                   &FiniteElement<T>::has_tensor_product_factorisation)
+      .def_prop_ro("interpolation_nderivs",
+                   &FiniteElement<T>::interpolation_nderivs)
+      .def_prop_ro("dof_ordering", &FiniteElement<T>::dof_ordering)
+      .def_prop_ro("dtype",
+                   [](const FiniteElement<T>&) -> char
+                   {
+                     static_assert(std::is_same_v<T, float>
+                                   or std::is_same_v<T, double>);
+                     if constexpr (std::is_same_v<T, float>)
+                       return 'f';
+                     else if constexpr (std::is_same_v<T, double>)
+                       return 'd';
+                   });
+
+  // Create FiniteElement
+  m.def(
+      "create_custom_element",
+      [](cell::type cell_type, const std::vector<std::size_t>& value_shape,
+         nb::ndarray<const T, nb::ndim<2>, nb::c_contig> wcoeffs,
+         std::vector<
+             std::vector<nb::ndarray<const T, nb::ndim<2>, nb::c_contig>>>
+             x,
+         std::vector<
+             std::vector<nb::ndarray<const T, nb::ndim<4>, nb::c_contig>>>
+             M,
+         int interpolation_nderivs, maps::type map_type,
+         sobolev::space sobolev_space, bool discontinuous,
+         int embedded_subdegree, int embedded_superdegree,
+         polyset::type poly_type) -> FiniteElement<T>
+      {
+        if (x.size() != 4)
+          throw std::runtime_error("x has the wrong size");
+        if (M.size() != 4)
+          throw std::runtime_error("M has the wrong size");
+
+        std::array<std::vector<mdspan_t<const T, 2>>, 4> _x;
+        for (int i = 0; i < 4; ++i)
+        {
+          for (std::size_t j = 0; j < x[i].size(); ++j)
+          {
+            _x[i].emplace_back(x[i][j].data(), x[i][j].shape(0),
+                               x[i][j].shape(1));
+          }
+        }
+
+        std::array<std::vector<impl::mdspan_t<const T, 4>>, 4> _M;
+        for (int i = 0; i < 4; ++i)
+        {
+          for (std::size_t j = 0; j < M[i].size(); ++j)
+          {
+            _M[i].emplace_back(M[i][j].data(), M[i][j].shape(0),
+                               M[i][j].shape(1), M[i][j].shape(2),
+                               M[i][j].shape(3));
+          }
+        }
+
+        return basix::create_custom_element<T>(
+            cell_type, value_shape,
+            mdspan_t<const T, 2>(wcoeffs.data(), wcoeffs.shape(0),
+                                 wcoeffs.shape(1)),
+            _x, _M, interpolation_nderivs, map_type, sobolev_space,
+            discontinuous, embedded_subdegree, embedded_superdegree, poly_type);
+      },
+      "cell_type"_a, "value_shape"_a, "wcoeffs"_a.noconvert(),
+      "x"_a.noconvert(), "M"_a.noconvert(), "interpolation_nderivs"_a,
+      "map_type"_a, "sobolev_space"_a, "discontinuous"_a,
+      "embedded_subdegree"_a, "embedded_superdegree"_a, "poly_type"_a);
+
+  // Interpolate between elements
+  m.def("compute_interpolation_operator",
+        [](const FiniteElement<T>& element_from,
+           const FiniteElement<T>& element_to)
+        {
+          return as_nbarrayp(
+              basix::compute_interpolation_operator(element_from, element_to));
+        });
+
+  m.def(
+      "tabulate_polynomial_set",
+      [](cell::type celltype, polyset::type polytype, int d, int n,
+         nb::ndarray<const T, nb::ndim<2>, nb::c_contig> x)
+      {
+        mdspan_t<const T, 2> _x(x.data(), x.shape(0), x.shape(1));
+        return as_nbarrayp(polyset::tabulate(celltype, polytype, d, n, _x));
+      },
+      "celltype"_a, "polytype"_a, "d"_a, "n"_a, "x"_a.noconvert());
+}
+
 } // namespace
 
 NB_MODULE(_basixcpp, m)
@@ -87,25 +411,21 @@ NB_MODULE(_basixcpp, m)
   m.doc() = "Interface to the Basix C++ library.";
   m.attr("__version__") = basix::version();
 
-  m.def("topology", &cell::topology, basix::docstring::topology.c_str());
+  m.def("topology", &cell::topology);
   m.def(
       "geometry",
       [](cell::type celltype)
-      { return as_nbarrayp(cell::geometry<double>(celltype)); },
-      basix::docstring::geometry.c_str());
-  m.def("sub_entity_connectivity", &cell::sub_entity_connectivity,
-        basix::docstring::sub_entity_connectivity.c_str());
+      { return as_nbarrayp(cell::geometry<double>(celltype)); });
+  m.def("sub_entity_connectivity", &cell::sub_entity_connectivity);
   m.def(
       "sub_entity_geometry",
       [](cell::type celltype, int dim, int index)
       {
         return as_nbarrayp(
             cell::sub_entity_geometry<double>(celltype, dim, index));
-      },
-      basix::docstring::sub_entity_geometry.c_str());
+      });
 
-  m.def("sobolev_space_intersection", &sobolev::space_intersection,
-        basix::docstring::space_intersection.c_str());
+  m.def("sobolev_space_intersection", &sobolev::space_intersection);
 
   nb::enum_<lattice::type>(m, "LatticeType")
       .value("equispaced", lattice::type::equispaced)
@@ -135,20 +455,8 @@ NB_MODULE(_basixcpp, m)
       {
         mdspan_t<const double, 2> _x(x.data(), x.shape(0), x.shape(1));
         return as_nbarrayp(polynomials::tabulate(polytype, celltype, d, _x));
-      },
-      basix::docstring::tabulate_polynomials.c_str());
-  m.def("polynomials_dim", &polynomials::dim,
-        basix::docstring::polynomials_dim.c_str());
-
-  m.def(
-      "create_lattice",
-      [](cell::type celltype, int n, lattice::type type, bool exterior)
-      {
-        return as_nbarrayp(lattice::create<double>(
-            celltype, n, type, exterior, lattice::simplex_method::none));
-      },
-      basix::docstring::create_lattice__celltype_n_type_exterior.c_str());
-
+      });
+  m.def("polynomials_dim", &polynomials::dim);
   m.def(
       "create_lattice",
       [](cell::type celltype, int n, lattice::type type, bool exterior,
@@ -156,9 +464,7 @@ NB_MODULE(_basixcpp, m)
       {
         return as_nbarrayp(
             lattice::create<double>(celltype, n, type, exterior, method));
-      },
-      basix::docstring::create_lattice__celltype_n_type_exterior_method
-          .c_str());
+      });
 
   nb::enum_<maps::type>(m, "MapType")
       .value("identity", maps::type::identity)
@@ -206,23 +512,19 @@ NB_MODULE(_basixcpp, m)
   m.def(
       "cell_volume",
       [](cell::type cell_type) -> double
-      { return cell::volume<double>(cell_type); },
-      basix::docstring::cell_volume.c_str());
+      { return cell::volume<double>(cell_type); });
   m.def(
       "cell_facet_normals",
       [](cell::type cell_type)
-      { return as_nbarrayp(cell::facet_normals<double>(cell_type)); },
-      basix::docstring::cell_facet_normals.c_str());
+      { return as_nbarrayp(cell::facet_normals<double>(cell_type)); });
   m.def(
       "cell_facet_reference_volumes",
       [](cell::type cell_type)
-      { return as_nbarray(cell::facet_reference_volumes<double>(cell_type)); },
-      basix::docstring::cell_facet_reference_volumes.c_str());
+      { return as_nbarray(cell::facet_reference_volumes<double>(cell_type)); });
   m.def(
       "cell_facet_outward_normals",
       [](cell::type cell_type)
-      { return as_nbarrayp(cell::facet_outward_normals<double>(cell_type)); },
-      basix::docstring::cell_facet_outward_normals.c_str());
+      { return as_nbarrayp(cell::facet_outward_normals<double>(cell_type)); });
   m.def(
       "cell_facet_orientations",
       [](cell::type cell_type)
@@ -230,13 +532,11 @@ NB_MODULE(_basixcpp, m)
         std::vector<bool> c = cell::facet_orientations(cell_type);
         std::vector<std::uint8_t> c8(c.begin(), c.end());
         return c8;
-      },
-      basix::docstring::cell_facet_orientations.c_str());
+      });
   m.def(
       "cell_facet_jacobians",
       [](cell::type cell_type)
-      { return as_nbarrayp(cell::facet_jacobians<double>(cell_type)); },
-      basix::docstring::cell_facet_jacobians.c_str());
+      { return as_nbarrayp(cell::facet_jacobians<double>(cell_type)); });
 
   nb::enum_<element::family>(m, "ElementFamily")
       .value("custom", element::family::custom)
@@ -256,264 +556,6 @@ NB_MODULE(_basixcpp, m)
       .def_prop_ro("name",
                    [](nb::object obj) { return nb::getattr(obj, "__name__"); });
 
-  nb::class_<FiniteElement<double>>(m, "FiniteElement")
-      .def(
-          "tabulate",
-          [](const FiniteElement<double>& self, int n,
-             nb::ndarray<const double, nb::ndim<2>, nb::c_contig> x)
-          {
-            mdspan_t<const double, 2> _x(x.data(), x.shape(0), x.shape(1));
-            return as_nbarrayp(self.tabulate(n, _x));
-          },
-          basix::docstring::FiniteElement__tabulate.c_str())
-      .def("__eq__", &FiniteElement<double>::operator==)
-      .def(
-          "push_forward",
-          [](const FiniteElement<double>& self,
-             nb::ndarray<const double, nb::ndim<3>, nb::c_contig> U,
-             nb::ndarray<const double, nb::ndim<3>, nb::c_contig> J,
-             nb::ndarray<const double, nb::ndim<1>, nb::c_contig> detJ,
-             nb::ndarray<const double, nb::ndim<3>, nb::c_contig> K)
-          {
-            auto u = self.push_forward(
-                mdspan_t<const double, 3>(U.data(), U.shape(0), U.shape(1),
-                                          U.shape(2)),
-                mdspan_t<const double, 3>(J.data(), J.shape(0), J.shape(1),
-                                          J.shape(2)),
-                std::span<const double>(detJ.data(), detJ.shape(0)),
-                mdspan_t<const double, 3>(K.data(), K.shape(0), K.shape(1),
-                                          K.shape(2)));
-            return as_nbarrayp(std::move(u));
-          },
-          basix::docstring::FiniteElement__push_forward.c_str())
-      .def(
-          "pull_back",
-          [](const FiniteElement<double>& self,
-             nb::ndarray<const double, nb::ndim<3>, nb::c_contig> u,
-             nb::ndarray<const double, nb::ndim<3>, nb::c_contig> J,
-             nb::ndarray<const double, nb::ndim<1>, nb::c_contig> detJ,
-             nb::ndarray<const double, nb::ndim<3>, nb::c_contig> K)
-          {
-            auto U = self.pull_back(
-                mdspan_t<const double, 3>(u.data(), u.shape(0), u.shape(1),
-                                          u.shape(2)),
-                mdspan_t<const double, 3>(J.data(), J.shape(0), J.shape(1),
-                                          J.shape(2)),
-                std::span<const double>(detJ.data(), detJ.shape(0)),
-                mdspan_t<const double, 3>(K.data(), K.shape(0), K.shape(1),
-                                          K.shape(2)));
-            return as_nbarrayp(std::move(U));
-          },
-          basix::docstring::FiniteElement__pull_back.c_str())
-      .def(
-          "pre_apply_dof_transformation",
-          [](const FiniteElement<double>& self,
-             nb::ndarray<double, nb::ndim<1>, nb::c_contig> data,
-             int block_size, std::uint32_t cell_info)
-          {
-            self.pre_apply_dof_transformation(std::span(data.data(), data.size()),
-                                          block_size, cell_info);
-          },
-          basix::docstring::FiniteElement__pre_apply_dof_transformation.c_str())
-      .def(
-          "post_apply_transpose_dof_transformation",
-          [](const FiniteElement<double>& self,
-             nb::ndarray<double, nb::ndim<1>, nb::c_contig> data,
-             int block_size, std::uint32_t cell_info)
-          {
-            self.post_apply_transpose_dof_transformation(
-                std::span(data.data(), data.size()), block_size, cell_info);
-          },
-          basix::docstring::FiniteElement__post_apply_transpose_dof_transformation
-              .c_str())
-      .def(
-          "pre_apply_inverse_transpose_dof_transformation",
-          [](const FiniteElement<double>& self,
-             nb::ndarray<double, nb::ndim<1>, nb::c_contig> data,
-             int block_size, std::uint32_t cell_info)
-          {
-            self.pre_apply_inverse_transpose_dof_transformation(
-                std::span(data.data(), data.size()), block_size, cell_info);
-          },
-          basix::docstring::
-              FiniteElement__pre_apply_inverse_transpose_dof_transformation.c_str())
-      .def(
-          "base_transformations",
-          [](const FiniteElement<double>& self)
-          { return as_nbarrayp(self.base_transformations()); },
-          basix::docstring::FiniteElement__base_transformations.c_str())
-      .def(
-          "entity_transformations",
-          [](const FiniteElement<double>& self)
-          {
-            nb::dict t;
-            for (auto& [key, data] : self.entity_transformations())
-              t[cell_type_to_str(key).c_str()] = as_nbarrayp(std::move(data));
-            return t;
-          },
-          basix::docstring::FiniteElement__entity_transformations.c_str())
-      .def(
-          "get_tensor_product_representation",
-          [](const FiniteElement<double>& self)
-          { return self.get_tensor_product_representation(); },
-          basix::docstring::FiniteElement__get_tensor_product_representation
-              .c_str())
-      .def_prop_ro("degree", &FiniteElement<double>::degree)
-      .def_prop_ro("embedded_superdegree",
-                   &FiniteElement<double>::embedded_superdegree)
-      .def_prop_ro("embedded_subdegree",
-                   &FiniteElement<double>::embedded_subdegree)
-      .def_prop_ro("cell_type", &FiniteElement<double>::cell_type)
-      .def_prop_ro("polyset_type", &FiniteElement<double>::polyset_type)
-      .def_prop_ro("dim", &FiniteElement<double>::dim)
-      .def_prop_ro("num_entity_dofs",
-                   [](const FiniteElement<double>& self)
-                   {
-                     // TODO: remove this function. Information can
-                     // retrieved from entity_dofs.
-                     auto& edofs = self.entity_dofs();
-                     std::vector<std::vector<int>> num_edofs;
-                     for (auto& edofs_d : edofs)
-                     {
-                       auto& ndofs = num_edofs.emplace_back();
-                       for (auto& edofs : edofs_d)
-                         ndofs.push_back(edofs.size());
-                     }
-                     return num_edofs;
-                   })
-      .def_prop_ro("entity_dofs", &FiniteElement<double>::entity_dofs)
-      .def_prop_ro("num_entity_closure_dofs",
-                   [](const FiniteElement<double>& self)
-                   {
-                     // TODO: remove this function. Information can
-                     // retrieved from entity_closure_dofs.
-                     auto& edofs = self.entity_closure_dofs();
-                     std::vector<std::vector<int>> num_edofs;
-                     for (auto& edofs_d : edofs)
-                     {
-                       auto& ndofs = num_edofs.emplace_back();
-                       for (auto& edofs : edofs_d)
-                         ndofs.push_back(edofs.size());
-                     }
-                     return num_edofs;
-                   })
-      .def_prop_ro("entity_closure_dofs",
-                   &FiniteElement<double>::entity_closure_dofs)
-      .def_prop_ro("value_size",
-                   [](const FiniteElement<double>& self)
-                   {
-                     return std::accumulate(self.value_shape().begin(),
-                                            self.value_shape().end(), 1,
-                                            std::multiplies{});
-                   })
-      .def_prop_ro("value_shape", &FiniteElement<double>::value_shape)
-      .def_prop_ro("discontinuous", &FiniteElement<double>::discontinuous)
-      .def_prop_ro("family", &FiniteElement<double>::family)
-      .def_prop_ro("lagrange_variant", &FiniteElement<double>::lagrange_variant)
-      .def_prop_ro("dpc_variant", &FiniteElement<double>::dpc_variant)
-      .def_prop_ro("dof_transformations_are_permutations",
-                   &FiniteElement<double>::dof_transformations_are_permutations)
-      .def_prop_ro("dof_transformations_are_identity",
-                   &FiniteElement<double>::dof_transformations_are_identity)
-      .def_prop_ro("interpolation_is_identity",
-                   &FiniteElement<double>::interpolation_is_identity)
-      .def_prop_ro("map_type", &FiniteElement<double>::map_type)
-      .def_prop_ro("sobolev_space", &FiniteElement<double>::sobolev_space)
-      .def_prop_ro(
-          "points",
-          [](const FiniteElement<double>& self)
-          {
-            auto& [x, shape] = self.points();
-            return nb::ndarray<const double, nb::ndim<2>, nb::numpy>(
-                x.data(), shape.size(), shape.data());
-          },
-          nb::rv_policy::reference_internal, "TODO")
-      .def_prop_ro(
-          "interpolation_matrix",
-          [](const FiniteElement<double>& self)
-          {
-            auto& [P, shape] = self.interpolation_matrix();
-            return nb::ndarray<const double, nb::ndim<2>, nb::numpy>(
-                P.data(), shape.size(), shape.data());
-          },
-          nb::rv_policy::reference_internal, "TODO")
-      .def_prop_ro(
-          "dual_matrix",
-          [](const FiniteElement<double>& self)
-          {
-            auto& [D, shape] = self.dual_matrix();
-            return nb::ndarray<const double, nb::ndim<2>, nb::numpy>(
-                D.data(), shape.size(), shape.data());
-          },
-          nb::rv_policy::reference_internal, "TODO")
-      .def_prop_ro(
-          "coefficient_matrix",
-          [](const FiniteElement<double>& self)
-          {
-            auto& [P, shape] = self.coefficient_matrix();
-            return nb::ndarray<const double, nb::ndim<2>, nb::numpy>(
-                P.data(), shape.size(), shape.data());
-          },
-          nb::rv_policy::reference_internal, "Coefficient matrix.")
-      .def_prop_ro(
-          "wcoeffs",
-          [](const FiniteElement<double>& self)
-          {
-            auto& [w, shape] = self.wcoeffs();
-            return nb::ndarray<const double, nb::ndim<2>, nb::numpy>(
-                w.data(), shape.size(), shape.data());
-          },
-          nb::rv_policy::reference_internal, "TODO")
-      .def_prop_ro(
-          "M",
-          [](const FiniteElement<double>& self)
-          {
-            const std::array<std::vector<std::pair<std::vector<double>,
-                                                   std::array<std::size_t, 4>>>,
-                             4>& _M
-                = self.M();
-            std::vector<std::vector<nb::ndarray<const double, nb::numpy>>> M(4);
-            for (int i = 0; i < 4; ++i)
-            {
-              for (std::size_t j = 0; j < _M[i].size(); ++j)
-              {
-                auto& mat = _M[i][j];
-                M[i].emplace_back(mat.first.data(), mat.second.size(),
-                                  mat.second.data());
-              }
-            }
-            return M;
-          },
-          nb::rv_policy::reference_internal, "TODO")
-      .def_prop_ro(
-          "x",
-          [](const FiniteElement<double>& self)
-          {
-            const std::array<std::vector<std::pair<std::vector<double>,
-                                                   std::array<std::size_t, 2>>>,
-                             4>& _x
-                = self.x();
-            std::vector<std::vector<nb::ndarray<const double, nb::numpy>>> x(4);
-            for (int i = 0; i < 4; ++i)
-            {
-              for (std::size_t j = 0; j < _x[i].size(); ++j)
-              {
-                auto& vec = _x[i][j];
-                x[i].emplace_back(vec.first.data(), vec.second.size(),
-                                  vec.second.data());
-              }
-            }
-            return x;
-          },
-          nb::rv_policy::reference_internal)
-      .def_prop_ro("has_tensor_product_factorisation",
-                   &FiniteElement<double>::has_tensor_product_factorisation,
-                   "TODO")
-      .def_prop_ro("interpolation_nderivs",
-                   &FiniteElement<double>::interpolation_nderivs, "TODO")
-      .def_prop_ro("dof_ordering", &FiniteElement<double>::dof_ordering,
-                   "TODO");
-
   nb::enum_<element::lagrange_variant>(m, "LagrangeVariant")
       .value("unset", element::lagrange_variant::unset)
       .value("equispaced", element::lagrange_variant::equispaced)
@@ -529,7 +571,6 @@ NB_MODULE(_basixcpp, m)
       .value("gl_centroid", element::lagrange_variant::gl_centroid)
       .value("legendre", element::lagrange_variant::legendre)
       .value("bernstein", element::lagrange_variant::bernstein)
-      .value("vtk", element::lagrange_variant::vtk)
       .def_prop_ro("name",
                    [](nb::object obj) { return nb::getattr(obj, "__name__"); });
 
@@ -546,87 +587,32 @@ NB_MODULE(_basixcpp, m)
       .def_prop_ro("name",
                    [](nb::object obj) { return nb::getattr(obj, "__name__"); });
 
-  // Create FiniteElement
-  m.def(
-      "create_custom_element",
-      [](cell::type cell_type, const std::vector<std::size_t>& value_shape,
-         nb::ndarray<const double, nb::ndim<2>, nb::c_contig> wcoeffs,
-         std::vector<
-             std::vector<nb::ndarray<const double, nb::ndim<2>, nb::c_contig>>>
-             x,
-         std::vector<
-             std::vector<nb::ndarray<const double, nb::ndim<4>, nb::c_contig>>>
-             M,
-         int interpolation_nderivs, maps::type map_type,
-         sobolev::space sobolev_space, bool discontinuous,
-         int embedded_subdegree, int embedded_superdegree,
-         polyset::type poly_type) -> FiniteElement<double>
-      {
-        if (x.size() != 4)
-          throw std::runtime_error("x has the wrong size");
-        if (M.size() != 4)
-          throw std::runtime_error("M has the wrong size");
-
-        std::array<std::vector<mdspan_t<const double, 2>>, 4> _x;
-        for (int i = 0; i < 4; ++i)
-        {
-          for (std::size_t j = 0; j < x[i].size(); ++j)
-          {
-            _x[i].emplace_back(x[i][j].data(), x[i][j].shape(0),
-                               x[i][j].shape(1));
-          }
-        }
-
-        std::array<std::vector<impl::mdspan_t<const double, 4>>, 4> _M;
-        for (int i = 0; i < 4; ++i)
-        {
-          for (std::size_t j = 0; j < M[i].size(); ++j)
-          {
-            _M[i].emplace_back(M[i][j].data(), M[i][j].shape(0),
-                               M[i][j].shape(1), M[i][j].shape(2),
-                               M[i][j].shape(3));
-          }
-        }
-
-        return basix::create_custom_element<double>(
-            cell_type, value_shape,
-            mdspan_t<const double, 2>(wcoeffs.data(), wcoeffs.shape(0),
-                                      wcoeffs.shape(1)),
-            _x, _M, interpolation_nderivs, map_type, sobolev_space,
-            discontinuous, embedded_subdegree, embedded_superdegree, poly_type);
-      },
-      basix::docstring::create_custom_element.c_str());
-
   m.def(
       "create_element",
       [](element::family family_name, cell::type cell_name, int degree,
          element::lagrange_variant lvariant, element::dpc_variant dvariant,
-         bool discontinuous,
-         const std::vector<int>& dof_ordering) -> FiniteElement<double>
+         bool discontinuous, const std::vector<int>& dof_ordering, char dtype)
+          -> std::variant<FiniteElement<float>, FiniteElement<double>>
       {
-        return basix::create_element<double>(family_name, cell_name, degree,
-                                             lvariant, dvariant, discontinuous,
-                                             dof_ordering);
+        if (dtype == 'd')
+        {
+          return basix::create_element<double>(family_name, cell_name, degree,
+                                               lvariant, dvariant,
+                                               discontinuous, dof_ordering);
+        }
+        else if (dtype == 'f')
+        {
+          return basix::create_element<float>(family_name, cell_name, degree,
+                                              lvariant, dvariant, discontinuous,
+                                              dof_ordering);
+        }
+        else
+          throw std::runtime_error("Unsupported finite element dtype.");
       },
-      nb::arg("family_name"), nb::arg("cell_name"), nb::arg("degree"),
-      nb::arg("lagrange_variant") = element::lagrange_variant::unset,
-      nb::arg("dpc_variant") = element::dpc_variant::unset,
-      nb::arg("discontinuous") = false,
-      nb::arg("dof_ordering") = std::vector<int>(),
-      basix::docstring::
-          create_element__family_cell_degree_lvariant_dvariant_discontinuous_dof_ordering
-              .c_str());
-
-  // Interpolate between elements
-  m.def(
-      "compute_interpolation_operator",
-      [](const FiniteElement<double>& element_from,
-         const FiniteElement<double>& element_to)
-      {
-        return as_nbarrayp(
-            basix::compute_interpolation_operator(element_from, element_to));
-      },
-      basix::docstring::compute_interpolation_operator.c_str());
+      "family_name"_a, "cell_name"_a, "degree"_a, "dtype"_a,
+      "lagrange_variant"_a = element::lagrange_variant::unset,
+      "dpc_variant"_a = element::dpc_variant::unset, "discontinuous"_a = false,
+      "dof_ordering"_a = std::vector<int>());
 
   nb::enum_<polyset::type>(m, "PolysetType")
       .value("standard", polyset::type::standard)
@@ -637,24 +623,12 @@ NB_MODULE(_basixcpp, m)
   m.def(
       "superset",
       [](cell::type cell, polyset::type type1, polyset::type type2)
-      { return polyset::superset(cell, type1, type2); },
-      basix::docstring::superset.c_str());
+      { return polyset::superset(cell, type1, type2); });
 
   m.def(
       "restriction",
       [](polyset::type ptype, cell::type cell, cell::type restriction_cell)
-      { return polyset::restriction(ptype, cell, restriction_cell); },
-      basix::docstring::restriction.c_str());
-
-  m.def(
-      "tabulate_polynomial_set",
-      [](cell::type celltype, polyset::type polytype, int d, int n,
-         nb::ndarray<const double, nb::ndim<2>, nb::c_contig> x)
-      {
-        mdspan_t<const double, 2> _x(x.data(), x.shape(0), x.shape(1));
-        return as_nbarrayp(polyset::tabulate(celltype, polytype, d, n, _x));
-      },
-      basix::docstring::tabulate_polynomial_set.c_str());
+      { return polyset::restriction(ptype, cell, restriction_cell); });
 
   m.def(
       "make_quadrature",
@@ -666,13 +640,12 @@ NB_MODULE(_basixcpp, m)
         std::array shape{w.size(), pts.size() / w.size()};
         return std::pair(as_nbarray(std::move(pts), shape.size(), shape.data()),
                          as_nbarray(std::move(w)));
-      },
-      basix::docstring::make_quadrature__rule_celltype_polytype_m.c_str());
+      });
 
-  m.def("index", nb::overload_cast<int>(&basix::indexing::idx),
-        basix::docstring::index__p.c_str());
-  m.def("index", nb::overload_cast<int, int>(&basix::indexing::idx),
-        basix::docstring::index__p_q.c_str());
-  m.def("index", nb::overload_cast<int, int, int>(&basix::indexing::idx),
-        basix::docstring::index__p_q_r.c_str());
+  m.def("index", nb::overload_cast<int>(&basix::indexing::idx));
+  m.def("index", nb::overload_cast<int, int>(&basix::indexing::idx));
+  m.def("index", nb::overload_cast<int, int, int>(&basix::indexing::idx));
+
+  declare_float<float>(m, "float32");
+  declare_float<double>(m, "float64");
 }

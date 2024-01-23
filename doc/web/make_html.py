@@ -46,7 +46,7 @@ def markdown(txt):
 
 
 def unicode_to_html(txt):
-    txt = txt.replace(u"\xe9", "&eacute;")
+    txt = txt.replace("\xe9", "&eacute;")
     return txt
 
 
@@ -130,6 +130,10 @@ template = template.replace("<p>!!", "!!")
 template = template.replace("!!</p>", "!!")
 template = template.replace("=\"/", "=\"https://fenicsproject.org/")
 template = template.replace("(/assets", "(https://fenicsproject.org/assets")
+template = template.replace(
+    "/assets/css/customsty.css\">",
+    "/assets/css/customsty.css\">\n"
+    "   <link rel=\"stylesheet\" type=\"text/css\" href=\"/assets/sty.css\">")
 
 intro, outro = template.split("!!CONTENT!!")
 

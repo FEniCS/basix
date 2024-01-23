@@ -2,7 +2,7 @@
 # FEniCS Project
 # SPDX-License-Identifier: MIT
 
-import numpy
+import numpy as np
 import pytest
 import sympy
 
@@ -24,12 +24,12 @@ def test_legendre(cell_type, degree):
 
     polys = basix.tabulate_polynomials(basix.PolynomialType.legendre, cell_type, degree, points)
 
-    matrix = numpy.empty((polys.shape[0], polys.shape[0]))
+    matrix = np.empty((polys.shape[0], polys.shape[0]))
     for i, col_i in enumerate(polys):
         for j, col_j in enumerate(polys):
             matrix[i, j] = sum(col_i * col_j * weights)
 
-    assert numpy.allclose(matrix, numpy.identity(polys.shape[0]))
+    assert np.allclose(matrix, np.identity(polys.shape[0]))
 
 
 def evaluate(function, pt):
@@ -78,17 +78,17 @@ def test_order(cell_type, functions, degree):
         # Using n polynomials
         # The monomial should NOT be exactly represented using this many
         coeffs = []
-        values = numpy.array([evaluate(function, i) for i in points])
+        values = np.array([evaluate(function, i) for i in points])
         for p in range(n):
             coeffs.append(sum(values * polys[p, :] * weights))
         actual_eval = [float(sum(coeffs * p[:n])) for p in eval_polys.T]
-        assert not numpy.allclose(expected_eval, actual_eval)
+        assert not np.allclose(expected_eval, actual_eval)
 
         # Using n+1 polynomials
         # The monomial should be exactly represented using this many
         coeffs = []
-        values = numpy.array([evaluate(function, i) for i in points])
+        values = np.array([evaluate(function, i) for i in points])
         for p in range(n + 1):
             coeffs.append(sum(values * polys[p, :] * weights))
         actual_eval = [float(sum(coeffs * p[:n+1])) for p in eval_polys.T]
-        assert numpy.allclose(expected_eval, actual_eval)
+        assert np.allclose(expected_eval, actual_eval)

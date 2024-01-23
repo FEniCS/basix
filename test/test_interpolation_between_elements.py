@@ -128,7 +128,7 @@ def test_blocked_interpolation(cell_type, order):
 
 @parametrize_over_elements(5)
 def test_degree_bounds(cell_type, degree, element_type, element_args):
-    np.random.seed(13)
+    generator = np.random.default_rng(13)
 
     element = basix.create_element(element_type, cell_type, degree, *element_args)
 
@@ -137,7 +137,7 @@ def test_degree_bounds(cell_type, degree, element_type, element_args):
 
     # Test that this element's basis functions are contained in Lagrange
     # space with degree element.embedded_superdegree
-    coeffs = np.random.rand(element.dim)
+    coeffs = generator.random(element.dim)
     values = np.array([tab[:, :, i] @ coeffs for i in range(element.value_size)])
 
     if element.polyset_type == basix.PolysetType.standard:
@@ -176,7 +176,7 @@ def test_degree_bounds(cell_type, degree, element_type, element_args):
         # tested
         lagrange = basix.create_element(p_family, cell_type, element.embedded_subdegree,
                                         basix.LagrangeVariant.equispaced, discontinuous=True)
-        lagrange_coeffs = np.random.rand(lagrange.dim * element.value_size)
+        lagrange_coeffs = generator.random(lagrange.dim * element.value_size)
         lagrange_tab = lagrange.tabulate(0, points)[0]
         lagrange_values = np.array([lagrange_tab[:, :, 0] @ lagrange_coeffs[i::element.value_size]
                                     for i in range(element.value_size)])
@@ -196,7 +196,7 @@ def test_degree_bounds(cell_type, degree, element_type, element_args):
         # being tested
         lagrange = basix.create_element(p_family, cell_type, element.embedded_subdegree + 1,
                                         basix.LagrangeVariant.equispaced, discontinuous=True)
-        lagrange_coeffs = np.random.rand(lagrange.dim * element.value_size)
+        lagrange_coeffs = generator.random(lagrange.dim * element.value_size)
         lagrange_tab = lagrange.tabulate(0, points)[0]
         lagrange_values = np.array([lagrange_tab[:, :, 0] @ lagrange_coeffs[i::element.value_size]
                                     for i in range(element.value_size)])

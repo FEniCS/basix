@@ -7,7 +7,7 @@ name = "fenics-basix"
 version = "0.8.0.dev0"
 description = "Basix Python interface"
 readme = "README.md"
-requires-python = ">=3.8.0"
+requires-python = ">=3.9.0"
 license = { file = "LICENSE" }
 authors = [
     { email = "fenics-steering-council@googlegroups.com" },
@@ -23,7 +23,7 @@ documentation = "https://docs.fenicsproject.org"
 
 [project.optional-dependencies]
 docs = ["markdown", "pylit3", "pyyaml", "sphinx", "sphinx_rtd_theme"]
-lint = ["flake8", "pydocstyle", "isort"]
+lint = ["ruff", "isort"]
 optional = ["numba", "fenics-ufl@git+https://github.com/fenics/ufl"]
 test = ["pytest", "sympy", "scipy", "matplotlib", "fenics-basix[optional]"]
 ci = ["mypy", "pytest-xdist", "fenics-basix[docs,lint,test,optional]"]
@@ -38,10 +38,10 @@ wheel.packages = ["python/basix"]
 
 [tool.cibuildwheel]
 build = [
-    "cp{38,39,310,311,312}-manylinux_x86_64",
-    "cp{38,39,310,311,312}-manylinux_aarch64",
-    "cp{38,39,310,311,312}-macosx_x86_64",
-    "cp{38,39,310,311,312}-macosx_arm64",
+    "cp{39,310,311,312}-manylinux_x86_64",
+    "cp{39,310,311,312}-manylinux_aarch64",
+    "cp{39,310,311,312}-macosx_x86_64",
+    "cp{39,310,311,312}-macosx_arm64",
 ]
 test-command = [
     "cmake -G Ninja -DPython3_EXECUTABLE=$(which python) -B build-dir -S {project}/test/test_cmake",
@@ -68,12 +68,31 @@ archs = [
 ] # Forces arm64 build on x86_64 runner using cross-compilation.
 before-build = "export HOMEBREW_AUTO_UPDATING=0 && brew update && brew install ninja"
 
-[tool.pydocstyle]
-convention = "google"
-
 [tool.mypy]
 ignore_missing_imports = true
 
 [tool.isort]
 line_length = 120
 skip_glob = ["*.pyi"]
+
+[tool.ruff]
+line-length = 120
+indent-width = 4
+
+[tool.ruff.lint]
+select = [
+    "E",   # pycodestyle
+    "W",   # pycodestyle
+    "D",   # pydocstyle - used only in python/
+    "F",   # pyflakes
+    # "I",   # isort - use standalone isort
+    "RUF", # Ruff-specific rules
+    "UP",  # pyupgrade
+    "ICN", # flake8-import-conventions
+    "NPY", # numpy-specific rules
+    "FLY", # use f-string not static joins
+]
+ignore = ["UP007", "RUF012"]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"

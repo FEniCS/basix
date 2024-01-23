@@ -1,6 +1,5 @@
 """Functions to get cell geometry information and manipulate cell types."""
 
-import typing
 
 import numpy.typing as npt
 
@@ -47,7 +46,7 @@ def string_to_type(cell: str) -> CellType:
     return getattr(CellType, cell)
 
 
-def sub_entity_connectivity(celltype: CellType) -> typing.List[typing.List[typing.List[typing.List[int]]]]:
+def sub_entity_connectivity(celltype: CellType) -> list[list[list[list[int]]]]:
     """Get the numbers of entities connected to each subentity of the cell.
 
     Args:
@@ -97,7 +96,7 @@ def facet_normals(celltype: CellType) -> npt.NDArray:
     return _fn(celltype.value)
 
 
-def facet_orientations(celltype: CellType) -> typing.List[bool]:
+def facet_orientations(celltype: CellType) -> list[bool]:
     """Get the orientations of the facets of a reference cell.
 
     This returns a list of bools that are True if the facet normal points outwards
@@ -150,7 +149,7 @@ def geometry(celltype: CellType) -> npt.NDArray:
     return _geometry(celltype.value)
 
 
-def topology(celltype: CellType) -> typing.List[typing.List[typing.List[int]]]:
+def topology(celltype: CellType) -> list[list[list[int]]]:
     """Get the cell topology.
 
     Args:

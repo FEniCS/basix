@@ -2,7 +2,7 @@
 # FEniCS Project
 # SPDX-License-Identifier: MIT
 
-import numpy
+import numpy as np
 import pytest
 import sympy
 
@@ -84,8 +84,8 @@ def test_poly(celltype, degree):
     pts = basix.create_lattice(celltype, 6, basix.LatticeType.equispaced, True)
     wtab = basix.tabulate_polynomials(basix.PolynomialType.bernstein, celltype, degree, pts)
     bern = get_bernstein_polynomials(celltype, degree)
-    wsym = numpy.array([[float(b.subs(list(zip([x, y, z], p)))) for p in pts] for b in bern])
-    assert numpy.allclose(wtab, wsym)
+    wsym = np.array([[float(b.subs(list(zip([x, y, z], p)))) for p in pts] for b in bern])
+    assert np.allclose(wtab, wsym)
 
 
 @pytest.mark.parametrize("celltype", [
@@ -107,7 +107,7 @@ def test_element(celltype, degree):
         derivs = [(n - i, i) for n in range(4) for i in range(n + 1)]
 
     for k in derivs:
-        wsym = numpy.zeros_like(wtab[0])
+        wsym = np.zeros_like(wtab[0])
         for i, b in enumerate(bern):
             wd = b
             for v, n in zip([x, y, z], k):
@@ -115,7 +115,7 @@ def test_element(celltype, degree):
             for j, p in enumerate(pts):
                 wsym[j, i] = wd.subs(list(zip([x, y, z], p)))
 
-        assert numpy.allclose(wtab[basix.index(*k)], wsym)
+        assert np.allclose(wtab[basix.index(*k)], wsym)
 
 
 @pytest.mark.parametrize("celltype", [
@@ -132,7 +132,7 @@ def test_basis_is_polynomials(celltype, degree):
     remaining = [i for i, _ in enumerate(bern)]
     for row in wtab.T:
         for i in remaining:
-            if numpy.allclose(row, bern[i]):
+            if np.allclose(row, bern[i]):
                 remaining.remove(i)
                 break
         else:

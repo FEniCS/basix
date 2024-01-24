@@ -2156,3 +2156,10 @@ def blocked_element(
         raise ValueError("Cannot create a blocked element containing a non-scalar element.")
 
     return _BlockedElement(sub_element, shape=shape, symmetry=symmetry, gdim=gdim)
+
+
+def wrap_element(
+    element: _basix.finite_element.FiniteElement, gdim: _typing.Optional[int] = None
+) -> _ElementBase:
+    """Wrap a Basix element as a Basix UFL element."""
+    return _BasixElement(element, gdim=gdim)

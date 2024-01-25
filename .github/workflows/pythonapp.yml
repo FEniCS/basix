@@ -67,7 +67,7 @@ jobs:
       - name: Upload C++ documentation artifact
         uses: actions/upload-artifact@v4
         with:
-          name: doc-cpp
+          name: doc-cpp-${{ matrix.python-version }}
           path: |
             doc/cpp/html
           retention-days: 2
@@ -75,7 +75,7 @@ jobs:
       - name: Upload Python documentation artifact
         uses: actions/upload-artifact@v4
         with:
-          name: doc-python
+          name: doc-python-${{ matrix.python-version }}
           path: |
             doc/python/build/html
           retention-days: 2

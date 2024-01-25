@@ -65,7 +65,7 @@ jobs:
           python -m sphinx -W -b html source build/html
           rm -rf build/html/.doctrees
       - name: Upload C++ documentation artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: doc-cpp
           path: |
@@ -73,7 +73,7 @@ jobs:
           retention-days: 2
           if-no-files-found: error
       - name: Upload Python documentation artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: doc-python
           path: |

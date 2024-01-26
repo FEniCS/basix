@@ -13,7 +13,6 @@ authors = [
     { email = "fenics-steering-council@googlegroups.com" },
     { name = "FEniCS Steering Council" },
 ]
-packages = ["basix"]
 dependencies = ["numpy>=1.21"]
 
 [project.optional-dependencies]
@@ -27,6 +26,7 @@ ci = ["mypy", "pytest-xdist", "fenics-basix[docs,lint,test,optional]"]
 minimum-version = "0.5"
 cmake.minimum-version = "3.19.0"
 wheel.packages = ["basix"]
+wheel.license-files = ["../LICENSE"]
 
 [tool.isort]
 line_length = 120

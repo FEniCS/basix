@@ -1580,12 +1580,12 @@ class _QuadratureElement(_ElementBase):
 class _RealElement(_ElementBase):
     """A real element."""
 
-    def __init__(self, cell: _basix.CellType, reference_value_shape: _typing.Tuple[int, ...]):
+    def __init__(self, cell: _basix.CellType, value_shape: _typing.Tuple[int, ...]):
         """Initialise the element."""
         self._cell_type = cell
         tdim = len(_basix.topology(cell)) - 1
 
-        super().__init__(f"RealElement({cell.name}, {reference_value_shape})", cell.name, reference_value_shape, 0)
+        super().__init__(f"RealElement({cell.name}, {value_shape})", cell.name, value_shape, 0)
 
         self._entity_counts = []
         if tdim >= 1:
@@ -1599,7 +1599,7 @@ class _RealElement(_ElementBase):
     def __eq__(self, other) -> bool:
         """Check if two elements are equal."""
         return isinstance(other, _RealElement) and (self._cell_type == other._cell_type
-                                                    and self._reference_value_shape == other._reference_value_shape)
+                                                    and self._value_shape == other._value_shape)
 
     def __hash__(self) -> int:
         """Return a hash."""
@@ -2016,7 +2016,7 @@ def mixed_element(elements: list[_ElementBase]) -> _ElementBase:
 
 
 def quadrature_element(cell: _typing.Union[str, _basix.CellType],
-                       reference_value_shape: tuple[int, ...] = (),
+                       value_shape: tuple[int, ...] = (),
                        scheme: _typing.Optional[str] = None,
                        degree: _typing.Optional[int] = None,
                        points: _typing.Optional[_npt.NDArray[np.float64]] = None,
@@ -2029,7 +2029,7 @@ def quadrature_element(cell: _typing.Union[str, _basix.CellType],
 
     Args:
         cell: Cell to create the element on.
-        reference_value_shape: Value shape of the element.
+        value_shape: Value shape of the element.
         scheme: Quadrature scheme.
         degree: Quadrature degree.
         points: Quadrature points.
@@ -2056,19 +2056,19 @@ def quadrature_element(cell: _typing.Union[str, _basix.CellType],
     assert weights is not None
 
     e = _QuadratureElement(cell, points, weights, pullback, degree)
-    if reference_value_shape == ():
+    if value_shape == ():
         return e
     else:
-        return _BlockedElement(e, reference_value_shape)
+        return _BlockedElement(e, value_shape)
 
 
 def real_element(cell: _typing.Union[_basix.CellType, str],
-                 reference_value_shape: tuple[int, ...]) -> _ElementBase:
+                 value_shape: tuple[int, ...]) -> _ElementBase:
     """Create a real element.
 
     Args:
         cell: Cell to create the element on.
-        reference_value_shape: Value shape of the element.
+        value_shape: Value shape of the element.
 
     Returns:
         A 'real' finite element.
@@ -2077,7 +2077,7 @@ def real_element(cell: _typing.Union[_basix.CellType, str],
     if isinstance(cell, str):
         cell = _basix.cell.string_to_type(cell)
 
-    return _RealElement(cell, reference_value_shape)
+    return _RealElement(cell, value_shape)
 
 
 @_functools.lru_cache

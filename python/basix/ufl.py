@@ -1948,7 +1948,7 @@ def enriched_element(elements: list[_ElementBase],
 
 
 def custom_element(
-    cell_type: _basix.CellType, value_shape: _typing.Union[list[int], tuple[int, ...]],
+    cell_type: _basix.CellType, reference_value_shape: _typing.Union[list[int], tuple[int, ...]],
     wcoeffs: _npt.NDArray[np.float64], x: list[list[_npt.NDArray[np.float64]]],
     M: list[list[_npt.NDArray[np.float64]]], interpolation_nderivs: int, map_type: _basix.MapType,
     sobolev_space: _basix.SobolevSpace, discontinuous: bool, embedded_subdegree: int, embedded_superdegree: int,

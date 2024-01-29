@@ -1,8 +1,7 @@
 """Functions for working with polynomials."""
 
-import typing as _typing
 
-import numpy as _np
+import numpy as np
 import numpy.typing as npt
 
 from basix._basixcpp import PolynomialType as _PT
@@ -30,8 +29,8 @@ class PolysetType(Enum):
     macroedge = _PST.macroedge
 
 
-def reshape_coefficients(poly_type: PolynomialType, cell_type: CellType, coefficients: npt.NDArray[_np.float64],
-                         value_size: int, input_degree: int, output_degree: int) -> npt.NDArray[_np.float64]:
+def reshape_coefficients(poly_type: PolynomialType, cell_type: CellType, coefficients: npt.NDArray[np.float64],
+                         value_size: int, input_degree: int, output_degree: int) -> npt.NDArray[np.float64]:
     """Reshape the coefficients.
 
     Args:
@@ -59,9 +58,9 @@ def reshape_coefficients(poly_type: PolynomialType, cell_type: CellType, coeffic
         return coefficients
 
     pdim = dim(poly_type, cell_type, output_degree)
-    out = _np.zeros((coefficients.shape[0], pdim * value_size))
+    out = np.zeros((coefficients.shape[0], pdim * value_size))
 
-    indices: _typing.List[_typing.Tuple[int, ...]] = []
+    indices: list[tuple[int, ...]] = []
 
     if cell_type == CellType.interval:
         indices = [(i, ) for i in range(input_degree + 1)]
@@ -205,7 +204,7 @@ def tabulate_polynomial_set(
     Args:
         celltype: The cell type
         ptype: The polyset type
-        n: The polynomial degree
+        degree: The polynomial degree
         nderiv: The number of derivatives
         pts: The points to tabulat at
 

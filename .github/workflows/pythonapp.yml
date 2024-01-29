@@ -25,7 +25,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-22.04]
-        python-version: ["3.8", "3.9", "3.10", "3.11"]
+        python-version: ["3.9", "3.10", "3.11"]
     steps:
       - uses: actions/checkout@v4
       - name: Set up Python
@@ -40,14 +40,12 @@ jobs:
         run: pip -v install git+https://github.com/FEniCS/ufl.git@mscroggs/gdim
       - name: Install Basix
         run: pip -v install .[ci]
-      - name: Lint with flake8
-        run: flake8 --statistics test/ python/ demo/python
+      - name: Ruff + isort
+        run: |
+          ruff check .
+          isort --check .
       - name: Run mypy checks
         run: mypy python/basix
-      - name: pydocstyle checks
-        run: pydocstyle python/basix
-      - name: isort checks
-        run: isort --check .
       - name: Run units tests
         run: pytest -n auto --durations 20 test/
       - name: Run simple CMake integration test
@@ -69,17 +67,17 @@ jobs:
           python -m sphinx -W -b html source build/html
           rm -rf build/html/.doctrees
       - name: Upload C++ documentation artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
-          name: doc-cpp
+          name: doc-cpp-${{ matrix.python-version }}
           path: |
             doc/cpp/html
           retention-days: 2
           if-no-files-found: error
       - name: Upload Python documentation artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
-          name: doc-python
+          name: doc-python-${{ matrix.python-version }}
           path: |
             doc/python/build/html
           retention-days: 2

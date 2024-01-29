@@ -2,7 +2,7 @@
 # FEniCS Project
 # SPDX-License-Identifier: MIT
 
-import numpy
+import numpy as np
 import sympy
 
 import basix
@@ -19,12 +19,12 @@ def test_hermite_interval():
     nderiv = 2
     wtab = hermite.tabulate(nderiv, pts)
     for kx in range(nderiv + 1):
-        wsym = numpy.zeros_like(wtab[0])
+        wsym = np.zeros_like(wtab[0])
         for i, f in enumerate(sym_basis):
             wd = sympy.diff(f, x, kx)
             for k, p in enumerate(pts):
                 wsym[k, i] = wd.subs([(x, p[0])])
-        assert numpy.allclose(wtab[kx], wsym)
+        assert np.allclose(wtab[kx], wsym)
 
 
 def test_hermite_triangle():
@@ -52,12 +52,12 @@ def test_hermite_triangle():
     wtab = hermite.tabulate(nderiv, pts)
     for kx in range(nderiv + 1):
         for ky in range(nderiv + 1 - kx):
-            wsym = numpy.zeros_like(wtab[0])
+            wsym = np.zeros_like(wtab[0])
             for i, f in enumerate(sym_basis):
                 wd = sympy.diff(f, x, kx, y, ky)
                 for k, p in enumerate(pts):
                     wsym[k, i] = wd.subs([(x, p[0]), (y, p[1])])
-            assert numpy.allclose(wtab[basix.index(kx, ky)], wsym)
+            assert np.allclose(wtab[basix.index(kx, ky)], wsym)
 
 
 def test_hermite_tetrahedron():
@@ -100,9 +100,9 @@ def test_hermite_tetrahedron():
     for kx in range(nderiv + 1):
         for ky in range(nderiv + 1 - kx):
             for kz in range(nderiv + 1 - kx - ky):
-                wsym = numpy.zeros_like(wtab[0])
+                wsym = np.zeros_like(wtab[0])
                 for i, f in enumerate(sym_basis):
                     wd = sympy.diff(f, x, kx, y, ky, z, kz)
                     for k, p in enumerate(pts):
                         wsym[k, i] = wd.subs([(x, p[0]), (y, p[1]), (z, p[2])])
-                assert numpy.allclose(wtab[basix.index(kx, ky, kz)], wsym)
+                assert np.allclose(wtab[basix.index(kx, ky, kz)], wsym)

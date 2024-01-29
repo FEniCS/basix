@@ -8,7 +8,7 @@ from abc import abstractmethod as _abstractmethod
 from abc import abstractproperty as _abstractproperty
 from warnings import warn as _warn
 
-import numpy as _np
+import numpy as np
 import numpy.typing as _npt
 import ufl as _ufl
 from ufl.finiteelement import AbstractFiniteElement as _AbstractFiniteElement
@@ -62,7 +62,7 @@ def _ufl_pullback_from_enum(m: _basix.maps.MapType) -> _AbstractPullback:
     """Convert an enum to a UFL pull back.
 
     Args:
-        map_type: A map type.
+        m: A map type.
 
     Returns:
         UFL pull back.
@@ -151,12 +151,12 @@ class _ElementBase(_AbstractFiniteElement):
         return _ufl.cell.Cell(self._cellname)
 
     @property
-    def reference_value_shape(self) -> _typing.Tuple[int, ...]:
+    def reference_value_shape(self) -> tuple[int, ...]:
         """Return the shape of the value space on the reference cell."""
         return self._reference_value_shape
 
     @property
-    def sub_elements(self) -> _typing.List[_AbstractFiniteElement]:
+    def sub_elements(self) -> list[_AbstractFiniteElement]:
         """Return a list of sub elements.
 
         This function does not recurse: ie it does not extract the sub-elements
@@ -166,7 +166,7 @@ class _ElementBase(_AbstractFiniteElement):
 
     # Basix specific functions
     @_abstractmethod
-    def tabulate(self, nderivs: int, points: _npt.NDArray[_np.float64]) -> _npt.NDArray[_np.float64]:
+    def tabulate(self, nderivs: int, points: _npt.NDArray[np.float64]) -> _npt.NDArray[np.float64]:
         """Tabulate the basis functions of the element.
 
         Args:
@@ -178,7 +178,7 @@ class _ElementBase(_AbstractFiniteElement):
         """
 
     @_abstractmethod
-    def get_component_element(self, flat_component: int) -> _typing.Tuple[_typing.Any, int, int]:
+    def get_component_element(self, flat_component: int) -> tuple[_typing.Any, int, int]:
         """Get element that represents a component of the element, and the offset and stride of the component.
 
         For example, for a mixed element, this will return the
@@ -207,19 +207,19 @@ class _ElementBase(_AbstractFiniteElement):
         """Number of DOFs the element has."""
 
     @_abstractproperty
-    def num_entity_dofs(self) -> _typing.List[_typing.List[int]]:
+    def num_entity_dofs(self) -> list[list[int]]:
         """Number of DOFs associated with each entity."""
 
     @_abstractproperty
-    def entity_dofs(self) -> _typing.List[_typing.List[_typing.List[int]]]:
+    def entity_dofs(self) -> list[list[list[int]]]:
         """DOF numbers associated with each entity."""
 
     @_abstractproperty
-    def num_entity_closure_dofs(self) -> _typing.List[_typing.List[int]]:
+    def num_entity_closure_dofs(self) -> list[list[int]]:
         """Number of DOFs associated with the closure of each entity."""
 
     @_abstractproperty
-    def entity_closure_dofs(self) -> _typing.List[_typing.List[_typing.List[int]]]:
+    def entity_closure_dofs(self) -> list[list[list[int]]]:
         """DOF numbers associated with the closure of each entity."""
 
     @_abstractproperty
@@ -227,11 +227,11 @@ class _ElementBase(_AbstractFiniteElement):
         """Get the number of global support DOFs."""
 
     @_abstractproperty
-    def reference_topology(self) -> _typing.List[_typing.List[_typing.List[int]]]:
+    def reference_topology(self) -> list[list[list[int]]]:
         """Topology of the reference element."""
 
     @_abstractproperty
-    def reference_geometry(self) -> _npt.NDArray[_np.float64]:
+    def reference_geometry(self) -> _npt.NDArray[np.float64]:
         """Geometry of the reference element."""
 
     @_abstractproperty
@@ -279,7 +279,7 @@ class _ElementBase(_AbstractFiniteElement):
         """The degree of the element."""
         return self._degree
 
-    def custom_quadrature(self) -> _typing.Tuple[_npt.NDArray[_np.float64], _npt.NDArray[_np.float64]]:
+    def custom_quadrature(self) -> tuple[_npt.NDArray[np.float64], _npt.NDArray[np.float64]]:
         """Return custom quadrature rule or raise a ValueError."""
         raise ValueError("Element does not have a custom quadrature rule.")
 
@@ -298,17 +298,17 @@ class _ElementBase(_AbstractFiniteElement):
         return 1
 
     @property
-    def _wcoeffs(self) -> _npt.NDArray[_np.float64]:
+    def _wcoeffs(self) -> _npt.NDArray[np.float64]:
         """The coefficients used to define the polynomial set."""
         raise NotImplementedError()
 
     @property
-    def _x(self) -> _typing.List[_typing.List[_npt.NDArray[_np.float64]]]:
+    def _x(self) -> list[list[_npt.NDArray[np.float64]]]:
         """The points used to define interpolation."""
         raise NotImplementedError()
 
     @property
-    def _M(self) -> _typing.List[_typing.List[_npt.NDArray[_np.float64]]]:
+    def _M(self) -> list[list[_npt.NDArray[np.float64]]]:
         """The matrices used to define interpolation."""
         raise NotImplementedError()
 
@@ -370,7 +370,7 @@ class _BasixElement(_ElementBase):
         """Return a hash."""
         return super().__hash__()
 
-    def tabulate(self, nderivs: int, points: _npt.NDArray[_np.float64]) -> _npt.NDArray[_np.float64]:
+    def tabulate(self, nderivs: int, points: _npt.NDArray[np.float64]) -> _npt.NDArray[np.float64]:
         """Tabulate the basis functions of the element.
 
         Args:
@@ -385,7 +385,7 @@ class _BasixElement(_ElementBase):
         # TODO: update FFCx to remove the need for transposing here
         return tab.transpose((0, 1, 3, 2)).reshape((tab.shape[0], tab.shape[1], -1))
 
-    def get_component_element(self, flat_component: int) -> _typing.Tuple[_ElementBase, int, int]:
+    def get_component_element(self, flat_component: int) -> tuple[_ElementBase, int, int]:
         """Get element that represents a component of the element, and the offset and stride of the component.
 
         For example, for a mixed element, this will return the
@@ -433,22 +433,22 @@ class _BasixElement(_ElementBase):
         return self._element.dim
 
     @property
-    def num_entity_dofs(self) -> _typing.List[_typing.List[int]]:
+    def num_entity_dofs(self) -> list[list[int]]:
         """Number of DOFs associated with each entity."""
         return self._element.num_entity_dofs
 
     @property
-    def entity_dofs(self) -> _typing.List[_typing.List[_typing.List[int]]]:
+    def entity_dofs(self) -> list[list[list[int]]]:
         """DOF numbers associated with each entity."""
         return self._element.entity_dofs
 
     @property
-    def num_entity_closure_dofs(self) -> _typing.List[_typing.List[int]]:
+    def num_entity_closure_dofs(self) -> list[list[int]]:
         """Number of DOFs associated with the closure of each entity."""
         return self._element.num_entity_closure_dofs
 
     @property
-    def entity_closure_dofs(self) -> _typing.List[_typing.List[_typing.List[int]]]:
+    def entity_closure_dofs(self) -> list[list[list[int]]]:
         """DOF numbers associated with the closure of each entity."""
         return self._element.entity_closure_dofs
 
@@ -458,12 +458,12 @@ class _BasixElement(_ElementBase):
         return 0
 
     @property
-    def reference_topology(self) -> _typing.List[_typing.List[_typing.List[int]]]:
+    def reference_topology(self) -> list[list[list[int]]]:
         """Topology of the reference element."""
         return _basix.topology(self._element.cell_type)
 
     @property
-    def reference_geometry(self) -> _npt.NDArray[_np.float64]:
+    def reference_geometry(self) -> _npt.NDArray[np.float64]:
         """Geometry of the reference element."""
         return _basix.geometry(self._element.cell_type)
 
@@ -547,17 +547,17 @@ class _BasixElement(_ElementBase):
         return self._element.polyset_type
 
     @property
-    def _wcoeffs(self) -> _npt.NDArray[_np.float64]:
+    def _wcoeffs(self) -> _npt.NDArray[np.float64]:
         """The coefficients used to define the polynomial set."""
         return self._element.wcoeffs
 
     @property
-    def _x(self) -> _typing.List[_typing.List[_npt.NDArray[_np.float64]]]:
+    def _x(self) -> list[list[_npt.NDArray[np.float64]]]:
         """The points used to define interpolation."""
         return self._element.x
 
     @property
-    def _M(self) -> _typing.List[_typing.List[_npt.NDArray[_np.float64]]]:
+    def _M(self) -> list[list[_npt.NDArray[np.float64]]]:
         """The matrices used to define interpolation."""
         return self._element.M
 
@@ -610,7 +610,7 @@ class _ComponentElement(_ElementBase):
               "Please, use basix.ufl.mixed_element.", FutureWarning)
         return mixed_element([self, other])
 
-    def tabulate(self, nderivs: int, points: _npt.NDArray[_np.float64]) -> _npt.NDArray[_np.float64]:
+    def tabulate(self, nderivs: int, points: _npt.NDArray[np.float64]) -> _npt.NDArray[np.float64]:
         """Tabulate the basis functions of the element.
 
         Args:
@@ -624,7 +624,7 @@ class _ComponentElement(_ElementBase):
         tables = self._element.tabulate(nderivs, points)
         output = []
         for tbl in tables:
-            shape = (points.shape[0],) + self._element._reference_value_shape + (-1,)
+            shape = (points.shape[0], *self._element._reference_value_shape, -1)
             tbl = tbl.reshape(shape)
             if len(self._element._reference_value_shape) == 0:
                 output.append(tbl)
@@ -639,9 +639,9 @@ class _ComponentElement(_ElementBase):
                     output.append(tbl[:, self._component // vs0, self._component % vs0, :])
             else:
                 raise NotImplementedError()
-        return _np.asarray(output, dtype=_np.float64)
+        return np.asarray(output, dtype=np.float64)
 
-    def get_component_element(self, flat_component: int) -> _typing.Tuple[_ElementBase, int, int]:
+    def get_component_element(self, flat_component: int) -> tuple[_ElementBase, int, int]:
         """Get element that represents a component of the element, and the offset and stride of the component.
 
         Args:
@@ -666,22 +666,22 @@ class _ComponentElement(_ElementBase):
         raise NotImplementedError()
 
     @property
-    def num_entity_dofs(self) -> _typing.List[_typing.List[int]]:
+    def num_entity_dofs(self) -> list[list[int]]:
         """Number of DOFs associated with each entity."""
         raise NotImplementedError()
 
     @property
-    def entity_dofs(self) -> _typing.List[_typing.List[_typing.List[int]]]:
+    def entity_dofs(self) -> list[list[list[int]]]:
         """DOF numbers associated with each entity."""
         raise NotImplementedError()
 
     @property
-    def num_entity_closure_dofs(self) -> _typing.List[_typing.List[int]]:
+    def num_entity_closure_dofs(self) -> list[list[int]]:
         """Number of DOFs associated with the closure of each entity."""
         raise NotImplementedError()
 
     @property
-    def entity_closure_dofs(self) -> _typing.List[_typing.List[_typing.List[int]]]:
+    def entity_closure_dofs(self) -> list[list[list[int]]]:
         """DOF numbers associated with the closure of each entity."""
         raise NotImplementedError()
 
@@ -696,12 +696,12 @@ class _ComponentElement(_ElementBase):
         raise NotImplementedError()
 
     @property
-    def reference_topology(self) -> _typing.List[_typing.List[_typing.List[int]]]:
+    def reference_topology(self) -> list[list[list[int]]]:
         """Topology of the reference element."""
         raise NotImplementedError()
 
     @property
-    def reference_geometry(self) -> _npt.NDArray[_np.float64]:
+    def reference_geometry(self) -> _npt.NDArray[np.float64]:
         """Geometry of the reference element."""
         raise NotImplementedError()
 
@@ -794,7 +794,7 @@ class _MixedElement(_ElementBase):
 
     """
 
-    _sub_elements: _typing.List[_ElementBase]
+    _sub_elements: list[_ElementBase]
 
     def __init__(self, sub_elements: _typing.List[_ElementBase]):
         """Initialise the element."""
@@ -827,7 +827,7 @@ class _MixedElement(_ElementBase):
         """Degree of the element."""
         return max((e.degree for e in self._sub_elements), default=-1)
 
-    def tabulate(self, nderivs: int, points: _npt.NDArray[_np.float64]) -> _npt.NDArray[_np.float64]:
+    def tabulate(self, nderivs: int, points: _npt.NDArray[np.float64]) -> _npt.NDArray[np.float64]:
         """Tabulate the basis functions of the element.
 
         Args:
@@ -841,16 +841,16 @@ class _MixedElement(_ElementBase):
         tables = []
         results = [e.tabulate(nderivs, points) for e in self._sub_elements]
         for deriv_tables in zip(*results):
-            new_table = _np.zeros((len(points), self.reference_value_size * self.dim))
+            new_table = np.zeros((len(points), self.reference_value_size * self.dim))
             start = 0
             for e, t in zip(self._sub_elements, deriv_tables):
                 for i in range(0, e.dim, e.reference_value_size):
                     new_table[:, start: start + e.reference_value_size] = t[:, i: i + e.reference_value_size]
                     start += self.reference_value_size
             tables.append(new_table)
-        return _np.asarray(tables, dtype=_np.float64)
+        return np.asarray(tables, dtype=np.float64)
 
-    def get_component_element(self, flat_component: int) -> _typing.Tuple[_ElementBase, int, int]:
+    def get_component_element(self, flat_component: int) -> tuple[_ElementBase, int, int]:
         """Get element that represents a component of the element, and the offset and stride of the component.
 
         Args:
@@ -863,12 +863,12 @@ class _MixedElement(_ElementBase):
         sub_dims = [0] + [e.dim for e in self._sub_elements]
         sub_cmps = [0] + [e.reference_value_size for e in self._sub_elements]
 
-        irange = _np.cumsum(sub_dims)
-        crange = _np.cumsum(sub_cmps)
+        irange = np.cumsum(sub_dims)
+        crange = np.cumsum(sub_cmps)
 
         # Find index of sub element which corresponds to the current
         # flat component
-        component_element_index = _np.where(crange <= flat_component)[0].shape[0] - 1
+        component_element_index = np.where(crange <= flat_component)[0].shape[0] - 1
 
         sub_e = self._sub_elements[component_element_index]
 
@@ -917,7 +917,7 @@ class _MixedElement(_ElementBase):
         return _basix.sobolev_spaces.intersection([e.basix_sobolev_space for e in self._sub_elements])
 
     @property
-    def sub_elements(self) -> _typing.List[_ElementBase]:
+    def sub_elements(self) -> list[_ElementBase]:
         """List of sub elements."""
         return self._sub_elements
 
@@ -932,16 +932,16 @@ class _MixedElement(_ElementBase):
         return sum(e.dim for e in self._sub_elements)
 
     @property
-    def num_entity_dofs(self) -> _typing.List[_typing.List[int]]:
+    def num_entity_dofs(self) -> list[list[int]]:
         """Number of DOFs associated with each entity."""
         data = [e.num_entity_dofs for e in self._sub_elements]
         return [[sum(d[tdim][entity_n] for d in data) for entity_n, _ in enumerate(entities)]
                 for tdim, entities in enumerate(data[0])]
 
     @property
-    def entity_dofs(self) -> _typing.List[_typing.List[_typing.List[int]]]:
+    def entity_dofs(self) -> list[list[list[int]]]:
         """DOF numbers associated with each entity."""
-        dofs: _typing.List[_typing.List[_typing.List[int]]] = [
+        dofs: list[list[list[int]]] = [
             [[] for i in entities]
             for entities in self._sub_elements[0].entity_dofs]
         start_dof = 0
@@ -953,16 +953,16 @@ class _MixedElement(_ElementBase):
         return dofs
 
     @property
-    def num_entity_closure_dofs(self) -> _typing.List[_typing.List[int]]:
+    def num_entity_closure_dofs(self) -> list[list[int]]:
         """Number of DOFs associated with the closure of each entity."""
         data = [e.num_entity_closure_dofs for e in self._sub_elements]
         return [[sum(d[tdim][entity_n] for d in data) for entity_n, _ in enumerate(entities)]
                 for tdim, entities in enumerate(data[0])]
 
     @property
-    def entity_closure_dofs(self) -> _typing.List[_typing.List[_typing.List[int]]]:
+    def entity_closure_dofs(self) -> list[list[list[int]]]:
         """DOF numbers associated with the closure of each entity."""
-        dofs: _typing.List[_typing.List[_typing.List[int]]] = [
+        dofs: list[list[list[int]]] = [
             [[] for i in entities]
             for entities in self._sub_elements[0].entity_closure_dofs]
         start_dof = 0
@@ -984,12 +984,12 @@ class _MixedElement(_ElementBase):
         return "mixed element"
 
     @property
-    def reference_topology(self) -> _typing.List[_typing.List[_typing.List[int]]]:
+    def reference_topology(self) -> list[list[list[int]]]:
         """Topology of the reference element."""
         return self._sub_elements[0].reference_topology
 
     @property
-    def reference_geometry(self) -> _npt.NDArray[_np.float64]:
+    def reference_geometry(self) -> _npt.NDArray[np.float64]:
         """Geometry of the reference element."""
         return self._sub_elements[0].reference_geometry
 
@@ -1030,7 +1030,7 @@ class _MixedElement(_ElementBase):
             pt = _basix.polyset_superset(self.cell_type, pt, e.polyset_type)
         return pt
 
-    def custom_quadrature(self) -> _typing.Tuple[_npt.NDArray[_np.float64], _npt.NDArray[_np.float64]]:
+    def custom_quadrature(self) -> tuple[_npt.NDArray[np.float64], _npt.NDArray[np.float64]]:
         """Return custom quadrature rule or raise a ValueError."""
         custom_q = None
         for e in self._sub_elements:
@@ -1039,7 +1039,7 @@ class _MixedElement(_ElementBase):
                     custom_q = e.custom_quadrature()
                 else:
                     p, w = e.custom_quadrature()
-                    if not _np.allclose(p, custom_q[0]) or not _np.allclose(w, custom_q[1]):
+                    if not np.allclose(p, custom_q[0]) or not np.allclose(w, custom_q[1]):
                         raise ValueError("Subelements of mixed element use different quadrature rules")
         if custom_q is not None:
             return custom_q
@@ -1062,13 +1062,12 @@ class _BlockedElement(_ElementBase):
     but should use the `blocked_element` function instead.
 
     """
-    _block_shape: _typing.Tuple[int, ...]
+    _block_shape: tuple[int, ...]
     _sub_element: _ElementBase
     _block_size: int
 
     def __init__(self, sub_element: _ElementBase, shape: _typing.Tuple[int, ...],
                  symmetry: _typing.Optional[bool] = None):
-        """Initialise the element."""
         if sub_element.reference_value_size != 1:
             raise ValueError("Blocked elements of non-scalar elements are not supported. "
                              "Try using _MixedElement instead.")
@@ -1121,7 +1120,7 @@ class _BlockedElement(_ElementBase):
         """Return a hash."""
         return super().__hash__()
 
-    def tabulate(self, nderivs: int, points: _npt.NDArray[_np.float64]) -> _npt.NDArray[_np.float64]:
+    def tabulate(self, nderivs: int, points: _npt.NDArray[np.float64]) -> _npt.NDArray[np.float64]:
         """Tabulate the basis functions of the element.
 
         Args:
@@ -1138,7 +1137,7 @@ class _BlockedElement(_ElementBase):
         for table in self._sub_element.tabulate(nderivs, points):
             # Repeat sub element horizontally
             assert len(table.shape) == 2
-            new_table = _np.zeros((table.shape[0], *self._block_shape,
+            new_table = np.zeros((table.shape[0], *self._block_shape,
                                    self._block_size * table.shape[1]))
             for i, j in enumerate(_itertools.product(*[range(s) for s in self._block_shape])):
                 if len(j) == 1:
@@ -1148,9 +1147,9 @@ class _BlockedElement(_ElementBase):
                 else:
                     raise NotImplementedError()
             output.append(new_table)
-        return _np.asarray(output, dtype=_np.float64)
+        return np.asarray(output, dtype=np.float64)
 
-    def get_component_element(self, flat_component: int) -> _typing.Tuple[_ElementBase, int, int]:
+    def get_component_element(self, flat_component: int) -> tuple[_ElementBase, int, int]:
         """Get element that represents a component of the element, and the offset and stride of the component.
 
         Args:
@@ -1174,7 +1173,7 @@ class _BlockedElement(_ElementBase):
         return self._block_size
 
     @property
-    def reference_value_shape(self) -> _typing.Tuple[int, ...]:
+    def reference_value_shape(self) -> tuple[int, ...]:
         """Reference value shape of the element basis function."""
         if self._has_symmetry:
             assert len(self._block_shape) == 2 and self._block_shape[0] == self._block_shape[1]
@@ -1187,7 +1186,7 @@ class _BlockedElement(_ElementBase):
         return self._sub_element.basix_sobolev_space
 
     @property
-    def sub_elements(self) -> _typing.List[_ElementBase]:
+    def sub_elements(self) -> list[_ElementBase]:
         """List of sub elements."""
         return [self._sub_element for _ in range(self._block_size)]
 
@@ -1202,12 +1201,12 @@ class _BlockedElement(_ElementBase):
         return self._sub_element.dim * self._block_size
 
     @property
-    def num_entity_dofs(self) -> _typing.List[_typing.List[int]]:
+    def num_entity_dofs(self) -> list[list[int]]:
         """Number of DOFs associated with each entity."""
         return [[j * self._block_size for j in i] for i in self._sub_element.num_entity_dofs]
 
     @property
-    def entity_dofs(self) -> _typing.List[_typing.List[_typing.List[int]]]:
+    def entity_dofs(self) -> list[list[list[int]]]:
         """DOF numbers associated with each entity."""
         # TODO: should this return this, or should it take blocks into
         # account?
@@ -1215,12 +1214,12 @@ class _BlockedElement(_ElementBase):
                  for j in i] for i in self._sub_element.entity_dofs]
 
     @property
-    def num_entity_closure_dofs(self) -> _typing.List[_typing.List[int]]:
+    def num_entity_closure_dofs(self) -> list[list[int]]:
         """Number of DOFs associated with the closure of each entity."""
         return [[j * self._block_size for j in i] for i in self._sub_element.num_entity_closure_dofs]
 
     @property
-    def entity_closure_dofs(self) -> _typing.List[_typing.List[_typing.List[int]]]:
+    def entity_closure_dofs(self) -> list[list[list[int]]]:
         """DOF numbers associated with the closure of each entity."""
         # TODO: should this return this, or should it take blocks into
         # account?
@@ -1238,12 +1237,12 @@ class _BlockedElement(_ElementBase):
         return self._sub_element.family_name
 
     @property
-    def reference_topology(self) -> _typing.List[_typing.List[_typing.List[int]]]:
+    def reference_topology(self) -> list[list[list[int]]]:
         """Topology of the reference element."""
         return self._sub_element.reference_topology
 
     @property
-    def reference_geometry(self) -> _npt.NDArray[_np.float64]:
+    def reference_geometry(self) -> _npt.NDArray[np.float64]:
         """Geometry of the reference element."""
         return self._sub_element.reference_geometry
 
@@ -1317,28 +1316,28 @@ class _BlockedElement(_ElementBase):
         return self._sub_element.polyset_type
 
     @property
-    def _wcoeffs(self) -> _npt.NDArray[_np.float64]:
+    def _wcoeffs(self) -> _npt.NDArray[np.float64]:
         """Coefficients used to define the polynomial set."""
         sub_wc = self._sub_element._wcoeffs
-        wcoeffs = _np.zeros((sub_wc.shape[0] * self._block_size, sub_wc.shape[1] * self._block_size))
+        wcoeffs = np.zeros((sub_wc.shape[0] * self._block_size, sub_wc.shape[1] * self._block_size))
         for i in range(self._block_size):
             wcoeffs[sub_wc.shape[0] * i: sub_wc.shape[0]
                     * (i + 1), sub_wc.shape[1] * i: sub_wc.shape[1] * (i + 1)] = sub_wc
         return wcoeffs
 
     @property
-    def _x(self) -> _typing.List[_typing.List[_npt.NDArray[_np.float64]]]:
+    def _x(self) -> list[list[_npt.NDArray[np.float64]]]:
         """Points used to define interpolation."""
         return self._sub_element._x
 
     @property
-    def _M(self) -> _typing.List[_typing.List[_npt.NDArray[_np.float64]]]:
+    def _M(self) -> list[list[_npt.NDArray[np.float64]]]:
         """Matrices used to define interpolation."""
         M = []
         for M_list in self._sub_element._M:
             M_row = []
             for mat in M_list:
-                new_mat = _np.zeros((mat.shape[0] * self._block_size, mat.shape[1]
+                new_mat = np.zeros((mat.shape[0] * self._block_size, mat.shape[1]
                                      * self._block_size, mat.shape[2], mat.shape[3]))
                 for i in range(self._block_size):
                     new_mat[i * mat.shape[0]: (i + 1) * mat.shape[0],
@@ -1358,7 +1357,7 @@ class _BlockedElement(_ElementBase):
         """
         return self._sub_element.has_tensor_product_factorisation
 
-    def custom_quadrature(self) -> _typing.Tuple[_npt.NDArray[_np.float64], _npt.NDArray[_np.float64]]:
+    def custom_quadrature(self) -> tuple[_npt.NDArray[np.float64], _npt.NDArray[np.float64]]:
         """Return custom quadrature rule or raise a ValueError."""
         return self._sub_element.custom_quadrature()
 
@@ -1376,8 +1375,8 @@ class _BlockedElement(_ElementBase):
 class _QuadratureElement(_ElementBase):
     """A quadrature element."""
 
-    def __init__(self, cell: _basix.CellType, points: _npt.NDArray[_np.float64],
-                 weights: _npt.NDArray[_np.float64], pullback: _AbstractPullback,
+    def __init__(self, cell: _basix.CellType, points: _npt.NDArray[np.float64],
+                 weights: _npt.NDArray[np.float64], pullback: _AbstractPullback,
                  degree: _typing.Optional[int] = None):
         """Initialise the element."""
         self._points = points
@@ -1402,15 +1401,15 @@ class _QuadratureElement(_ElementBase):
             and self._pullback == other._pullback
             and self._points.shape == other._points.shape
             and self._weights.shape == other._weights.shape
-            and _np.allclose(self._points, other._points)
-            and _np.allclose(self._weights, other._weights)
+            and np.allclose(self._points, other._points)
+            and np.allclose(self._weights, other._weights)
         )
 
     def __hash__(self) -> int:
         """Return a hash."""
         return super().__hash__()
 
-    def tabulate(self, nderivs: int, points: _npt.NDArray[_np.float64]) -> _npt.NDArray[_np.float64]:
+    def tabulate(self, nderivs: int, points: _npt.NDArray[np.float64]) -> _npt.NDArray[np.float64]:
         """Tabulate the basis functions of the element.
 
         Args:
@@ -1425,10 +1424,10 @@ class _QuadratureElement(_ElementBase):
 
         if points.shape != self._points.shape:
             raise ValueError("Mismatch of tabulation points and element points.")
-        tables = _np.asarray([_np.eye(points.shape[0], points.shape[0])])
+        tables = np.asarray([np.eye(points.shape[0], points.shape[0])])
         return tables
 
-    def get_component_element(self, flat_component: int) -> _typing.Tuple[_ElementBase, int, int]:
+    def get_component_element(self, flat_component: int) -> tuple[_ElementBase, int, int]:
         """Get element that represents a component of the element, and the offset and stride of the component.
 
         Args:
@@ -1440,7 +1439,7 @@ class _QuadratureElement(_ElementBase):
         """
         return self, 0, 1
 
-    def custom_quadrature(self) -> _typing.Tuple[_npt.NDArray[_np.float64], _npt.NDArray[_np.float64]]:
+    def custom_quadrature(self) -> tuple[_npt.NDArray[np.float64], _npt.NDArray[np.float64]]:
         """Return custom quadrature rule or raise a ValueError."""
         return self._points, self._weights
 
@@ -1455,7 +1454,7 @@ class _QuadratureElement(_ElementBase):
         return self._points.shape[0]
 
     @property
-    def num_entity_dofs(self) -> _typing.List[_typing.List[int]]:
+    def num_entity_dofs(self) -> list[list[int]]:
         """Number of DOFs associated with each entity."""
         dofs = []
         for d in self._entity_counts[:-1]:
@@ -1465,7 +1464,7 @@ class _QuadratureElement(_ElementBase):
         return dofs
 
     @property
-    def entity_dofs(self) -> _typing.List[_typing.List[_typing.List[int]]]:
+    def entity_dofs(self) -> list[list[list[int]]]:
         """DOF numbers associated with each entity."""
         start_dof = 0
         entity_dofs = []
@@ -1478,12 +1477,12 @@ class _QuadratureElement(_ElementBase):
         return entity_dofs
 
     @property
-    def num_entity_closure_dofs(self) -> _typing.List[_typing.List[int]]:
+    def num_entity_closure_dofs(self) -> list[list[int]]:
         """Number of DOFs associated with the closure of each entity."""
         return self.num_entity_dofs
 
     @property
-    def entity_closure_dofs(self) -> _typing.List[_typing.List[_typing.List[int]]]:
+    def entity_closure_dofs(self) -> list[list[list[int]]]:
         """DOF numbers associated with the closure of each entity."""
         return self.entity_dofs
 
@@ -1493,12 +1492,12 @@ class _QuadratureElement(_ElementBase):
         return 0
 
     @property
-    def reference_topology(self) -> _typing.List[_typing.List[_typing.List[int]]]:
+    def reference_topology(self) -> list[list[list[int]]]:
         """Topology of the reference element."""
         raise NotImplementedError()
 
     @property
-    def reference_geometry(self) -> _npt.NDArray[_np.float64]:
+    def reference_geometry(self) -> _npt.NDArray[np.float64]:
         """Geometry of the reference element."""
         raise NotImplementedError()
 
@@ -1606,7 +1605,7 @@ class _RealElement(_ElementBase):
         """Return a hash."""
         return super().__hash__()
 
-    def tabulate(self, nderivs: int, points: _npt.NDArray[_np.float64]) -> _npt.NDArray[_np.float64]:
+    def tabulate(self, nderivs: int, points: _npt.NDArray[np.float64]) -> _npt.NDArray[np.float64]:
         """Tabulate the basis functions of the element.
 
         Args:
@@ -1617,12 +1616,12 @@ class _RealElement(_ElementBase):
             Tabulated basis functions
 
         """
-        out = _np.zeros((nderivs + 1, len(points), self.reference_value_size**2))
+        out = np.zeros((nderivs + 1, len(points), self.reference_value_size**2))
         for v in range(self.reference_value_size):
             out[0, :, self.reference_value_size * v + v] = 1.
         return out
 
-    def get_component_element(self, flat_component: int) -> _typing.Tuple[_ElementBase, int, int]:
+    def get_component_element(self, flat_component: int) -> tuple[_ElementBase, int, int]:
         """Get element that represents a component of the element, and the offset and stride of the component.
 
         Args:
@@ -1676,7 +1675,7 @@ class _RealElement(_ElementBase):
         return 0
 
     @property
-    def num_entity_dofs(self) -> _typing.List[_typing.List[int]]:
+    def num_entity_dofs(self) -> list[list[int]]:
         """Number of DOFs associated with each entity."""
         dofs = []
         for d in self._entity_counts[:-1]:
@@ -1686,7 +1685,7 @@ class _RealElement(_ElementBase):
         return dofs
 
     @property
-    def entity_dofs(self) -> _typing.List[_typing.List[_typing.List[int]]]:
+    def entity_dofs(self) -> list[list[list[int]]]:
         """DOF numbers associated with each entity."""
         start_dof = 0
         entity_dofs = []
@@ -1699,12 +1698,12 @@ class _RealElement(_ElementBase):
         return entity_dofs
 
     @property
-    def num_entity_closure_dofs(self) -> _typing.List[_typing.List[int]]:
+    def num_entity_closure_dofs(self) -> list[list[int]]:
         """Number of DOFs associated with the closure of each entity."""
         return self.num_entity_dofs
 
     @property
-    def entity_closure_dofs(self) -> _typing.List[_typing.List[_typing.List[int]]]:
+    def entity_closure_dofs(self) -> list[list[list[int]]]:
         """DOF numbers associated with the closure of each entity."""
         return self.entity_dofs
 
@@ -1714,12 +1713,12 @@ class _RealElement(_ElementBase):
         return 1
 
     @property
-    def reference_topology(self) -> _typing.List[_typing.List[_typing.List[int]]]:
+    def reference_topology(self) -> list[list[list[int]]]:
         """Topology of the reference element."""
         raise NotImplementedError()
 
     @property
-    def reference_geometry(self) -> _npt.NDArray[_np.float64]:
+    def reference_geometry(self) -> _npt.NDArray[np.float64]:
         """Geometry of the reference element."""
         raise NotImplementedError()
 
@@ -1805,12 +1804,12 @@ def _compute_signature(element: _basix.finite_element.FiniteElement) -> str:
     return signature
 
 
-@_functools.lru_cache()
+@_functools.lru_cache
 def element(family: _typing.Union[_basix.ElementFamily, str], cell: _typing.Union[_basix.CellType, str], degree: int,
             lagrange_variant: _basix.LagrangeVariant = _basix.LagrangeVariant.unset,
             dpc_variant: _basix.DPCVariant = _basix.DPCVariant.unset, discontinuous: bool = False,
-            shape: _typing.Optional[_typing.Tuple[int, ...]] = None,
-            symmetry: _typing.Optional[bool] = None, dtype: _npt.DTypeLike = _np.float64) -> _ElementBase:
+            shape: _typing.Optional[tuple[int, ...]] = None,
+            symmetry: _typing.Optional[bool] = None, dtype: _npt.DTypeLike = np.float64) -> _ElementBase:
     """Create a UFL compatible element using Basix.
 
     Args:
@@ -1825,7 +1824,7 @@ def element(family: _typing.Union[_basix.ElementFamily, str], cell: _typing.Unio
             this can be used to create vector and tensor elements.
         symmetry: Set to ``True`` if the tensor is symmetric. Valid for
             rank 2 elements only.
-        dtype: The data type
+        dtype: Floating point data type.
 
     Returns:
         A finite element.
@@ -1879,7 +1878,7 @@ def element(family: _typing.Union[_basix.ElementFamily, str], cell: _typing.Unio
         return blocked_element(ufl_e, shape=shape, symmetry=symmetry)
 
 
-def enriched_element(elements: _typing.List[_ElementBase],
+def enriched_element(elements: list[_ElementBase],
                      map_type: _typing.Optional[_basix.MapType] = None) -> _ElementBase:
     """Create an UFL compatible enriched element from a list of elements.
 
@@ -1918,7 +1917,7 @@ def enriched_element(elements: _typing.List[_ElementBase],
 
     x = []
     for pts_lists in zip(*[e._x for e in elements]):
-        x.append([_np.concatenate(pts) for pts in zip(*pts_lists)])
+        x.append([np.concatenate(pts) for pts in zip(*pts_lists)])
     M = []
     for M_lists in zip(*[e._M for e in elements]):
         M_row = []
@@ -1926,7 +1925,7 @@ def enriched_element(elements: _typing.List[_ElementBase],
             ndofs = sum(mat.shape[0] for mat in M_parts)
             npts = sum(mat.shape[2] for mat in M_parts)
             deriv_dim = max(mat.shape[3] for mat in M_parts)
-            new_M = _np.zeros((ndofs, vsize, npts, deriv_dim))
+            new_M = np.zeros((ndofs, vsize, npts, deriv_dim))
             pt = 0
             dof = 0
             for i, mat in enumerate(M_parts):
@@ -1937,7 +1936,7 @@ def enriched_element(elements: _typing.List[_ElementBase],
         M.append(M_row)
 
     dim = sum(e.dim for e in elements)
-    wcoeffs = _np.zeros((dim, _basix.polynomials.dim(_basix.PolynomialType.legendre, ct, hd) * vsize))
+    wcoeffs = np.zeros((dim, _basix.polynomials.dim(_basix.PolynomialType.legendre, ct, hd) * vsize))
     row = 0
     for e in elements:
         wcoeffs[row: row + e.dim, :] = _basix.polynomials.reshape_coefficients(
@@ -1949,11 +1948,11 @@ def enriched_element(elements: _typing.List[_ElementBase],
 
 
 def custom_element(
-    cell_type: _basix.CellType, reference_value_shape: _typing.Union[_typing.List[int], _typing.Tuple[int, ...]],
-    wcoeffs: _npt.NDArray[_np.float64], x: _typing.List[_typing.List[_npt.NDArray[_np.float64]]],
-    M: _typing.List[_typing.List[_npt.NDArray[_np.float64]]], interpolation_nderivs: int, map_type: _basix.MapType,
+    cell_type: _basix.CellType, value_shape: _typing.Union[list[int], tuple[int, ...]],
+    wcoeffs: _npt.NDArray[np.float64], x: list[list[_npt.NDArray[np.float64]]],
+    M: list[list[_npt.NDArray[np.float64]]], interpolation_nderivs: int, map_type: _basix.MapType,
     sobolev_space: _basix.SobolevSpace, discontinuous: bool, embedded_subdegree: int, embedded_superdegree: int,
-    polyset_type: _basix.PolysetType = _basix.PolysetType.standard
+    polyset_type: _basix.PolysetType = _basix.PolysetType.standard,
 ) -> _ElementBase:
     """Create a UFL compatible custom Basix element.
 
@@ -2003,7 +2002,7 @@ def custom_element(
     return _BasixElement(e)
 
 
-def mixed_element(elements: _typing.List[_ElementBase]) -> _ElementBase:
+def mixed_element(elements: list[_ElementBase]) -> _ElementBase:
     """Create a UFL compatible mixed element from a list of elements.
 
     Args:
@@ -2017,11 +2016,11 @@ def mixed_element(elements: _typing.List[_ElementBase]) -> _ElementBase:
 
 
 def quadrature_element(cell: _typing.Union[str, _basix.CellType],
-                       reference_value_shape: _typing.Tuple[int, ...] = (),
+                       reference_value_shape: tuple[int, ...] = (),
                        scheme: _typing.Optional[str] = None,
                        degree: _typing.Optional[int] = None,
-                       points: _typing.Optional[_npt.NDArray[_np.float64]] = None,
-                       weights: _typing.Optional[_npt.NDArray[_np.float64]] = None,
+                       points: _typing.Optional[_npt.NDArray[np.float64]] = None,
+                       weights: _typing.Optional[_npt.NDArray[np.float64]] = None,
                        pullback: _AbstractPullback = _ufl.identity_pullback) -> _ElementBase:
     """Create a quadrature element.
 
@@ -2064,7 +2063,7 @@ def quadrature_element(cell: _typing.Union[str, _basix.CellType],
 
 
 def real_element(cell: _typing.Union[_basix.CellType, str],
-                 reference_value_shape: _typing.Tuple[int, ...]) -> _ElementBase:
+                 reference_value_shape: tuple[int, ...]) -> _ElementBase:
     """Create a real element.
 
     Args:
@@ -2081,9 +2080,9 @@ def real_element(cell: _typing.Union[_basix.CellType, str],
     return _RealElement(cell, reference_value_shape)
 
 
-@_functools.lru_cache()
+@_functools.lru_cache
 def blocked_element(
-    sub_element: _ElementBase, shape: _typing.Tuple[int, ...],
+    sub_element: _ElementBase, shape: tuple[int, ...],
     symmetry: _typing.Optional[bool] = None
 ) -> _ElementBase:
     """Create a UFL compatible blocked element.

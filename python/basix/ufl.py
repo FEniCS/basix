@@ -81,12 +81,12 @@ class _ElementBase(_AbstractFiniteElement):
     types defined in this file.
     """
 
-    def __init__(self, repr: str, cellname: str, value_shape: _typing.Tuple[int, ...],
+    def __init__(self, repr: str, cellname: str, reference_value_shape: _typing.Tuple[int, ...],
                  degree: int = -1, pullback: _AbstractPullback = _UndefinedPullback()):
         """Initialise the element."""
         self._repr = repr
         self._cellname = cellname
-        self._value_shape = value_shape
+        self._reference_value_shape = reference_value_shape
         self._degree = degree
         self._pullback = pullback
 
@@ -153,7 +153,7 @@ class _ElementBase(_AbstractFiniteElement):
     @property
     def reference_value_shape(self) -> _typing.Tuple[int, ...]:
         """Return the shape of the value space on the reference cell."""
-        return self._value_shape
+        return self._reference_value_shape
 
     @property
     def sub_elements(self) -> _typing.List[_AbstractFiniteElement]:
@@ -624,18 +624,18 @@ class _ComponentElement(_ElementBase):
         tables = self._element.tabulate(nderivs, points)
         output = []
         for tbl in tables:
-            shape = (points.shape[0],) + self._element._value_shape + (-1,)
+            shape = (points.shape[0],) + self._element._reference_value_shape + (-1,)
             tbl = tbl.reshape(shape)
-            if len(self._element._value_shape) == 0:
+            if len(self._element._reference_value_shape) == 0:
                 output.append(tbl)
-            elif len(self._element._value_shape) == 1:
+            elif len(self._element._reference_value_shape) == 1:
                 output.append(tbl[:, self._component, :])
-            elif len(self._element._value_shape) == 2:
+            elif len(self._element._reference_value_shape) == 2:
                 if isinstance(self._element, _BlockedElement) and self._element._has_symmetry:
                     # FIXME: check that this behaves as expected
                     output.append(tbl[:, self._component, :])
                 else:
-                    vs0 = self._element._value_shape[0]
+                    vs0 = self._element._reference_value_shape[0]
                     output.append(tbl[:, self._component // vs0, self._component % vs0, :])
             else:
                 raise NotImplementedError()
@@ -1179,7 +1179,7 @@ class _BlockedElement(_ElementBase):
         if self._has_symmetry:
             assert len(self._block_shape) == 2 and self._block_shape[0] == self._block_shape[1]
             return (self._block_shape[0] * (self._block_shape[0] + 1) // 2, )
-        return self._value_shape
+        return self._reference_value_shape
 
     @property
     def basix_sobolev_space(self):
@@ -1581,12 +1581,12 @@ class _QuadratureElement(_ElementBase):
 class _RealElement(_ElementBase):
     """A real element."""
 
-    def __init__(self, cell: _basix.CellType, value_shape: _typing.Tuple[int, ...]):
+    def __init__(self, cell: _basix.CellType, reference_value_shape: _typing.Tuple[int, ...]):
         """Initialise the element."""
         self._cell_type = cell
         tdim = len(_basix.topology(cell)) - 1
 
-        super().__init__(f"RealElement({cell.name}, {value_shape})", cell.name, value_shape, 0)
+        super().__init__(f"RealElement({cell.name}, {reference_value_shape})", cell.name, reference_value_shape, 0)
 
         self._entity_counts = []
         if tdim >= 1:
@@ -1600,7 +1600,7 @@ class _RealElement(_ElementBase):
     def __eq__(self, other) -> bool:
         """Check if two elements are equal."""
         return isinstance(other, _RealElement) and (self._cell_type == other._cell_type
-                                                    and self._value_shape == other._value_shape)
+                                                    and self._reference_value_shape == other._reference_value_shape)
 
     def __hash__(self) -> int:
         """Return a hash."""
@@ -1948,17 +1948,18 @@ def enriched_element(elements: _typing.List[_ElementBase],
                           map_type, ss, discontinuous, hcd, hd, ptype)
 
 
-def custom_element(cell_type: _basix.CellType, value_shape: _typing.Union[_typing.List[int], _typing.Tuple[int, ...]],
-                   wcoeffs: _npt.NDArray[_np.float64], x: _typing.List[_typing.List[_npt.NDArray[_np.float64]]],
-                   M: _typing.List[_typing.List[_npt.NDArray[_np.float64]]], interpolation_nderivs: int,
-                   map_type: _basix.MapType, sobolev_space: _basix.SobolevSpace, discontinuous: bool,
-                   embedded_subdegree: int, embedded_superdegree: int,
-                   polyset_type: _basix.PolysetType = _basix.PolysetType.standard) -> _ElementBase:
+def custom_element(
+    cell_type: _basix.CellType, reference_value_shape: _typing.Union[_typing.List[int], _typing.Tuple[int, ...]],
+    wcoeffs: _npt.NDArray[_np.float64], x: _typing.List[_typing.List[_npt.NDArray[_np.float64]]],
+    M: _typing.List[_typing.List[_npt.NDArray[_np.float64]]], interpolation_nderivs: int, map_type: _basix.MapType,
+    sobolev_space: _basix.SobolevSpace, discontinuous: bool, embedded_subdegree: int, embedded_superdegree: int,
+    polyset_type: _basix.PolysetType = _basix.PolysetType.standard
+) -> _ElementBase:
     """Create a UFL compatible custom Basix element.
 
     Args:
         cell_type: The cell type
-        value_shape: The value shape of the element
+        reference_value_shape: The reference value shape of the element
         wcoeffs: Matrices for the kth value index containing the
             expansion coefficients defining a polynomial basis spanning
             the polynomial space for this element. Shape is
@@ -1987,7 +1988,7 @@ def custom_element(cell_type: _basix.CellType, value_shape: _typing.Union[_typin
     """
     e = _basix.create_custom_element(
         cell_type,
-        list(value_shape),
+        list(reference_value_shape),
         wcoeffs,
         x,
         M,
@@ -2016,7 +2017,7 @@ def mixed_element(elements: _typing.List[_ElementBase]) -> _ElementBase:
 
 
 def quadrature_element(cell: _typing.Union[str, _basix.CellType],
-                       value_shape: _typing.Tuple[int, ...] = (),
+                       reference_value_shape: _typing.Tuple[int, ...] = (),
                        scheme: _typing.Optional[str] = None,
                        degree: _typing.Optional[int] = None,
                        points: _typing.Optional[_npt.NDArray[_np.float64]] = None,
@@ -2029,7 +2030,7 @@ def quadrature_element(cell: _typing.Union[str, _basix.CellType],
 
     Args:
         cell: Cell to create the element on.
-        value_shape: Value shape of the element.
+        reference_value_shape: Value shape of the element.
         scheme: Quadrature scheme.
         degree: Quadrature degree.
         points: Quadrature points.
@@ -2056,19 +2057,19 @@ def quadrature_element(cell: _typing.Union[str, _basix.CellType],
     assert weights is not None
 
     e = _QuadratureElement(cell, points, weights, pullback, degree)
-    if value_shape == ():
+    if reference_value_shape == ():
         return e
     else:
-        return _BlockedElement(e, value_shape)
+        return _BlockedElement(e, reference_value_shape)
 
 
 def real_element(cell: _typing.Union[_basix.CellType, str],
-                 value_shape: _typing.Tuple[int, ...]) -> _ElementBase:
+                 reference_value_shape: _typing.Tuple[int, ...]) -> _ElementBase:
     """Create a real element.
 
     Args:
         cell: Cell to create the element on.
-        value_shape: Value shape of the element.
+        reference_value_shape: Value shape of the element.
 
     Returns:
         A 'real' finite element.
@@ -2077,7 +2078,7 @@ def real_element(cell: _typing.Union[_basix.CellType, str],
     if isinstance(cell, str):
         cell = _basix.cell.string_to_type(cell)
 
-    return _RealElement(cell, value_shape)
+    return _RealElement(cell, reference_value_shape)
 
 
 @_functools.lru_cache()

@@ -81,7 +81,7 @@ class _ElementBase(_AbstractFiniteElement):
     types defined in this file.
     """
 
-    def __init__(self, repr: str, cellname: str, reference_value_shape: _typing.Tuple[int, ...],
+    def __init__(self, repr: str, cellname: str, reference_value_shape: tuple[int, ...],
                  degree: int = -1, pullback: _AbstractPullback = _UndefinedPullback()):
         """Initialise the element."""
         self._repr = repr
@@ -796,7 +796,7 @@ class _MixedElement(_ElementBase):
 
     _sub_elements: list[_ElementBase]
 
-    def __init__(self, sub_elements: _typing.List[_ElementBase]):
+    def __init__(self, sub_elements: list[_ElementBase]):
         """Initialise the element."""
         assert len(sub_elements) > 0
         self._sub_elements = sub_elements
@@ -1066,7 +1066,7 @@ class _BlockedElement(_ElementBase):
     _sub_element: _ElementBase
     _block_size: int
 
-    def __init__(self, sub_element: _ElementBase, shape: _typing.Tuple[int, ...],
+    def __init__(self, sub_element: _ElementBase, shape: tuple[int, ...],
                  symmetry: _typing.Optional[bool] = None):
         if sub_element.reference_value_size != 1:
             raise ValueError("Blocked elements of non-scalar elements are not supported. "
@@ -1580,7 +1580,7 @@ class _QuadratureElement(_ElementBase):
 class _RealElement(_ElementBase):
     """A real element."""
 
-    def __init__(self, cell: _basix.CellType, value_shape: _typing.Tuple[int, ...]):
+    def __init__(self, cell: _basix.CellType, value_shape: tuple[int, ...]):
         """Initialise the element."""
         self._cell_type = cell
         tdim = len(_basix.topology(cell)) - 1

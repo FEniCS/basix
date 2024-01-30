@@ -21,6 +21,7 @@
 # Modified by Marie E. Rognes, 2010
 # Modified by Lizao Li, 2016
 
+import random
 import numpy as np
 import pytest
 
@@ -30,7 +31,7 @@ import basix.ufl
 
 def random_point(cell):
     vertices = basix.geometry(basix.cell.string_to_type(cell))
-    w = np.random.random(len(vertices))
+    w = [random.random() for _ in vertices]
     return sum(v * i for v, i in zip(vertices, w)) / sum(w)
 
 

@@ -38,7 +38,8 @@ def random_point(cell):
     ("Lagrange", "triangle", 1, 3), ("Lagrange", "triangle", 2, 6), ("Lagrange", "triangle", 3, 10),
     ("DG", "triangle", 1, 3), ("DG", "triangle", 2, 6), ("DG", "triangle", 3, 10),
     ("Lagrange", "quadrilateral", 1, 4), ("Lagrange", "quadrilateral", 2, 9), ("Lagrange", "quadrilateral", 3, 16),
-    ("Regge", "triangle", 0, 3), ("Regge", "triangle", 1, 9), ("Regge", "triangle", 2, 18), ("Regge", "triangle", 3, 30),
+    ("Regge", "triangle", 0, 3), ("Regge", "triangle", 1, 9), ("Regge", "triangle", 2, 18),
+    ("Regge", "triangle", 3, 30),
     ("HHJ", "triangle", 0, 3), ("HHJ", "triangle", 1, 9), ("HHJ", "triangle", 2, 18), ("HHJ", "triangle", 3, 30),
 ])
 def test_dimension(family, cell, degree, dim):
@@ -55,22 +56,24 @@ def test_dimension(family, cell, degree, dim):
     ("Lagrange", "hexahedron", 1, [
         lambda x: (1 - x[0]) * (1 - x[1]) * (1 - x[2]), lambda x: x[0] * (1 - x[1]) * (1 - x[2]),
         lambda x: (1 - x[0]) * x[1] * (1 - x[2]), lambda x: x[0] * x[1] * (1 - x[2]),
-        lambda x: (1 - x[0]) * (1 - x[1]) * x[2], lambda x: x[0] * (1 - x[1]) * x[2], lambda x: (1 - x[0]) * x[1] * x[2],
-        lambda x: x[0] * x[1] * x[2]]),
+        lambda x: (1 - x[0]) * (1 - x[1]) * x[2], lambda x: x[0] * (1 - x[1]) * x[2],
+        lambda x: (1 - x[0]) * x[1] * x[2], lambda x: x[0] * x[1] * x[2]]),
     ("Brezzi-Douglas-Marini", "triangle", 1, [
         lambda x: (-x[0], -x[1]), lambda x: (3**0.5 * x[0], -3**0.5 * x[1]), lambda x: (x[0] - 1, x[1]),
         lambda x: (3**0.5 * (1 - x[0] - 2*x[1]), 3**0.5 * x[1]), lambda x: (-x[0], 1-x[1]),
         lambda x: (-3**0.5 * x[0], 3**0.5 * (2*x[0] + x[1] - 1))]),
-    ("Raviart-Thomas", "triangle", 1, [lambda x: (-x[0], -x[1]), lambda x: (x[0] - 1, x[1]), lambda x: (-x[0], 1 - x[1])]),
+    ("Raviart-Thomas", "triangle", 1, [lambda x: (-x[0], -x[1]), lambda x: (x[0] - 1, x[1]),
+                                       lambda x: (-x[0], 1 - x[1])]),
     ("Raviart-Thomas", "tetrahedron", 1, [
         lambda x: (2 ** 0.5 * x[0], 2 ** 0.5 * x[1], 2 ** 0.5 * x[2]),
         lambda x: (2 ** 0.5 - 2 ** 0.5 * x[0], -2 ** 0.5 * x[1], -2 ** 0.5 * x[2]),
         lambda x: (2 ** 0.5 * x[0], 2 ** 0.5 * x[1] - 2 ** 0.5, 2 ** 0.5 * x[2]),
         lambda x: (-2 ** 0.5 * x[0], -2 ** 0.5 * x[1], 2 ** 0.5 - 2 ** 0.5 * x[2])]),
     ("N1curl", "triangle", 1, [lambda x: (-x[1], x[0]), lambda x: (x[1], 1 - x[0]), lambda x: (1.0 - x[1], x[0])]),
-    ("N1curl", "tetrahedron", 1, [lambda x: (0.0, -x[2], x[1]), lambda x: (-x[2], 0.0, x[0]), lambda x: (-x[1], x[0], 0.0),
-                                  lambda x: (x[2], x[2], 1.0 - x[0] - x[1]), lambda x: (x[1], 1.0 - x[0] - x[2], x[1]),
-                                  lambda x: (1.0 - x[1] - x[2], x[0], x[0])]),
+    ("N1curl", "tetrahedron", 1, [
+        lambda x: (0.0, -x[2], x[1]), lambda x: (-x[2], 0.0, x[0]), lambda x: (-x[1], x[0], 0.0),
+        lambda x: (x[2], x[2], 1.0 - x[0] - x[1]), lambda x: (x[1], 1.0 - x[0] - x[2], x[1]),
+        lambda x: (1.0 - x[1] - x[2], x[0], x[0])]),
 ])
 def test_values(family, cell, degree, functions):
     # Create element

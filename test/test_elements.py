@@ -22,6 +22,7 @@
 # Modified by Lizao Li, 2016
 
 import random
+
 import numpy as np
 import pytest
 

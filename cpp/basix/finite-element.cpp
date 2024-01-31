@@ -419,6 +419,7 @@ FiniteElement<T> basix::create_tp_element(cell::type cell, int degree,
                            dof_ordering);
 }
 //-----------------------------------------------------------------------------
+template basix::FiniteElement<double>
 basix::create_tp_element(cell::type, int, element::lagrange_variant, bool);
 template basix::FiniteElement<float>
 basix::create_tp_element(cell::type, int, element::lagrange_variant, bool);

@@ -322,6 +322,108 @@ basix::create_element(element::family, cell::type, int,
                       std::vector<int>);
 //-----------------------------------------------------------------------------
 template <std::floating_point T>
+FiniteElement<T> basix::create_tp_element(cell::type cell, int degree,
+                                          element::lagrange_variant lvariant,
+                                          bool discontinuous)
+{
+  std::vector<int> dof_ordering;
+  std::vector<int> perm;
+
+  if (cell == cell::type::quadrilateral)
+  {
+    perm.push_back(0);
+    if (degree > 0)
+    {
+      int n = degree - 1;
+      perm.push_back(2);
+      for (int i = 0; i < n; ++i)
+        perm.push_back(4 + n + i);
+      perm.push_back(1);
+      perm.push_back(3);
+      for (int i = 0; i < n; ++i)
+        perm.push_back(4 + 2 * n + i);
+      for (int i = 0; i < n; ++i)
+      {
+        perm.push_back(4 + i);
+        perm.push_back(4 + 3 * n + i);
+        for (int j = 0; j < n; ++j)
+          perm.push_back(4 + i + (4 + j) * n);
+      }
+    }
+    assert(perm.size() == (degree + 1) * (degree + 1));
+  }
+  else if (cell == cell::type::hexahedron)
+  {
+    perm.push_back(0);
+    if (degree > 0)
+    {
+      int n = degree - 1;
+      perm.push_back(4);
+      for (int i = 0; i < n; ++i)
+        perm.push_back(8 + 2 * n + i);
+      perm.push_back(2);
+      perm.push_back(6);
+      for (int i = 0; i < n; ++i)
+        perm.push_back(8 + 6 * n + i);
+      for (int i = 0; i < n; ++i)
+      {
+        perm.push_back(8 + n + i);
+        perm.push_back(8 + 9 * n + i);
+        for (int j = 0; j < n; ++j)
+          perm.push_back(8 + 12 * n + 2 * n * n + i + n * j);
+      }
+      perm.push_back(1);
+      perm.push_back(5);
+      for (int i = 0; i < n; ++i)
+        perm.push_back(8 + 4 * n + i);
+      perm.push_back(3);
+      perm.push_back(7);
+      for (int i = 0; i < n; ++i)
+        perm.push_back(8 + 7 * n + i);
+      for (int i = 0; i < n; ++i)
+      {
+        perm.push_back(8 + 3 * n + i);
+        perm.push_back(8 + 10 * n + i);
+        for (int j = 0; j < n; ++j)
+          perm.push_back(8 + 12 * n + 3 * n * n + i + n * j);
+      }
+      for (int i = 0; i < n; ++i)
+      {
+        perm.push_back(8 + i);
+        perm.push_back(8 + 8 * n + i);
+        for (int j = 0; j < n; ++j)
+          perm.push_back(8 + 12 * n + n * n + i + n * j);
+        perm.push_back(8 + 5 * n + i);
+        perm.push_back(8 + 11 * n + i);
+        for (int j = 0; j < n; ++j)
+          perm.push_back(8 + 12 * n + 4 * n * n + i + n * j);
+        for (int j = 0; j < n; ++j)
+        {
+          perm.push_back(8 + 12 * n + i + n * j);
+          perm.push_back(8 + 12 * n + 5 * n * n + i + n * j);
+          for (int k = 0; k < n; ++k)
+            perm.push_back(8 + 12 * n + 6 * n * n + i + n * j + n * n * k);
+        }
+      }
+    }
+    assert(perm.size() == (degree + 1) * (degree + 1) * (degree + 1));
+  }
+  else
+    throw std::runtime_error("Invalid celltype in create_tp_element");
+
+  dof_ordering.resize(perm.size());
+  for (int i = 0; i < perm.size(); ++i)
+    dof_ordering[perm[i]] = i;
+  return create_element<T>(element::family::P, cell, degree, lvariant,
+                           element::dpc_variant::unset, discontinuous,
+                           dof_ordering);
+}
+//-----------------------------------------------------------------------------
+basix::create_tp_element(cell::type, int, element::lagrange_variant, bool);
+template basix::FiniteElement<float>
+basix::create_tp_element(cell::type, int, element::lagrange_variant, bool);
+//-----------------------------------------------------------------------------
+template <std::floating_point T>
 std::tuple<std::array<std::vector<std::vector<T>>, 4>,
            std::array<std::vector<std::array<std::size_t, 2>>, 4>,
            std::array<std::vector<std::vector<T>>, 4>,

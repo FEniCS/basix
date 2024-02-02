@@ -23,6 +23,8 @@
 #include <limits>
 #include <numeric>
 
+#include <iostream>
+
 #define str_macro(X) #X
 #define str(X) str_macro(X)
 
@@ -993,6 +995,51 @@ bool FiniteElement<F>::operator==(const FiniteElement& e) const
            and dpc_variant() == e.dpc_variant() and map_type() == e.map_type()
            and sobolev_space() == e.sobolev_space()
            and dof_ordering() == e.dof_ordering();
+  }
+}
+//-----------------------------------------------------------------------------
+template <std::floating_point F>
+int FiniteElement<F>::hash() const
+{
+  int dof_ordering_hash = 0;
+  for (std::size_t i = 0; i < dof_ordering().size(); ++i)
+  {
+    dof_ordering_hash *= 53;
+    dof_ordering_hash += (dof_ordering()[i] - i);
+    dof_ordering_hash %= 1024;
+  }
+  if (family() == element::family::custom)
+  {
+    int coeff_hash = 0;
+    for (auto i : _coeffs.first)
+    {
+      coeff_hash *= 53;
+      coeff_hash += int(i * 10000);
+      coeff_hash %= 1024;
+    }
+    std::vector<int> primes = {2, 3, 5, 7, 11};
+    int vs_hash = 0;
+    for (std::size_t i = 0; i < value_shape().size(); ++i)
+    {
+      vs_hash += pow(primes[i], value_shape()[i]);
+    }
+    return pow(2, static_cast<int>(family())) * pow(3, dof_ordering_hash % 16)
+           * pow(5, coeff_hash % 16) * pow(7, static_cast<int>(cell_type()))
+           * pow(11, embedded_superdegree()) * pow(13, embedded_subdegree())
+           * pow(17, static_cast<int>(lagrange_variant()))
+           * pow(19, static_cast<int>(dpc_variant()))
+           * pow(23, static_cast<int>(sobolev_space()))
+           * pow(29, static_cast<int>(map_type()))
+           * pow(31, static_cast<int>(vs_hash));
+  }
+  else
+  {
+    return pow(2, static_cast<int>(family())) * pow(3, dof_ordering_hash % 16)
+           * pow(5, static_cast<int>(cell_type())) * pow(7, degree())
+           * pow(11, static_cast<int>(lagrange_variant()))
+           * pow(13, static_cast<int>(dpc_variant()))
+           * pow(17, static_cast<int>(sobolev_space()))
+           * pow(19, static_cast<int>(map_type()));
   }
 }
 //-----------------------------------------------------------------------------

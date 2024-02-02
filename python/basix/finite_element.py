@@ -12,14 +12,15 @@ from basix._basixcpp import FiniteElement_float64 as _FiniteElement_float64
 from basix._basixcpp import LagrangeVariant as _LV
 from basix._basixcpp import create_custom_element as _create_custom_element
 from basix._basixcpp import create_element as _create_element
+from basix._basixcpp import create_tp_element as _create_tp_element
 from basix.cell import CellType
 from basix.maps import MapType
 from basix.polynomials import PolysetType
 from basix.sobolev_spaces import SobolevSpace
 from basix.utils import Enum
 
-__all__ = ["FiniteElement", "create_element", "create_custom_element", "string_to_family",
-           "string_to_lagrange_variant", "string_to_dpc_variant"]
+__all__ = ["FiniteElement", "create_element", "create_custom_element", "create_tp_element",
+           "string_to_family", "string_to_lagrange_variant", "string_to_dpc_variant"]
 
 
 class ElementFamily(Enum):
@@ -309,9 +310,7 @@ class FiniteElement:
         """
         return self._e.entity_transformations()
 
-    def get_tensor_product_representation(self) -> list[
-        tuple[list["FiniteElement"], list[int]]
-    ]:
+    def get_tensor_product_representation(self) -> list[list["FiniteElement"]]:
         """Get the tensor product representation of this element.
 
         Raises an exception if no such factorisation exists.
@@ -328,7 +327,7 @@ class FiniteElement:
             The tensor product representation
         """
         factors = self._e.get_tensor_product_representation()
-        return [([FiniteElement(e) for e in elements], perm) for elements, perm in factors]
+        return [[FiniteElement(e) for e in elements] for elements in factors]
 
     @property
     def degree(self) -> int:
@@ -576,6 +575,33 @@ def create_element(family: ElementFamily, celltype: CellType, degree: int,
     return FiniteElement(_create_element(
         family.value, celltype.value, degree, lagrange_variant.value, dpc_variant.value,
         discontinuous, dof_ordering, np.dtype(dtype).char))
+
+
+def create_tp_element(family: ElementFamily, celltype: CellType, degree: int,
+                      lagrange_variant: LagrangeVariant = LagrangeVariant.unset,
+                      dpc_variant: DPCVariant = DPCVariant.unset,
+                      discontinuous: bool = False,
+                      dtype: npt.DTypeLike = np.float64) -> FiniteElement:
+    """Create a finite element with tensor product ordering.
+
+    Args:
+        family: Finite element family.
+        celltype: Reference cell type that the element is defined on
+        degree: Polynomial degree of the element.
+        lagrange_variant: Lagrange variant type.
+        dpc_variant: DPC variant type.
+        discontinuous: If `True` element is discontinuous. The
+            discontinuous element will have the same DOFs as a
+            continuous element, but the DOFs will all be associated with
+            the interior of the cell.
+        dtype: Element scalar type.
+
+    Returns:
+        A finite element.
+    """
+    return FiniteElement(_create_tp_element(
+        family.value, celltype.value, degree, lagrange_variant.value, dpc_variant.value,
+        discontinuous, np.dtype(dtype).char))
 
 
 def create_custom_element(cell_type: CellType, value_shape, wcoeffs, x, M, interpolation_nderivs: int, map_type,

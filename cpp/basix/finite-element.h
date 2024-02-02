@@ -312,24 +312,20 @@ public:
   /// polymonial set
   /// @param[in] lvariant The Lagrange variant of the element
   /// @param[in] dvariant The DPC variant of the element
-  /// @param[in] tensor_factors The factors in the tensor product
-  /// representation of this element
   /// @param[in] dof_ordering DOF reordering: a mapping from the
   /// reference order to a new permuted order
-  FiniteElement(
-      element::family family, cell::type cell_type, polyset::type poly_type,
-      int degree, const std::vector<std::size_t>& value_shape,
-      mdspan_t<const F, 2> wcoeffs,
-      const std::array<std::vector<mdspan_t<const F, 2>>, 4>& x,
-      const std::array<std::vector<mdspan_t<const F, 4>>, 4>& M,
-      int interpolation_nderivs, maps::type map_type,
-      sobolev::space sobolev_space, bool discontinuous, int embedded_subdegree,
-      int embedded_superdegree, element::lagrange_variant lvariant,
-      element::dpc_variant dvariant,
-      std::vector<std::tuple<std::vector<FiniteElement>, std::vector<int>>>
-          tensor_factors
-      = {},
-      std::vector<int> dof_ordering = {});
+  FiniteElement(element::family family, cell::type cell_type,
+                polyset::type poly_type, int degree,
+                const std::vector<std::size_t>& value_shape,
+                mdspan_t<const F, 2> wcoeffs,
+                const std::array<std::vector<mdspan_t<const F, 2>>, 4>& x,
+                const std::array<std::vector<mdspan_t<const F, 4>>, 4>& M,
+                int interpolation_nderivs, maps::type map_type,
+                sobolev::space sobolev_space, bool discontinuous,
+                int embedded_subdegree, int embedded_superdegree,
+                element::lagrange_variant lvariant,
+                element::dpc_variant dvariant,
+                std::vector<int> dof_ordering = {});
 
   /// Copy constructor
   FiniteElement(const FiniteElement& element) = default;
@@ -1101,15 +1097,15 @@ public:
   /// Get the tensor product representation of this element, or throw an
   /// error if no such factorisation exists.
   ///
-  /// The tensor product representation will be a vector of tuples. Each
-  /// tuple contains a vector of finite elements, and a vector of
+  /// The tensor product representation will be a vector of vectors of finite
+  /// elements. Each tuple contains a vector of finite elements, and a vector of
   /// integers. The vector of finite elements gives the elements on an
   /// interval that appear in the tensor product representation. The
   /// vector of integers gives the permutation between the numbering of
   /// the tensor product DOFs and the number of the DOFs of this Basix
   /// element.
   /// @return The tensor product representation
-  std::vector<std::tuple<std::vector<FiniteElement<F>>, std::vector<int>>>
+  std::vector<std::vector<FiniteElement<F>>>
   get_tensor_product_representation() const
   {
     if (!has_tensor_product_factorisation())
@@ -1266,14 +1262,6 @@ private:
   // The dual matrix
   std::pair<std::vector<F>, std::array<std::size_t, 2>> _dual_matrix;
 
-  // Tensor product representation
-  // Entries of tuple are (list of elements on an interval, permutation
-  // of DOF numbers)
-  // @todo: For vector-valued elements, a tensor product type and a
-  // scaling factor may additionally be needed.
-  std::vector<std::tuple<std::vector<FiniteElement>, std::vector<int>>>
-      _tensor_factors;
-
   // Dof reordering for different element dof layout compatibility.
   // The reference basix layout is ordered by entity, i.e. dofs on
   // vertices, followed by edges, faces, then internal dofs.
@@ -1281,6 +1269,13 @@ private:
   // for a P2 triangle, _dof_ordering=[0 3 5 1 2 4] will place
   // dofs 0, 3, 5 on the vertices and 1, 2, 4, on the edges.
   std::vector<int> _dof_ordering;
+
+  // Tensor product representation
+  // Entries of tuple are (list of elements on an interval, permutation
+  // of DOF numbers)
+  // @todo: For vector-valued elements, a tensor product type and a
+  // scaling factor may additionally be needed.
+  std::vector<std::vector<FiniteElement>> _tensor_factors;
 
   // Is the interpolation matrix an identity?
   bool _interpolation_is_identity;
@@ -1351,20 +1346,56 @@ FiniteElement<T> create_element(element::family family, cell::type cell,
                                 bool discontinuous,
                                 std::vector<int> dof_ordering = {});
 
+/// Get the tensor product DOF ordering for an element
+/// @param[in] family The element family
+/// @param[in] cell The reference cell type that the element is defined on.
+/// Currently limited to quadrilateral or hexahedron.
+/// @param[in] degree The degree of the element
+/// @param[in] lvariant The variant of Lagrange to use
+/// @param[in] dvariant The variant of DPC to use
+/// @param[in] discontinuous Indicates whether the element is discontinuous
+/// between cells points of the element. The discontinuous element will have the
+/// same DOFs, but they will all be associated with the interior of the cell.
+/// @return A finite element
+std::vector<int> tp_dof_ordering(element::family family, cell::type cell,
+                                 int degree, element::lagrange_variant lvariant,
+                                 element::dpc_variant dvariant,
+                                 bool discontinuous);
+
+/// Get the tensor factors of an element
+/// @param[in] family The element family
+/// @param[in] cell The reference cell type that the element is defined on.
+/// Currently limited to quadrilateral or hexahedron.
+/// @param[in] degree The degree of the element
+/// @param[in] lvariant The variant of Lagrange to use
+/// @param[in] dvariant The variant of DPC to use
+/// @param[in] discontinuous Indicates whether the element is discontinuous
+/// between cells points of the element. The discontinuous element will have the
+/// same DOFs, but they will all be associated with the interior of the cell.
+/// @param[in] dof_ordering The ordering of the DOFs
+/// @return A finite element
+template <std::floating_point T>
+std::vector<std::vector<FiniteElement<T>>>
+tp_factors(element::family family, cell::type cell, int degree,
+           element::lagrange_variant lvariant, element::dpc_variant dvariant,
+           bool discontinuous, std::vector<int> dof_ordering);
+
 /// Create an element with Tensor Product dof ordering
 /// @param[in] family The element family
 /// @param[in] cell The reference cell type that the element is defined on.
 /// Currently limited to quadrilateral or hexahedron.
 /// @param[in] degree The degree of the element
 /// @param[in] lvariant The variant of Lagrange to use
+/// @param[in] dvariant The variant of DPC to use
 /// @param[in] discontinuous Indicates whether the element is discontinuous
 /// between cells points of the element. The discontinuous element will have the
 /// same DOFs, but they will all be associated with the interior of the cell.
 /// @return A finite element
 template <std::floating_point T>
-FiniteElement<T> create_tp_element(cell::type cell, int degree,
-                                   element::lagrange_variant lvariant,
-                                   bool discontinuous);
+FiniteElement<T>
+create_tp_element(element::family family, cell::type cell, int degree,
+                  element::lagrange_variant lvariant,
+                  element::dpc_variant dvariant, bool discontinuous);
 
 /// Return the Basix version number
 /// @return version string

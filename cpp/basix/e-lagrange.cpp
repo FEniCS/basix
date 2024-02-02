@@ -208,122 +208,6 @@ create_d_iso(cell::type celltype, int degree, element::lagrange_variant variant,
 }
 //----------------------------------------------------------------------------
 template <std::floating_point T>
-std::vector<std::tuple<std::vector<FiniteElement<T>>, std::vector<int>>>
-create_tensor_product_factors(cell::type celltype, int degree,
-                              element::lagrange_variant variant,
-                              std::vector<int> dof_ordering)
-{
-
-  if (dof_ordering.size() == 0)
-  {
-    std::size_t ndofs = celltype == cell::type::quadrilateral
-                            ? (degree + 1) * (degree + 1)
-                            : (degree + 1) * (degree + 1) * (degree + 1);
-    std::vector<int> d(ndofs);
-    std::iota(d.begin(), d.end(), 0);
-    return create_tensor_product_factors<T>(celltype, degree, variant, d);
-  }
-
-  switch (celltype)
-  {
-  case cell::type::quadrilateral:
-  {
-    FiniteElement<T> sub_element = element::create_lagrange<T>(
-        cell::type::interval, degree, variant, true);
-    std::vector<int> perm((degree + 1) * (degree + 1));
-    if (degree == 0)
-      perm[dof_ordering[0]] = 0;
-    else
-    {
-      int p = 0;
-      int n = degree - 1;
-      perm[dof_ordering[p++]] = 0;
-      perm[dof_ordering[p++]] = 2;
-      for (int i = 0; i < n; ++i)
-        perm[dof_ordering[p++]] = 4 + n + i;
-      perm[dof_ordering[p++]] = 1;
-      perm[dof_ordering[p++]] = 3;
-      for (int i = 0; i < n; ++i)
-        perm[dof_ordering[p++]] = 4 + 2 * n + i;
-      for (int i = 0; i < n; ++i)
-      {
-        perm[dof_ordering[p++]] = 4 + i;
-        perm[dof_ordering[p++]] = 4 + 3 * n + i;
-        for (int j = 0; j < n; ++j)
-          perm[dof_ordering[p++]] = 4 + i + (4 + j) * n;
-      }
-    }
-    return {{{sub_element, sub_element}, std::move(perm)}};
-  }
-  case cell::type::hexahedron:
-  {
-    FiniteElement<T> sub_element = element::create_lagrange<T>(
-        cell::type::interval, degree, variant, true);
-    std::vector<int> perm((degree + 1) * (degree + 1) * (degree + 1));
-    if (degree == 0)
-      perm[dof_ordering[0]] = 0;
-    else
-    {
-      int p = 0;
-      int n = degree - 1;
-      perm[dof_ordering[p++]] = 0;
-      perm[dof_ordering[p++]] = 4;
-      for (int i = 0; i < n; ++i)
-        perm[dof_ordering[p++]] = 8 + 2 * n + i;
-      perm[dof_ordering[p++]] = 2;
-      perm[dof_ordering[p++]] = 6;
-      for (int i = 0; i < n; ++i)
-        perm[dof_ordering[p++]] = 8 + 6 * n + i;
-      for (int i = 0; i < n; ++i)
-      {
-        perm[dof_ordering[p++]] = 8 + n + i;
-        perm[dof_ordering[p++]] = 8 + 9 * n + i;
-        for (int j = 0; j < n; ++j)
-          perm[dof_ordering[p++]] = 8 + 12 * n + 2 * n * n + i + n * j;
-      }
-      perm[dof_ordering[p++]] = 1;
-      perm[dof_ordering[p++]] = 5;
-      for (int i = 0; i < n; ++i)
-        perm[dof_ordering[p++]] = 8 + 4 * n + i;
-      perm[dof_ordering[p++]] = 3;
-      perm[dof_ordering[p++]] = 7;
-      for (int i = 0; i < n; ++i)
-        perm[dof_ordering[p++]] = 8 + 7 * n + i;
-      for (int i = 0; i < n; ++i)
-      {
-        perm[dof_ordering[p++]] = 8 + 3 * n + i;
-        perm[dof_ordering[p++]] = 8 + 10 * n + i;
-        for (int j = 0; j < n; ++j)
-          perm[dof_ordering[p++]] = 8 + 12 * n + 3 * n * n + i + n * j;
-      }
-      for (int i = 0; i < n; ++i)
-      {
-        perm[dof_ordering[p++]] = 8 + i;
-        perm[dof_ordering[p++]] = 8 + 8 * n + i;
-        for (int j = 0; j < n; ++j)
-          perm[dof_ordering[p++]] = 8 + 12 * n + n * n + i + n * j;
-        perm[dof_ordering[p++]] = 8 + 5 * n + i;
-        perm[dof_ordering[p++]] = 8 + 11 * n + i;
-        for (int j = 0; j < n; ++j)
-          perm[dof_ordering[p++]] = 8 + 12 * n + 4 * n * n + i + n * j;
-        for (int j = 0; j < n; ++j)
-        {
-          perm[dof_ordering[p++]] = 8 + 12 * n + i + n * j;
-          perm[dof_ordering[p++]] = 8 + 12 * n + 5 * n * n + i + n * j;
-          for (int k = 0; k < n; ++k)
-            perm[dof_ordering[p++]]
-                = 8 + 12 * n + 6 * n * n + i + n * j + n * n * k;
-        }
-      }
-    }
-    return {{{sub_element, sub_element, sub_element}, std::move(perm)}};
-  }
-  default:
-    return {};
-  }
-}
-//----------------------------------------------------------------------------
-template <std::floating_point T>
 FiniteElement<T> create_legendre(cell::type celltype, int degree,
                                  bool discontinuous)
 {
@@ -570,7 +454,7 @@ basix::element::create_lagrange(cell::type celltype, int degree,
         impl::mdspan_t<T, 2>(math::eye<T>(1).data(), 1, 1), impl::to_mdspan(x),
         impl::to_mdspan(M), 0, maps::type::identity, sobolev::space::H1,
         discontinuous, degree, degree, element::lagrange_variant::unset,
-        element::dpc_variant::unset, {}, dof_ordering);
+        element::dpc_variant::unset, dof_ordering);
   }
 
   if (variant == lagrange_variant::legendre)
@@ -716,13 +600,11 @@ basix::element::create_lagrange(cell::type celltype, int degree,
 
   sobolev::space space
       = discontinuous ? sobolev::space::L2 : sobolev::space::H1;
-  auto tensor_factors = create_tensor_product_factors<T>(celltype, degree,
-                                                         variant, dof_ordering);
   return FiniteElement<T>(
       family::P, celltype, polyset::type::standard, degree, {},
       impl::mdspan_t<T, 2>(math::eye<T>(ndofs).data(), ndofs, ndofs), xview,
       Mview, 0, maps::type::identity, space, discontinuous, degree, degree,
-      variant, dpc_variant::unset, tensor_factors, dof_ordering);
+      variant, dpc_variant::unset, dof_ordering);
 }
 //-----------------------------------------------------------------------------
 template <std::floating_point T>

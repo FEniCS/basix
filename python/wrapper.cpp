@@ -614,6 +614,32 @@ NB_MODULE(_basixcpp, m)
       "dpc_variant"_a = element::dpc_variant::unset, "discontinuous"_a = false,
       "dof_ordering"_a = std::vector<int>());
 
+  m.def(
+      "create_tp_element",
+      [](element::family family_name, cell::type cell_name, int degree,
+         element::lagrange_variant lvariant, element::dpc_variant dvariant,
+         bool discontinuous, char dtype)
+          -> std::variant<FiniteElement<float>, FiniteElement<double>>
+      {
+        if (dtype == 'd')
+        {
+          return basix::create_tp_element<double>(family_name, cell_name,
+                                                  degree, lvariant, dvariant,
+                                                  discontinuous);
+        }
+        else if (dtype == 'f')
+        {
+          return basix::create_tp_element<float>(family_name, cell_name, degree,
+                                                 lvariant, dvariant,
+                                                 discontinuous);
+        }
+        else
+          throw std::runtime_error("Unsupported finite element dtype.");
+      },
+      "family_name"_a, "cell_name"_a, "degree"_a, "dtype"_a,
+      "lagrange_variant"_a = element::lagrange_variant::unset,
+      "dpc_variant"_a = element::dpc_variant::unset, "discontinuous"_a = false);
+
   nb::enum_<polyset::type>(m, "PolysetType")
       .value("standard", polyset::type::standard)
       .value("macroedge", polyset::type::macroedge)

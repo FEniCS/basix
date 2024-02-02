@@ -50,7 +50,6 @@ jobs:
           path: ./ffcx
           repository: FEniCS/ffcx
           ref: main
-mscroggs/tp-element
       - name: Get FFCx source (specified branch)
         if: github.event_name == 'workflow_dispatch'
         uses: actions/checkout@v4

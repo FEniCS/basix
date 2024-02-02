@@ -23,8 +23,6 @@
 #include <limits>
 #include <numeric>
 
-#include <iostream>
-
 #define str_macro(X) #X
 #define str(X) str_macro(X)
 

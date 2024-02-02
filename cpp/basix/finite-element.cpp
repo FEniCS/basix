@@ -333,6 +333,13 @@ basix::create_tp_element(element::family family, cell::type cell, int degree,
                            discontinuous, dof_ordering);
 }
 //-----------------------------------------------------------------------------
+template basix::FiniteElement<float>
+basix::create_tp_element(element::family, cell::type, int,
+                         element::lagrange_variant, element::dpc_variant, bool);
+template basix::FiniteElement<double>
+basix::create_tp_element(element::family, cell::type, int,
+                         element::lagrange_variant, element::dpc_variant, bool);
+//-----------------------------------------------------------------------------
 template <std::floating_point T>
 std::vector<std::vector<FiniteElement<T>>>
 basix::tp_factors(element::family family, cell::type cell, int degree,
@@ -376,6 +383,13 @@ basix::tp_factors(element::family family, cell::type cell, int degree,
   }
   return {};
 }
+//-----------------------------------------------------------------------------
+template std::vector<std::vector<basix::FiniteElement<float>>>
+basix::tp_factors(element::family, cell::type, int, element::lagrange_variant,
+                  element::dpc_variant, bool, std::vector<int>);
+template std::vector<std::vector<basix::FiniteElement<double>>>
+basix::tp_factors(element::family, cell::type, int, element::lagrange_variant,
+                  element::dpc_variant, bool, std::vector<int>);
 //-----------------------------------------------------------------------------
 std::vector<int> basix::tp_dof_ordering(element::family family, cell::type cell,
                                         int degree, element::lagrange_variant,
@@ -489,13 +503,6 @@ std::vector<int> basix::tp_dof_ordering(element::family family, cell::type cell,
     dof_ordering[perm[i]] = i;
   return dof_ordering;
 }
-//-----------------------------------------------------------------------------
-template basix::FiniteElement<double>
-basix::create_tp_element(element::family, cell::type, int,
-                         element::lagrange_variant, element::dpc_variant, bool);
-template basix::FiniteElement<float>
-basix::create_tp_element(element::family, cell::type, int,
-                         element::lagrange_variant, element::dpc_variant, bool);
 //-----------------------------------------------------------------------------
 template <std::floating_point T>
 std::tuple<std::array<std::vector<std::vector<T>>, 4>,

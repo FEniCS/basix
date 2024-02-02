@@ -673,7 +673,7 @@ def tp_factors(
     Returns:
         A list of finite elements.
     """
-    return [FiniteElement(e) for e in _tp_factors(
+    return [[FiniteElement(e) for e in elements] for elements in _tp_factors(
         family.value, celltype.value, degree, lagrange_variant.value, dpc_variant.value,
         discontinuous, dof_ordering, np.dtype(dtype).char)]
 

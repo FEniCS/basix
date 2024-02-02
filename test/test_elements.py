@@ -92,23 +92,26 @@ def test_values(family, cell, degree, functions):
 def test_hash():
     e0 = basix.create_element(basix.ElementFamily.P, basix.CellType.interval, 1)
     e1 = basix.create_element(basix.ElementFamily.P, basix.CellType.interval, 1)
-    e2 = basix.create_element(basix.ElementFamily.P, basix.CellType.interval, 2)
-    e3 = basix.create_element(basix.ElementFamily.P, basix.CellType.triangle, 1)
+    e2 = basix.create_element(basix.ElementFamily.P, basix.CellType.interval, 1,
+                              dof_ordering=list(range(2)))
+    e3 = basix.create_element(basix.ElementFamily.P, basix.CellType.interval, 2)
+    e4 = basix.create_element(basix.ElementFamily.P, basix.CellType.triangle, 1)
 
     wcoeffs = np.eye(3)
     z = np.zeros((0, 2))
     x = [[np.array([[0., 0.]]), np.array([[1., 0.]]), np.array([[0., 1.]])], [z, z, z], [z], []]
     z = np.zeros((0, 1, 0, 1))
     M = [[np.array([[[[1.]]]]), np.array([[[[1.]]]]), np.array([[[[1.]]]])], [z, z, z], [z], []]
-
-    e4 = basix.create_custom_element(basix.CellType.triangle, [], wcoeffs,
+    e5 = basix.create_custom_element(basix.CellType.triangle, [], wcoeffs,
                                      x, M, 0, basix.MapType.L2Piola, basix.SobolevSpace.L2,
                                      False, 1, 1, basix.PolysetType.standard)
 
-    assert hash(e0) == hash(e1)
-    assert hash(e1) != hash(e2)
-    assert hash(e1) != hash(e3)
-    assert hash(e1) != hash(e4)
-    assert hash(e2) != hash(e3)
-    assert hash(e2) != hash(e4)
-    assert hash(e3) != hash(e4)
+    e6 = basix.create_element(basix.ElementFamily.P, basix.CellType.quadrilateral, 2)
+    e7 = basix.create_tp_element(basix.ElementFamily.P, basix.CellType.quadrilateral, 2)
+
+    assert hash(e0) == hash(e1) == hash(e2)
+
+    different_elements = [e2, e3, e4, e5, e6, e7]
+    for i, d0 in enumerate(different_elements):
+        for d1 in different_elements[:i]:
+            assert hash(d0) != hash(d1)

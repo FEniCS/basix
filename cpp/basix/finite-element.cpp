@@ -1175,7 +1175,8 @@ bool FiniteElement<F>::operator==(const FiniteElement& e) const
            and embedded_superdegree() == e.embedded_superdegree()
            and embedded_subdegree() == e.embedded_subdegree() and coeff_equal
            and entity_dofs() == e.entity_dofs()
-           and dof_ordering() == e.dof_ordering();
+           and dof_ordering() == e.dof_ordering()
+           and polyset_type() == e.polyset_type();
   }
   else
   {
@@ -1220,7 +1221,8 @@ int FiniteElement<F>::hash() const
            * pow(19, static_cast<int>(dpc_variant()))
            * pow(23, static_cast<int>(sobolev_space()))
            * pow(29, static_cast<int>(map_type()))
-           * pow(31, static_cast<int>(vs_hash));
+           * pow(31, static_cast<int>(polyset_type()))
+           * pow(37, static_cast<int>(vs_hash));
   }
   else
   {

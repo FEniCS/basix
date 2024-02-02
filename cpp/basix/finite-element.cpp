@@ -324,6 +324,193 @@ basix::create_element(element::family, cell::type, int,
                       std::vector<int>);
 //-----------------------------------------------------------------------------
 template <std::floating_point T>
+FiniteElement<T>
+basix::create_tp_element(element::family family, cell::type cell, int degree,
+                         element::lagrange_variant lvariant,
+                         element::dpc_variant dvariant, bool discontinuous)
+{
+  std::vector<int> dof_ordering = tp_dof_ordering(
+      family, cell, degree, lvariant, dvariant, discontinuous);
+  return create_element<T>(family, cell, degree, lvariant, dvariant,
+                           discontinuous, dof_ordering);
+}
+//-----------------------------------------------------------------------------
+template basix::FiniteElement<float>
+basix::create_tp_element(element::family, cell::type, int,
+                         element::lagrange_variant, element::dpc_variant, bool);
+template basix::FiniteElement<double>
+basix::create_tp_element(element::family, cell::type, int,
+                         element::lagrange_variant, element::dpc_variant, bool);
+//-----------------------------------------------------------------------------
+template <std::floating_point T>
+std::vector<std::vector<FiniteElement<T>>>
+basix::tp_factors(element::family family, cell::type cell, int degree,
+                  element::lagrange_variant lvariant,
+                  element::dpc_variant dvariant, bool discontinuous,
+                  std::vector<int> dof_ordering)
+{
+  std::vector<int> tp_dofs = tp_dof_ordering(family, cell, degree, lvariant,
+                                             dvariant, discontinuous);
+  if (tp_dofs.size() > 0 && tp_dofs == dof_ordering)
+  {
+    switch (family)
+    {
+    case element::family::P:
+    {
+      FiniteElement<T> sub_element
+          = create_element<T>(element::family::P, cell::type::interval, degree,
+                              lvariant, dvariant, true);
+      switch (cell)
+      {
+      case cell::type::quadrilateral:
+      {
+        return {{sub_element, sub_element}};
+      }
+      case cell::type::hexahedron:
+      {
+        return {{sub_element, sub_element, sub_element}};
+      }
+      default:
+      {
+        throw std::runtime_error("Invalid celltype.");
+      }
+      }
+      break;
+    }
+    default:
+    {
+      throw std::runtime_error("Invalid family.");
+    }
+    }
+  }
+  throw std::runtime_error(
+      "Element does not have tensor product factorisation.");
+}
+//-----------------------------------------------------------------------------
+template std::vector<std::vector<basix::FiniteElement<float>>>
+basix::tp_factors(element::family, cell::type, int, element::lagrange_variant,
+                  element::dpc_variant, bool, std::vector<int>);
+template std::vector<std::vector<basix::FiniteElement<double>>>
+basix::tp_factors(element::family, cell::type, int, element::lagrange_variant,
+                  element::dpc_variant, bool, std::vector<int>);
+//-----------------------------------------------------------------------------
+std::vector<int> basix::tp_dof_ordering(element::family family, cell::type cell,
+                                        int degree, element::lagrange_variant,
+                                        element::dpc_variant, bool)
+{
+  std::vector<int> dof_ordering;
+  std::vector<int> perm;
+
+  switch (family)
+  {
+  case element::family::P:
+  {
+    switch (cell)
+    {
+    case cell::type::quadrilateral:
+    {
+      perm.push_back(0);
+      if (degree > 0)
+      {
+        int n = degree - 1;
+        perm.push_back(2);
+        for (int i = 0; i < n; ++i)
+          perm.push_back(4 + n + i);
+        perm.push_back(1);
+        perm.push_back(3);
+        for (int i = 0; i < n; ++i)
+          perm.push_back(4 + 2 * n + i);
+        for (int i = 0; i < n; ++i)
+        {
+          perm.push_back(4 + i);
+          perm.push_back(4 + 3 * n + i);
+          for (int j = 0; j < n; ++j)
+            perm.push_back(4 + i + (4 + j) * n);
+        }
+      }
+      assert((int)perm.size() == (degree + 1) * (degree + 1));
+      break;
+    }
+    case cell::type::hexahedron:
+    {
+      perm.push_back(0);
+      if (degree > 0)
+      {
+        int n = degree - 1;
+        perm.push_back(4);
+        for (int i = 0; i < n; ++i)
+          perm.push_back(8 + 2 * n + i);
+        perm.push_back(2);
+        perm.push_back(6);
+        for (int i = 0; i < n; ++i)
+          perm.push_back(8 + 6 * n + i);
+        for (int i = 0; i < n; ++i)
+        {
+          perm.push_back(8 + n + i);
+          perm.push_back(8 + 9 * n + i);
+          for (int j = 0; j < n; ++j)
+            perm.push_back(8 + 12 * n + 2 * n * n + i + n * j);
+        }
+        perm.push_back(1);
+        perm.push_back(5);
+        for (int i = 0; i < n; ++i)
+          perm.push_back(8 + 4 * n + i);
+        perm.push_back(3);
+        perm.push_back(7);
+        for (int i = 0; i < n; ++i)
+          perm.push_back(8 + 7 * n + i);
+        for (int i = 0; i < n; ++i)
+        {
+          perm.push_back(8 + 3 * n + i);
+          perm.push_back(8 + 10 * n + i);
+          for (int j = 0; j < n; ++j)
+            perm.push_back(8 + 12 * n + 3 * n * n + i + n * j);
+        }
+        for (int i = 0; i < n; ++i)
+        {
+          perm.push_back(8 + i);
+          perm.push_back(8 + 8 * n + i);
+          for (int j = 0; j < n; ++j)
+            perm.push_back(8 + 12 * n + n * n + i + n * j);
+          perm.push_back(8 + 5 * n + i);
+          perm.push_back(8 + 11 * n + i);
+          for (int j = 0; j < n; ++j)
+            perm.push_back(8 + 12 * n + 4 * n * n + i + n * j);
+          for (int j = 0; j < n; ++j)
+          {
+            perm.push_back(8 + 12 * n + i + n * j);
+            perm.push_back(8 + 12 * n + 5 * n * n + i + n * j);
+            for (int k = 0; k < n; ++k)
+              perm.push_back(8 + 12 * n + 6 * n * n + i + n * j + n * n * k);
+          }
+        }
+      }
+      assert((int)perm.size() == (degree + 1) * (degree + 1) * (degree + 1));
+      break;
+    }
+    default:
+    {
+    }
+    }
+    break;
+  }
+  default:
+  {
+  }
+  }
+
+  if (perm.size() == 0)
+  {
+    throw std::runtime_error(
+        "Element does not have tensor product factorisation.");
+  }
+  dof_ordering.resize(perm.size());
+  for (std::size_t i = 0; i < perm.size(); ++i)
+    dof_ordering[perm[i]] = i;
+  return dof_ordering;
+}
+//-----------------------------------------------------------------------------
+template <std::floating_point T>
 std::tuple<std::array<std::vector<std::vector<T>>, 4>,
            std::array<std::vector<std::array<std::size_t, 2>>, 4>,
            std::array<std::vector<std::vector<T>>, 4>,
@@ -544,10 +731,7 @@ FiniteElement<F>::FiniteElement(
     int interpolation_nderivs, maps::type map_type,
     sobolev::space sobolev_space, bool discontinuous, int embedded_subdegree,
     int embedded_superdegree, element::lagrange_variant lvariant,
-    element::dpc_variant dvariant,
-    std::vector<std::tuple<std::vector<FiniteElement<F>>, std::vector<int>>>
-        tensor_factors,
-    std::vector<int> dof_ordering)
+    element::dpc_variant dvariant, std::vector<int> dof_ordering)
     : _cell_type(cell_type), _poly_type(poly_type),
       _cell_tdim(cell::topological_dimension(cell_type)),
       _cell_subentity_types(cell::subentity_types(cell_type)), _family(family),
@@ -556,8 +740,7 @@ FiniteElement<F>::FiniteElement(
       _embedded_superdegree(embedded_superdegree),
       _embedded_subdegree(embedded_subdegree), _value_shape(value_shape),
       _map_type(map_type), _sobolev_space(sobolev_space),
-      _discontinuous(discontinuous), _tensor_factors(tensor_factors),
-      _dof_ordering(dof_ordering)
+      _discontinuous(discontinuous), _dof_ordering(dof_ordering)
 {
   // Check that discontinuous elements only have DOFs on interior
   if (discontinuous)
@@ -573,6 +756,15 @@ FiniteElement<F>::FiniteElement(
         }
       }
     }
+  }
+
+  try
+  {
+    _tensor_factors = tp_factors<F>(family, cell_type, degree, lvariant,
+                                    dvariant, discontinuous, dof_ordering);
+  }
+  catch (...)
+  {
   }
 
   std::vector<F> wcoeffs_b(wcoeffs.extent(0) * wcoeffs.extent(1));

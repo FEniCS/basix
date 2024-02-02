@@ -24,8 +24,9 @@ def tensor_product(*data):
 
 @parametrize_over_elements(4)
 def test_tensor_product_factorisation(cell_type, degree, element_type, element_args):
-    element = basix.create_tp_element(element_type, cell_type, degree, *element_args)
-    if not element.has_tensor_product_factorisation:
+    try:
+        element = basix.create_tp_element(element_type, cell_type, degree, *element_args)
+    except:
         # These elements should have a factorisation
         if cell_type in [
             basix.CellType.quadrilateral, basix.CellType.hexahedron
@@ -34,6 +35,8 @@ def test_tensor_product_factorisation(cell_type, degree, element_type, element_a
         ] and basix.LagrangeVariant.equispaced in element_args:
             raise RuntimeError("Could not create tensor product element")
         pytest.skip()
+
+    assert element.has_tensor_product_factorisation
 
     tdim = len(basix.topology(cell_type)) - 1
 

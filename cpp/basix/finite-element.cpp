@@ -381,7 +381,8 @@ basix::tp_factors(element::family family, cell::type cell, int degree,
     }
     }
   }
-  return {};
+  throw std::runtime_error(
+      "Element does not have tensor product factorisation.");
 }
 //-----------------------------------------------------------------------------
 template std::vector<std::vector<basix::FiniteElement<float>>>
@@ -487,17 +488,20 @@ std::vector<int> basix::tp_dof_ordering(element::family family, cell::type cell,
     }
     default:
     {
-      return {};
     }
     }
     break;
   }
   default:
   {
-    return {};
   }
   }
 
+  if (perm.size() == 0)
+  {
+    throw std::runtime_error(
+        "Element does not have tensor product factorisation.");
+  }
   dof_ordering.resize(perm.size());
   for (std::size_t i = 0; i < perm.size(); ++i)
     dof_ordering[perm[i]] = i;
@@ -752,8 +756,14 @@ FiniteElement<F>::FiniteElement(
     }
   }
 
-  _tensor_factors = tp_factors<F>(family, cell_type, degree, lvariant, dvariant,
-                                  discontinuous, dof_ordering);
+  try
+  {
+    _tensor_factors = tp_factors<F>(family, cell_type, degree, lvariant,
+                                    dvariant, discontinuous, dof_ordering);
+  }
+  catch (...)
+  {
+  }
 
   std::vector<F> wcoeffs_b(wcoeffs.extent(0) * wcoeffs.extent(1));
   std::copy(wcoeffs.data_handle(), wcoeffs.data_handle() + wcoeffs.size(),

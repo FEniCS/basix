@@ -10,8 +10,8 @@ cell_volume: nanobind.nb_func
 compute_interpolation_operator: nanobind.nb_func
 create_custom_element: nanobind.nb_func
 create_element: nanobind.nb_func
-create_tp_element: nanobind.nb_func
 create_lattice: nanobind.nb_func
+create_tp_element: nanobind.nb_func
 geometry: nanobind.nb_func
 index: nanobind.nb_func
 make_quadrature: nanobind.nb_func
@@ -24,6 +24,8 @@ superset: nanobind.nb_func
 tabulate_polynomial_set: nanobind.nb_func
 tabulate_polynomials: nanobind.nb_func
 topology: nanobind.nb_func
+tp_factors: nanobind.nb_func
+tp_dof_ordering: nanobind.nb_func
 __version__: str
 
 class CellType:

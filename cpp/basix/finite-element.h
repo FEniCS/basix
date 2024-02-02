@@ -1356,7 +1356,7 @@ FiniteElement<T> create_element(element::family family, cell::type cell,
 /// @param[in] discontinuous Indicates whether the element is discontinuous
 /// between cells points of the element. The discontinuous element will have the
 /// same DOFs, but they will all be associated with the interior of the cell.
-/// @return A finite element
+/// @return A vector containing the dof ordering
 std::vector<int> tp_dof_ordering(element::family family, cell::type cell,
                                  int degree, element::lagrange_variant lvariant,
                                  element::dpc_variant dvariant,

@@ -1373,7 +1373,7 @@ std::vector<int> tp_dof_ordering(element::family family, cell::type cell,
 /// between cells points of the element. The discontinuous element will have the
 /// same DOFs, but they will all be associated with the interior of the cell.
 /// @param[in] dof_ordering The ordering of the DOFs
-/// @return A finite element
+/// @return A list of lists of finite element factors
 template <std::floating_point T>
 std::vector<std::vector<FiniteElement<T>>>
 tp_factors(element::family family, cell::type cell, int degree,

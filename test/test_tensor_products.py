@@ -195,3 +195,5 @@ def test_dof_ordering(cell_type, family, args, degree):
     perm = e.dof_ordering
     e2 = basix.create_element(family, cell_type, degree, *args, dof_ordering=perm)
     assert e2.has_tensor_product_factorisation
+
+    assert perm == basix.finite_element.tp_dof_ordering(family, cell_type, degree, *args)

@@ -589,56 +589,84 @@ NB_MODULE(_basixcpp, m)
 
   m.def(
       "create_element",
-      [](element::family family_name, cell::type cell_name, int degree,
-         element::lagrange_variant lvariant, element::dpc_variant dvariant,
+      [](element::family family_name, cell::type cell, int degree,
+         element::lagrange_variant lagrange_variant, element::dpc_variant dpc_variant,
          bool discontinuous, const std::vector<int>& dof_ordering, char dtype)
           -> std::variant<FiniteElement<float>, FiniteElement<double>>
       {
         if (dtype == 'd')
         {
-          return basix::create_element<double>(family_name, cell_name, degree,
-                                               lvariant, dvariant,
+          return basix::create_element<double>(family_name, cell, degree,
+                                               lagrange_variant, dpc_variant,
                                                discontinuous, dof_ordering);
         }
         else if (dtype == 'f')
         {
-          return basix::create_element<float>(family_name, cell_name, degree,
-                                              lvariant, dvariant, discontinuous,
+          return basix::create_element<float>(family_name, cell, degree,
+                                              lagrange_variant, dpc_variant, discontinuous,
                                               dof_ordering);
         }
         else
           throw std::runtime_error("Unsupported finite element dtype.");
-      },
-      "family_name"_a, "cell_name"_a, "degree"_a, "dtype"_a,
-      "lagrange_variant"_a = element::lagrange_variant::unset,
-      "dpc_variant"_a = element::dpc_variant::unset, "discontinuous"_a = false,
-      "dof_ordering"_a = std::vector<int>());
+      });
 
   m.def(
       "create_tp_element",
-      [](element::family family_name, cell::type cell_name, int degree,
-         element::lagrange_variant lvariant, element::dpc_variant dvariant,
+      [](element::family family_name, cell::type cell, int degree,
+         element::lagrange_variant lagrange_variant, element::dpc_variant dpc_variant,
          bool discontinuous, char dtype)
           -> std::variant<FiniteElement<float>, FiniteElement<double>>
       {
         if (dtype == 'd')
         {
-          return basix::create_tp_element<double>(family_name, cell_name,
-                                                  degree, lvariant, dvariant,
+          return basix::create_tp_element<double>(family_name, cell,
+                                                  degree, lagrange_variant, dpc_variant,
                                                   discontinuous);
         }
         else if (dtype == 'f')
         {
-          return basix::create_tp_element<float>(family_name, cell_name, degree,
-                                                 lvariant, dvariant,
+          return basix::create_tp_element<float>(family_name, cell, degree,
+                                                 lagrange_variant, dpc_variant,
                                                  discontinuous);
         }
         else
           throw std::runtime_error("Unsupported finite element dtype.");
-      },
-      "family_name"_a, "cell_name"_a, "degree"_a, "dtype"_a,
-      "lagrange_variant"_a = element::lagrange_variant::unset,
-      "dpc_variant"_a = element::dpc_variant::unset, "discontinuous"_a = false);
+      });
+
+  m.def(
+      "tp_factors",
+      [](element::family family_name, cell::type cell, int degree,
+         element::lagrange_variant lagrange_variant, element::dpc_variant dpc_variant,
+         bool discontinuous, std::vector<int> dof_ordering, char dtype)
+          -> std::variant<std::vector<std::vector<FiniteElement<float>>>, std::vector<std::vector<FiniteElement<double>>>>
+      {
+        if (dtype == 'd')
+        {
+          return basix::tp_factors<double>(family_name, cell,
+                                                  degree, lagrange_variant, dpc_variant,
+                                                  discontinuous, dof_ordering);
+        }
+        else if (dtype == 'f')
+        {
+          return basix::tp_factors<float>(family_name, cell, degree,
+                                                 lagrange_variant, dpc_variant,
+                                                 discontinuous, dof_ordering);
+        }
+        else
+          throw std::runtime_error("Unsupported finite element dtype.");
+      });
+
+  m.def(
+      "tp_dof_ordering",
+      [](element::family family_name, cell::type cell, int degree,
+         element::lagrange_variant lagrange_variant, element::dpc_variant dpc_variant,
+         bool discontinuous)
+          -> std::vector<int>
+      {
+          return basix::tp_dof_ordering(family_name, cell,
+                                        degree, lagrange_variant, dpc_variant,
+                                        discontinuous);
+      });
 
   nb::enum_<polyset::type>(m, "PolysetType")
       .value("standard", polyset::type::standard)

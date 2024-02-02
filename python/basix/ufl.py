@@ -1175,7 +1175,7 @@ class _BlockedElement(_ElementBase):
             # Repeat sub element horizontally
             assert len(table.shape) == 2
             new_table = np.zeros((table.shape[0], *self._block_shape,
-                                   self._block_size * table.shape[1]))
+                                  self._block_size * table.shape[1]))
             for i, j in enumerate(_itertools.product(*[range(s) for s in self._block_shape])):
                 if len(j) == 1:
                     new_table[:, j[0], i::self._block_size] = table
@@ -1375,7 +1375,7 @@ class _BlockedElement(_ElementBase):
             M_row = []
             for mat in M_list:
                 new_mat = np.zeros((mat.shape[0] * self._block_size, mat.shape[1]
-                                     * self._block_size, mat.shape[2], mat.shape[3]))
+                                    * self._block_size, mat.shape[2], mat.shape[3]))
                 for i in range(self._block_size):
                     new_mat[i * mat.shape[0]: (i + 1) * mat.shape[0],
                             i * mat.shape[1]: (i + 1) * mat.shape[1], :, :] = mat

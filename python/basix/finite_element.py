@@ -13,6 +13,8 @@ from basix._basixcpp import LagrangeVariant as _LV
 from basix._basixcpp import create_custom_element as _create_custom_element
 from basix._basixcpp import create_element as _create_element
 from basix._basixcpp import create_tp_element as _create_tp_element
+from basix._basixcpp import tp_dof_ordering as _tp_dof_ordering
+from basix._basixcpp import tp_factors as _tp_factors
 from basix.cell import CellType
 from basix.maps import MapType
 from basix.polynomials import PolysetType
@@ -20,7 +22,8 @@ from basix.sobolev_spaces import SobolevSpace
 from basix.utils import Enum
 
 __all__ = ["FiniteElement", "create_element", "create_custom_element", "create_tp_element",
-           "string_to_family", "string_to_lagrange_variant", "string_to_dpc_variant"]
+           "string_to_family", "string_to_lagrange_variant", "string_to_dpc_variant",
+           "tp_factors", "tp_dof_ordering"]
 
 
 class ElementFamily(Enum):
@@ -577,33 +580,6 @@ def create_element(family: ElementFamily, celltype: CellType, degree: int,
         discontinuous, dof_ordering, np.dtype(dtype).char))
 
 
-def create_tp_element(family: ElementFamily, celltype: CellType, degree: int,
-                      lagrange_variant: LagrangeVariant = LagrangeVariant.unset,
-                      dpc_variant: DPCVariant = DPCVariant.unset,
-                      discontinuous: bool = False,
-                      dtype: npt.DTypeLike = np.float64) -> FiniteElement:
-    """Create a finite element with tensor product ordering.
-
-    Args:
-        family: Finite element family.
-        celltype: Reference cell type that the element is defined on
-        degree: Polynomial degree of the element.
-        lagrange_variant: Lagrange variant type.
-        dpc_variant: DPC variant type.
-        discontinuous: If `True` element is discontinuous. The
-            discontinuous element will have the same DOFs as a
-            continuous element, but the DOFs will all be associated with
-            the interior of the cell.
-        dtype: Element scalar type.
-
-    Returns:
-        A finite element.
-    """
-    return FiniteElement(_create_tp_element(
-        family.value, celltype.value, degree, lagrange_variant.value, dpc_variant.value,
-        discontinuous, np.dtype(dtype).char))
-
-
 def create_custom_element(cell_type: CellType, value_shape, wcoeffs, x, M, interpolation_nderivs: int, map_type,
                           sobolev_space, discontinuous: bool,
                           embedded_subdegree: int, embedded_superdegree: int,
@@ -642,6 +618,95 @@ def create_custom_element(cell_type: CellType, value_shape, wcoeffs, x, M, inter
                                                 interpolation_nderivs, map_type.value,
                                                 sobolev_space.value, discontinuous, embedded_subdegree,
                                                 embedded_superdegree, poly_type.value))
+
+
+def create_tp_element(family: ElementFamily, celltype: CellType, degree: int,
+                      lagrange_variant: LagrangeVariant = LagrangeVariant.unset,
+                      dpc_variant: DPCVariant = DPCVariant.unset,
+                      discontinuous: bool = False,
+                      dtype: npt.DTypeLike = np.float64) -> FiniteElement:
+    """Create a finite element with tensor product ordering.
+
+    Args:
+        family: Finite element family.
+        celltype: Reference cell type that the element is defined on
+        degree: Polynomial degree of the element.
+        lagrange_variant: Lagrange variant type.
+        dpc_variant: DPC variant type.
+        discontinuous: If `True` element is discontinuous. The
+            discontinuous element will have the same DOFs as a
+            continuous element, but the DOFs will all be associated with
+            the interior of the cell.
+        dtype: Element scalar type.
+
+    Returns:
+        A finite element.
+    """
+    return FiniteElement(_create_tp_element(
+        family.value, celltype.value, degree, lagrange_variant.value, dpc_variant.value,
+        discontinuous, np.dtype(dtype).char))
+
+
+def tp_factors(
+    family: ElementFamily, celltype: CellType, degree: int,
+    lagrange_variant: LagrangeVariant = LagrangeVariant.unset,
+    dpc_variant: DPCVariant = DPCVariant.unset, discontinuous: bool = False,
+    dof_ordering: list[int] = [], dtype: npt.DTypeLike = np.float64
+) -> list[list[FiniteElement]]:
+    """Get the elements in the tensor product factorisation of an element.
+
+    If the element has no factorisation, an empty list is returned.
+
+    Args:
+        family: Finite element family.
+        celltype: Reference cell type that the element is defined on
+        degree: Polynomial degree of the element.
+        lagrange_variant: Lagrange variant type.
+        dpc_variant: DPC variant type.
+        discontinuous: If `True` element is discontinuous. The
+            discontinuous element will have the same DOFs as a
+            continuous element, but the DOFs will all be associated with
+            the interior of the cell.
+        dof_ordering: Ordering of dofs for ElementDofLayout
+        dtype: Element scalar type.
+
+    Returns:
+        A list of finite elements.
+    """
+    return [FiniteElement(e) for e in _tp_factors(
+        family.value, celltype.value, degree, lagrange_variant.value, dpc_variant.value,
+        discontinuous, dof_ordering, np.dtype(dtype).char)]
+
+
+def tp_dof_ordering(
+    family: ElementFamily, celltype: CellType, degree: int,
+    lagrange_variant: LagrangeVariant = LagrangeVariant.unset,
+    dpc_variant: DPCVariant = DPCVariant.unset, discontinuous: bool = False,
+) -> list[int]:
+    """Get the tensor product DOF ordering for an element.
+
+    This DOF ordering can be passed into create_element to create the element with
+    DOFs ordered in a tensor product order.
+
+    If the element has no tensor product factorisation, an empty list is returned.
+
+    Args:
+        family: Finite element family.
+        celltype: Reference cell type that the element is defined on
+        degree: Polynomial degree of the element.
+        lagrange_variant: Lagrange variant type.
+        dpc_variant: DPC variant type.
+        discontinuous: If `True` element is discontinuous. The
+            discontinuous element will have the same DOFs as a
+            continuous element, but the DOFs will all be associated with
+            the interior of the cell.
+
+    Returns:
+        The DOF ordering.
+    """
+    return _tp_dof_ordering(
+        family.value, celltype.value, degree, lagrange_variant.value, dpc_variant.value,
+        discontinuous)
 
 
 def string_to_family(family: str, cell: str) -> ElementFamily:

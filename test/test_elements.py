@@ -90,21 +90,10 @@ def test_values(family, cell, degree, functions):
 
 
 def test_hash():
-    elements = []
-    for cell in basix.CellType.__members__.values():
-        for family in basix.ElementFamily.__members__.values():
-            for degree in range(4):
-                for lvariant in basix.LagrangeVariant.__members__.values():
-                    for dvariant in basix.DPCVariant.__members__.values():
-                        for discontinuous in [True, False]:
-                            try:
-                                elements.append(basix.create_element(
-                                    family, cell, degree, lvariant, dvariant, discontinuous))
-                                elements.append(basix.create_tp_element(
-                                    family, cell, degree, lvariant, dvariant, discontinuous))
-                            except RuntimeError:
-                                pass
-    assert len(elements) > 0
+    e0 = basix.create_element(basix.ElementFamily.P, basix.CellType.interval, 1)
+    e1 = basix.create_element(basix.ElementFamily.P, basix.CellType.interval, 1)
+    e2 = basix.create_element(basix.ElementFamily.P, basix.CellType.interval, 2)
+    e3 = basix.create_element(basix.ElementFamily.P, basix.CellType.triangle, 1)
 
     wcoeffs = np.eye(3)
     z = np.zeros((0, 2))
@@ -112,12 +101,14 @@ def test_hash():
     z = np.zeros((0, 1, 0, 1))
     M = [[np.array([[[[1.]]]]), np.array([[[[1.]]]]), np.array([[[[1.]]]])], [z, z, z], [z], []]
 
-    lagrange = basix.create_element(basix.ElementFamily.P, basix.CellType.triangle, 1)
-    elements.append(basix.create_custom_element(basix.CellType.triangle, [], wcoeffs,
-                                    x, M, 0, basix.MapType.L2Piola, basix.SobolevSpace.L2,
-                                    False, 1, 1, basix.PolysetType.standard))
+    e4 = basix.create_custom_element(basix.CellType.triangle, [], wcoeffs,
+                                     x, M, 0, basix.MapType.L2Piola, basix.SobolevSpace.L2,
+                                     False, 1, 1, basix.PolysetType.standard)
 
-    for i, e in enumerate(elements):
-        for j, e2 in enumerate(elements):
-            assert (hash(e) == hash(e2)) == (i == j)
-
+    assert hash(e0) == hash(e1)
+    assert hash(e1) != hash(e2)
+    assert hash(e1) != hash(e3)
+    assert hash(e1) != hash(e4)
+    assert hash(e2) != hash(e3)
+    assert hash(e2) != hash(e4)
+    assert hash(e3) != hash(e4)

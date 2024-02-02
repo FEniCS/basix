@@ -26,7 +26,7 @@ def tensor_product(*data):
 def test_tensor_product_factorisation(cell_type, degree, element_type, element_args):
     try:
         element = basix.create_tp_element(element_type, cell_type, degree, *element_args)
-    except:
+    except RuntimeError:
         # These elements should have a factorisation
         if cell_type in [
             basix.CellType.quadrilateral, basix.CellType.hexahedron

@@ -6,8 +6,8 @@ functionality can be used via this Python interface.
 from basix import cell, finite_element, lattice, polynomials, quadrature, sobolev_spaces
 from basix._basixcpp import __version__
 from basix.cell import CellType, geometry, topology
-from basix.finite_element import (DPCVariant, ElementFamily, LagrangeVariant, create_custom_element,
-                                  create_element, create_tp_element)
+from basix.finite_element import (DPCVariant, ElementFamily, LagrangeVariant, create_custom_element, create_element,
+                                  create_tp_element)
 from basix.interpolation import compute_interpolation_operator
 from basix.lattice import LatticeSimplexMethod, LatticeType, create_lattice
 from basix.maps import MapType

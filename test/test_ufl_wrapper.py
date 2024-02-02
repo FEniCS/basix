@@ -159,3 +159,8 @@ def test_real_element_eq_hash(cell_type, value_shape):
     e1 = basix.ufl.real_element("triangle", ())
     e2 = basix.ufl.real_element(cell_type, value_shape)
     assert (e1 == e2) == (hash(e1) == hash(e2))
+
+
+def test_wrap_element():
+    e = basix.create_element(basix.ElementFamily.P, basix.CellType.triangle, 1)
+    basix.ufl.wrap_element(e)

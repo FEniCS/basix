@@ -7,7 +7,7 @@ name = "fenics-basix"
 version = "0.8.0.dev0"
 description = "Basix Python interface"
 readme = "README.md"
-requires-python = ">=3.9.0"
+requires-python = ">=3.9"
 license = { file = "LICENSE" }
 authors = [
     { email = "fenics-steering-council@googlegroups.com" },
@@ -77,21 +77,34 @@ skip_glob = ["*.pyi"]
 [tool.ruff]
 line-length = 120
 indent-width = 4
+exclude = ["./joss"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
 
 [tool.ruff.lint]
+exclude = ["joss/"]
 select = [
-    "E",   # pycodestyle
-    "W",   # pycodestyle
-    "D",   # pydocstyle - used only in python/
-    "F",   # pyflakes
-    # "I",   # isort - use standalone isort
+    # "N", # pep8-naming
+    "E", # pycodestyle
+    #     "W", # pycodestyle
+    "D", # pydocstyle - used only in python/
+    "F", # pyflakes
+    # "I", # isort - use standalone isort
     "RUF", # Ruff-specific rules
     "UP",  # pyupgrade
     "ICN", # flake8-import-conventions
     "NPY", # numpy-specific rules
     "FLY", # use f-string not static joins
 ]
-ignore = ["UP007", "RUF012"]
+# ignore = ["UP007", "RUF012"]
+
+[tool.ruff.lint.per-file-ignores]
+"test/*" = ["D"]
+"demo/*" = ["D"]
+"doc/*" = ["D"]
 
 [tool.ruff.lint.pydocstyle]
 convention = "google"

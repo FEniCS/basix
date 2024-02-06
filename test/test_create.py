@@ -53,8 +53,7 @@ def test_all_cells_included():
 
 
 def test_all_elements_included():
-    all_elements = [getattr(basix.ElementFamily, e) for e in dir(basix.ElementFamily)
-                    if e[0].isalpha() and e != "name"]
+    all_elements = [getattr(basix.ElementFamily, e) for e in dir(basix.ElementFamily) if e[0].isalpha() and e != "name"]
     assert sorted(all_elements) == sorted(elements)
 
 
@@ -98,5 +97,4 @@ def test_create_element(cell, degree, family, variant):
 
 
 def test_create_high_degree_lagrange():
-    basix.create_element(basix.ElementFamily.P, basix.CellType.hexahedron, 7,
-                         basix.LagrangeVariant.gll_isaac)
+    basix.create_element(basix.ElementFamily.P, basix.CellType.hexahedron, 7, basix.LagrangeVariant.gll_isaac)

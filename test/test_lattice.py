@@ -8,10 +8,13 @@ import pytest
 import basix
 
 
-@pytest.mark.parametrize("lattice_type, simplex_method", [
-    (basix.LatticeType.equispaced, basix.LatticeSimplexMethod.none),
-    # (basix.LatticeType.gll, basix.LatticeSimplexMethod.warp),
-])
+@pytest.mark.parametrize(
+    "lattice_type, simplex_method",
+    [
+        (basix.LatticeType.equispaced, basix.LatticeSimplexMethod.none),
+        # (basix.LatticeType.gll, basix.LatticeSimplexMethod.warp),
+    ],
+)
 @pytest.mark.parametrize("n", [1, 2, 4, 8])
 def test_pyramid(n, lattice_type, simplex_method):
     # Check that all the surface points of the pyramid match up with the
@@ -46,11 +49,14 @@ def test_pyramid(n, lattice_type, simplex_method):
     assert np.allclose(np.sort(quad_pts), np.sort(pyr_z0))
 
 
-@pytest.mark.parametrize("lattice_type, simplex_method", [
-    (basix.LatticeType.equispaced, basix.LatticeSimplexMethod.none),
-    (basix.LatticeType.gll, basix.LatticeSimplexMethod.warp),
-    (basix.LatticeType.gll, basix.LatticeSimplexMethod.isaac),
-])
+@pytest.mark.parametrize(
+    "lattice_type, simplex_method",
+    [
+        (basix.LatticeType.equispaced, basix.LatticeSimplexMethod.none),
+        (basix.LatticeType.gll, basix.LatticeSimplexMethod.warp),
+        (basix.LatticeType.gll, basix.LatticeSimplexMethod.isaac),
+    ],
+)
 @pytest.mark.parametrize("n", [1, 2, 4, 8])
 def test_tetrahedron(n, lattice_type, simplex_method):
     # Check that all the surface points of the tet match up with the same points on
@@ -79,11 +85,14 @@ def test_tetrahedron(n, lattice_type, simplex_method):
     assert np.allclose(np.sort(tri_pts), np.sort(tet_xyz))
 
 
-@pytest.mark.parametrize("lattice_type, simplex_method", [
-    (basix.LatticeType.equispaced, basix.LatticeSimplexMethod.none),
-    (basix.LatticeType.gll, basix.LatticeSimplexMethod.warp),
-    (basix.LatticeType.gll, basix.LatticeSimplexMethod.isaac),
-])
+@pytest.mark.parametrize(
+    "lattice_type, simplex_method",
+    [
+        (basix.LatticeType.equispaced, basix.LatticeSimplexMethod.none),
+        (basix.LatticeType.gll, basix.LatticeSimplexMethod.warp),
+        (basix.LatticeType.gll, basix.LatticeSimplexMethod.isaac),
+    ],
+)
 @pytest.mark.parametrize("n", [1, 2, 4, 8])
 def test_triangle(n, lattice_type, simplex_method):
     # Check that all the surface points of the triangle match up with the same points on

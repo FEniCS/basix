@@ -10,6 +10,7 @@ __all__ = ["intersection", "string_to_sobolev_space"]
 
 class SobolevSpace(Enum):
     """Sobolev space."""
+
     L2 = _SS.L2
     H1 = _SS.H1
     H2 = _SS.H2

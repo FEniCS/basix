@@ -11,13 +11,24 @@ import basix
 def create_custom_p1():
     wcoeffs = np.eye(3)
     z = np.zeros((0, 2))
-    x = [[np.array([[0., 0.]]), np.array([[1., 0.]]), np.array([[0., 1.]])], [z, z, z], [z], []]
+    x = [[np.array([[0.0, 0.0]]), np.array([[1.0, 0.0]]), np.array([[0.0, 1.0]])], [z, z, z], [z], []]
     z = np.zeros((0, 1, 0, 1))
-    M = [[np.array([[[[1.]]]]), np.array([[[[1.]]]]), np.array([[[[1.]]]])], [z, z, z], [z], []]
+    M = [[np.array([[[[1.0]]]]), np.array([[[[1.0]]]]), np.array([[[[1.0]]]])], [z, z, z], [z], []]
 
-    return basix.create_custom_element(basix.CellType.triangle, [], wcoeffs,
-                                       x, M, 0, basix.MapType.identity, basix.SobolevSpace.H1,
-                                       False, 1, 1, basix.PolysetType.standard)
+    return basix.create_custom_element(
+        basix.CellType.triangle,
+        [],
+        wcoeffs,
+        x,
+        M,
+        0,
+        basix.MapType.identity,
+        basix.SobolevSpace.H1,
+        False,
+        1,
+        1,
+        basix.PolysetType.standard,
+    )
 
 
 @pytest.fixture
@@ -34,13 +45,24 @@ def p1_custom_again():
 def cr_custom():
     wcoeffs = np.eye(3)
     z = np.zeros((0, 2))
-    x = [[z, z, z], [np.array([[.5, .5]]), np.array([[0., .5]]), np.array([[.5, 0.]])], [z], []]
+    x = [[z, z, z], [np.array([[0.5, 0.5]]), np.array([[0.0, 0.5]]), np.array([[0.5, 0.0]])], [z], []]
     z = np.zeros((0, 1, 0, 1))
-    M = [[z, z, z], [np.array([[[[1.]]]]), np.array([[[[1.]]]]), np.array([[[[1.]]]])], [z], []]
+    M = [[z, z, z], [np.array([[[[1.0]]]]), np.array([[[[1.0]]]]), np.array([[[[1.0]]]])], [z], []]
 
-    return basix.create_custom_element(basix.CellType.triangle, [], wcoeffs,
-                                       x, M, 0, basix.MapType.identity, basix.SobolevSpace.L2,
-                                       False, 1, 1, basix.PolysetType.standard)
+    return basix.create_custom_element(
+        basix.CellType.triangle,
+        [],
+        wcoeffs,
+        x,
+        M,
+        0,
+        basix.MapType.identity,
+        basix.SobolevSpace.L2,
+        False,
+        1,
+        1,
+        basix.PolysetType.standard,
+    )
 
 
 @pytest.fixture

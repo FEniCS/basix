@@ -14,7 +14,13 @@ def is_canonical(version):
     """Check version number is canonical according to PEP0440
 
     From https://peps.python.org/pep-0440/#appendix-b-parsing-version-strings-with-regular-expressions"""
-    return re.match(r'^([1-9][0-9]*!)?(0|[1-9][0-9]*)(\.(0|[1-9][0-9]*))*((a|b|rc)(0|[1-9][0-9]*))?(\.post(0|[1-9][0-9]*))?(\.dev(0|[1-9][0-9]*))?$', version) is not None  # noqa: E501
+    return (
+        re.match(
+            r"^([1-9][0-9]*!)?(0|[1-9][0-9]*)(\.(0|[1-9][0-9]*))*((a|b|rc)(0|[1-9][0-9]*))?(\.post(0|[1-9][0-9]*))?(\.dev(0|[1-9][0-9]*))?$",
+            version,
+        )
+        is not None
+    )
 
 
 def test_version(python_version=version("fenics-basix"), cpp_version=basix.__version__):
@@ -27,7 +33,8 @@ def test_version(python_version=version("fenics-basix"), cpp_version=basix.__ver
     if stripped_version != cpp_version:
         raise RuntimeError(
             f"The version numbers of the Python ({python_version} "
-            + f"-> {stripped_version}) and nanobind/C++ ({basix.__version__}) libraries does not match")
+            + f"-> {stripped_version}) and nanobind/C++ ({basix.__version__}) libraries does not match"
+        )
 
 
 def test_test_version_logic():

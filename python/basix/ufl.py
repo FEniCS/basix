@@ -11,6 +11,7 @@ from warnings import warn as _warn
 import numpy as np
 import numpy.typing as _npt
 import ufl as _ufl
+
 # TODO: remove gdim arguments once UFL handles cells better
 from ufl.finiteelement import AbstractFiniteElement as _AbstractFiniteElement
 from ufl.pullback import AbstractPullback as _AbstractPullback
@@ -21,8 +22,16 @@ from ufl.pullback import UndefinedPullback as _UndefinedPullback
 
 import basix as _basix
 
-__all__ = ["element", "enriched_element", "custom_element", "mixed_element",
-           "quadrature_element", "real_element", "blocked_element", "wrap_element"]
+__all__ = [
+    "element",
+    "enriched_element",
+    "custom_element",
+    "mixed_element",
+    "quadrature_element",
+    "real_element",
+    "blocked_element",
+    "wrap_element",
+]
 
 _spacemap = {
     _basix.SobolevSpace.L2: _ufl.sobolevspace.L2,
@@ -104,9 +113,15 @@ class _ElementBase(_AbstractFiniteElement):
     types defined in this file.
     """
 
-    def __init__(self, repr: str, cellname: str, value_shape: tuple[int, ...],
-                 degree: int = -1, pullback: _AbstractPullback = _UndefinedPullback(),
-                 gdim: _typing.Optional[int] = None):
+    def __init__(
+        self,
+        repr: str,
+        cellname: str,
+        value_shape: tuple[int, ...],
+        degree: int = -1,
+        pullback: _AbstractPullback = _UndefinedPullback(),
+        gdim: _typing.Optional[int] = None,
+    ):
         """Initialise the element."""
         self._repr = repr
         self._cellname = cellname
@@ -376,16 +391,23 @@ class _BasixElement(_ElementBase):
             repr = f"custom Basix element ({_compute_signature(element)}"
         else:
             self._is_custom = False
-            repr = (f"Basix element ({element.family.name}, {element.cell_type.name}, {element.degree}, "
-                    f"{element.lagrange_variant.name}, {element.dpc_variant.name}, {element.discontinuous}, "
-                    f"{element.dtype}, {element.dof_ordering}")
+            repr = (
+                f"Basix element ({element.family.name}, {element.cell_type.name}, {element.degree}, "
+                f"{element.lagrange_variant.name}, {element.dpc_variant.name}, {element.discontinuous}, "
+                f"{element.dtype}, {element.dof_ordering}"
+            )
         if gdim != _cellname_to_tdim(element.cell_type.name):
             repr += _repr_optional_args(gdim=gdim)
         repr += ")"
 
         super().__init__(
-            repr, element.cell_type.name, tuple(element.value_shape), element.degree,
-            _ufl_pullback_from_enum(element.map_type), gdim=gdim)
+            repr,
+            element.cell_type.name,
+            tuple(element.value_shape),
+            element.degree,
+            _ufl_pullback_from_enum(element.map_type),
+            gdim=gdim,
+        )
 
         self._element = element
 
@@ -612,6 +634,7 @@ class _ComponentElement(_ElementBase):
     function is called.
 
     """
+
     _element: _ElementBase
     _component: int
 
@@ -623,20 +646,27 @@ class _ComponentElement(_ElementBase):
         if gdim != _cellname_to_tdim(element.cell_type.name):
             repr += _repr_optional_args(gdim=gdim)
         repr += ")"
-        super().__init__(repr, element.cell_type.name, (1, ), element._degree, gdim=gdim)
+        super().__init__(repr, element.cell_type.name, (1,), element._degree, gdim=gdim)
 
     def __eq__(self, other) -> bool:
         """Check if two elements are equal."""
-        return (isinstance(other, _ComponentElement) and self._element == other._element
-                and self._component == other._component and self._gdim == other._gdim)
+        return (
+            isinstance(other, _ComponentElement)
+            and self._element == other._element
+            and self._component == other._component
+            and self._gdim == other._gdim
+        )
 
     def __hash__(self) -> int:
         """Return a hash."""
         return super().__hash__()
 
     def __mul__(self, other):
-        _warn("Use of * to create mixed elements is deprecated and will be removed after December 2023. "
-              "Please, use basix.ufl.mixed_element.", FutureWarning)
+        _warn(
+            "Use of * to create mixed elements is deprecated and will be removed after December 2023. "
+            "Please, use basix.ufl.mixed_element.",
+            FutureWarning,
+        )
         return mixed_element([self, other])
 
     def tabulate(self, nderivs: int, points: _npt.NDArray[np.float64]) -> _npt.NDArray[np.float64]:
@@ -838,13 +868,19 @@ class _MixedElement(_ElementBase):
         if gdim != _cellname_to_tdim(sub_elements[0].cell_type.name):
             repr += _repr_optional_args(gdim=gdim)
         repr += ")"
-        super().__init__(repr, sub_elements[0].cell_type.name,
-                         (sum(i.value_size for i in sub_elements), ), pullback=pullback, gdim=gdim)
+        super().__init__(
+            repr,
+            sub_elements[0].cell_type.name,
+            (sum(i.value_size for i in sub_elements),),
+            pullback=pullback,
+            gdim=gdim,
+        )
 
     def __eq__(self, other) -> bool:
         """Check if two elements are equal."""
-        if isinstance(other, _MixedElement) and (len(self._sub_elements) == len(other._sub_elements)
-                                                 and self._gdim == other._gdim):
+        if isinstance(other, _MixedElement) and (
+            len(self._sub_elements) == len(other._sub_elements) and self._gdim == other._gdim
+        ):
             for i, j in zip(self._sub_elements, other._sub_elements):
                 if i != j:
                     return False
@@ -878,7 +914,7 @@ class _MixedElement(_ElementBase):
             start = 0
             for e, t in zip(self._sub_elements, deriv_tables):
                 for i in range(0, e.dim, e.value_size):
-                    new_table[:, start: start + e.value_size] = t[:, i: i + e.value_size]
+                    new_table[:, start : start + e.value_size] = t[:, i : i + e.value_size]
                     start += self.value_size
             tables.append(new_table)
         return np.asarray(tables, dtype=np.float64)
@@ -968,15 +1004,15 @@ class _MixedElement(_ElementBase):
     def num_entity_dofs(self) -> list[list[int]]:
         """Number of DOFs associated with each entity."""
         data = [e.num_entity_dofs for e in self._sub_elements]
-        return [[sum(d[tdim][entity_n] for d in data) for entity_n, _ in enumerate(entities)]
-                for tdim, entities in enumerate(data[0])]
+        return [
+            [sum(d[tdim][entity_n] for d in data) for entity_n, _ in enumerate(entities)]
+            for tdim, entities in enumerate(data[0])
+        ]
 
     @property
     def entity_dofs(self) -> list[list[list[int]]]:
         """DOF numbers associated with each entity."""
-        dofs: list[list[list[int]]] = [
-            [[] for i in entities]
-            for entities in self._sub_elements[0].entity_dofs]
+        dofs: list[list[list[int]]] = [[[] for i in entities] for entities in self._sub_elements[0].entity_dofs]
         start_dof = 0
         for e in self._sub_elements:
             for tdim, entities in enumerate(e.entity_dofs):
@@ -989,15 +1025,15 @@ class _MixedElement(_ElementBase):
     def num_entity_closure_dofs(self) -> list[list[int]]:
         """Number of DOFs associated with the closure of each entity."""
         data = [e.num_entity_closure_dofs for e in self._sub_elements]
-        return [[sum(d[tdim][entity_n] for d in data) for entity_n, _ in enumerate(entities)]
-                for tdim, entities in enumerate(data[0])]
+        return [
+            [sum(d[tdim][entity_n] for d in data) for entity_n, _ in enumerate(entities)]
+            for tdim, entities in enumerate(data[0])
+        ]
 
     @property
     def entity_closure_dofs(self) -> list[list[list[int]]]:
         """DOF numbers associated with the closure of each entity."""
-        dofs: list[list[list[int]]] = [
-            [[] for i in entities]
-            for entities in self._sub_elements[0].entity_closure_dofs]
+        dofs: list[list[list[int]]] = [[[] for i in entities] for entities in self._sub_elements[0].entity_closure_dofs]
         start_dof = 0
         for e in self._sub_elements:
             for tdim, entities in enumerate(e.entity_closure_dofs):
@@ -1095,16 +1131,23 @@ class _BlockedElement(_ElementBase):
     but should use the `blocked_element` function instead.
 
     """
+
     _block_shape: tuple[int, ...]
     _sub_element: _ElementBase
     _block_size: int
 
-    def __init__(self, sub_element: _ElementBase, shape: tuple[int, ...],
-                 symmetry: _typing.Optional[bool] = None, gdim: _typing.Optional[int] = None,):
+    def __init__(
+        self,
+        sub_element: _ElementBase,
+        shape: tuple[int, ...],
+        symmetry: _typing.Optional[bool] = None,
+        gdim: _typing.Optional[int] = None,
+    ):
         """Initialise the element."""
         if sub_element.value_size != 1:
-            raise ValueError("Blocked elements of non-scalar elements are not supported. "
-                             "Try using _MixedElement instead.")
+            raise ValueError(
+                "Blocked elements of non-scalar elements are not supported. " "Try using _MixedElement instead."
+            )
         if symmetry is not None:
             if len(shape) != 2:
                 raise ValueError("symmetry argument can only be passed to elements of rank 2.")
@@ -1132,8 +1175,7 @@ class _BlockedElement(_ElementBase):
             repr += _repr_optional_args(symmetry=symmetry)
         repr += ")"
 
-        super().__init__(repr, sub_element.cell_type.name, shape,
-                         sub_element._degree, sub_element._pullback, gdim=gdim)
+        super().__init__(repr, sub_element.cell_type.name, shape, sub_element._degree, sub_element._pullback, gdim=gdim)
 
         if symmetry:
             n = 0
@@ -1149,9 +1191,12 @@ class _BlockedElement(_ElementBase):
     def __eq__(self, other) -> bool:
         """Check if two elements are equal."""
         return (
-            isinstance(other, _BlockedElement) and self._block_size == other._block_size
-            and self._block_shape == other._block_shape and self._sub_element == other._sub_element
-            and self._gdim == other._gdim)
+            isinstance(other, _BlockedElement)
+            and self._block_size == other._block_size
+            and self._block_shape == other._block_shape
+            and self._sub_element == other._sub_element
+            and self._gdim == other._gdim
+        )
 
     def __hash__(self) -> int:
         """Return a hash."""
@@ -1174,13 +1219,12 @@ class _BlockedElement(_ElementBase):
         for table in self._sub_element.tabulate(nderivs, points):
             # Repeat sub element horizontally
             assert len(table.shape) == 2
-            new_table = np.zeros((table.shape[0], *self._block_shape,
-                                  self._block_size * table.shape[1]))
+            new_table = np.zeros((table.shape[0], *self._block_shape, self._block_size * table.shape[1]))
             for i, j in enumerate(_itertools.product(*[range(s) for s in self._block_shape])):
                 if len(j) == 1:
-                    new_table[:, j[0], i::self._block_size] = table
+                    new_table[:, j[0], i :: self._block_size] = table
                 elif len(j) == 2:
-                    new_table[:, j[0], j[1], i::self._block_size] = table
+                    new_table[:, j[0], j[1], i :: self._block_size] = table
                 else:
                     raise NotImplementedError()
             output.append(new_table)
@@ -1214,7 +1258,7 @@ class _BlockedElement(_ElementBase):
         """Reference value shape of the element basis function."""
         if self._has_symmetry:
             assert len(self._block_shape) == 2 and self._block_shape[0] == self._block_shape[1]
-            return (self._block_shape[0] * (self._block_shape[0] + 1) // 2, )
+            return (self._block_shape[0] * (self._block_shape[0] + 1) // 2,)
         return self._value_shape
 
     @property
@@ -1247,8 +1291,10 @@ class _BlockedElement(_ElementBase):
         """DOF numbers associated with each entity."""
         # TODO: should this return this, or should it take blocks into
         # account?
-        return [[[k * self._block_size + b for k in j for b in range(self._block_size)]
-                 for j in i] for i in self._sub_element.entity_dofs]
+        return [
+            [[k * self._block_size + b for k in j for b in range(self._block_size)] for j in i]
+            for i in self._sub_element.entity_dofs
+        ]
 
     @property
     def num_entity_closure_dofs(self) -> list[list[int]]:
@@ -1260,8 +1306,10 @@ class _BlockedElement(_ElementBase):
         """DOF numbers associated with the closure of each entity."""
         # TODO: should this return this, or should it take blocks into
         # account?
-        return [[[k * self._block_size + b for k in j for b in range(self._block_size)]
-                 for j in i] for i in self._sub_element.entity_closure_dofs]
+        return [
+            [[k * self._block_size + b for k in j for b in range(self._block_size)] for j in i]
+            for i in self._sub_element.entity_closure_dofs
+        ]
 
     @property
     def num_global_support_dofs(self) -> int:
@@ -1358,8 +1406,9 @@ class _BlockedElement(_ElementBase):
         sub_wc = self._sub_element._wcoeffs
         wcoeffs = np.zeros((sub_wc.shape[0] * self._block_size, sub_wc.shape[1] * self._block_size))
         for i in range(self._block_size):
-            wcoeffs[sub_wc.shape[0] * i: sub_wc.shape[0]
-                    * (i + 1), sub_wc.shape[1] * i: sub_wc.shape[1] * (i + 1)] = sub_wc
+            wcoeffs[
+                sub_wc.shape[0] * i : sub_wc.shape[0] * (i + 1), sub_wc.shape[1] * i : sub_wc.shape[1] * (i + 1)
+            ] = sub_wc
         return wcoeffs
 
     @property
@@ -1374,11 +1423,13 @@ class _BlockedElement(_ElementBase):
         for M_list in self._sub_element._M:
             M_row = []
             for mat in M_list:
-                new_mat = np.zeros((mat.shape[0] * self._block_size, mat.shape[1]
-                                    * self._block_size, mat.shape[2], mat.shape[3]))
+                new_mat = np.zeros(
+                    (mat.shape[0] * self._block_size, mat.shape[1] * self._block_size, mat.shape[2], mat.shape[3])
+                )
                 for i in range(self._block_size):
-                    new_mat[i * mat.shape[0]: (i + 1) * mat.shape[0],
-                            i * mat.shape[1]: (i + 1) * mat.shape[1], :, :] = mat
+                    new_mat[
+                        i * mat.shape[0] : (i + 1) * mat.shape[0], i * mat.shape[1] : (i + 1) * mat.shape[1], :, :
+                    ] = mat
                 M_row.append(new_mat)
             M.append(M_row)
         return M
@@ -1412,9 +1463,14 @@ class _BlockedElement(_ElementBase):
 class _QuadratureElement(_ElementBase):
     """A quadrature element."""
 
-    def __init__(self, cell: _basix.CellType, points: _npt.NDArray[np.float64],
-                 weights: _npt.NDArray[np.float64], pullback: _AbstractPullback,
-                 degree: _typing.Optional[int] = None):
+    def __init__(
+        self,
+        cell: _basix.CellType,
+        points: _npt.NDArray[np.float64],
+        weights: _npt.NDArray[np.float64],
+        pullback: _AbstractPullback,
+        degree: _typing.Optional[int] = None,
+    ):
         """Initialise the element."""
         self._points = points
         self._weights = weights
@@ -1635,8 +1691,9 @@ class _RealElement(_ElementBase):
 
     def __eq__(self, other) -> bool:
         """Check if two elements are equal."""
-        return isinstance(other, _RealElement) and (self._cell_type == other._cell_type
-                                                    and self._value_shape == other._value_shape)
+        return isinstance(other, _RealElement) and (
+            self._cell_type == other._cell_type and self._value_shape == other._value_shape
+        )
 
     def __hash__(self) -> int:
         """Return a hash."""
@@ -1655,7 +1712,7 @@ class _RealElement(_ElementBase):
         """
         out = np.zeros((nderivs + 1, len(points), self.value_size**2))
         for v in range(self.value_size):
-            out[0, :, self.value_size * v + v] = 1.
+            out[0, :, self.value_size * v + v] = 1.0
         return out
 
     def get_component_element(self, flat_component: int) -> tuple[_ElementBase, int, int]:
@@ -1816,9 +1873,11 @@ def _compute_signature(element: _basix.finite_element.FiniteElement) -> str:
 
     """
     assert element.family == _basix.ElementFamily.custom
-    signature = (f"{element.cell_type.name}, {element.value_shape}, {element.map_type.name}, "
-                 f"{element.discontinuous}, {element.embedded_subdegree}, {element.embedded_superdegree}, "
-                 f"{element.dtype}, {element.dof_ordering}")
+    signature = (
+        f"{element.cell_type.name}, {element.value_shape}, {element.map_type.name}, "
+        f"{element.discontinuous}, {element.embedded_subdegree}, {element.embedded_superdegree}, "
+        f"{element.dtype}, {element.dof_ordering}"
+    )
     data = ",".join([f"{i}" for row in element.wcoeffs for i in row])
     data += "__"
     for entity in element.x:
@@ -1836,18 +1895,24 @@ def _compute_signature(element: _basix.finite_element.FiniteElement) -> str:
     for mat in element.entity_transformations().values():
         data += ",".join([f"{i}" for row in mat for i in row])
         data += "__"
-    signature += _hashlib.sha1(data.encode('utf-8')).hexdigest()
+    signature += _hashlib.sha1(data.encode("utf-8")).hexdigest()
 
     return signature
 
 
 @_functools.lru_cache
-def element(family: _typing.Union[_basix.ElementFamily, str], cell: _typing.Union[_basix.CellType, str], degree: int,
-            lagrange_variant: _basix.LagrangeVariant = _basix.LagrangeVariant.unset,
-            dpc_variant: _basix.DPCVariant = _basix.DPCVariant.unset, discontinuous: bool = False,
-            shape: _typing.Optional[tuple[int, ...]] = None,
-            symmetry: _typing.Optional[bool] = None, gdim: _typing.Optional[int] = None,
-            dtype: _npt.DTypeLike = np.float64) -> _ElementBase:
+def element(
+    family: _typing.Union[_basix.ElementFamily, str],
+    cell: _typing.Union[_basix.CellType, str],
+    degree: int,
+    lagrange_variant: _basix.LagrangeVariant = _basix.LagrangeVariant.unset,
+    dpc_variant: _basix.DPCVariant = _basix.DPCVariant.unset,
+    discontinuous: bool = False,
+    shape: _typing.Optional[tuple[int, ...]] = None,
+    symmetry: _typing.Optional[bool] = None,
+    gdim: _typing.Optional[int] = None,
+    dtype: _npt.DTypeLike = np.float64,
+) -> _ElementBase:
     """Create a UFL compatible element using Basix.
 
     Args:
@@ -1881,8 +1946,11 @@ def element(family: _typing.Union[_basix.ElementFamily, str], cell: _typing.Unio
             family = "P"
             discontinuous = True
         if family == "CG":
-            _warn("\"CG\" element name is deprecated. Consider using \"Lagrange\" or \"P\" instead",
-                  DeprecationWarning, stacklevel=2)
+            _warn(
+                '"CG" element name is deprecated. Consider using "Lagrange" or "P" instead',
+                DeprecationWarning,
+                stacklevel=2,
+            )
             family = "P"
             discontinuous = False
         if family == "DPC":
@@ -1906,8 +1974,7 @@ def element(family: _typing.Union[_basix.ElementFamily, str], cell: _typing.Unio
         elif family == EF.DPC:
             dpc_variant = _basix.DPCVariant.diagonal_gll
 
-    e = _basix.create_element(family, cell, degree, lagrange_variant, dpc_variant,
-                              discontinuous, dtype=dtype)
+    e = _basix.create_element(family, cell, degree, lagrange_variant, dpc_variant, discontinuous, dtype=dtype)
     ufl_e = _BasixElement(e, gdim=gdim)
 
     if shape is None or shape == tuple(e.value_shape):
@@ -1918,9 +1985,9 @@ def element(family: _typing.Union[_basix.ElementFamily, str], cell: _typing.Unio
         return blocked_element(ufl_e, shape=shape, gdim=gdim, symmetry=symmetry)
 
 
-def enriched_element(elements: list[_ElementBase],
-                     map_type: _typing.Optional[_basix.MapType] = None,
-                     gdim: _typing.Optional[int] = None) -> _ElementBase:
+def enriched_element(
+    elements: list[_ElementBase], map_type: _typing.Optional[_basix.MapType] = None, gdim: _typing.Optional[int] = None
+) -> _ElementBase:
     """Create an UFL compatible enriched element from a list of elements.
 
     Args:
@@ -1972,7 +2039,7 @@ def enriched_element(elements: list[_ElementBase],
             pt = 0
             dof = 0
             for i, mat in enumerate(M_parts):
-                new_M[dof: dof + mat.shape[0], :, pt: pt + mat.shape[2], :mat.shape[3]] = mat
+                new_M[dof : dof + mat.shape[0], :, pt : pt + mat.shape[2], : mat.shape[3]] = mat
                 dof += mat.shape[0]
                 pt += mat.shape[2]
             M_row.append(new_M)
@@ -1982,21 +2049,31 @@ def enriched_element(elements: list[_ElementBase],
     wcoeffs = np.zeros((dim, _basix.polynomials.dim(_basix.PolynomialType.legendre, ct, hd) * vsize))
     row = 0
     for e in elements:
-        wcoeffs[row: row + e.dim, :] = _basix.polynomials.reshape_coefficients(
-            _basix.PolynomialType.legendre, ct, e._wcoeffs, vsize, e.embedded_superdegree, hd)
+        wcoeffs[row : row + e.dim, :] = _basix.polynomials.reshape_coefficients(
+            _basix.PolynomialType.legendre, ct, e._wcoeffs, vsize, e.embedded_superdegree, hd
+        )
         row += e.dim
 
-    return custom_element(ct, list(vshape), wcoeffs, x, M, nderivs,
-                          map_type, ss, discontinuous, hcd, hd, ptype, gdim=gdim)
+    return custom_element(
+        ct, list(vshape), wcoeffs, x, M, nderivs, map_type, ss, discontinuous, hcd, hd, ptype, gdim=gdim
+    )
 
 
-def custom_element(cell_type: _basix.CellType, value_shape: _typing.Union[list[int], tuple[int, ...]],
-                   wcoeffs: _npt.NDArray[np.float64], x: list[list[_npt.NDArray[np.float64]]],
-                   M: list[list[_npt.NDArray[np.float64]]], interpolation_nderivs: int,
-                   map_type: _basix.MapType, sobolev_space: _basix.SobolevSpace, discontinuous: bool,
-                   embedded_subdegree: int, embedded_superdegree: int,
-                   polyset_type: _basix.PolysetType = _basix.PolysetType.standard,
-                   gdim: _typing.Optional[int] = None) -> _ElementBase:
+def custom_element(
+    cell_type: _basix.CellType,
+    value_shape: _typing.Union[list[int], tuple[int, ...]],
+    wcoeffs: _npt.NDArray[np.float64],
+    x: list[list[_npt.NDArray[np.float64]]],
+    M: list[list[_npt.NDArray[np.float64]]],
+    interpolation_nderivs: int,
+    map_type: _basix.MapType,
+    sobolev_space: _basix.SobolevSpace,
+    discontinuous: bool,
+    embedded_subdegree: int,
+    embedded_superdegree: int,
+    polyset_type: _basix.PolysetType = _basix.PolysetType.standard,
+    gdim: _typing.Optional[int] = None,
+) -> _ElementBase:
     """Create a UFL compatible custom Basix element.
 
     Args:
@@ -2042,7 +2119,7 @@ def custom_element(cell_type: _basix.CellType, value_shape: _typing.Union[list[i
         discontinuous,
         embedded_subdegree,
         embedded_superdegree,
-        polyset_type
+        polyset_type,
     )
     return _BasixElement(e, gdim=gdim)
 
@@ -2067,13 +2144,15 @@ def mixed_element(elements: list[_ElementBase], gdim: _typing.Optional[int] = No
     return _MixedElement(elements, gdim=gdim)
 
 
-def quadrature_element(cell: _typing.Union[str, _basix.CellType],
-                       value_shape: tuple[int, ...] = (),
-                       scheme: _typing.Optional[str] = None,
-                       degree: _typing.Optional[int] = None,
-                       points: _typing.Optional[_npt.NDArray[np.float64]] = None,
-                       weights: _typing.Optional[_npt.NDArray[np.float64]] = None,
-                       pullback: _AbstractPullback = _ufl.identity_pullback) -> _ElementBase:
+def quadrature_element(
+    cell: _typing.Union[str, _basix.CellType],
+    value_shape: tuple[int, ...] = (),
+    scheme: _typing.Optional[str] = None,
+    degree: _typing.Optional[int] = None,
+    points: _typing.Optional[_npt.NDArray[np.float64]] = None,
+    weights: _typing.Optional[_npt.NDArray[np.float64]] = None,
+    pullback: _AbstractPullback = _ufl.identity_pullback,
+) -> _ElementBase:
     """Create a quadrature element.
 
     When creating this element, either the quadrature scheme and degree
@@ -2101,8 +2180,7 @@ def quadrature_element(cell: _typing.Union[str, _basix.CellType],
         if scheme is None:
             points, weights = _basix.make_quadrature(cell, degree)
         else:
-            points, weights = _basix.make_quadrature(
-                cell, degree, rule=_basix.quadrature.string_to_type(scheme))
+            points, weights = _basix.make_quadrature(cell, degree, rule=_basix.quadrature.string_to_type(scheme))
 
     assert points is not None
     assert weights is not None
@@ -2114,8 +2192,7 @@ def quadrature_element(cell: _typing.Union[str, _basix.CellType],
         return _BlockedElement(e, value_shape)
 
 
-def real_element(cell: _typing.Union[_basix.CellType, str],
-                 value_shape: tuple[int, ...]) -> _ElementBase:
+def real_element(cell: _typing.Union[_basix.CellType, str], value_shape: tuple[int, ...]) -> _ElementBase:
     """Create a real element.
 
     Args:
@@ -2134,8 +2211,10 @@ def real_element(cell: _typing.Union[_basix.CellType, str],
 
 @_functools.lru_cache
 def blocked_element(
-    sub_element: _ElementBase, shape: tuple[int, ...],
-    symmetry: _typing.Optional[bool] = None, gdim: _typing.Optional[int] = None
+    sub_element: _ElementBase,
+    shape: tuple[int, ...],
+    symmetry: _typing.Optional[bool] = None,
+    gdim: _typing.Optional[int] = None,
 ) -> _ElementBase:
     """Create a UFL compatible blocked element.
 
@@ -2158,8 +2237,6 @@ def blocked_element(
     return _BlockedElement(sub_element, shape=shape, symmetry=symmetry, gdim=gdim)
 
 
-def wrap_element(
-    element: _basix.finite_element.FiniteElement, gdim: _typing.Optional[int] = None
-) -> _ElementBase:
+def wrap_element(element: _basix.finite_element.FiniteElement, gdim: _typing.Optional[int] = None) -> _ElementBase:
     """Wrap a Basix element as a Basix UFL element."""
     return _BasixElement(element, gdim=gdim)

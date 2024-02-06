@@ -8,6 +8,7 @@ __all__ = ["string_to_type"]
 
 class MapType(Enum):
     """Map type."""
+
     identity = _MT.identity
     L2Piola = _MT.L2Piola
     covariantPiola = _MT.covariantPiola

@@ -7,7 +7,8 @@ from basix.finite_element import FiniteElement
 
 
 def compute_interpolation_operator(
-    e0: FiniteElement, e1: FiniteElement,
+    e0: FiniteElement,
+    e1: FiniteElement,
 ) -> npt.NDArray:
     """Compute a matrix that represents the interpolation between two elements.
 

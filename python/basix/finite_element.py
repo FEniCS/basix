@@ -21,13 +21,22 @@ from basix.polynomials import PolysetType
 from basix.sobolev_spaces import SobolevSpace
 from basix.utils import Enum
 
-__all__ = ["FiniteElement", "create_element", "create_custom_element", "create_tp_element",
-           "string_to_family", "string_to_lagrange_variant", "string_to_dpc_variant",
-           "tp_factors", "tp_dof_ordering"]
+__all__ = [
+    "FiniteElement",
+    "create_element",
+    "create_custom_element",
+    "create_tp_element",
+    "string_to_family",
+    "string_to_lagrange_variant",
+    "string_to_dpc_variant",
+    "tp_factors",
+    "tp_dof_ordering",
+]
 
 
 class ElementFamily(Enum):
     """Element family."""
+
     custom = _EF.custom
     P = _EF.P
     BDM = _EF.BDM
@@ -46,6 +55,7 @@ class ElementFamily(Enum):
 
 class LagrangeVariant(Enum):
     """Lagrange variant."""
+
     unset = _LV.unset
     equispaced = _LV.equispaced
     gll_warped = _LV.gll_warped
@@ -63,6 +73,7 @@ class LagrangeVariant(Enum):
 
 class DPCVariant(Enum):
     """DPC variant."""
+
     unset = _DPCV.unset
     simplex_equispaced = _DPCV.simplex_equispaced
     simplex_gll = _DPCV.simplex_gll
@@ -75,6 +86,7 @@ class DPCVariant(Enum):
 
 class FiniteElement:
     """Finite element class."""
+
     _e: typing.Union[_FiniteElement_float32, _FiniteElement_float64]
 
     def __init__(self, e: typing.Union[_FiniteElement_float32, _FiniteElement_float64]):
@@ -148,8 +160,7 @@ class FiniteElement:
         """
         return self._e.push_forward(U, J, detJ, K)
 
-    def pull_back(self, u: npt.NDArray, J: npt.NDArray,
-                  detJ: npt.NDArray, K: npt.NDArray) -> npt.NDArray[np.floating]:
+    def pull_back(self, u: npt.NDArray, J: npt.NDArray, detJ: npt.NDArray, K: npt.NDArray) -> npt.NDArray[np.floating]:
         """Map function values from a physical cell to the reference.
 
         Args:
@@ -551,12 +562,16 @@ class FiniteElement:
         return np.dtype(self._e.dtype)
 
 
-def create_element(family: ElementFamily, celltype: CellType, degree: int,
-                   lagrange_variant: LagrangeVariant = LagrangeVariant.unset,
-                   dpc_variant: DPCVariant = DPCVariant.unset,
-                   discontinuous: bool = False,
-                   dof_ordering: list[int] = [],
-                   dtype: npt.DTypeLike = np.float64) -> FiniteElement:
+def create_element(
+    family: ElementFamily,
+    celltype: CellType,
+    degree: int,
+    lagrange_variant: LagrangeVariant = LagrangeVariant.unset,
+    dpc_variant: DPCVariant = DPCVariant.unset,
+    discontinuous: bool = False,
+    dof_ordering: list[int] = [],
+    dtype: npt.DTypeLike = np.float64,
+) -> FiniteElement:
     """Create a finite element.
 
     Args:
@@ -575,15 +590,34 @@ def create_element(family: ElementFamily, celltype: CellType, degree: int,
     Returns:
         A finite element.
     """
-    return FiniteElement(_create_element(
-        family.value, celltype.value, degree, lagrange_variant.value, dpc_variant.value,
-        discontinuous, dof_ordering, np.dtype(dtype).char))
+    return FiniteElement(
+        _create_element(
+            family.value,
+            celltype.value,
+            degree,
+            lagrange_variant.value,
+            dpc_variant.value,
+            discontinuous,
+            dof_ordering,
+            np.dtype(dtype).char,
+        )
+    )
 
 
-def create_custom_element(cell_type: CellType, value_shape, wcoeffs, x, M, interpolation_nderivs: int, map_type,
-                          sobolev_space, discontinuous: bool,
-                          embedded_subdegree: int, embedded_superdegree: int,
-                          poly_type: PolysetType) -> FiniteElement:
+def create_custom_element(
+    cell_type: CellType,
+    value_shape,
+    wcoeffs,
+    x,
+    M,
+    interpolation_nderivs: int,
+    map_type,
+    sobolev_space,
+    discontinuous: bool,
+    embedded_subdegree: int,
+    embedded_superdegree: int,
+    poly_type: PolysetType,
+) -> FiniteElement:
     """Create a custom finite element.
 
     Args:
@@ -614,17 +648,33 @@ def create_custom_element(cell_type: CellType, value_shape, wcoeffs, x, M, inter
     Returns:
         A custom finite element
     """
-    return FiniteElement(_create_custom_element(cell_type.value, value_shape, wcoeffs, x, M,
-                                                interpolation_nderivs, map_type.value,
-                                                sobolev_space.value, discontinuous, embedded_subdegree,
-                                                embedded_superdegree, poly_type.value))
+    return FiniteElement(
+        _create_custom_element(
+            cell_type.value,
+            value_shape,
+            wcoeffs,
+            x,
+            M,
+            interpolation_nderivs,
+            map_type.value,
+            sobolev_space.value,
+            discontinuous,
+            embedded_subdegree,
+            embedded_superdegree,
+            poly_type.value,
+        )
+    )
 
 
-def create_tp_element(family: ElementFamily, celltype: CellType, degree: int,
-                      lagrange_variant: LagrangeVariant = LagrangeVariant.unset,
-                      dpc_variant: DPCVariant = DPCVariant.unset,
-                      discontinuous: bool = False,
-                      dtype: npt.DTypeLike = np.float64) -> FiniteElement:
+def create_tp_element(
+    family: ElementFamily,
+    celltype: CellType,
+    degree: int,
+    lagrange_variant: LagrangeVariant = LagrangeVariant.unset,
+    dpc_variant: DPCVariant = DPCVariant.unset,
+    discontinuous: bool = False,
+    dtype: npt.DTypeLike = np.float64,
+) -> FiniteElement:
     """Create a finite element with tensor product ordering.
 
     Args:
@@ -642,16 +692,28 @@ def create_tp_element(family: ElementFamily, celltype: CellType, degree: int,
     Returns:
         A finite element.
     """
-    return FiniteElement(_create_tp_element(
-        family.value, celltype.value, degree, lagrange_variant.value, dpc_variant.value,
-        discontinuous, np.dtype(dtype).char))
+    return FiniteElement(
+        _create_tp_element(
+            family.value,
+            celltype.value,
+            degree,
+            lagrange_variant.value,
+            dpc_variant.value,
+            discontinuous,
+            np.dtype(dtype).char,
+        )
+    )
 
 
 def tp_factors(
-    family: ElementFamily, celltype: CellType, degree: int,
+    family: ElementFamily,
+    celltype: CellType,
+    degree: int,
     lagrange_variant: LagrangeVariant = LagrangeVariant.unset,
-    dpc_variant: DPCVariant = DPCVariant.unset, discontinuous: bool = False,
-    dof_ordering: list[int] = [], dtype: npt.DTypeLike = np.float64
+    dpc_variant: DPCVariant = DPCVariant.unset,
+    discontinuous: bool = False,
+    dof_ordering: list[int] = [],
+    dtype: npt.DTypeLike = np.float64,
 ) -> list[list[FiniteElement]]:
     """Get the elements in the tensor product factorisation of an element.
 
@@ -673,15 +735,28 @@ def tp_factors(
     Returns:
         A list of finite elements.
     """
-    return [[FiniteElement(e) for e in elements] for elements in _tp_factors(
-        family.value, celltype.value, degree, lagrange_variant.value, dpc_variant.value,
-        discontinuous, dof_ordering, np.dtype(dtype).char)]
+    return [
+        [FiniteElement(e) for e in elements]
+        for elements in _tp_factors(
+            family.value,
+            celltype.value,
+            degree,
+            lagrange_variant.value,
+            dpc_variant.value,
+            discontinuous,
+            dof_ordering,
+            np.dtype(dtype).char,
+        )
+    ]
 
 
 def tp_dof_ordering(
-    family: ElementFamily, celltype: CellType, degree: int,
+    family: ElementFamily,
+    celltype: CellType,
+    degree: int,
     lagrange_variant: LagrangeVariant = LagrangeVariant.unset,
-    dpc_variant: DPCVariant = DPCVariant.unset, discontinuous: bool = False,
+    dpc_variant: DPCVariant = DPCVariant.unset,
+    discontinuous: bool = False,
 ) -> list[int]:
     """Get the tensor product DOF ordering for an element.
 
@@ -705,8 +780,8 @@ def tp_dof_ordering(
         The DOF ordering.
     """
     return _tp_dof_ordering(
-        family.value, celltype.value, degree, lagrange_variant.value, dpc_variant.value,
-        discontinuous)
+        family.value, celltype.value, degree, lagrange_variant.value, dpc_variant.value, discontinuous
+    )
 
 
 def string_to_family(family: str, cell: str) -> ElementFamily:
@@ -730,68 +805,80 @@ def string_to_family(family: str, cell: str) -> ElementFamily:
 
     # Family names that are valid on non-interval cells
     if cell != "interval":
-        families.update({
-            "RT": ElementFamily.RT,
-            "Raviart-Thomas": ElementFamily.RT,
-            "N1F": ElementFamily.RT,
-            "N1div": ElementFamily.RT,
-            "Nedelec 1st kind H(div)": ElementFamily.RT,
-            "N1E": ElementFamily.N1E,
-            "N1curl": ElementFamily.N1E,
-            "Nedelec 1st kind H(curl)": ElementFamily.N1E,
-            "BDM": ElementFamily.BDM,
-            "Brezzi-Douglas-Marini": ElementFamily.BDM,
-            "N2F": ElementFamily.BDM,
-            "N2div": ElementFamily.BDM,
-            "Nedelec 2nd kind H(div)": ElementFamily.BDM,
-            "N2E": ElementFamily.N2E,
-            "N2curl": ElementFamily.N2E,
-            "Nedelec 2nd kind H(curl)": ElementFamily.N2E,
-        })
+        families.update(
+            {
+                "RT": ElementFamily.RT,
+                "Raviart-Thomas": ElementFamily.RT,
+                "N1F": ElementFamily.RT,
+                "N1div": ElementFamily.RT,
+                "Nedelec 1st kind H(div)": ElementFamily.RT,
+                "N1E": ElementFamily.N1E,
+                "N1curl": ElementFamily.N1E,
+                "Nedelec 1st kind H(curl)": ElementFamily.N1E,
+                "BDM": ElementFamily.BDM,
+                "Brezzi-Douglas-Marini": ElementFamily.BDM,
+                "N2F": ElementFamily.BDM,
+                "N2div": ElementFamily.BDM,
+                "Nedelec 2nd kind H(div)": ElementFamily.BDM,
+                "N2E": ElementFamily.N2E,
+                "N2curl": ElementFamily.N2E,
+                "Nedelec 2nd kind H(curl)": ElementFamily.N2E,
+            }
+        )
 
     # Family names that are valid for intervals
     if cell == "interval":
-        families.update({
-            "DPC": ElementFamily.P,
-        })
+        families.update(
+            {
+                "DPC": ElementFamily.P,
+            }
+        )
 
     # Family names that are valid for tensor product cells
     if cell in ["interval", "quadrilateral", "hexahedron"]:
-        families.update({
-            "Q": ElementFamily.P,
-            "Serendipity": ElementFamily.serendipity,
-            "serendipity": ElementFamily.serendipity,
-            "S": ElementFamily.serendipity,
-        })
+        families.update(
+            {
+                "Q": ElementFamily.P,
+                "Serendipity": ElementFamily.serendipity,
+                "serendipity": ElementFamily.serendipity,
+                "S": ElementFamily.serendipity,
+            }
+        )
 
     # Family names that are valid for quads and hexes
     if cell in ["quadrilateral", "hexahedron"]:
-        families.update({
-            "RTCF": ElementFamily.RT,
-            "DPC": ElementFamily.DPC,
-            "NCF": ElementFamily.RT,
-            "RTCE": ElementFamily.N1E,
-            "NCE": ElementFamily.N1E,
-            "BDMCF": ElementFamily.BDM,
-            "BDMCE": ElementFamily.N2E,
-            "AAF": ElementFamily.BDM,
-            "AAE": ElementFamily.N2E,
-        })
+        families.update(
+            {
+                "RTCF": ElementFamily.RT,
+                "DPC": ElementFamily.DPC,
+                "NCF": ElementFamily.RT,
+                "RTCE": ElementFamily.N1E,
+                "NCE": ElementFamily.N1E,
+                "BDMCF": ElementFamily.BDM,
+                "BDMCE": ElementFamily.N2E,
+                "AAF": ElementFamily.BDM,
+                "AAE": ElementFamily.N2E,
+            }
+        )
 
     # Family names that are valid for triangles and tetrahedra
     if cell in ["triangle", "tetrahedron"]:
-        families.update({
-            "Regge": ElementFamily.Regge,
-            "CR": ElementFamily.CR,
-            "Crouzeix-Raviart": ElementFamily.CR,
-        })
+        families.update(
+            {
+                "Regge": ElementFamily.Regge,
+                "CR": ElementFamily.CR,
+                "Crouzeix-Raviart": ElementFamily.CR,
+            }
+        )
 
     # Family names that are valid for triangles
     if cell in "triangle":
-        families.update({
-            "HHJ": ElementFamily.HHJ,
-            "Hellan-Herrmann-Johnson": ElementFamily.HHJ,
-        })
+        families.update(
+            {
+                "HHJ": ElementFamily.HHJ,
+                "Hellan-Herrmann-Johnson": ElementFamily.HHJ,
+            }
+        )
 
     if family in families:
         return families[family]

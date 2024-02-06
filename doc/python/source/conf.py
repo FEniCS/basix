@@ -1,4 +1,3 @@
-
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
@@ -19,29 +18,26 @@ import basix
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
-extensions = ['sphinx.ext.autodoc',
-              'sphinx.ext.autosummary',
-              'sphinx.ext.mathjax',
-              'sphinx.ext.napoleon']
+extensions = ["sphinx.ext.autodoc", "sphinx.ext.autosummary", "sphinx.ext.mathjax", "sphinx.ext.napoleon"]
 
 # Add any paths that contain templates here, relative to this directory.
-templates_path = ['_templates']
+templates_path = ["_templates"]
 
 # The suffix(es) of source filenames.
 # You can specify multiple suffix as a list of string:
 #
 # source_suffix = ['.rst', '.md']
-source_suffix = '.rst'
+source_suffix = ".rst"
 
 # The master toctree document.
-master_doc = 'index'
+master_doc = "index"
 
 # General information about the project.
-project = 'Basix'
+project = "Basix"
 now = datetime.datetime.now()
 date = now.date()
-copyright = f'{date.year}, FEniCS Project'
-author = 'FEniCS Project'
+copyright = f"{date.year}, FEniCS Project"
+author = "FEniCS Project"
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -65,7 +61,7 @@ language = "en"
 exclude_patterns = []
 
 # The name of the Pygments (syntax highlighting) style to use.
-pygments_style = 'sphinx'
+pygments_style = "sphinx"
 
 # If true, `todo` and `todoList` produce output, else they produce nothing.
 todo_include_todos = True
@@ -92,7 +88,7 @@ html_static_path = []
 # -- Options for HTMLHelp output ------------------------------------------
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = 'BASIXdoc'
+htmlhelp_basename = "BASIXdoc"
 
 
 # -- Options for LaTeX output ---------------------------------------------
@@ -101,15 +97,12 @@ latex_elements = {
     # The paper size ('letterpaper' or 'a4paper').
     #
     # 'papersize': 'letterpaper',
-
     # The font size ('10pt', '11pt' or '12pt').
     #
     # 'pointsize': '10pt',
-
     # Additional stuff for the LaTeX preamble.
     #
     # 'preamble': '',
-
     # Latex figure (float) alignment
     #
     # 'figure_align': 'htbp',
@@ -119,8 +112,7 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-    (master_doc, 'Basix.tex', 'Basix Documentation',
-     'FEniCS Project', 'manual'),
+    (master_doc, "Basix.tex", "Basix Documentation", "FEniCS Project", "manual"),
 ]
 
 
@@ -128,12 +120,9 @@ latex_documents = [
 
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
-man_pages = [
-    (master_doc, 'basix', 'Basix Documentation',
-     [author], 1)
-]
+man_pages = [(master_doc, "basix", "Basix Documentation", [author], 1)]
 
-autodoc_default_options = {'members': True, 'show-inheritance': True, 'imported-members': True, 'undoc-members': True}
+autodoc_default_options = {"members": True, "show-inheritance": True, "imported-members": True, "undoc-members": True}
 autosummary_generate = True
 autoclass_content = "both"
 
@@ -141,14 +130,16 @@ napoleon_google_docstring = True
 napoleon_numpy_docstring = False
 napoleon_use_admonition_for_notes = False
 
+
 def skip_member(app, what, name, obj, skip, opts):
     # Skip @entries from nanobind enums
     # Imported abc.abstractmethod (as _abstractmethod)
     # also seems to be confusing sphinx
-    if name == '@entries' or name == "_abstractmethod":
+    if name == "@entries" or name == "_abstractmethod":
         return True
     else:
         return skip
 
+
 def setup(app):
-    app.connect('autodoc-skip-member', skip_member)
+    app.connect("autodoc-skip-member", skip_member)

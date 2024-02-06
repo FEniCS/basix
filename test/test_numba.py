@@ -10,13 +10,18 @@ import pytest
 import basix
 
 
-@pytest.mark.parametrize("cell", [basix.CellType.triangle, basix.CellType.tetrahedron,
-                                  basix.CellType.quadrilateral, basix.CellType.hexahedron])
-@pytest.mark.parametrize("element, degree, element_args", [
-    (basix.ElementFamily.P, 1, [basix.LagrangeVariant.gll_warped]),
-    (basix.ElementFamily.P, 3, [basix.LagrangeVariant.gll_warped]),
-    (basix.ElementFamily.N1E, 3, [])
-])
+@pytest.mark.parametrize(
+    "cell",
+    [basix.CellType.triangle, basix.CellType.tetrahedron, basix.CellType.quadrilateral, basix.CellType.hexahedron],
+)
+@pytest.mark.parametrize(
+    "element, degree, element_args",
+    [
+        (basix.ElementFamily.P, 1, [basix.LagrangeVariant.gll_warped]),
+        (basix.ElementFamily.P, 3, [basix.LagrangeVariant.gll_warped]),
+        (basix.ElementFamily.N1E, 3, []),
+    ],
+)
 @pytest.mark.parametrize("block_size", [1, 2, 4])
 def test_dof_transformations(cell, element, degree, element_args, block_size):
     try:
@@ -35,7 +40,7 @@ def test_dof_transformations(cell, element, degree, element_args, block_size):
         basix.CellType.tetrahedron: numba_helpers.pre_apply_dof_transformation_tetrahedron,
         basix.CellType.hexahedron: numba_helpers.pre_apply_dof_transformation_hexahedron,
         basix.CellType.prism: numba_helpers.pre_apply_dof_transformation_prism,
-        basix.CellType.pyramid: numba_helpers.pre_apply_dof_transformation_pyramid
+        basix.CellType.pyramid: numba_helpers.pre_apply_dof_transformation_pyramid,
     }
 
     random.seed(1337)
@@ -44,7 +49,7 @@ def test_dof_transformations(cell, element, degree, element_args, block_size):
     data = np.array(list(range(e.dim * block_size)), dtype=np.double)
 
     for i in range(10):
-        cell_info = random.randrange(2 ** 30)
+        cell_info = random.randrange(2**30)
 
         data1 = data.copy()
         e.pre_apply_dof_transformation(data1, block_size, cell_info)
@@ -64,13 +69,18 @@ def test_dof_transformations(cell, element, degree, element_args, block_size):
         assert np.allclose(data1, data2)
 
 
-@pytest.mark.parametrize("cell", [basix.CellType.triangle, basix.CellType.tetrahedron,
-                                  basix.CellType.quadrilateral, basix.CellType.hexahedron])
-@pytest.mark.parametrize("element, degree, element_args", [
-    (basix.ElementFamily.P, 1, [basix.LagrangeVariant.gll_warped]),
-    (basix.ElementFamily.P, 3, [basix.LagrangeVariant.gll_warped]),
-    (basix.ElementFamily.N1E, 3, [])
-])
+@pytest.mark.parametrize(
+    "cell",
+    [basix.CellType.triangle, basix.CellType.tetrahedron, basix.CellType.quadrilateral, basix.CellType.hexahedron],
+)
+@pytest.mark.parametrize(
+    "element, degree, element_args",
+    [
+        (basix.ElementFamily.P, 1, [basix.LagrangeVariant.gll_warped]),
+        (basix.ElementFamily.P, 3, [basix.LagrangeVariant.gll_warped]),
+        (basix.ElementFamily.N1E, 3, []),
+    ],
+)
 @pytest.mark.parametrize("block_size", [1, 2, 4])
 def test_dof_transformations_to_transpose(cell, element, degree, block_size, element_args):
     try:
@@ -89,7 +99,7 @@ def test_dof_transformations_to_transpose(cell, element, degree, block_size, ele
         basix.CellType.tetrahedron: numba_helpers.post_apply_transpose_dof_transformation_tetrahedron,
         basix.CellType.hexahedron: numba_helpers.post_apply_transpose_dof_transformation_hexahedron,
         basix.CellType.prism: numba_helpers.post_apply_transpose_dof_transformation_prism,
-        basix.CellType.pyramid: numba_helpers.post_apply_transpose_dof_transformation_pyramid
+        basix.CellType.pyramid: numba_helpers.post_apply_transpose_dof_transformation_pyramid,
     }
 
     random.seed(1337)
@@ -98,7 +108,7 @@ def test_dof_transformations_to_transpose(cell, element, degree, block_size, ele
     data = np.array(list(range(e.dim * block_size)), dtype=np.double)
 
     for i in range(10):
-        cell_info = random.randrange(2 ** 30)
+        cell_info = random.randrange(2**30)
 
         data1 = data.copy()
         e.post_apply_transpose_dof_transformation(data1, block_size, cell_info)

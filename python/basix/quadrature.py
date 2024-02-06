@@ -15,6 +15,7 @@ __all__ = ["string_to_type", "make_quadrature"]
 
 class QuadratureType(Enum):
     """Quadrature type."""
+
     Default = _QT.Default
     gauss_jacobi = _QT.gauss_jacobi
     gll = _QT.gll
@@ -47,8 +48,10 @@ def string_to_type(rule: str) -> QuadratureType:
 
 
 def make_quadrature(
-    cell: CellType, degree: int, rule: QuadratureType = QuadratureType.Default,
-    polyset_type: PolysetType = PolysetType.standard
+    cell: CellType,
+    degree: int,
+    rule: QuadratureType = QuadratureType.Default,
+    polyset_type: PolysetType = PolysetType.standard,
 ) -> tuple[_npt.NDArray[np.float64], _npt.NDArray[np.float64]]:
     """Create a quadrature rule.
 

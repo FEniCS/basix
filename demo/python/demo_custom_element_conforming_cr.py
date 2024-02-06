@@ -29,7 +29,6 @@ from basix import CellType, LatticeType, MapType, PolynomialType, PolysetType, S
 
 
 def create_ccr_triangle(degree):
-
     if degree == 1:
         wcoeffs = np.eye(3)
 
@@ -44,15 +43,26 @@ def create_ccr_triangle(degree):
 
         M = [[], [], [], []]
         for _ in range(3):
-            M[0].append(np.array([[[1.]]]))
+            M[0].append(np.array([[[1.0]]]))
 
         for _ in range(3):
             M[1].append(np.zeros((0, 1, 0)))
         M[2].append(np.zeros((0, 1, 0, 1)))
 
         return basix.create_custom_element(
-            CellType.triangle, [], wcoeffs, x, M, 0, MapType.identity, SobolevSpace.L2, False, 1, 1,
-            PolysetType.standard)
+            CellType.triangle,
+            [],
+            wcoeffs,
+            x,
+            M,
+            0,
+            MapType.identity,
+            SobolevSpace.L2,
+            False,
+            1,
+            1,
+            PolysetType.standard,
+        )
 
     npoly = (degree + 2) * (degree + 3) // 2
     ndofs = degree * (degree + 5) // 2
@@ -68,7 +78,7 @@ def create_ccr_triangle(degree):
     for i in range(1, degree):
         x = pts[:, 0]
         y = pts[:, 1]
-        f = x ** i * y ** (degree - i) * (x + y)
+        f = x**i * y ** (degree - i) * (x + y)
 
         for j in range(npoly):
             wcoeffs[dof_n, j] = sum(f * poly[j, :] * wts)
@@ -80,7 +90,7 @@ def create_ccr_triangle(degree):
     M = [[], [], [], []]
     for v in topology[0]:
         x[0].append(np.array(geometry[v]))
-        M[0].append(np.array([[[[1.]]]]))
+        M[0].append(np.array([[[[1.0]]]]))
     pts = basix.create_lattice(CellType.interval, degree, LatticeType.equispaced, False)
     mat = np.zeros((len(pts), 1, len(pts), 1))
     mat[:, 0, :, 0] = np.eye(len(pts))
@@ -99,8 +109,19 @@ def create_ccr_triangle(degree):
     M[2].append(mat)
 
     return basix.create_custom_element(
-        CellType.triangle, [], wcoeffs, x, M, 0, MapType.identity, SobolevSpace.L2, False,
-        degree, degree + 1, PolysetType.standard)
+        CellType.triangle,
+        [],
+        wcoeffs,
+        x,
+        M,
+        0,
+        MapType.identity,
+        SobolevSpace.L2,
+        False,
+        degree,
+        degree + 1,
+        PolysetType.standard,
+    )
 
 
 # We can then create a degree 2 conforming CR element.
@@ -119,9 +140,9 @@ fig = plt.figure(figsize=(8, 8))
 
 for n in range(7):
     if n == 6:
-        ax = plt.subplot(3, 3, n + 2, projection='3d')
+        ax = plt.subplot(3, 3, n + 2, projection="3d")
     else:
-        ax = plt.subplot(3, 3, n + 1, projection='3d')
+        ax = plt.subplot(3, 3, n + 1, projection="3d")
     ax.plot([0, 1, 0, 0], [0, 0, 1, 0], [0, 0, 0, 0], "k-")
     ax.scatter(x, y, z[:, n, 0])
 
@@ -144,7 +165,7 @@ z = e.tabulate(0, pts)[0]
 fig = plt.figure(figsize=(11, 8))
 
 for n in range(12):
-    ax = plt.subplot(3, 4, n + 1, projection='3d')
+    ax = plt.subplot(3, 4, n + 1, projection="3d")
     ax.plot([0, 1, 0, 0], [0, 0, 1, 0], [0, 0, 0, 0], "k-")
     ax.scatter(x, y, z[:, n, 0])
 

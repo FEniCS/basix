@@ -1,6 +1,7 @@
 from typing import Any, ClassVar
 
 import nanobind
+
 cell_facet_jacobians: nanobind.nb_func
 cell_facet_normals: nanobind.nb_func
 cell_facet_orientations: nanobind.nb_func

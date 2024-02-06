@@ -43,8 +43,7 @@ from basix import CellType, ElementFamily, LagrangeVariant, LatticeType
 # orientation corrections by applying permutations when creating the
 # DOF map.
 
-lagrange = basix.create_element(
-    ElementFamily.P, CellType.triangle, 5, LagrangeVariant.equispaced)
+lagrange = basix.create_element(ElementFamily.P, CellType.triangle, 5, LagrangeVariant.equispaced)
 print(lagrange.dof_transformations_are_identity)
 print(lagrange.dof_transformations_are_permutations)
 
@@ -91,8 +90,7 @@ print(lagrange.entity_dofs[1][2])
 # transformations are identity matrices, we also print the base
 # transformations.
 
-lagrange_degree_2 = basix.create_element(
-    ElementFamily.P, CellType.triangle, 2, LagrangeVariant.equispaced)
+lagrange_degree_2 = basix.create_element(ElementFamily.P, CellType.triangle, 2, LagrangeVariant.equispaced)
 print(lagrange_degree_2.dof_transformations_are_identity)
 print(lagrange_degree_2.base_transformations())
 
@@ -129,8 +127,7 @@ print(nedelec.entity_transformations())
 # To demonstrate how these transformations can be used, we create a
 # lattice of points where we will tabulate the element.
 
-points = basix.create_lattice(
-    CellType.tetrahedron, 5, LatticeType.equispaced, True)
+points = basix.create_lattice(CellType.tetrahedron, 5, LatticeType.equispaced, True)
 
 # If (for example) the direction of edge 2 in the physical cell does
 # not match its direction on the reference, then we need to adjust the

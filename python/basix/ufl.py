@@ -2162,7 +2162,7 @@ def enriched_element(
 
 def custom_element(
     cell_type: _basix.CellType,
-    value_shape: _typing.Union[list[int], tuple[int, ...]],
+    value_shape: _typing.Union[_typing.List[int], _typing.Tuple[int, ...]],
     wcoeffs: _npt.NDArray[np.float64],
     x: list[list[_npt.NDArray[np.float64]]],
     M: list[list[_npt.NDArray[np.float64]]],
@@ -2210,7 +2210,7 @@ def custom_element(
     """
     e = _basix.create_custom_element(
         cell_type,
-        list(value_shape),
+        tuple(value_shape),
         wcoeffs,
         x,
         M,

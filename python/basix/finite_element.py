@@ -600,7 +600,7 @@ def create_element(
             lagrange_variant.value,
             dpc_variant.value,
             discontinuous,
-            dof_ordering,
+            dof_ordering if dof_ordering is not None else [],
             np.dtype(dtype).char,
         )
     )
@@ -746,7 +746,7 @@ def tp_factors(
             lagrange_variant.value,
             dpc_variant.value,
             discontinuous,
-            dof_ordering,
+            dof_ordering if dof_ordering is not None else [],
             np.dtype(dtype).char,
         )
     ]

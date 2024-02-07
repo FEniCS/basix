@@ -184,7 +184,14 @@ def pre_apply_dof_transformation_tetrahedron(
 
     """
     pre_apply_dof_transformation(
-        3, 6, 4, entity_transformations, entity_dofs, data, cell_info, _numba.typed.List(["triangle"] * 4)
+        3,
+        6,
+        4,
+        entity_transformations,
+        entity_dofs,
+        data,
+        cell_info,
+        _numba.typed.List(["triangle"] * 4),
     )
 
 
@@ -206,7 +213,14 @@ def pre_apply_dof_transformation_hexahedron(
 
     """
     pre_apply_dof_transformation(
-        3, 12, 6, entity_transformations, entity_dofs, data, cell_info, _numba.typed.List(["quadrilateral"] * 6)
+        3,
+        12,
+        6,
+        entity_transformations,
+        entity_dofs,
+        data,
+        cell_info,
+        _numba.typed.List(["quadrilateral"] * 6),
     )
 
 
@@ -296,7 +310,14 @@ def post_apply_transpose_dof_transformation(
     """
     transposed_data = data.transpose().copy()
     pre_apply_dof_transformation(
-        tdim, edge_count, face_count, entity_transformations, entity_dofs, transposed_data, cell_info, face_types
+        tdim,
+        edge_count,
+        face_count,
+        entity_transformations,
+        entity_dofs,
+        transposed_data,
+        cell_info,
+        face_types,
     )
     data[:] = transposed_data.transpose()
 
@@ -397,7 +418,14 @@ def post_apply_transpose_dof_transformation_tetrahedron(
 
     """
     post_apply_transpose_dof_transformation(
-        3, 6, 4, entity_transformations, entity_dofs, data, cell_info, _numba.typed.List(["triangle"] * 4)
+        3,
+        6,
+        4,
+        entity_transformations,
+        entity_dofs,
+        data,
+        cell_info,
+        _numba.typed.List(["triangle"] * 4),
     )
 
 
@@ -419,7 +447,14 @@ def post_apply_transpose_dof_transformation_hexahedron(
 
     """
     post_apply_transpose_dof_transformation(
-        3, 12, 6, entity_transformations, entity_dofs, data, cell_info, _numba.typed.List(["quadrilateral"] * 6)
+        3,
+        12,
+        6,
+        entity_transformations,
+        entity_dofs,
+        data,
+        cell_info,
+        _numba.typed.List(["quadrilateral"] * 6),
     )
 
 

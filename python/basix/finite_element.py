@@ -780,7 +780,12 @@ def tp_dof_ordering(
         The DOF ordering.
     """
     return _tp_dof_ordering(
-        family.value, celltype.value, degree, lagrange_variant.value, dpc_variant.value, discontinuous
+        family.value,
+        celltype.value,
+        degree,
+        lagrange_variant.value,
+        dpc_variant.value,
+        discontinuous,
     )
 
 

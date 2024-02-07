@@ -1175,7 +1175,14 @@ class _BlockedElement(_ElementBase):
             repr += _repr_optional_args(symmetry=symmetry)
         repr += ")"
 
-        super().__init__(repr, sub_element.cell_type.name, shape, sub_element._degree, sub_element._pullback, gdim=gdim)
+        super().__init__(
+            repr,
+            sub_element.cell_type.name,
+            shape,
+            sub_element._degree,
+            sub_element._pullback,
+            gdim=gdim,
+        )
 
         if symmetry:
             n = 0
@@ -1407,7 +1414,8 @@ class _BlockedElement(_ElementBase):
         wcoeffs = np.zeros((sub_wc.shape[0] * self._block_size, sub_wc.shape[1] * self._block_size))
         for i in range(self._block_size):
             wcoeffs[
-                sub_wc.shape[0] * i : sub_wc.shape[0] * (i + 1), sub_wc.shape[1] * i : sub_wc.shape[1] * (i + 1)
+                sub_wc.shape[0] * i : sub_wc.shape[0] * (i + 1),
+                sub_wc.shape[1] * i : sub_wc.shape[1] * (i + 1),
             ] = sub_wc
         return wcoeffs
 
@@ -1424,11 +1432,19 @@ class _BlockedElement(_ElementBase):
             M_row = []
             for mat in M_list:
                 new_mat = np.zeros(
-                    (mat.shape[0] * self._block_size, mat.shape[1] * self._block_size, mat.shape[2], mat.shape[3])
+                    (
+                        mat.shape[0] * self._block_size,
+                        mat.shape[1] * self._block_size,
+                        mat.shape[2],
+                        mat.shape[3],
+                    )
                 )
                 for i in range(self._block_size):
                     new_mat[
-                        i * mat.shape[0] : (i + 1) * mat.shape[0], i * mat.shape[1] : (i + 1) * mat.shape[1], :, :
+                        i * mat.shape[0] : (i + 1) * mat.shape[0],
+                        i * mat.shape[1] : (i + 1) * mat.shape[1],
+                        :,
+                        :,
                     ] = mat
                 M_row.append(new_mat)
             M.append(M_row)
@@ -1986,7 +2002,9 @@ def element(
 
 
 def enriched_element(
-    elements: list[_ElementBase], map_type: _typing.Optional[_basix.MapType] = None, gdim: _typing.Optional[int] = None
+    elements: list[_ElementBase],
+    map_type: _typing.Optional[_basix.MapType] = None,
+    gdim: _typing.Optional[int] = None,
 ) -> _ElementBase:
     """Create an UFL compatible enriched element from a list of elements.
 
@@ -2055,7 +2073,19 @@ def enriched_element(
         row += e.dim
 
     return custom_element(
-        ct, list(vshape), wcoeffs, x, M, nderivs, map_type, ss, discontinuous, hcd, hd, ptype, gdim=gdim
+        ct,
+        list(vshape),
+        wcoeffs,
+        x,
+        M,
+        nderivs,
+        map_type,
+        ss,
+        discontinuous,
+        hcd,
+        hd,
+        ptype,
+        gdim=gdim,
     )
 
 

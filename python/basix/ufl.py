@@ -161,13 +161,15 @@ class _ElementBase(_AbstractFiniteElement):
     def embedded_superdegree(self) -> int:
         """Return the degree of the minimum degree Lagrange space that spans this element.
 
-        This returns the degree of the lowest degree Lagrange space such that the polynomial
-        space of the Lagrange space is a superspace of this element's polynomial space. If this
-        element contains basis functions that are not in any Lagrange space, this function should
-        return None.
+        This returns the degree of the lowest degree Lagrange space such
+        that the polynomial space of the Lagrange space is a superspace
+        of this element's polynomial space. If this element contains
+        basis functions that are not in any Lagrange space, this
+        function should return None.
 
-        Note that on a simplex cells, the polynomial space of Lagrange space is a complete polynomial
-        space, but on other cells this is not true. For example, on quadrilateral cells, the degree 1
+        Note that on a simplex cells, the polynomial space of Lagrange
+        space is a complete polynomial space, but on other cells this is
+        not true. For example, on quadrilateral cells, the degree 1
         Lagrange space includes the degree 2 polynomial xy.
         """
 
@@ -175,13 +177,15 @@ class _ElementBase(_AbstractFiniteElement):
     def embedded_subdegree(self) -> int:
         """Return the degree of the maximum degree Lagrange space that is spanned by this element.
 
-        This returns the degree of the highest degree Lagrange space such that the polynomial
-        space of the Lagrange space is a subspace of this element's polynomial space. If this
-        element's polynomial space does not include the constant function, this function should
-        return -1.
+        This returns the degree of the highest degree Lagrange space
+        such that the polynomial space of the Lagrange space is a
+        subspace of this element's polynomial space. If this element's
+        polynomial space does not include the constant function, this
+        function should return -1.
 
-        Note that on a simplex cells, the polynomial space of Lagrange space is a complete polynomial
-        space, but on other cells this is not true. For example, on quadrilateral cells, the degree 1
+        Note that on a simplex cells, the polynomial space of Lagrange
+        space is a complete polynomial space, but on other cells this is
+        not true. For example, on quadrilateral cells, the degree 1
         Lagrange space includes the degree 2 polynomial xy.
         """
 
@@ -199,8 +203,8 @@ class _ElementBase(_AbstractFiniteElement):
     def sub_elements(self) -> list[_AbstractFiniteElement]:
         """Return a list of sub elements.
 
-        This function does not recurse: ie it does not extract the sub-elements
-        of sub-elements.
+        This function does not recurse: i.e. it does not extract the
+        sub-elements of sub-elements.
         """
         return []
 
@@ -219,7 +223,7 @@ class _ElementBase(_AbstractFiniteElement):
 
     @_abstractmethod
     def get_component_element(self, flat_component: int) -> tuple[_typing.Any, int, int]:
-        """Get element that represents a component of the element, and the offset and stride of the component.
+        """Get element that represents a component, and the offset and stride of the component.
 
         For example, for a mixed element, this will return the
         sub-element that represents the given component, the offset of
@@ -327,8 +331,9 @@ class _ElementBase(_AbstractFiniteElement):
     def has_tensor_product_factorisation(self) -> bool:
         """Indicates whether or not this element has a tensor product factorisation.
 
-        If this value is true, this element's basis functions can be computed
-        as a tensor product of the basis elements of the elements in the factoriaation.
+        If this value is true, this element's basis functions can be
+        computed as a tensor product of the basis elements of the
+        elements in the factoriaation.
         """
         return False
 

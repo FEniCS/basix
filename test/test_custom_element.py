@@ -5,10 +5,15 @@
 import basix
 import numpy as np
 import pytest
+from basix import CellType
 
 
 def test_lagrange_custom_triangle_degree1():
-    """Test that Lagrange element created as a custom element agrees with built-in Lagrange."""
+    """Test Lagrange custom element.
+
+    Test that Lagrange element created as a custom element agrees with
+    built-in Lagrange.
+    """
     wcoeffs = np.eye(3)
     z = np.zeros((0, 2))
     x = [
@@ -20,9 +25,9 @@ def test_lagrange_custom_triangle_degree1():
     z = np.zeros((0, 1, 0, 1))
     M = [[np.array([[[[1.0]]]]), np.array([[[[1.0]]]]), np.array([[[[1.0]]]])], [z, z, z], [z], []]
 
-    lagrange = basix.create_element(basix.ElementFamily.P, basix.CellType.triangle, 1)
+    lagrange = basix.create_element(basix.ElementFamily.P, CellType.triangle, 1)
     element = basix.create_custom_element(
-        basix.CellType.triangle,
+        CellType.triangle,
         [],
         wcoeffs,
         x,
@@ -35,7 +40,7 @@ def test_lagrange_custom_triangle_degree1():
         1,
         basix.PolysetType.standard,
     )
-    points = basix.create_lattice(basix.CellType.triangle, 5, basix.LatticeType.equispaced, True)
+    points = basix.create_lattice(CellType.triangle, 5, basix.LatticeType.equispaced, True)
     assert np.allclose(lagrange.tabulate(1, points), element.tabulate(1, points))
     assert np.allclose(lagrange.base_transformations(), element.base_transformations())
 
@@ -54,9 +59,9 @@ def test_lagrange_custom_triangle_degree1_l2piola():
     z = np.zeros((0, 1, 0, 1))
     M = [[np.array([[[[1.0]]]]), np.array([[[[1.0]]]]), np.array([[[[1.0]]]])], [z, z, z], [z], []]
 
-    lagrange = basix.create_element(basix.ElementFamily.P, basix.CellType.triangle, 1)
+    lagrange = basix.create_element(basix.ElementFamily.P, CellType.triangle, 1)
     element = basix.create_custom_element(
-        basix.CellType.triangle,
+        CellType.triangle,
         [],
         wcoeffs,
         x,
@@ -69,7 +74,7 @@ def test_lagrange_custom_triangle_degree1_l2piola():
         1,
         basix.PolysetType.standard,
     )
-    points = basix.create_lattice(basix.CellType.triangle, 5, basix.LatticeType.equispaced, True)
+    points = basix.create_lattice(CellType.triangle, 5, basix.LatticeType.equispaced, True)
     assert np.allclose(lagrange.tabulate(1, points), element.tabulate(1, points))
     assert np.allclose(lagrange.base_transformations(), element.base_transformations())
 
@@ -96,10 +101,10 @@ def test_lagrange_custom_triangle_degree4():
     ]
 
     lagrange = basix.create_element(
-        basix.ElementFamily.P, basix.CellType.triangle, 4, basix.LagrangeVariant.equispaced
+        basix.ElementFamily.P, CellType.triangle, 4, basix.LagrangeVariant.equispaced
     )
     element = basix.create_custom_element(
-        basix.CellType.triangle,
+        CellType.triangle,
         [],
         wcoeffs,
         x,
@@ -113,7 +118,7 @@ def test_lagrange_custom_triangle_degree4():
         basix.PolysetType.standard,
     )
 
-    points = basix.create_lattice(basix.CellType.triangle, 5, basix.LatticeType.equispaced, True)
+    points = basix.create_lattice(CellType.triangle, 5, basix.LatticeType.equispaced, True)
     assert np.allclose(lagrange.tabulate(1, points), element.tabulate(1, points))
     assert np.allclose(lagrange.base_transformations(), element.base_transformations())
 
@@ -146,9 +151,9 @@ def test_lagrange_custom_quadrilateral_degree1():
         [],
     ]
 
-    lagrange = basix.create_element(basix.ElementFamily.P, basix.CellType.quadrilateral, 1)
+    lagrange = basix.create_element(basix.ElementFamily.P, CellType.quadrilateral, 1)
     element = basix.create_custom_element(
-        basix.CellType.quadrilateral,
+        CellType.quadrilateral,
         [],
         wcoeffs,
         x,
@@ -161,28 +166,28 @@ def test_lagrange_custom_quadrilateral_degree1():
         1,
         basix.PolysetType.standard,
     )
-    points = basix.create_lattice(
-        basix.CellType.quadrilateral, 5, basix.LatticeType.equispaced, True
-    )
+    points = basix.create_lattice(CellType.quadrilateral, 5, basix.LatticeType.equispaced, True)
     assert np.allclose(lagrange.tabulate(1, points), element.tabulate(1, points))
     assert np.allclose(lagrange.base_transformations(), element.base_transformations())
 
 
 def test_raviart_thomas_triangle_degree1():
-    """Test that Raviart-Thomas element created as a custom element agrees with built-in Raviart-Thomas."""
+    """Test custom  Raviart-Thomas element.
+
+    Test that Raviart-Thomas element created as a custom element agrees
+    with built-in Raviart-Thomas.
+    """
     wcoeffs = np.zeros((3, 6))
     wcoeffs[0, 0] = 1
     wcoeffs[1, 3] = 1
 
-    pts, wts = basix.make_quadrature(basix.CellType.triangle, 2)
-    poly = basix.tabulate_polynomials(
-        basix.PolynomialType.legendre, basix.CellType.triangle, 1, pts
-    )
+    pts, wts = basix.make_quadrature(CellType.triangle, 2)
+    poly = basix.tabulate_polynomials(basix.PolynomialType.legendre, CellType.triangle, 1, pts)
     for i in range(3):
         wcoeffs[2, i] = sum(pts[:, 0] * poly[i, :] * wts)
         wcoeffs[2, 3 + i] = sum(pts[:, 1] * poly[i, :] * wts)
 
-    pts, wts = basix.make_quadrature(basix.CellType.interval, 2)
+    pts, wts = basix.make_quadrature(CellType.interval, 2)
 
     x = [[], [], [], []]
     for _ in range(3):
@@ -203,7 +208,7 @@ def test_raviart_thomas_triangle_degree1():
     M[2].append(np.zeros((0, 2, 0, 1)))
 
     element = basix.create_custom_element(
-        basix.CellType.triangle,
+        CellType.triangle,
         [2],
         wcoeffs,
         x,
@@ -216,14 +221,14 @@ def test_raviart_thomas_triangle_degree1():
         1,
         basix.PolysetType.standard,
     )
-    rt = basix.create_element(basix.ElementFamily.RT, basix.CellType.triangle, 1)
-    points = basix.create_lattice(basix.CellType.triangle, 5, basix.LatticeType.equispaced, True)
+    rt = basix.create_element(basix.ElementFamily.RT, CellType.triangle, 1)
+    points = basix.create_lattice(CellType.triangle, 5, basix.LatticeType.equispaced, True)
     assert np.allclose(rt.tabulate(1, points), element.tabulate(1, points))
     assert np.allclose(rt.base_transformations(), element.base_transformations())
 
 
 def create_lagrange1_quad(
-    cell_type=basix.CellType.quadrilateral,
+    cell_type=CellType.quadrilateral,
     degree=1,
     wcoeffs=None,
     x=None,
@@ -370,7 +375,7 @@ def test_x_too_many_points():
 
 
 def test_x_point_tdim_too_high():
-    """Test that a runtime error is thrown when x has a point in an entity with a too high dimension."""
+    """Test that exception is raised when x has a point in an entity with a too high dimension."""
     z = np.zeros((0, 2))
     x = [
         [np.array([[0.0, 0.0]]), np.array([[1.0, 0.0]]), np.array([[0.0, 1.0]]), z],
@@ -499,7 +504,7 @@ def test_wrong_value_shape():
 
 def test_wrong_cell_type():
     """Test that a runtime error is thrown when cell type is wrong."""
-    assert_failure(cell_type=basix.CellType.hexahedron)
+    assert_failure(cell_type=CellType.hexahedron)
 
 
 def test_wrong_degree():

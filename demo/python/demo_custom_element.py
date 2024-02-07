@@ -14,58 +14,66 @@ from basix import CellType, LatticeType, MapType, PolynomialType, PolysetType, S
 # Lagrange element with bubble
 # ============================
 #
-# As a first example, we create a degree 1 Lagrange element with a quadratic bubble
-# on a quadrilateral cell. This element will span the following set of polynomials:
+# As a first example, we create a degree 1 Lagrange element with a
+# quadratic bubble on a quadrilateral cell. This element will span the
+# following set of polynomials:
 #
 # .. math::
 #    \left\{1,\; y,\; x,\; xy,\; x(1-x)y(1-y)\right\}.
 #
-# We will define the degrees of freedom (DOFs) of this element by placing a point
-# evaluation at each vertex, plus one at the midpoint of the cell.
+# We will define the degrees of freedom (DOFs) of this element by
+# placing a point evaluation at each vertex, plus one at the midpoint of
+# the cell.
 #
 # Polynomial coefficients
 # -----------------------
 #
-# When creating a custom element, we must input the coefficients that define
-# a basis of the set of polynomials that our element spans. In this example,
-# we will represent the 5 functions above in terms of the 9 orthogonal polynomials
-# of degree :math:`\leqslant2` on a quadrilateral, so we create a 5 by 9 matrix.
+# When creating a custom element, we must input the coefficients that
+# define a basis of the set of polynomials that our element spans. In
+# this example, we will represent the 5 functions above in terms of the
+# 9 orthogonal polynomials of degree :math:`\leqslant2` on a
+# quadrilateral, so we create a 5 by 9 matrix.
 
 wcoeffs = np.zeros((5, 9))
 
-# The degree 2 orthonormal polynomials for a quadrilateral will have their highest
-# degree terms in the following order:
+# The degree 2 orthonormal polynomials for a quadrilateral will have
+# their highest degree terms in the following order:
 #
 # .. math::
 #   1,\; y,\; y^2,\; x,\; xy,\; xy^2,\; x^2,\; x^2y,\; x^2y^2
 #
-# The order in which the polynomials appear in the orthonormal polynomial sets for
-# each cell are documented at
+# The order in which the polynomials appear in the orthonormal
+# polynomial sets for each cell are documented at
 # https://docs.fenicsproject.org/basix/main/polyset-order.html.
 #
-# As our polynomial space contains 1, :math:`y`, :math:`x` and :math:`xy`. The first
-# four rows of the matrix contain a single 1 for the four orthogonal polynomials with
-# these are their highest degree terms.
+# As our polynomial space contains 1, :math:`y`, :math:`x` and
+# :math:`xy`. The first four rows of the matrix contain a single 1 for
+# the four orthogonal polynomials with these are their highest degree
+# terms.
 
 wcoeffs[0, 0] = 1
 wcoeffs[1, 1] = 1
 wcoeffs[2, 3] = 1
 wcoeffs[3, 4] = 1
 
-# The final row of the matrix defines the polynomials :math:`x(1-x)y(1-y)`. As the polynomials
-# are orthonormal, we can represent this as
+# The final row of the matrix defines the polynomials
+# :math:`x(1-x)y(1-y)`. As the polynomials are orthonormal, we can
+# represent this as
 #
 # .. math::
-#    x(1-x)y(1-y) = \sum_{i=0}^8\int_0^1\int_0^1p_i(x, y)x(1-x)y(1-y)\,\mathrm{d}x\,\mathrm{d}y\; p_i(x, y),
+#    x(1-x)y(1-y) = \sum_{i=0}^8\int_0^1\int_0^1p_i(x, y)x(1-x)y(1-y)\,
+#    \mathrm{d}x\,\mathrm{d}y\; p_i(x, y),
 #
-# where :math:`p_0` to :math:`p_8` are the orthonormal polynomials. Therefore the coefficients we want
-# to put in the final row of our matrix are:
+# where :math:`p_0` to :math:`p_8` are the orthonormal polynomials.
+# Therefore the coefficients we want to put in the final row of our
+# matrix are:
 #
 # .. math::
 #    \int_0^1\int_0^1p_i(x, y)x(1-x)y(1-y)\,\mathrm{d}x\,\mathrm{d}y.
 #
-# We compute these integrals using a degree 4 quadrature rule (this is the largest degree
-# that the integrand will be, so these integrals will be exact).
+# We compute these integrals using a degree 4 quadrature rule (this is
+# the largest degree that the integrand will be, so these integrals will
+# be exact).
 
 pts, wts = basix.make_quadrature(CellType.quadrilateral, 4)
 poly = basix.tabulate_polynomials(PolynomialType.legendre, CellType.quadrilateral, 2, pts)
@@ -78,14 +86,16 @@ for i in range(9):
 # Interpolation
 # -------------
 #
-# Next, we compute the points and matrices that define how functions can be interpolated
-# into this space. These are representations of the functionals that are used in the
-# Ciarlet definition of the finite element -- in this example, these are evaluations
-# at the points described above.
+# Next, we compute the points and matrices that define how functions can
+# be interpolated into this space. These are representations of the
+# functionals that are used in the Ciarlet definition of the finite
+# element -- in this example, these are evaluations at the points
+# described above.
 #
-# First, we define the points. We create an array of points for each entity of each
-# dimension. For each vertex of the cell, we include the coordinates of that vertex.
-# For the interior of the cell, we include a point at :math:`(0.5,0.5)`.
+# First, we define the points. We create an array of points for each
+# entity of each dimension. For each vertex of the cell, we include the
+# coordinates of that vertex. For the interior of the cell, we include a
+# point at :math:`(0.5,0.5)`.
 #
 # The shape of each of the point lists is (number of points, dimension).
 
@@ -96,18 +106,19 @@ x[0].append(np.array([[0.0, 1.0]]))
 x[0].append(np.array([[1.0, 1.0]]))
 x[2].append(np.array([[0.5, 0.5]]))
 
-# There are no DOFs associates with the edges for this element, so we add an empty
-# array of points for each edge.
+# There are no DOFs associates with the edges for this element, so we
+# add an empty array of points for each edge.
 
 for _ in range(4):
     x[1].append(np.zeros((0, 2)))
 
-# We then define the interpolation matrices that define how the evaluations at the points
-# are combined to evaluate the functionals. As all the DOFs are point evaluations in this
-# example, the matrices are all identity matrices for the entities that have a point.
+# We then define the interpolation matrices that define how the
+# evaluations at the points are combined to evaluate the functionals. As
+# all the DOFs are point evaluations in this example, the matrices are
+# all identity matrices for the entities that have a point.
 #
-# The shape of each matrix is (number of DOFs, value size, number of points, number of
-# derivatives).
+# The shape of each matrix is (number of DOFs, value size, number of
+# points, number of derivatives).
 
 M = [[], [], [], []]
 for _ in range(4):

@@ -32,7 +32,8 @@ def test_version(python_version=version("fenics-basix"), cpp_version=basix.__ver
     if stripped_version != cpp_version:
         raise RuntimeError(
             f"The version numbers of the Python ({python_version} "
-            + f"-> {stripped_version}) and nanobind/C++ ({basix.__version__}) libraries does not match"
+            + f"-> {stripped_version}) and nanobind/C++ ({basix.__version__}) "
+            + " libraries do not match."
         )
 
 

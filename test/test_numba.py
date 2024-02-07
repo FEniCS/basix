@@ -7,15 +7,16 @@ import random
 import basix
 import numpy as np
 import pytest
+from basix import CellType
 
 
 @pytest.mark.parametrize(
     "cell",
     [
-        basix.CellType.triangle,
-        basix.CellType.tetrahedron,
-        basix.CellType.quadrilateral,
-        basix.CellType.hexahedron,
+        CellType.triangle,
+        CellType.tetrahedron,
+        CellType.quadrilateral,
+        CellType.hexahedron,
     ],
 )
 @pytest.mark.parametrize(
@@ -38,12 +39,12 @@ def test_dof_transformations(cell, element, degree, element_args, block_size):
     from numba.typed import Dict
 
     transform_functions = {
-        basix.CellType.triangle: numba_helpers.pre_apply_dof_transformation_triangle,
-        basix.CellType.quadrilateral: numba_helpers.pre_apply_dof_transformation_quadrilateral,
-        basix.CellType.tetrahedron: numba_helpers.pre_apply_dof_transformation_tetrahedron,
-        basix.CellType.hexahedron: numba_helpers.pre_apply_dof_transformation_hexahedron,
-        basix.CellType.prism: numba_helpers.pre_apply_dof_transformation_prism,
-        basix.CellType.pyramid: numba_helpers.pre_apply_dof_transformation_pyramid,
+        CellType.triangle: numba_helpers.pre_apply_dof_transformation_triangle,
+        CellType.quadrilateral: numba_helpers.pre_apply_dof_transformation_quadrilateral,
+        CellType.tetrahedron: numba_helpers.pre_apply_dof_transformation_tetrahedron,
+        CellType.hexahedron: numba_helpers.pre_apply_dof_transformation_hexahedron,
+        CellType.prism: numba_helpers.pre_apply_dof_transformation_prism,
+        CellType.pyramid: numba_helpers.pre_apply_dof_transformation_pyramid,
     }
 
     random.seed(1337)
@@ -77,10 +78,10 @@ def test_dof_transformations(cell, element, degree, element_args, block_size):
 @pytest.mark.parametrize(
     "cell",
     [
-        basix.CellType.triangle,
-        basix.CellType.tetrahedron,
-        basix.CellType.quadrilateral,
-        basix.CellType.hexahedron,
+        CellType.triangle,
+        CellType.tetrahedron,
+        CellType.quadrilateral,
+        CellType.hexahedron,
     ],
 )
 @pytest.mark.parametrize(
@@ -103,12 +104,12 @@ def test_dof_transformations_to_transpose(cell, element, degree, block_size, ele
     from numba.typed import Dict
 
     transform_functions = {
-        basix.CellType.triangle: numba_helpers.post_apply_transpose_dof_transformation_triangle,
-        basix.CellType.quadrilateral: numba_helpers.post_apply_transpose_dof_transformation_quadrilateral,
-        basix.CellType.tetrahedron: numba_helpers.post_apply_transpose_dof_transformation_tetrahedron,
-        basix.CellType.hexahedron: numba_helpers.post_apply_transpose_dof_transformation_hexahedron,
-        basix.CellType.prism: numba_helpers.post_apply_transpose_dof_transformation_prism,
-        basix.CellType.pyramid: numba_helpers.post_apply_transpose_dof_transformation_pyramid,
+        CellType.triangle: numba_helpers.post_apply_transpose_dof_transformation_triangle,
+        CellType.quadrilateral: numba_helpers.post_apply_transpose_dof_transformation_quadrilateral,
+        CellType.tetrahedron: numba_helpers.post_apply_transpose_dof_transformation_tetrahedron,
+        CellType.hexahedron: numba_helpers.post_apply_transpose_dof_transformation_hexahedron,
+        CellType.prism: numba_helpers.post_apply_transpose_dof_transformation_prism,
+        CellType.pyramid: numba_helpers.post_apply_transpose_dof_transformation_pyramid,
     }
 
     random.seed(1337)

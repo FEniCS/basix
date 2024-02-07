@@ -4,10 +4,9 @@
 
 from itertools import product
 
+import basix
 import numpy as np
 import pytest
-
-import basix
 
 from .utils import parametrize_over_elements
 
@@ -28,11 +27,11 @@ def test_tensor_product_factorisation(cell_type, degree, element_type, element_a
         element = basix.create_tp_element(element_type, cell_type, degree, *element_args)
     except RuntimeError:
         # These elements should have a factorisation
-        if cell_type in [
-            basix.CellType.quadrilateral, basix.CellType.hexahedron
-        ] and element_type in [
-            basix.ElementFamily.P
-        ] and basix.LagrangeVariant.equispaced in element_args:
+        if (
+            cell_type in [basix.CellType.quadrilateral, basix.CellType.hexahedron]
+            and element_type in [basix.ElementFamily.P]
+            and basix.LagrangeVariant.equispaced in element_args
+        ):
             raise RuntimeError("Could not create tensor product element")
         pytest.skip()
 
@@ -53,7 +52,9 @@ def test_tensor_product_factorisation(cell_type, degree, element_type, element_a
             values1 = tab1[deriv, i, :, 0]
 
             for fs in factors:
-                evals = [e.tabulate(d, p.reshape(1, -1))[d, 0, :, 0] for e, p, d in zip(fs, point, ds)]
+                evals = [
+                    e.tabulate(d, p.reshape(1, -1))[d, 0, :, 0] for e, p, d in zip(fs, point, ds)
+                ]
                 values2 = tensor_product(*evals)
             assert np.allclose(values1, values2)
 
@@ -62,8 +63,9 @@ def test_tensor_product_factorisation(cell_type, degree, element_type, element_a
 def test_tensor_product_factorisation_quadrilateral(degree):
     P = degree
     cell_type = basix.CellType.quadrilateral
-    element = basix.create_tp_element(basix.ElementFamily.P, cell_type,
-                                      P, basix.LagrangeVariant.gll_warped)
+    element = basix.create_tp_element(
+        basix.ElementFamily.P, cell_type, P, basix.LagrangeVariant.gll_warped
+    )
     factors = element.get_tensor_product_representation()[0]
     # FIXME: This test assumes all factors formed by a single element
     element0 = factors[0]
@@ -76,7 +78,7 @@ def test_tensor_product_factorisation_quadrilateral(degree):
     dphi_x = data[1, :, :, 0]
     dphi_y = data[2, :, :, 0]
 
-    assert points.shape[0] == (P+2) * (P+2)
+    assert points.shape[0] == (P + 2) * (P + 2)
 
     cell1d = element0.cell_type
     points, _ = basix.make_quadrature(cell1d, Q)
@@ -95,8 +97,8 @@ def test_tensor_product_factorisation_quadrilateral(degree):
         for q1 in range(Nq):
             for i0 in range(Nd):
                 for i1 in range(Nd):
-                    dphi_tensor[q0, q1, i0, i1] = dphi0[q0, i0]*phi0[q1, i1]
-    dphi_tensor = dphi_tensor.reshape([Nq*Nq, Nd*Nd])
+                    dphi_tensor[q0, q1, i0, i1] = dphi0[q0, i0] * phi0[q1, i1]
+    dphi_tensor = dphi_tensor.reshape([Nq * Nq, Nd * Nd])
     assert np.allclose(dphi_x, dphi_tensor)
 
     # Compute derivative of basis function in the y direction
@@ -105,23 +107,23 @@ def test_tensor_product_factorisation_quadrilateral(degree):
         for q1 in range(Nq):
             for i0 in range(Nd):
                 for i1 in range(Nd):
-                    dphi_tensor[q0, q1, i0, i1] = phi0[q0, i0]*dphi0[q1, i1]
+                    dphi_tensor[q0, q1, i0, i1] = phi0[q0, i0] * dphi0[q1, i1]
 
-    dphi_tensor = dphi_tensor.reshape([Nq*Nq, Nd*Nd])
+    dphi_tensor = dphi_tensor.reshape([Nq * Nq, Nd * Nd])
     assert np.allclose(dphi_y, dphi_tensor)
 
 
 @pytest.mark.parametrize("degree", range(1, 6))
 def test_tensor_product_factorisation_hexahedron(degree):
     P = degree
-    element = basix.create_tp_element(basix.ElementFamily.P, basix.CellType.hexahedron,
-                                      P, basix.LagrangeVariant.gll_warped)
+    element = basix.create_tp_element(
+        basix.ElementFamily.P, basix.CellType.hexahedron, P, basix.LagrangeVariant.gll_warped
+    )
     factors = element.get_tensor_product_representation()[0]
 
     # Quadrature degree
     Q = 2 * P + 2
-    points, _ = basix.make_quadrature(
-        basix.CellType.hexahedron, Q)
+    points, _ = basix.make_quadrature(basix.CellType.hexahedron, Q)
 
     # FIXME: This test assumes all factors formed by a single element
     element0 = factors[0]
@@ -131,7 +133,7 @@ def test_tensor_product_factorisation_hexahedron(degree):
     dphi_y = data[2, :, :, 0]
     dphi_z = data[3, :, :, 0]
 
-    assert points.shape[0] == (P+2) * (P+2) * (P+2)
+    assert points.shape[0] == (P + 2) * (P + 2) * (P + 2)
 
     cell1d = element0.cell_type
     points, w = basix.make_quadrature(cell1d, Q)
@@ -152,9 +154,11 @@ def test_tensor_product_factorisation_hexahedron(degree):
                 for i0 in range(Nd):
                     for i1 in range(Nd):
                         for i2 in range(Nd):
-                            dphi_tensor[q0, q1, q2, i0, i1, i2] = dphi0[q0, i0]*phi0[q1, i1]*phi0[q2, i2]
+                            dphi_tensor[q0, q1, q2, i0, i1, i2] = (
+                                dphi0[q0, i0] * phi0[q1, i1] * phi0[q2, i2]
+                            )
 
-    dphi_tensor = dphi_tensor.reshape([Nq*Nq*Nq, Nd*Nd*Nd])
+    dphi_tensor = dphi_tensor.reshape([Nq * Nq * Nq, Nd * Nd * Nd])
     assert np.allclose(dphi_x, dphi_tensor)
 
     # Compute derivative of basis function in the y direction
@@ -165,9 +169,11 @@ def test_tensor_product_factorisation_hexahedron(degree):
                 for i0 in range(Nd):
                     for i1 in range(Nd):
                         for i2 in range(Nd):
-                            dphi_tensor[q0, q1, q2, i0, i1, i2] = phi0[q0, i0]*dphi0[q1, i1]*phi0[q2, i2]
+                            dphi_tensor[q0, q1, q2, i0, i1, i2] = (
+                                phi0[q0, i0] * dphi0[q1, i1] * phi0[q2, i2]
+                            )
 
-    dphi_tensor = dphi_tensor.reshape([Nq*Nq*Nq, Nd*Nd*Nd])
+    dphi_tensor = dphi_tensor.reshape([Nq * Nq * Nq, Nd * Nd * Nd])
     assert np.allclose(dphi_y, dphi_tensor)
 
     # Compute the derivative of basis function in the z direction
@@ -178,20 +184,28 @@ def test_tensor_product_factorisation_hexahedron(degree):
                 for i0 in range(Nd):
                     for i1 in range(Nd):
                         for i2 in range(Nd):
-                            dphi_tensor[q0, q1, q2, i0, i1, i2] = phi0[q0, i0]*phi0[q1, i1]*dphi0[q2, i2]
+                            dphi_tensor[q0, q1, q2, i0, i1, i2] = (
+                                phi0[q0, i0] * phi0[q1, i1] * dphi0[q2, i2]
+                            )
 
-    dphi_tensor = dphi_tensor.reshape([Nq*Nq*Nq, Nd*Nd*Nd])
+    dphi_tensor = dphi_tensor.reshape([Nq * Nq * Nq, Nd * Nd * Nd])
     assert np.allclose(dphi_z, dphi_tensor)
 
 
-@pytest.mark.parametrize("cell_type", [
-    basix.CellType.quadrilateral,
-    basix.CellType.hexahedron,
-])
-@pytest.mark.parametrize("family, args", [
-    (basix.ElementFamily.P, (basix.LagrangeVariant.equispaced, )),
-    (basix.ElementFamily.P, (basix.LagrangeVariant.gll_warped, )),
-])
+@pytest.mark.parametrize(
+    "cell_type",
+    [
+        basix.CellType.quadrilateral,
+        basix.CellType.hexahedron,
+    ],
+)
+@pytest.mark.parametrize(
+    "family, args",
+    [
+        (basix.ElementFamily.P, (basix.LagrangeVariant.equispaced,)),
+        (basix.ElementFamily.P, (basix.LagrangeVariant.gll_warped,)),
+    ],
+)
 @pytest.mark.parametrize("degree", range(1, 5))
 def test_dof_ordering(cell_type, family, args, degree):
     e = basix.create_tp_element(family, cell_type, degree, *args)

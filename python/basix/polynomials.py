@@ -19,18 +19,26 @@ __all__ = ["reshape_coefficients", "dim", "tabulate_polynomial_set"]
 
 class PolynomialType(Enum):
     """Polynomial type."""
+
     legendre = _PT.legendre
     bernstein = _PT.bernstein
 
 
 class PolysetType(Enum):
     """Polyset type."""
+
     standard = _PST.standard
     macroedge = _PST.macroedge
 
 
-def reshape_coefficients(poly_type: PolynomialType, cell_type: CellType, coefficients: npt.NDArray[np.float64],
-                         value_size: int, input_degree: int, output_degree: int) -> npt.NDArray[np.float64]:
+def reshape_coefficients(
+    poly_type: PolynomialType,
+    cell_type: CellType,
+    coefficients: npt.NDArray[np.float64],
+    value_size: int,
+    input_degree: int,
+    output_degree: int,
+) -> npt.NDArray[np.float64]:
     """Reshape the coefficients.
 
     Args:
@@ -63,7 +71,7 @@ def reshape_coefficients(poly_type: PolynomialType, cell_type: CellType, coeffic
     indices: list[tuple[int, ...]] = []
 
     if cell_type == CellType.interval:
-        indices = [(i, ) for i in range(input_degree + 1)]
+        indices = [(i,) for i in range(input_degree + 1)]
 
         def idx(d, i):
             return index(i[0])
@@ -75,8 +83,12 @@ def reshape_coefficients(poly_type: PolynomialType, cell_type: CellType, coeffic
             return index(i[1], i[0])
 
     elif cell_type == CellType.tetrahedron:
-        indices = [(i, j, k) for i in range(input_degree + 1) for j in range(input_degree + 1 - i)
-                   for k in range(input_degree + 1 - i - j)]
+        indices = [
+            (i, j, k)
+            for i in range(input_degree + 1)
+            for j in range(input_degree + 1 - i)
+            for k in range(input_degree + 1 - i - j)
+        ]
 
         def idx(d, i):
             return index(i[2], i[1], i[0])
@@ -88,15 +100,23 @@ def reshape_coefficients(poly_type: PolynomialType, cell_type: CellType, coeffic
             return (d + 1) * i[0] + i[1]
 
     elif cell_type == CellType.hexahedron:
-        indices = [(i, j, k) for i in range(input_degree + 1) for j in range(input_degree + 1)
-                   for k in range(input_degree + 1)]
+        indices = [
+            (i, j, k)
+            for i in range(input_degree + 1)
+            for j in range(input_degree + 1)
+            for k in range(input_degree + 1)
+        ]
 
         def idx(d, i):
             return (d + 1) ** 2 * i[0] + (d + 1) * i[1] + i[2]
 
     elif cell_type == CellType.pyramid:
-        indices = [(i, j, k) for k in range(input_degree + 1) for i in range(input_degree + 1 - k)
-                   for j in range(input_degree + 1 - k)]
+        indices = [
+            (i, j, k)
+            for k in range(input_degree + 1)
+            for i in range(input_degree + 1 - k)
+            for j in range(input_degree + 1 - k)
+        ]
 
         def idx(d, i):
             rv = d - i[2] + 1
@@ -104,8 +124,12 @@ def reshape_coefficients(poly_type: PolynomialType, cell_type: CellType, coeffic
             return r0 + i[0] * rv + i[1]
 
     elif cell_type == CellType.prism:
-        indices = [(i, j, k) for i in range(input_degree + 1) for j in range(input_degree + 1 - i)
-                   for k in range(input_degree + 1)]
+        indices = [
+            (i, j, k)
+            for i in range(input_degree + 1)
+            for j in range(input_degree + 1 - i)
+            for k in range(input_degree + 1)
+        ]
 
         def idx(d, i):
             return (d + 1) * index(i[1], i[0]) + i[2]
@@ -116,7 +140,9 @@ def reshape_coefficients(poly_type: PolynomialType, cell_type: CellType, coeffic
     pdim_in = dim(poly_type, cell_type, input_degree)
     for v in range(value_size):
         for i in indices:
-            out[:, v * pdim + idx(output_degree, i)] = coefficients[:, v * pdim_in + idx(input_degree, i)]
+            out[:, v * pdim + idx(output_degree, i)] = coefficients[
+                :, v * pdim_in + idx(input_degree, i)
+            ]
 
     return out
 
@@ -152,9 +178,7 @@ def tabulate_polynomials(
     return _tabulate_polynomials(ptype.value, celltype.value, degree, pts)
 
 
-def restriction(
-    ptype: PolysetType, cell: CellType, restriction_cell: CellType
-) -> PolysetType:
+def restriction(ptype: PolysetType, cell: CellType, restriction_cell: CellType) -> PolysetType:
     """Get the polyset type that represents the restrictions of a type on a subentity.
 
     Args:

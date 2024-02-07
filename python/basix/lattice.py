@@ -13,6 +13,7 @@ __all__ = ["string_to_type", "string_to_simplex_method"]
 
 class LatticeType(Enum):
     """Lattice type."""
+
     equispaced = _LT.equispaced
     gll = _LT.gll
     chebyshev = _LT.chebyshev
@@ -21,6 +22,7 @@ class LatticeType(Enum):
 
 class LatticeSimplexMethod(Enum):
     """Lattice simplex method."""
+
     none = _LSM.none
     warp = _LSM.warp
     isaac = _LSM.isaac
@@ -58,8 +60,11 @@ def string_to_simplex_method(method: str) -> LatticeSimplexMethod:
 
 
 def create_lattice(
-    celltype: CellType, n: int, ltype: LatticeType, exterior: bool,
-    method: LatticeSimplexMethod = LatticeSimplexMethod.none
+    celltype: CellType,
+    n: int,
+    ltype: LatticeType,
+    exterior: bool,
+    method: LatticeSimplexMethod = LatticeSimplexMethod.none,
 ) -> npt.NDArray:
     """Create a lattice of points on a reference cell.
 

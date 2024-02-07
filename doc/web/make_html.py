@@ -2,8 +2,9 @@ import argparse
 import os
 import re
 
-import basix
 from markdown import markdown as _markdown
+
+import basix
 
 _path = os.path.dirname(os.path.realpath(__file__))
 
@@ -15,8 +16,10 @@ def path(dir):
 temp = path("_temp")
 
 parser = argparse.ArgumentParser(description="Build Basix documentation")
-parser.add_argument("--url", metavar="url", default="http://localhost", help="URL of built documentation")
-parser.add_argument("--clone", metavar="clone", default="true", help="Clone the web repository")
+parser.add_argument('--url', metavar='url',
+                    default="http://localhost", help="URL of built documentation")
+parser.add_argument('--clone', metavar='clone',
+                    default="true", help="Clone the web repository")
 
 args = parser.parse_args()
 url = args.url
@@ -108,13 +111,13 @@ system(f"mkdir {path('python/source/_templates')}")
 
 # Prepare templates
 if args.clone == "true":
-    if os.path.isdir(path("web")):
+    if os.path.isdir(path('web')):
         system(f"rm -r {path('web')}")
     system(f"git clone http://github.com/FEniCS/web {path('web')}")
 
     with open(f"{path('web')}/template.md", "w") as f:
         f.write("---\n")
-        f.write(insert_info('title: "Basix {{VERSION}}"\n'))
+        f.write(insert_info("title: \"Basix {{VERSION}}\"\n"))
         f.write("---\n")
         f.write("\n")
         f.write("!!CONTENT!!\n")
@@ -125,17 +128,17 @@ with open(f"{path('web')}/_site/template.html") as f:
     template = f.read()
 template = template.replace("<p>!!", "!!")
 template = template.replace("!!</p>", "!!")
-template = template.replace('="/', '="https://fenicsproject.org/')
+template = template.replace("=\"/", "=\"https://fenicsproject.org/")
 template = template.replace("(/assets", "(https://fenicsproject.org/assets")
 template = template.replace(
-    '/assets/css/customsty.css">',
-    '/assets/css/customsty.css">\n   <link rel="stylesheet" type="text/css" href="/assets/sty.css">',
-)
+    "/assets/css/customsty.css\">",
+    "/assets/css/customsty.css\">\n"
+    "   <link rel=\"stylesheet\" type=\"text/css\" href=\"/assets/sty.css\">")
 
 intro, outro = template.split("!!CONTENT!!")
 
 with open(path("template/navbar.html")) as f:
-    intro += f'<h2 id="project_subtitle">{insert_info(f.read())}</h2>'
+    intro += f"<h2 id=\"project_subtitle\">{insert_info(f.read())}</h2>"
 
 with open(os.path.join(temp, "intro.html"), "w") as f:
     f.write(intro)
@@ -152,7 +155,7 @@ with open(path("cpp/header.html"), "w") as f:
     with open(path("cpp-header.html")) as f2:
         f.write(insert_info(f2.read()))
 
-content = '{% extends "!layout.html" %}\n'
+content = "{% extends \"!layout.html\" %}\n"
 content += "{%- block content %}\n"
 content += intro.split("<body>")[1] + "\n"
 content += "    {{ super() }}\n"
@@ -188,7 +191,7 @@ for file in os.listdir(_path):
     if file.endswith(".md"):
         with open(path(file)) as f:
             contents = unicode_to_html(insert_info(f.read()))
-        with open(os.path.join(path("html"), file[:-3] + ".html"), "w") as f:
+        with open(os.path.join(path('html'), file[:-3] + ".html"), "w") as f:
             f.write(make_html_page(markdown(contents)))
 
 # Make cpp docs

@@ -39,7 +39,9 @@ jobs:
       - name: Install Basix
         run: pip -v install .[ci]
       - name: Ruff check
-        run: ruff check .
+        run: |
+          ruff check .
+          ruff format --check .
       - name: Run mypy checks
         run: mypy python/basix
       - name: Run units tests

@@ -1,6 +1,5 @@
-import numpy as np
-
 import basix
+import numpy as np
 
 np.set_printoptions(suppress=True)
 

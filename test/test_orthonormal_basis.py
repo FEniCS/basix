@@ -2,10 +2,9 @@
 # FEniCS Project
 # SPDX-License-Identifier: MIT
 
+import basix
 import numpy as np
 import pytest
-
-import basix
 
 
 @pytest.mark.parametrize("order", [1, 2, 3])

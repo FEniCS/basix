@@ -7,12 +7,11 @@
 #
 # First, we import Basix and Numpy.
 
+import basix
 import matplotlib.pyplot as plt
 import numpy as np
-from mpl_toolkits import mplot3d  # noqa: F401
-
-import basix
 from basix import CellType, LatticeType, MapType, PolynomialType, PolysetType, SobolevSpace
+from mpl_toolkits import mplot3d  # noqa: F401
 
 # Conforming CR element on a triangle
 # ===================================

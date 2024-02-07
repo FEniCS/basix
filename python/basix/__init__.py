@@ -17,10 +17,9 @@ from basix.finite_element import (
 from basix.interpolation import compute_interpolation_operator
 from basix.lattice import LatticeSimplexMethod, LatticeType, create_lattice
 from basix.maps import MapType
-from basix.polynomials import PolynomialType, PolysetType
+from basix.polynomials import PolynomialType, PolysetType, tabulate_polynomials
 from basix.polynomials import restriction as polyset_restriction
 from basix.polynomials import superset as polyset_superset
-from basix.polynomials import tabulate_polynomials
 from basix.quadrature import QuadratureType, make_quadrature
 from basix.sobolev_spaces import SobolevSpace
 from basix.utils import index

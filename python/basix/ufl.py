@@ -2125,7 +2125,7 @@ def enriched_element(
             new_M = np.zeros((ndofs, vsize, npts, deriv_dim))
             pt = 0
             dof = 0
-            for i, mat in enumerate(M_parts):
+            for mat in M_parts:
                 new_M[dof : dof + mat.shape[0], :, pt : pt + mat.shape[2], : mat.shape[3]] = mat
                 dof += mat.shape[0]
                 pt += mat.shape[2]

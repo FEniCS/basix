@@ -571,7 +571,7 @@ def create_element(
     lagrange_variant: LagrangeVariant = LagrangeVariant.unset,
     dpc_variant: DPCVariant = DPCVariant.unset,
     discontinuous: bool = False,
-    dof_ordering: list[int] = [],
+    dof_ordering: typing.Optional[list[int]] = None,
     dtype: npt.DTypeLike = np.float64,
 ) -> FiniteElement:
     """Create a finite element.
@@ -714,7 +714,7 @@ def tp_factors(
     lagrange_variant: LagrangeVariant = LagrangeVariant.unset,
     dpc_variant: DPCVariant = DPCVariant.unset,
     discontinuous: bool = False,
-    dof_ordering: list[int] = [],
+    dof_ordering: typing.Optional[list[int]] = None,
     dtype: npt.DTypeLike = np.float64,
 ) -> list[list[FiniteElement]]:
     """Get the elements in the tensor product factorisation of an element.

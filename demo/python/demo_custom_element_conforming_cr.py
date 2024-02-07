@@ -67,21 +67,18 @@ def create_ccr_triangle(degree):
     ndofs = degree * (degree + 5) // 2
     wcoeffs = np.zeros((ndofs, npoly))
 
-    dof_n = 0
-    for i in range((degree + 1) * (degree + 2) // 2):
-        wcoeffs[dof_n, dof_n] = 1
-        dof_n += 1
+    r = (degree + 1) * (degree + 2) // 2
+    wcoeffs[:r, :r] = np.eye(r)
 
     pts, wts = basix.make_quadrature(CellType.triangle, 2 * (degree + 1))
     poly = basix.tabulate_polynomials(PolynomialType.legendre, CellType.triangle, degree + 1, pts)
+    x = pts[:, 0]
+    y = pts[:, 1]
     for i in range(1, degree):
-        x = pts[:, 0]
-        y = pts[:, 1]
         f = x**i * y ** (degree - i) * (x + y)
-
         for j in range(npoly):
-            wcoeffs[dof_n, j] = sum(f * poly[j, :] * wts)
-        dof_n += 1
+            wcoeffs[r, j] = sum(f * poly[j, :] * wts)
+        r += 1
 
     geometry = basix.geometry(CellType.triangle)
     topology = basix.topology(CellType.triangle)

@@ -93,6 +93,10 @@ select = [
     "ICN", # flake8-import-conventions
     "NPY", # numpy-specific rules
     "FLY", # use f-string not static joins
+    "LOG", # https://docs.astral.sh/ruff/rules/#flake8-logging-log
+    "ISC", # https://docs.astral.sh/ruff/rules/#flake8-implicit-str-concat-isc
+    # "B", https://docs.astral.sh/ruff/rules/#flake8-bugbear-b
+    # "A", # https://docs.astral.sh/ruff/rules/#flake8-builtins-a
 ]
 # ignore = ["UP007", "RUF012"]
 

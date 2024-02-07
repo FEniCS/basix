@@ -70,19 +70,13 @@ before-build = "export HOMEBREW_AUTO_UPDATING=0 && brew update && brew install n
 [tool.mypy]
 ignore_missing_imports = true
 
-# [tool.isort]
-# line_length = 120
-# skip_glob = ["*.pyi"]
-
 [tool.ruff]
 line-length = 120
 indent-width = 4
 exclude = ["./joss"]
 
 [tool.ruff.format]
-quote-style = "double"
-indent-style = "space"
-skip-magic-trailing-comma = false
+exclude = ["doc/web/make_html.py"]
 
 [tool.ruff.lint]
 exclude = ["joss/"]
@@ -90,9 +84,9 @@ select = [
     # "N", # pep8-naming
     "E", # pycodestyle
     #     "W", # pycodestyle
-    "D", # pydocstyle - used only in python/
-    "F", # pyflakes
-    "I", # isort
+    "D",   # pydocstyle - used only in python/
+    "F",   # pyflakes
+    "I",   # isort
     "RUF", # Ruff-specific rules
     "UP",  # pyupgrade
     "ICN", # flake8-import-conventions
@@ -105,9 +99,6 @@ select = [
 "test/*" = ["D"]
 "demo/*" = ["D"]
 "doc/*" = ["D"]
-
-[tool.ruff.lint.isort]
-detect-same-package = true
 
 [tool.ruff.lint.pydocstyle]
 convention = "google"

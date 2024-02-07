@@ -129,7 +129,7 @@ template = template.replace('="/', '="https://fenicsproject.org/')
 template = template.replace("(/assets", "(https://fenicsproject.org/assets")
 template = template.replace(
     '/assets/css/customsty.css">',
-    '/assets/css/customsty.css">\n' '   <link rel="stylesheet" type="text/css" href="/assets/sty.css">',
+    '/assets/css/customsty.css">\n   <link rel="stylesheet" type="text/css" href="/assets/sty.css">',
 )
 
 intro, outro = template.split("!!CONTENT!!")

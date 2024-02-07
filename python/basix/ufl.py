@@ -1957,10 +1957,8 @@ def _compute_signature(element: _basix.finite_element.FiniteElement) -> str:
     """
     assert element.family == _basix.ElementFamily.custom
     signature = (
-        f"{element.cell_type.name}, {
-            element.value_shape}, {element.map_type.name}, "
-        f"{element.discontinuous}, {element.embedded_subdegree}, {
-            element.embedded_superdegree}, "
+        f"{element.cell_type.name}, {element.value_shape}, {element.map_type.name}, "
+        f"{element.discontinuous}, {element.embedded_subdegree}, {element.embedded_superdegree}, "
         f"{element.dtype}, {element.dof_ordering}"
     )
     data = ",".join([f"{i}" for row in element.wcoeffs for i in row])

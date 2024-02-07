@@ -76,15 +76,15 @@ indent-width = 4
 exclude = ["./joss", "make_html.py"]
 
 [tool.ruff.format]
-exclude = ["make_html.py"]
 docstring-code-format = true
 
+exclude = ["make_html.py"]
 [tool.ruff.lint]
 exclude = ["joss/"]
 select = [
     # "N", # pep8-naming
-    "E", # pycodestyle
-    #     "W", # pycodestyle
+    "E",   # pycodestyle
+    "W",   # pycodestyle
     "D",   # pydocstyle - used only in python/
     "F",   # pyflakes
     "I",   # isort

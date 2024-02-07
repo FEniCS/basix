@@ -94,11 +94,9 @@ def create_ccr_triangle(degree):
     mat = np.zeros((len(pts), 1, len(pts), 1))
     mat[:, 0, :, 0] = np.eye(len(pts))
     for e in topology[1]:
-        edge_pts = []
         v0 = geometry[e[0]]
         v1 = geometry[e[1]]
-        for p in pts:
-            edge_pts.append(v0 + p * (v1 - v0))
+        edge_pts = [v0 + p * (v1 - v0) for p in pts]
         x[1].append(np.array(edge_pts))
         M[1].append(mat)
     pts = basix.create_lattice(CellType.triangle, degree + 1, LatticeType.equispaced, False)

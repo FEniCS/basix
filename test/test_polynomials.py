@@ -141,8 +141,7 @@ def test_order(cell_type, functions, degree):
         # The monomial should NOT be exactly represented using this many
         coeffs = []
         values = np.array([evaluate(function, i) for i in points])
-        for p in range(n):
-            coeffs.append(sum(values * polys[p, :] * weights))
+        coeffs = [sum(values * polys[p, :] * weights) for p in range(n)]
         actual_eval = [float(sum(coeffs * p[:n])) for p in eval_polys.T]
         assert not np.allclose(expected_eval, actual_eval)
 

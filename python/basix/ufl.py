@@ -2162,7 +2162,7 @@ def enriched_element(
 
 def custom_element(
     cell_type: _basix.CellType,
-    value_shape: _typing.Union[_typing.List[int], _typing.Tuple[int, ...]],
+    value_shape: _typing.Union[list[int], tuple[int, ...]],
     wcoeffs: _npt.NDArray[np.float64],
     x: list[list[_npt.NDArray[np.float64]]],
     M: list[list[_npt.NDArray[np.float64]]],
@@ -2178,14 +2178,14 @@ def custom_element(
     """Create a UFL compatible custom Basix element.
 
     Args:
-        cell_type: The cell type
-        value_shape: The value shape of the element
+        cell_type: The cell type.
+        value_shape: The value shape of the element.
         wcoeffs: Matrices for the kth value index containing the
             expansion coefficients defining a polynomial basis spanning
             the polynomial space for this element. Shape is
             ``(dim(finite element polyset), dim(Legenre polynomials))``.
         x: Interpolation points. Indices are ``(tdim, entity index,
-            point index, dim)``
+            point index, dim)``.
         M: The interpolation matrices. Indices are ``(tdim, entity
             index, dof, vs, point_index, derivative)``.
         interpolation_nderivs: The number of derivatives that need to be
@@ -2198,15 +2198,14 @@ def custom_element(
         embedded_subdegree: The highest degree ``n`` such that a
             Lagrange (or vector Lagrange) element of degree ``n`` is a
             subspace of this element.
-        embedded_superdegree: The highest degree of a polynomial in this element's
-            polyset.
+        embedded_superdegree: The highest degree of a polynomial in this
+            element's polyset.
         polyset_type: Polyset type for the element.
         gdim: Geometric dimension. If not set the geometric dimension is
             set equal to the topological dimension of the cell.
 
     Returns:
         A custom finite element.
-
     """
     e = _basix.create_custom_element(
         cell_type,
@@ -2235,7 +2234,6 @@ def mixed_element(elements: list[_ElementBase], gdim: _typing.Optional[int] = No
 
     Returns:
         A mixed finite element.
-
     """
     if gdim is None:
         gdim = elements[0]._gdim
@@ -2270,7 +2268,6 @@ def quadrature_element(
 
     Returns:
         A 'quadrature' finite element.
-
     """
     if isinstance(cell, str):
         cell = _basix.cell.string_to_type(cell)
@@ -2334,7 +2331,6 @@ def blocked_element(
 
     Returns:
         A blocked finite element.
-
     """
     if len(sub_element.value_shape) != 0:
         raise ValueError("Cannot create a blocked element containing a non-scalar element.")

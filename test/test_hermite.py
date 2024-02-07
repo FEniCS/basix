@@ -124,7 +124,15 @@ def test_hermite_tetrahedron():
         - 7 * x * y
         + 7 * x * z**2
         - 7 * x * z,
-        x**3 - 2 * x**2 * y - 2 * x**2 * z - x**2 - 2 * x * y**2 - 2 * x * y * z + 2 * x * y - 2 * x * z**2 + 2 * x * z,
+        x**3
+        - 2 * x**2 * y
+        - 2 * x**2 * z
+        - x**2
+        - 2 * x * y**2
+        - 2 * x * y * z
+        + 2 * x * y
+        - 2 * x * z**2
+        + 2 * x * z,
         2 * x**2 * y + x * y**2 - x * y,
         2 * x**2 * z + x * z**2 - x * z,
         7 * x**2 * y

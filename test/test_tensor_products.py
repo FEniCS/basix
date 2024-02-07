@@ -52,7 +52,9 @@ def test_tensor_product_factorisation(cell_type, degree, element_type, element_a
             values1 = tab1[deriv, i, :, 0]
 
             for fs in factors:
-                evals = [e.tabulate(d, p.reshape(1, -1))[d, 0, :, 0] for e, p, d in zip(fs, point, ds)]
+                evals = [
+                    e.tabulate(d, p.reshape(1, -1))[d, 0, :, 0] for e, p, d in zip(fs, point, ds)
+                ]
                 values2 = tensor_product(*evals)
             assert np.allclose(values1, values2)
 
@@ -61,7 +63,9 @@ def test_tensor_product_factorisation(cell_type, degree, element_type, element_a
 def test_tensor_product_factorisation_quadrilateral(degree):
     P = degree
     cell_type = basix.CellType.quadrilateral
-    element = basix.create_tp_element(basix.ElementFamily.P, cell_type, P, basix.LagrangeVariant.gll_warped)
+    element = basix.create_tp_element(
+        basix.ElementFamily.P, cell_type, P, basix.LagrangeVariant.gll_warped
+    )
     factors = element.get_tensor_product_representation()[0]
     # FIXME: This test assumes all factors formed by a single element
     element0 = factors[0]
@@ -150,7 +154,9 @@ def test_tensor_product_factorisation_hexahedron(degree):
                 for i0 in range(Nd):
                     for i1 in range(Nd):
                         for i2 in range(Nd):
-                            dphi_tensor[q0, q1, q2, i0, i1, i2] = dphi0[q0, i0] * phi0[q1, i1] * phi0[q2, i2]
+                            dphi_tensor[q0, q1, q2, i0, i1, i2] = (
+                                dphi0[q0, i0] * phi0[q1, i1] * phi0[q2, i2]
+                            )
 
     dphi_tensor = dphi_tensor.reshape([Nq * Nq * Nq, Nd * Nd * Nd])
     assert np.allclose(dphi_x, dphi_tensor)
@@ -163,7 +169,9 @@ def test_tensor_product_factorisation_hexahedron(degree):
                 for i0 in range(Nd):
                     for i1 in range(Nd):
                         for i2 in range(Nd):
-                            dphi_tensor[q0, q1, q2, i0, i1, i2] = phi0[q0, i0] * dphi0[q1, i1] * phi0[q2, i2]
+                            dphi_tensor[q0, q1, q2, i0, i1, i2] = (
+                                phi0[q0, i0] * dphi0[q1, i1] * phi0[q2, i2]
+                            )
 
     dphi_tensor = dphi_tensor.reshape([Nq * Nq * Nq, Nd * Nd * Nd])
     assert np.allclose(dphi_y, dphi_tensor)
@@ -176,7 +184,9 @@ def test_tensor_product_factorisation_hexahedron(degree):
                 for i0 in range(Nd):
                     for i1 in range(Nd):
                         for i2 in range(Nd):
-                            dphi_tensor[q0, q1, q2, i0, i1, i2] = phi0[q0, i0] * phi0[q1, i1] * dphi0[q2, i2]
+                            dphi_tensor[q0, q1, q2, i0, i1, i2] = (
+                                phi0[q0, i0] * phi0[q1, i1] * dphi0[q2, i2]
+                            )
 
     dphi_tensor = dphi_tensor.reshape([Nq * Nq * Nq, Nd * Nd * Nd])
     assert np.allclose(dphi_z, dphi_tensor)

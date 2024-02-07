@@ -143,7 +143,18 @@ for _ in range(4):
 # - The type of polynomial set to use. In this example, we use standard polynomials.
 
 element = basix.create_custom_element(
-    CellType.quadrilateral, [], wcoeffs, x, M, 0, MapType.identity, SobolevSpace.H1, False, 1, 2, PolysetType.standard
+    CellType.quadrilateral,
+    [],
+    wcoeffs,
+    x,
+    M,
+    0,
+    MapType.identity,
+    SobolevSpace.H1,
+    False,
+    1,
+    2,
+    PolysetType.standard,
 )
 
 # We can now use this element in the same way we can use a built-in element. For example, we

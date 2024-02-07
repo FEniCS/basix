@@ -10,7 +10,12 @@ import pytest
 def create_custom_p1():
     wcoeffs = np.eye(3)
     z = np.zeros((0, 2))
-    x = [[np.array([[0.0, 0.0]]), np.array([[1.0, 0.0]]), np.array([[0.0, 1.0]])], [z, z, z], [z], []]
+    x = [
+        [np.array([[0.0, 0.0]]), np.array([[1.0, 0.0]]), np.array([[0.0, 1.0]])],
+        [z, z, z],
+        [z],
+        [],
+    ]
     z = np.zeros((0, 1, 0, 1))
     M = [[np.array([[[[1.0]]]]), np.array([[[[1.0]]]]), np.array([[[[1.0]]]])], [z, z, z], [z], []]
 
@@ -44,7 +49,12 @@ def p1_custom_again():
 def cr_custom():
     wcoeffs = np.eye(3)
     z = np.zeros((0, 2))
-    x = [[z, z, z], [np.array([[0.5, 0.5]]), np.array([[0.0, 0.5]]), np.array([[0.5, 0.0]])], [z], []]
+    x = [
+        [z, z, z],
+        [np.array([[0.5, 0.5]]), np.array([[0.0, 0.5]]), np.array([[0.5, 0.0]])],
+        [z],
+        [],
+    ]
     z = np.zeros((0, 1, 0, 1))
     M = [[z, z, z], [np.array([[[[1.0]]]]), np.array([[[[1.0]]]]), np.array([[[[1.0]]]])], [z], []]
 
@@ -91,12 +101,16 @@ def p1_quad():
 
 @pytest.fixture
 def p4_gll():
-    return basix.create_element(basix.ElementFamily.P, basix.CellType.triangle, 4, basix.LagrangeVariant.gll_warped)
+    return basix.create_element(
+        basix.ElementFamily.P, basix.CellType.triangle, 4, basix.LagrangeVariant.gll_warped
+    )
 
 
 @pytest.fixture
 def p4_equi():
-    return basix.create_element(basix.ElementFamily.P, basix.CellType.triangle, 4, basix.LagrangeVariant.equispaced)
+    return basix.create_element(
+        basix.ElementFamily.P, basix.CellType.triangle, 4, basix.LagrangeVariant.equispaced
+    )
 
 
 @pytest.fixture
@@ -111,17 +125,23 @@ def p1_f64():
 
 @pytest.fixture
 def p1_dofs():
-    return basix.create_element(basix.ElementFamily.P, basix.CellType.triangle, 1, dof_ordering=[0, 1, 2])
+    return basix.create_element(
+        basix.ElementFamily.P, basix.CellType.triangle, 1, dof_ordering=[0, 1, 2]
+    )
 
 
 @pytest.fixture
 def p1_dofs_again():
-    return basix.create_element(basix.ElementFamily.P, basix.CellType.triangle, 1, dof_ordering=[0, 1, 2])
+    return basix.create_element(
+        basix.ElementFamily.P, basix.CellType.triangle, 1, dof_ordering=[0, 1, 2]
+    )
 
 
 @pytest.fixture
 def p1_reverse_dofs():
-    return basix.create_element(basix.ElementFamily.P, basix.CellType.triangle, 1, dof_ordering=[2, 1, 0])
+    return basix.create_element(
+        basix.ElementFamily.P, basix.CellType.triangle, 1, dof_ordering=[2, 1, 0]
+    )
 
 
 def test_equal_same_element(p1, p1_again):

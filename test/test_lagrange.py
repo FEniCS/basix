@@ -40,12 +40,21 @@ def sympy_lagrange(celltype, n):
             ]
         if n == 5:
             return [
-                -625 * x**5 / 24 + 625 * x**4 / 8 - 2125 * x**3 / 24 + 375 * x**2 / 8 - 137 * x / 12 + 1,
+                -625 * x**5 / 24
+                + 625 * x**4 / 8
+                - 2125 * x**3 / 24
+                + 375 * x**2 / 8
+                - 137 * x / 12
+                + 1,
                 625 * x**5 / 24 - 625 * x**4 / 12 + 875 * x**3 / 24 - 125 * x**2 / 12 + x,
                 3125 * x**5 / 24 - 4375 * x**4 / 12 + 8875 * x**3 / 24 - 1925 * x**2 / 12 + 25 * x,
                 -3125 * x**5 / 12 + 8125 * x**4 / 12 - 7375 * x**3 / 12 + 2675 * x**2 / 12 - 25 * x,
                 3125 * x**5 / 12 - 625 * x**4 + 6125 * x**3 / 12 - 325 * x**2 / 2 + 50 * x / 3,
-                -3125 * x**5 / 24 + 6875 * x**4 / 24 - 5125 * x**3 / 24 + 1525 * x**2 / 24 - 25 * x / 4,
+                -3125 * x**5 / 24
+                + 6875 * x**4 / 24
+                - 5125 * x**3 / 24
+                + 1525 * x**2 / 24
+                - 25 * x / 4,
             ]
     if celltype == basix.CellType.triangle:
         if n == 1:
@@ -75,9 +84,19 @@ def sympy_lagrange(celltype, n):
                 9 * y**3 / 2 - 9 * y**2 / 2 + y,
                 27 * x**2 * y / 2 - 9 * x * y / 2,
                 27 * x * y**2 / 2 - 9 * x * y / 2,
-                27 * x**2 * y / 2 + 27 * x * y**2 - 45 * x * y / 2 + 27 * y**3 / 2 - 45 * y**2 / 2 + 9 * y,
+                27 * x**2 * y / 2
+                + 27 * x * y**2
+                - 45 * x * y / 2
+                + 27 * y**3 / 2
+                - 45 * y**2 / 2
+                + 9 * y,
                 -27 * x * y**2 / 2 + 9 * x * y / 2 - 27 * y**3 / 2 + 18 * y**2 - 9 * y / 2,
-                27 * x**3 / 2 + 27 * x**2 * y - 45 * x**2 / 2 + 27 * x * y**2 / 2 - 45 * x * y / 2 + 9 * x,
+                27 * x**3 / 2
+                + 27 * x**2 * y
+                - 45 * x**2 / 2
+                + 27 * x * y**2 / 2
+                - 45 * x * y / 2
+                + 9 * x,
                 -27 * x**3 / 2 - 27 * x**2 * y / 2 + 18 * x**2 + 9 * x * y / 2 - 9 * x / 2,
                 -27 * x**2 * y - 27 * x * y**2 + 27 * x * y,
             ]
@@ -155,7 +174,12 @@ def sympy_lagrange(celltype, n):
                 - 112 * x**2 / 3
                 - 16 * x * y / 3
                 + 16 * x / 3,
-                128 * x**3 * y + 256 * x**2 * y**2 - 224 * x**2 * y + 128 * x * y**3 - 224 * x * y**2 + 96 * x * y,
+                128 * x**3 * y
+                + 256 * x**2 * y**2
+                - 224 * x**2 * y
+                + 128 * x * y**3
+                - 224 * x * y**2
+                + 96 * x * y,
                 -128 * x**3 * y - 128 * x**2 * y**2 + 160 * x**2 * y + 32 * x * y**2 - 32 * x * y,
                 -128 * x**2 * y**2 + 32 * x**2 * y - 128 * x * y**3 + 160 * x * y**2 - 32 * x * y,
             ]
@@ -354,7 +378,16 @@ def sympy_lagrange(celltype, n):
             return [-x - y - z + 1, x, y, z]
         if n == 2:
             return [
-                2 * x**2 + 4 * x * y + 4 * x * z - 3 * x + 2 * y**2 + 4 * y * z - 3 * y + 2 * z**2 - 3 * z + 1,
+                2 * x**2
+                + 4 * x * y
+                + 4 * x * z
+                - 3 * x
+                + 2 * y**2
+                + 4 * y * z
+                - 3 * y
+                + 2 * z**2
+                - 3 * z
+                + 1,
                 2 * x**2 - x,
                 2 * y**2 - y,
                 2 * z**2 - z,
@@ -721,7 +754,9 @@ def sympy_lagrange(celltype, n):
 
 
 def test_point():
-    lagrange = basix.create_element(basix.ElementFamily.P, basix.CellType.point, 0, discontinuous=True)
+    lagrange = basix.create_element(
+        basix.ElementFamily.P, basix.CellType.point, 0, discontinuous=True
+    )
     assert np.allclose(lagrange.tabulate(0, np.array([[]])), [[[1]]])
     assert np.allclose(lagrange.tabulate(0, np.array([[], []])), [[[1, 1]]])
 
@@ -731,7 +766,9 @@ def test_line(n):
     celltype = basix.CellType.interval
     g = sympy_lagrange(celltype, n)
     x = sympy.Symbol("x")
-    lagrange = basix.create_element(basix.ElementFamily.P, celltype, n, basix.LagrangeVariant.equispaced)
+    lagrange = basix.create_element(
+        basix.ElementFamily.P, celltype, n, basix.LagrangeVariant.equispaced
+    )
     pts = basix.create_lattice(celltype, 6, basix.LatticeType.equispaced, True)
     nderiv = n
     wtab = lagrange.tabulate(nderiv, pts)
@@ -820,7 +857,9 @@ def test_tet(degree):
 )
 @pytest.mark.parametrize("degree", [1, 2, 3, 4])
 def test_lagrange(celltype, degree):
-    lagrange = basix.create_element(basix.ElementFamily.P, celltype[1], degree, basix.LagrangeVariant.equispaced)
+    lagrange = basix.create_element(
+        basix.ElementFamily.P, celltype[1], degree, basix.LagrangeVariant.equispaced
+    )
     pts = basix.create_lattice(celltype[0], 6, basix.LatticeType.equispaced, True)
     w = lagrange.tabulate(0, pts)[0]
     assert np.isclose(np.sum(w, axis=1), 1.0).all()
@@ -911,10 +950,18 @@ def test_dof_transformations_tetrahedron(degree):
 
 @pytest.mark.parametrize("degree", [1, 2, 3, 4])
 @pytest.mark.parametrize(
-    "celltype", [basix.CellType.quadrilateral, basix.CellType.hexahedron, basix.CellType.pyramid, basix.CellType.prism]
+    "celltype",
+    [
+        basix.CellType.quadrilateral,
+        basix.CellType.hexahedron,
+        basix.CellType.pyramid,
+        basix.CellType.prism,
+    ],
 )
 def test_celltypes(degree, celltype):
-    tp = basix.create_element(basix.ElementFamily.P, celltype, degree, basix.LagrangeVariant.equispaced)
+    tp = basix.create_element(
+        basix.ElementFamily.P, celltype, degree, basix.LagrangeVariant.equispaced
+    )
     pts = basix.create_lattice(celltype, 5, basix.LatticeType.equispaced, True)
     w = tp.tabulate(0, pts)[0]
     assert np.allclose(np.sum(w, axis=1), 1.0)
@@ -934,9 +981,18 @@ def in_cell(celltype, p):
     if celltype == basix.CellType.quadrilateral:
         return leq(0, p[0]) and leq(0, p[1]) and leq(p[0], 1) and leq(p[1], 1)
     if celltype == basix.CellType.hexahedron:
-        return leq(0, p[0]) and leq(0, p[1]) and leq(0, p[2]) and leq(p[0], 1) and leq(p[1], 1) and leq(p[2], 1)
+        return (
+            leq(0, p[0])
+            and leq(0, p[1])
+            and leq(0, p[2])
+            and leq(p[0], 1)
+            and leq(p[1], 1)
+            and leq(p[2], 1)
+        )
     if celltype == basix.CellType.prism:
-        return leq(0, p[0]) and leq(0, p[1]) and leq(0, p[2]) and leq(p[0] + p[1], 1) and leq(p[2], 1)
+        return (
+            leq(0, p[0]) and leq(0, p[1]) and leq(0, p[2]) and leq(p[0] + p[1], 1) and leq(p[2], 1)
+        )
 
 
 @pytest.mark.parametrize(
@@ -1040,7 +1096,9 @@ def test_legendre(celltype, degree, variant):
 )
 @pytest.mark.parametrize("degree", range(5))
 def test_dpc(celltype, degree, variant):
-    e = basix.create_element(basix.ElementFamily.DPC, celltype, degree, dpc_variant=variant, discontinuous=True)
+    e = basix.create_element(
+        basix.ElementFamily.DPC, celltype, degree, dpc_variant=variant, discontinuous=True
+    )
     for p in e.points:
         assert in_cell(celltype, p)
 
@@ -1135,7 +1193,11 @@ def test_legendre_lagrange_variant(celltype, degree):
 @pytest.mark.parametrize("degree", range(1, 5))
 def test_legendre_dpc_variant(celltype, degree):
     e = basix.create_element(
-        basix.ElementFamily.DPC, celltype, degree, dpc_variant=basix.DPCVariant.legendre, discontinuous=True
+        basix.ElementFamily.DPC,
+        celltype,
+        degree,
+        dpc_variant=basix.DPCVariant.legendre,
+        discontinuous=True,
     )
 
     # Test that the basis functions are orthogonal

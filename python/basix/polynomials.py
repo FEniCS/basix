@@ -101,7 +101,10 @@ def reshape_coefficients(
 
     elif cell_type == CellType.hexahedron:
         indices = [
-            (i, j, k) for i in range(input_degree + 1) for j in range(input_degree + 1) for k in range(input_degree + 1)
+            (i, j, k)
+            for i in range(input_degree + 1)
+            for j in range(input_degree + 1)
+            for k in range(input_degree + 1)
         ]
 
         def idx(d, i):
@@ -137,7 +140,9 @@ def reshape_coefficients(
     pdim_in = dim(poly_type, cell_type, input_degree)
     for v in range(value_size):
         for i in indices:
-            out[:, v * pdim + idx(output_degree, i)] = coefficients[:, v * pdim_in + idx(input_degree, i)]
+            out[:, v * pdim + idx(output_degree, i)] = coefficients[
+                :, v * pdim_in + idx(input_degree, i)
+            ]
 
     return out
 
@@ -156,7 +161,9 @@ def dim(ptype: PolynomialType, celltype: CellType, degree: int) -> int:
     return _pd(ptype.value, celltype.value, degree)
 
 
-def tabulate_polynomials(ptype: PolynomialType, celltype: CellType, degree: int, pts: npt.NDArray) -> npt.NDArray:
+def tabulate_polynomials(
+    ptype: PolynomialType, celltype: CellType, degree: int, pts: npt.NDArray
+) -> npt.NDArray:
     """Tabulate a set of polynomials on a reference cell.
 
     Args:

@@ -11,7 +11,12 @@ def test_lagrange_custom_triangle_degree1():
     """Test that Lagrange element created as a custom element agrees with built-in Lagrange."""
     wcoeffs = np.eye(3)
     z = np.zeros((0, 2))
-    x = [[np.array([[0.0, 0.0]]), np.array([[1.0, 0.0]]), np.array([[0.0, 1.0]])], [z, z, z], [z], []]
+    x = [
+        [np.array([[0.0, 0.0]]), np.array([[1.0, 0.0]]), np.array([[0.0, 1.0]])],
+        [z, z, z],
+        [z],
+        [],
+    ]
     z = np.zeros((0, 1, 0, 1))
     M = [[np.array([[[[1.0]]]]), np.array([[[[1.0]]]]), np.array([[[[1.0]]]])], [z, z, z], [z], []]
 
@@ -40,7 +45,12 @@ def test_lagrange_custom_triangle_degree1_l2piola():
 
     wcoeffs = np.eye(3)
     z = np.zeros((0, 2))
-    x = [[np.array([[0.0, 0.0]]), np.array([[1.0, 0.0]]), np.array([[0.0, 1.0]])], [z, z, z], [z], []]
+    x = [
+        [np.array([[0.0, 0.0]]), np.array([[1.0, 0.0]]), np.array([[0.0, 1.0]])],
+        [z, z, z],
+        [z],
+        [],
+    ]
     z = np.zeros((0, 1, 0, 1))
     M = [[np.array([[[[1.0]]]]), np.array([[[[1.0]]]]), np.array([[[[1.0]]]])], [z, z, z], [z], []]
 
@@ -78,9 +88,16 @@ def test_lagrange_custom_triangle_degree4():
         [],
     ]
     id = np.array([[[[1.0], [0.0], [0.0]]], [[[0.0], [1.0], [0.0]]], [[[0.0], [0.0], [1.0]]]])
-    M = [[np.array([[[[1.0]]]]), np.array([[[[1.0]]]]), np.array([[[[1.0]]]])], [id, id, id], [id], []]
+    M = [
+        [np.array([[[[1.0]]]]), np.array([[[[1.0]]]]), np.array([[[[1.0]]]])],
+        [id, id, id],
+        [id],
+        [],
+    ]
 
-    lagrange = basix.create_element(basix.ElementFamily.P, basix.CellType.triangle, 4, basix.LagrangeVariant.equispaced)
+    lagrange = basix.create_element(
+        basix.ElementFamily.P, basix.CellType.triangle, 4, basix.LagrangeVariant.equispaced
+    )
     element = basix.create_custom_element(
         basix.CellType.triangle,
         [],
@@ -106,14 +123,24 @@ def test_lagrange_custom_quadrilateral_degree1():
     wcoeffs = np.eye(4)
     z = np.zeros((0, 2))
     x = [
-        [np.array([[0.0, 0.0]]), np.array([[1.0, 0.0]]), np.array([[0.0, 1.0]]), np.array([[1.0, 1.0]])],
+        [
+            np.array([[0.0, 0.0]]),
+            np.array([[1.0, 0.0]]),
+            np.array([[0.0, 1.0]]),
+            np.array([[1.0, 1.0]]),
+        ],
         [z, z, z, z],
         [z],
         [],
     ]
     z = np.zeros((0, 1, 0, 1))
     M = [
-        [np.array([[[[1.0]]]]), np.array([[[[1.0]]]]), np.array([[[[1.0]]]]), np.array([[[[1.0]]]])],
+        [
+            np.array([[[[1.0]]]]),
+            np.array([[[[1.0]]]]),
+            np.array([[[[1.0]]]]),
+            np.array([[[[1.0]]]]),
+        ],
         [z, z, z, z],
         [z],
         [],
@@ -134,7 +161,9 @@ def test_lagrange_custom_quadrilateral_degree1():
         1,
         basix.PolysetType.standard,
     )
-    points = basix.create_lattice(basix.CellType.quadrilateral, 5, basix.LatticeType.equispaced, True)
+    points = basix.create_lattice(
+        basix.CellType.quadrilateral, 5, basix.LatticeType.equispaced, True
+    )
     assert np.allclose(lagrange.tabulate(1, points), element.tabulate(1, points))
     assert np.allclose(lagrange.base_transformations(), element.base_transformations())
 
@@ -146,7 +175,9 @@ def test_raviart_thomas_triangle_degree1():
     wcoeffs[1, 3] = 1
 
     pts, wts = basix.make_quadrature(basix.CellType.triangle, 2)
-    poly = basix.tabulate_polynomials(basix.PolynomialType.legendre, basix.CellType.triangle, 1, pts)
+    poly = basix.tabulate_polynomials(
+        basix.PolynomialType.legendre, basix.CellType.triangle, 1, pts
+    )
     for i in range(3):
         wcoeffs[2, i] = sum(pts[:, 0] * poly[i, :] * wts)
         wcoeffs[2, 3 + i] = sum(pts[:, 1] * poly[i, :] * wts)
@@ -207,7 +238,12 @@ def create_lagrange1_quad(
     if x is None:
         z = np.zeros((0, 2))
         x = [
-            [np.array([[0.0, 0.0]]), np.array([[1.0, 0.0]]), np.array([[0.0, 1.0]]), np.array([[1.0, 1.0]])],
+            [
+                np.array([[0.0, 0.0]]),
+                np.array([[1.0, 0.0]]),
+                np.array([[0.0, 1.0]]),
+                np.array([[1.0, 1.0]]),
+            ],
             [z, z, z, z],
             [z],
             [],
@@ -215,7 +251,12 @@ def create_lagrange1_quad(
     if M is None:
         z = np.zeros((0, 1, 0, 1))
         M = [
-            [np.array([[[[1.0]]]]), np.array([[[[1.0]]]]), np.array([[[[1.0]]]]), np.array([[[[1.0]]]])],
+            [
+                np.array([[[[1.0]]]]),
+                np.array([[[[1.0]]]]),
+                np.array([[[[1.0]]]]),
+                np.array([[[[1.0]]]]),
+            ],
             [z, z, z, z],
             [z],
             [],
@@ -264,25 +305,33 @@ def test_wcoeffs_wrong_shape():
 
 def test_wcoeffs_too_few_cols():
     """Test that a runtime error is thrown when wcoeffs has too few columns."""
-    assert_failure(wcoeffs=np.array([[1.0, 0.0, 0.0, 0.0], [0.0, 1.0, 0.0, 0.0], [0.0, 0.0, 1.0, 0.0]]))
+    assert_failure(
+        wcoeffs=np.array([[1.0, 0.0, 0.0, 0.0], [0.0, 1.0, 0.0, 0.0], [0.0, 0.0, 1.0, 0.0]])
+    )
 
 
 def test_wcoeffs_too_few_rows():
     """Test that a runtime error is thrown when wcoeffs has too few rows."""
-    assert_failure(wcoeffs=np.array([[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0], [1.0, 0.0, 1.0]]))
+    assert_failure(
+        wcoeffs=np.array([[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0], [1.0, 0.0, 1.0]])
+    )
 
 
 def test_wcoeffs_zero_row():
     """Test that a runtime error is thrown when wcoeffs has a row of zeros."""
     assert_failure(
-        wcoeffs=np.array([[1.0, 0.0, 0.0, 0.0], [0.0, 1.0, 0.0, 0.0], [0.0, 0.0, 1.0, 0.0], [0.0, 0.0, 0.0, 0.0]])
+        wcoeffs=np.array(
+            [[1.0, 0.0, 0.0, 0.0], [0.0, 1.0, 0.0, 0.0], [0.0, 0.0, 1.0, 0.0], [0.0, 0.0, 0.0, 0.0]]
+        )
     )
 
 
 def test_wcoeffs_equal_rows():
     """Test that a runtime error is thrown when wcoeffs has two equal rows."""
     assert_failure(
-        wcoeffs=np.array([[1.0, 0.0, 0.0, 0.0], [0.0, 1.0, 0.0, 0.0], [0.0, 0.0, 1.0, 1.0], [0.0, 0.0, 1.0, 1.0]])
+        wcoeffs=np.array(
+            [[1.0, 0.0, 0.0, 0.0], [0.0, 1.0, 0.0, 0.0], [0.0, 0.0, 1.0, 1.0], [0.0, 0.0, 1.0, 1.0]]
+        )
     )
 
 
@@ -290,7 +339,12 @@ def test_x_wrong_tdim():
     """Test that a runtime error is thrown when a point in x has the wrong tdim."""
     z = np.zeros((0, 2))
     x = [
-        [np.array([[0.0, 0.0, 0.0]]), np.array([[1.0, 0.0]]), np.array([[0.0, 1.0]]), np.array([[1.0, 1.0]])],
+        [
+            np.array([[0.0, 0.0, 0.0]]),
+            np.array([[1.0, 0.0]]),
+            np.array([[0.0, 1.0]]),
+            np.array([[1.0, 1.0]]),
+        ],
         [z, z, z, z],
         [z],
         [],
@@ -302,7 +356,12 @@ def test_x_too_many_points():
     """Test that a runtime error is thrown when x has too many points."""
     z = np.zeros((0, 2))
     x = [
-        [np.array([[0.0, 0.0]]), np.array([[1.0, 0.0]]), np.array([[0.0, 1.0]]), np.array([[1.0, 1.0]])],
+        [
+            np.array([[0.0, 0.0]]),
+            np.array([[1.0, 0.0]]),
+            np.array([[0.0, 1.0]]),
+            np.array([[1.0, 1.0]]),
+        ],
         [z, z, z, z],
         [np.array([[0.5, 0.5]])],
         [],
@@ -326,7 +385,12 @@ def test_x_wrong_entity_count():
     """Test that a runtime error is thrown when x has the wrong number of edges."""
     z = np.zeros((0, 2))
     x = [
-        [np.array([[0.0, 0.0]]), np.array([[1.0, 0.0]]), np.array([[0.0, 1.0]]), np.array([[1.0, 1.0]])],
+        [
+            np.array([[0.0, 0.0]]),
+            np.array([[1.0, 0.0]]),
+            np.array([[0.0, 1.0]]),
+            np.array([[1.0, 1.0]]),
+        ],
         [z, z, z, z, z],
         [z],
         [],
@@ -338,7 +402,12 @@ def test_M_wrong_value_size():
     """Test that a runtime error is thrown when M has the wrong shape."""
     z = np.zeros((0, 1, 0, 1))
     M = [
-        [np.array([[[[1.0], [1.0]]]]), np.array([[[[1.0]]]]), np.array([[[[1.0]]]]), np.array([[[[1.0]]]])],
+        [
+            np.array([[[[1.0], [1.0]]]]),
+            np.array([[[[1.0]]]]),
+            np.array([[[[1.0]]]]),
+            np.array([[[[1.0]]]]),
+        ],
         [z, z, z, z],
         [z],
         [],
@@ -350,7 +419,12 @@ def test_M_too_many_points():
     """Test that a runtime error is thrown when M is the wrong shape."""
     z = np.zeros((0, 1, 0, 1))
     M = [
-        [np.array([[[[1.0]]]]), np.array([[[[1.0]]]]), np.array([[[[1.0]]]]), np.array([[[[1.0]]]])],
+        [
+            np.array([[[[1.0]]]]),
+            np.array([[[[1.0]]]]),
+            np.array([[[[1.0]]]]),
+            np.array([[[[1.0]]]]),
+        ],
         [z, z, z, z],
         [np.array([[[[1.0]]]])],
         [],
@@ -359,7 +433,12 @@ def test_M_too_many_points():
 
     z = np.zeros((0, 1, 0, 1))
     M = [
-        [np.array([[[[1.0], [1.0]]]]), np.array([[[[1.0]]]]), np.array([[[[1.0]]]]), np.array([[[[1.0]]]])],
+        [
+            np.array([[[[1.0], [1.0]]]]),
+            np.array([[[[1.0]]]]),
+            np.array([[[[1.0]]]]),
+            np.array([[[[1.0]]]]),
+        ],
         [z, z, z, z],
         [z],
         [],
@@ -370,7 +449,12 @@ def test_M_too_many_points():
 def test_M_wrong_entities():
     """Test that a runtime error is thrown when the shape of M does not match x."""
     z = np.zeros((0, 1, 0, 1))
-    M = [[np.array([[[[1.0]]]]), np.array([[[[1.0]]]]), np.array([[[[1.0]]], [[[1.0]]]]), z], [z, z, z, z], [z], []]
+    M = [
+        [np.array([[[[1.0]]]]), np.array([[[[1.0]]]]), np.array([[[[1.0]]], [[[1.0]]]]), z],
+        [z, z, z, z],
+        [z],
+        [],
+    ]
     assert_failure(M=M)
 
 
@@ -378,7 +462,12 @@ def test_M_too_many_derivs():
     """Test that a runtime error is thrown when M is the wrong shape."""
     z = np.zeros((0, 1, 0, 1))
     M = [
-        [np.array([[[[1.0]]]]), np.array([[[[1.0]]]]), np.array([[[[1.0, 1.0]]]]), np.array([[[[1.0]]]])],
+        [
+            np.array([[[[1.0]]]]),
+            np.array([[[[1.0]]]]),
+            np.array([[[[1.0, 1.0]]]]),
+            np.array([[[[1.0]]]]),
+        ],
         [z, z, z, z],
         [z],
         [],
@@ -390,7 +479,12 @@ def test_M_zero_row():
     """Test that a runtime error is thrown when M has a zero row."""
     z = np.zeros((0, 1, 0, 1))
     M = [
-        [np.array([[[[1.0]]]]), np.array([[[[1.0]]]]), np.array([[[[1.0]]]]), np.array([[[[0.0]]]])],
+        [
+            np.array([[[[1.0]]]]),
+            np.array([[[[1.0]]]]),
+            np.array([[[[1.0]]]]),
+            np.array([[[[0.0]]]]),
+        ],
         [z, z, z, z],
         [z],
         [],

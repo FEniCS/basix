@@ -20,7 +20,9 @@ from basix import CellType, ElementFamily, LagrangeVariant
 # variant: this will place the degrees of freedom (DOFs) of the element in an
 # equally spaced lattice.
 
-lagrange = basix.create_element(ElementFamily.P, CellType.quadrilateral, 4, LagrangeVariant.equispaced)
+lagrange = basix.create_element(
+    ElementFamily.P, CellType.quadrilateral, 4, LagrangeVariant.equispaced
+)
 
 # We now print the number of DOFs that this element has.
 

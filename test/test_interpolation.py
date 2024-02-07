@@ -10,7 +10,9 @@ from .utils import parametrize_over_elements
 
 
 @pytest.mark.parametrize("n", range(1, 6))
-@pytest.mark.parametrize("cell_type", [basix.CellType.interval, basix.CellType.triangle, basix.CellType.tetrahedron])
+@pytest.mark.parametrize(
+    "cell_type", [basix.CellType.interval, basix.CellType.triangle, basix.CellType.tetrahedron]
+)
 @pytest.mark.parametrize("element_type", [basix.ElementFamily.P])
 def test_interpolation(cell_type, n, element_type):
     element = basix.create_element(element_type, cell_type, n, basix.LagrangeVariant.gll_warped)
@@ -22,7 +24,10 @@ def test_interpolation(cell_type, n, element_type):
 @parametrize_over_elements(5)
 def test_interpolation_matrix(cell_type, degree, element_type, element_args):
     if degree > 4:
-        if cell_type in [basix.CellType.quadrilateral, basix.CellType.hexahedron] and element_type in [
+        if cell_type in [
+            basix.CellType.quadrilateral,
+            basix.CellType.hexahedron,
+        ] and element_type in [
             basix.ElementFamily.RT,
             basix.ElementFamily.N1E,
             basix.ElementFamily.BDM,

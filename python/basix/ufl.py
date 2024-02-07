@@ -384,7 +384,9 @@ class _BasixElement(_ElementBase):
 
     _element: _basix.finite_element.FiniteElement
 
-    def __init__(self, element: _basix.finite_element.FiniteElement, gdim: _typing.Optional[int] = None):
+    def __init__(
+        self, element: _basix.finite_element.FiniteElement, gdim: _typing.Optional[int] = None
+    ):
         """Create a Basix element."""
         if element.family == _basix.ElementFamily.custom:
             self._is_custom = True
@@ -413,7 +415,9 @@ class _BasixElement(_ElementBase):
 
     def __eq__(self, other) -> bool:
         """Check if two elements are equal."""
-        return isinstance(other, _BasixElement) and (self._element == other._element and self._gdim == other._gdim)
+        return isinstance(other, _BasixElement) and (
+            self._element == other._element and self._gdim == other._gdim
+        )
 
     def __hash__(self) -> int:
         """Return a hash."""
@@ -941,7 +945,9 @@ class _MixedElement(_ElementBase):
 
         sub_e = self._sub_elements[component_element_index]
 
-        e, offset, stride = sub_e.get_component_element(flat_component - crange[component_element_index])
+        e, offset, stride = sub_e.get_component_element(
+            flat_component - crange[component_element_index]
+        )
         # TODO: is this offset correct?
         return e, irange[component_element_index] + offset, stride
 
@@ -983,7 +989,9 @@ class _MixedElement(_ElementBase):
     @property
     def basix_sobolev_space(self):
         """Basix Sobolev space that the element belongs to."""
-        return _basix.sobolev_spaces.intersection([e.basix_sobolev_space for e in self._sub_elements])
+        return _basix.sobolev_spaces.intersection(
+            [e.basix_sobolev_space for e in self._sub_elements]
+        )
 
     @property
     def sub_elements(self) -> list[_ElementBase]:
@@ -1012,7 +1020,9 @@ class _MixedElement(_ElementBase):
     @property
     def entity_dofs(self) -> list[list[list[int]]]:
         """DOF numbers associated with each entity."""
-        dofs: list[list[list[int]]] = [[[] for i in entities] for entities in self._sub_elements[0].entity_dofs]
+        dofs: list[list[list[int]]] = [
+            [[] for i in entities] for entities in self._sub_elements[0].entity_dofs
+        ]
         start_dof = 0
         for e in self._sub_elements:
             for tdim, entities in enumerate(e.entity_dofs):
@@ -1033,7 +1043,9 @@ class _MixedElement(_ElementBase):
     @property
     def entity_closure_dofs(self) -> list[list[list[int]]]:
         """DOF numbers associated with the closure of each entity."""
-        dofs: list[list[list[int]]] = [[[] for i in entities] for entities in self._sub_elements[0].entity_closure_dofs]
+        dofs: list[list[list[int]]] = [
+            [[] for i in entities] for entities in self._sub_elements[0].entity_closure_dofs
+        ]
         start_dof = 0
         for e in self._sub_elements:
             for tdim, entities in enumerate(e.entity_closure_dofs):
@@ -1109,7 +1121,9 @@ class _MixedElement(_ElementBase):
                 else:
                     p, w = e.custom_quadrature()
                     if not np.allclose(p, custom_q[0]) or not np.allclose(w, custom_q[1]):
-                        raise ValueError("Subelements of mixed element use different quadrature rules")
+                        raise ValueError(
+                            "Subelements of mixed element use different quadrature rules"
+                        )
         if custom_q is not None:
             return custom_q
         raise ValueError("Element does not have custom quadrature")
@@ -1146,7 +1160,8 @@ class _BlockedElement(_ElementBase):
         """Initialise the element."""
         if sub_element.value_size != 1:
             raise ValueError(
-                "Blocked elements of non-scalar elements are not supported. " "Try using _MixedElement instead."
+                "Blocked elements of non-scalar elements are not supported. "
+                "Try using _MixedElement instead."
             )
         if symmetry is not None:
             if len(shape) != 2:
@@ -1226,7 +1241,9 @@ class _BlockedElement(_ElementBase):
         for table in self._sub_element.tabulate(nderivs, points):
             # Repeat sub element horizontally
             assert len(table.shape) == 2
-            new_table = np.zeros((table.shape[0], *self._block_shape, self._block_size * table.shape[1]))
+            new_table = np.zeros(
+                (table.shape[0], *self._block_shape, self._block_size * table.shape[1])
+            )
             for i, j in enumerate(_itertools.product(*[range(s) for s in self._block_shape])):
                 if len(j) == 1:
                     new_table[:, j[0], i :: self._block_size] = table
@@ -1306,7 +1323,9 @@ class _BlockedElement(_ElementBase):
     @property
     def num_entity_closure_dofs(self) -> list[list[int]]:
         """Number of DOFs associated with the closure of each entity."""
-        return [[j * self._block_size for j in i] for i in self._sub_element.num_entity_closure_dofs]
+        return [
+            [j * self._block_size for j in i] for i in self._sub_element.num_entity_closure_dofs
+        ]
 
     @property
     def entity_closure_dofs(self) -> list[list[list[int]]]:
@@ -1490,7 +1509,9 @@ class _QuadratureElement(_ElementBase):
         """Initialise the element."""
         self._points = points
         self._weights = weights
-        repr = f"QuadratureElement({cell.name}, {points!r}, {weights!r}, {pullback})".replace("\n", "")
+        repr = f"QuadratureElement({cell.name}, {points!r}, {weights!r}, {pullback})".replace(
+            "\n", ""
+        )
         self._cell_type = cell
         self._entity_counts = [len(i) for i in _basix.topology(cell)]
 
@@ -1990,7 +2011,9 @@ def element(
         elif family == EF.DPC:
             dpc_variant = _basix.DPCVariant.diagonal_gll
 
-    e = _basix.create_element(family, cell, degree, lagrange_variant, dpc_variant, discontinuous, dtype=dtype)
+    e = _basix.create_element(
+        family, cell, degree, lagrange_variant, dpc_variant, discontinuous, dtype=dtype
+    )
     ufl_e = _BasixElement(e, gdim=gdim)
 
     if shape is None or shape == tuple(e.value_shape):
@@ -2064,7 +2087,9 @@ def enriched_element(
         M.append(M_row)
 
     dim = sum(e.dim for e in elements)
-    wcoeffs = np.zeros((dim, _basix.polynomials.dim(_basix.PolynomialType.legendre, ct, hd) * vsize))
+    wcoeffs = np.zeros(
+        (dim, _basix.polynomials.dim(_basix.PolynomialType.legendre, ct, hd) * vsize)
+    )
     row = 0
     for e in elements:
         wcoeffs[row : row + e.dim, :] = _basix.polynomials.reshape_coefficients(
@@ -2210,7 +2235,9 @@ def quadrature_element(
         if scheme is None:
             points, weights = _basix.make_quadrature(cell, degree)
         else:
-            points, weights = _basix.make_quadrature(cell, degree, rule=_basix.quadrature.string_to_type(scheme))
+            points, weights = _basix.make_quadrature(
+                cell, degree, rule=_basix.quadrature.string_to_type(scheme)
+            )
 
     assert points is not None
     assert weights is not None
@@ -2222,7 +2249,9 @@ def quadrature_element(
         return _BlockedElement(e, value_shape)
 
 
-def real_element(cell: _typing.Union[_basix.CellType, str], value_shape: tuple[int, ...]) -> _ElementBase:
+def real_element(
+    cell: _typing.Union[_basix.CellType, str], value_shape: tuple[int, ...]
+) -> _ElementBase:
     """Create a real element.
 
     Args:
@@ -2267,6 +2296,8 @@ def blocked_element(
     return _BlockedElement(sub_element, shape=shape, symmetry=symmetry, gdim=gdim)
 
 
-def wrap_element(element: _basix.finite_element.FiniteElement, gdim: _typing.Optional[int] = None) -> _ElementBase:
+def wrap_element(
+    element: _basix.finite_element.FiniteElement, gdim: _typing.Optional[int] = None
+) -> _ElementBase:
     """Wrap a Basix element as a Basix UFL element."""
     return _BasixElement(element, gdim=gdim)

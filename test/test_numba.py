@@ -11,7 +11,12 @@ import pytest
 
 @pytest.mark.parametrize(
     "cell",
-    [basix.CellType.triangle, basix.CellType.tetrahedron, basix.CellType.quadrilateral, basix.CellType.hexahedron],
+    [
+        basix.CellType.triangle,
+        basix.CellType.tetrahedron,
+        basix.CellType.quadrilateral,
+        basix.CellType.hexahedron,
+    ],
 )
 @pytest.mark.parametrize(
     "element, degree, element_args",
@@ -54,7 +59,9 @@ def test_dof_transformations(cell, element, degree, element_args, block_size):
         # Numba function does not use blocked data
         data2 = data.copy().reshape(e.dim, block_size)
         # Mapping lists to numba dictionaries
-        entity_transformations = Dict.empty(key_type=types.string, value_type=types.float64[:, :, :])
+        entity_transformations = Dict.empty(
+            key_type=types.string, value_type=types.float64[:, :, :]
+        )
         for i, transformation in e.entity_transformations().items():
             entity_transformations[i] = transformation
 
@@ -69,7 +76,12 @@ def test_dof_transformations(cell, element, degree, element_args, block_size):
 
 @pytest.mark.parametrize(
     "cell",
-    [basix.CellType.triangle, basix.CellType.tetrahedron, basix.CellType.quadrilateral, basix.CellType.hexahedron],
+    [
+        basix.CellType.triangle,
+        basix.CellType.tetrahedron,
+        basix.CellType.quadrilateral,
+        basix.CellType.hexahedron,
+    ],
 )
 @pytest.mark.parametrize(
     "element, degree, element_args",
@@ -112,7 +124,9 @@ def test_dof_transformations_to_transpose(cell, element, degree, block_size, ele
         # Numba function does not use blocked data
         data2 = data.copy().reshape(block_size, e.dim)
         # Mapping lists to numba dictionaries
-        entity_transformations = Dict.empty(key_type=types.string, value_type=types.float64[:, :, :])
+        entity_transformations = Dict.empty(
+            key_type=types.string, value_type=types.float64[:, :, :]
+        )
         for i, transformation in e.entity_transformations().items():
             entity_transformations[i] = transformation
 

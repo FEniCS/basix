@@ -39,7 +39,9 @@ def test_qorder_line(m, scheme):
 
 
 @pytest.mark.parametrize("m", range(6))
-@pytest.mark.parametrize("scheme", [basix.QuadratureType.Default, basix.QuadratureType.gauss_jacobi])
+@pytest.mark.parametrize(
+    "scheme", [basix.QuadratureType.Default, basix.QuadratureType.gauss_jacobi]
+)
 def test_qorder_tri(m, scheme):
     Qpts, Qwts = basix.make_quadrature(basix.CellType.triangle, m, rule=scheme)
     x = sympy.Symbol("x")
@@ -82,14 +84,18 @@ def test_xiao_gimbutas_tet(m, scheme):
 
 
 @pytest.mark.parametrize("m", range(9))
-@pytest.mark.parametrize("scheme", [basix.QuadratureType.Default, basix.QuadratureType.gauss_jacobi])
+@pytest.mark.parametrize(
+    "scheme", [basix.QuadratureType.Default, basix.QuadratureType.gauss_jacobi]
+)
 def test_qorder_tet(m, scheme):
     Qpts, Qwts = basix.make_quadrature(basix.CellType.tetrahedron, m, rule=scheme)
     x = sympy.Symbol("x")
     y = sympy.Symbol("y")
     z = sympy.Symbol("z")
     f = x**m + y**m + z**m
-    q = sympy.integrate(sympy.integrate(sympy.integrate(f, (x, 0, (1 - y - z))), (y, 0, 1 - z)), (z, 0, 1))
+    q = sympy.integrate(
+        sympy.integrate(sympy.integrate(f, (x, 0, (1 - y - z))), (y, 0, 1 - z)), (z, 0, 1)
+    )
     s = 0.0
     for pt, wt in zip(Qpts, Qwts):
         s += wt * f.subs([(x, pt[0]), (y, pt[1]), (z, pt[2])])
@@ -124,7 +130,9 @@ def test_gll():
     assert np.isclose(sum(wts), 2)
 
     # 2D quad
-    pts, wts = basix.make_quadrature(basix.CellType.quadrilateral, m + 1, rule=basix.QuadratureType.gll)
+    pts, wts = basix.make_quadrature(
+        basix.CellType.quadrilateral, m + 1, rule=basix.QuadratureType.gll
+    )
     pts, wts = 2 * pts - 1, 4 * wts
     ref_pts2 = np.array([[x, y] for x in ref_pts for y in ref_pts])
     assert np.allclose(pts, ref_pts2)
@@ -134,7 +142,9 @@ def test_gll():
     assert np.isclose(sum(wts), 4)
 
     # 3D hex
-    pts, wts = basix.make_quadrature(basix.CellType.hexahedron, m + 1, rule=basix.QuadratureType.gll)
+    pts, wts = basix.make_quadrature(
+        basix.CellType.hexahedron, m + 1, rule=basix.QuadratureType.gll
+    )
     pts, wts = 2 * pts - 1, 8 * wts
     ref_pts3 = np.array([[x, y, z] for x in ref_pts for y in ref_pts for z in ref_pts])
     assert np.allclose(pts, ref_pts3)

@@ -129,7 +129,12 @@ def test_dimension(family, cell, degree, dim):
                 lambda x: (-(2**0.5) * x[0], -(2**0.5) * x[1], 2**0.5 - 2**0.5 * x[2]),
             ],
         ),
-        ("N1curl", "triangle", 1, [lambda x: (-x[1], x[0]), lambda x: (x[1], 1 - x[0]), lambda x: (1.0 - x[1], x[0])]),
+        (
+            "N1curl",
+            "triangle",
+            1,
+            [lambda x: (-x[1], x[0]), lambda x: (x[1], 1 - x[0]), lambda x: (1.0 - x[1], x[0])],
+        ),
         (
             "N1curl",
             "tetrahedron",

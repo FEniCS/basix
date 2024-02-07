@@ -64,8 +64,16 @@ def test_continuity_interval_facet(degree, element, variant):
         pytest.skip()
 
     facets = [
-        [np.array([0, 0]), np.array([1, 0]), {basix.CellType.triangle: 2, basix.CellType.quadrilateral: 0}],
-        [np.array([0, 0]), np.array([0, 1]), {basix.CellType.triangle: 1, basix.CellType.quadrilateral: 1}],
+        [
+            np.array([0, 0]),
+            np.array([1, 0]),
+            {basix.CellType.triangle: 2, basix.CellType.quadrilateral: 0},
+        ],
+        [
+            np.array([0, 0]),
+            np.array([0, 1]),
+            {basix.CellType.triangle: 1, basix.CellType.quadrilateral: 1},
+        ],
     ]
 
     for start, end, cellmap in facets:
@@ -117,7 +125,9 @@ def test_continuity_triangle_facet(degree, element, variant):
     ]
 
     for v0, v1, v2, cellmap in facets:
-        points = np.array([v0 + i / 10 * (v1 - v0) + j / 10 * (v2 - v0) for i in range(11) for j in range(11 - i)])
+        points = np.array(
+            [v0 + i / 10 * (v1 - v0) + j / 10 * (v2 - v0) for i in range(11) for j in range(11 - i)]
+        )
         data = None
         for c, e in elements.items():
             if c in cellmap:
@@ -170,7 +180,9 @@ def test_continuity_quadrilateral_facet(degree, element, variant):
 
     for v0, v1, v2, v3, cellmap in facets:
         assert np.allclose(v0 + v3, v1 + v2)
-        points = np.array([v0 + i / 10 * (v1 - v0) + j / 10 * (v2 - v0) for i in range(11) for j in range(11)])
+        points = np.array(
+            [v0 + i / 10 * (v1 - v0) + j / 10 * (v2 - v0) for i in range(11) for j in range(11)]
+        )
         data = None
         for c, e in elements.items():
             if c in cellmap:

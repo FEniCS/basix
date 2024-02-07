@@ -32,7 +32,9 @@ def replace_version(content, version):
 
 
 parser = argparse.ArgumentParser(description="Update version numbering")
-parser.add_argument("-v", "--version", metavar="version", help="Version number to update to", required=True)
+parser.add_argument(
+    "-v", "--version", metavar="version", help="Version number to update to", required=True
+)
 
 args = parser.parse_args()
 

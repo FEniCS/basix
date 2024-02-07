@@ -89,7 +89,9 @@ print(lagrange.entity_dofs[1][2])
 # transformations are identity matrices, we also print the base
 # transformations.
 
-lagrange_degree_2 = basix.create_element(ElementFamily.P, CellType.triangle, 2, LagrangeVariant.equispaced)
+lagrange_degree_2 = basix.create_element(
+    ElementFamily.P, CellType.triangle, 2, LagrangeVariant.equispaced
+)
 print(lagrange_degree_2.dof_transformations_are_identity)
 print(lagrange_degree_2.base_transformations())
 

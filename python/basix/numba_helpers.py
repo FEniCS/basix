@@ -71,7 +71,9 @@ def pre_apply_dof_transformation(
             if edofs == 0:
                 continue
             if cell_info >> (face_start + e) & 1:
-                data[dofstart : dofstart + edofs] = np.dot(edge_reflection, data[dofstart : dofstart + edofs])
+                data[dofstart : dofstart + edofs] = np.dot(
+                    edge_reflection, data[dofstart : dofstart + edofs]
+                )
             dofstart += edofs
 
         if tdim == 3:
@@ -82,9 +84,13 @@ def pre_apply_dof_transformation(
                 if fdofs == 0:
                     continue
                 if cell_info >> (3 * f) & 1:
-                    data[dofstart : dofstart + fdofs] = np.dot(face_reflection, data[dofstart : dofstart + fdofs])
+                    data[dofstart : dofstart + fdofs] = np.dot(
+                        face_reflection, data[dofstart : dofstart + fdofs]
+                    )
                 for _ in range(cell_info >> (3 * f + 1) & 3):
-                    data[dofstart : dofstart + fdofs] = np.dot(face_rotation, data[dofstart : dofstart + fdofs])
+                    data[dofstart : dofstart + fdofs] = np.dot(
+                        face_rotation, data[dofstart : dofstart + fdofs]
+                    )
                 dofstart += fdofs
 
 

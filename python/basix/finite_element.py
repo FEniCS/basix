@@ -160,7 +160,9 @@ class FiniteElement:
         """
         return self._e.push_forward(U, J, detJ, K)
 
-    def pull_back(self, u: npt.NDArray, J: npt.NDArray, detJ: npt.NDArray, K: npt.NDArray) -> npt.NDArray[np.floating]:
+    def pull_back(
+        self, u: npt.NDArray, J: npt.NDArray, detJ: npt.NDArray, K: npt.NDArray
+    ) -> npt.NDArray[np.floating]:
         """Map function values from a physical cell to the reference.
 
         Args:

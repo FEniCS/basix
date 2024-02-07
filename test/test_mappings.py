@@ -26,7 +26,12 @@ def run_map_test(e, J, detJ, K, reference_value_size, physical_value_size):
         points = np.array([[i / N, j / N] for i in range(N + 1) for j in range(N + 1 - i)])
     elif tdim == 3:
         points = np.array(
-            [[i / N, j / N, k / N] for i in range(N + 1) for j in range(N + 1 - i) for k in range(N + 1 - i - j)]
+            [
+                [i / N, j / N, k / N]
+                for i in range(N + 1)
+                for j in range(N + 1 - i)
+                for k in range(N + 1 - i - j)
+            ]
         )
     values = e.tabulate(0, points)[0]
 

@@ -55,7 +55,11 @@ def evaluate(function, pt):
         [basix.CellType.interval, [one, x, x**2, x**3], 3],
         [basix.CellType.triangle, [one, y, x], 1],
         [basix.CellType.triangle, [one, y, x, y**2, x * y, x**2], 2],
-        [basix.CellType.triangle, [one, y, x, y**2, x * y, x**2, y**3, x * y**2, x**2 * y, x**3], 3],
+        [
+            basix.CellType.triangle,
+            [one, y, x, y**2, x * y, x**2, y**3, x * y**2, x**2 * y, x**3],
+            3,
+        ],
         [basix.CellType.tetrahedron, [one], 0],
         [basix.CellType.tetrahedron, [one, z, y, x], 1],
         [basix.CellType.tetrahedron, [one, z, y, x, z**2, y * z, x * z, y**2, x * y, x**2], 2],
@@ -86,7 +90,11 @@ def evaluate(function, pt):
             3,
         ],
         [basix.CellType.quadrilateral, [one, y, x, x * y], 1],
-        [basix.CellType.quadrilateral, [one, y, y**2, x, x * y, x * y**2, x**2, x**2 * y, x**2 * y**2], 2],
+        [
+            basix.CellType.quadrilateral,
+            [one, y, y**2, x, x * y, x * y**2, x**2, x**2 * y, x**2 * y**2],
+            2,
+        ],
         [basix.CellType.hexahedron, [one, z, y, y * z, x, x * z, x * y, x * y * z], 1],
         [basix.CellType.prism, [one, z, y, y * z, x, x * z], 1],
         [
@@ -122,7 +130,9 @@ def test_order(cell_type, functions, degree):
     assert len(functions) == polys.shape[0]
 
     eval_points = basix.create_lattice(cell_type, 10, basix.LatticeType.equispaced, True)
-    eval_polys = basix.tabulate_polynomials(basix.PolynomialType.legendre, cell_type, degree, eval_points)
+    eval_polys = basix.tabulate_polynomials(
+        basix.PolynomialType.legendre, cell_type, degree, eval_points
+    )
 
     for n, function in enumerate(functions):
         expected_eval = [float(evaluate(function, i)) for i in eval_points]

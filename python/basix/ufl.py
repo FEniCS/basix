@@ -93,7 +93,7 @@ class _ElementBase(_AbstractFiniteElement):
         self,
         repr: str,
         cellname: str,
-        value_shape: tuple[int, ...],
+        reference_value_shape: tuple[int, ...],
         degree: int = -1,
         pullback: _AbstractPullback = _UndefinedPullback(),
     ):
@@ -363,9 +363,7 @@ class _BasixElement(_ElementBase):
 
     _element: _basix.finite_element.FiniteElement
 
-    def __init__(
-        self, element: _basix.finite_element.FiniteElement
-    ):
+    def __init__(self, element: _basix.finite_element.FiniteElement):
         """Create a Basix element."""
         if element.family == _basix.ElementFamily.custom:
             self._is_custom = True
@@ -898,7 +896,9 @@ class _MixedElement(_ElementBase):
             start = 0
             for e, t in zip(self._sub_elements, deriv_tables):
                 for i in range(0, e.dim, e.reference_value_size):
-                    new_table[:, start: start + e.reference_value_size] = t[:, i: i + e.reference_value_size]
+                    new_table[:, start : start + e.reference_value_size] = t[
+                        :, i : i + e.reference_value_size
+                    ]
                     start += self.reference_value_size
             tables.append(new_table)
         return np.asarray(tables, dtype=np.float64)
@@ -2274,8 +2274,6 @@ def blocked_element(
     return _BlockedElement(sub_element, shape=shape, symmetry=symmetry)
 
 
-def wrap_element(
-    element: _basix.finite_element.FiniteElement
-) -> _ElementBase:
+def wrap_element(element: _basix.finite_element.FiniteElement) -> _ElementBase:
     """Wrap a Basix element as a Basix UFL element."""
     return _BasixElement(element)

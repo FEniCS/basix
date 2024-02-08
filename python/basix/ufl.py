@@ -20,8 +20,16 @@ from ufl.pullback import UndefinedPullback as _UndefinedPullback
 
 import basix as _basix
 
-__all__ = ["element", "enriched_element", "custom_element", "mixed_element",
-           "quadrature_element", "real_element", "blocked_element"]
+__all__ = [
+    "element",
+    "enriched_element",
+    "custom_element",
+    "mixed_element",
+    "quadrature_element",
+    "real_element",
+    "blocked_element",
+    "wrap_element",
+]
 
 _spacemap = {
     _basix.SobolevSpace.L2: _ufl.sobolevspace.L2,
@@ -81,8 +89,14 @@ class _ElementBase(_AbstractFiniteElement):
     types defined in this file.
     """
 
-    def __init__(self, repr: str, cellname: str, reference_value_shape: tuple[int, ...],
-                 degree: int = -1, pullback: _AbstractPullback = _UndefinedPullback()):
+    def __init__(
+        self,
+        repr: str,
+        cellname: str,
+        value_shape: tuple[int, ...],
+        degree: int = -1,
+        pullback: _AbstractPullback = _UndefinedPullback(),
+    ):
         """Initialise the element."""
         self._repr = repr
         self._cellname = cellname
@@ -121,13 +135,15 @@ class _ElementBase(_AbstractFiniteElement):
     def embedded_superdegree(self) -> int:
         """Return the degree of the minimum degree Lagrange space that spans this element.
 
-        This returns the degree of the lowest degree Lagrange space such that the polynomial
-        space of the Lagrange space is a superspace of this element's polynomial space. If this
-        element contains basis functions that are not in any Lagrange space, this function should
-        return None.
+        This returns the degree of the lowest degree Lagrange space such
+        that the polynomial space of the Lagrange space is a superspace
+        of this element's polynomial space. If this element contains
+        basis functions that are not in any Lagrange space, this
+        function should return None.
 
-        Note that on a simplex cells, the polynomial space of Lagrange space is a complete polynomial
-        space, but on other cells this is not true. For example, on quadrilateral cells, the degree 1
+        Note that on a simplex cells, the polynomial space of Lagrange
+        space is a complete polynomial space, but on other cells this is
+        not true. For example, on quadrilateral cells, the degree 1
         Lagrange space includes the degree 2 polynomial xy.
         """
 
@@ -135,13 +151,15 @@ class _ElementBase(_AbstractFiniteElement):
     def embedded_subdegree(self) -> int:
         """Return the degree of the maximum degree Lagrange space that is spanned by this element.
 
-        This returns the degree of the highest degree Lagrange space such that the polynomial
-        space of the Lagrange space is a subspace of this element's polynomial space. If this
-        element's polynomial space does not include the constant function, this function should
-        return -1.
+        This returns the degree of the highest degree Lagrange space
+        such that the polynomial space of the Lagrange space is a
+        subspace of this element's polynomial space. If this element's
+        polynomial space does not include the constant function, this
+        function should return -1.
 
-        Note that on a simplex cells, the polynomial space of Lagrange space is a complete polynomial
-        space, but on other cells this is not true. For example, on quadrilateral cells, the degree 1
+        Note that on a simplex cells, the polynomial space of Lagrange
+        space is a complete polynomial space, but on other cells this is
+        not true. For example, on quadrilateral cells, the degree 1
         Lagrange space includes the degree 2 polynomial xy.
         """
 
@@ -159,8 +177,8 @@ class _ElementBase(_AbstractFiniteElement):
     def sub_elements(self) -> list[_AbstractFiniteElement]:
         """Return a list of sub elements.
 
-        This function does not recurse: ie it does not extract the sub-elements
-        of sub-elements.
+        This function does not recurse: i.e. it does not extract the
+        sub-elements of sub-elements.
         """
         return []
 
@@ -179,7 +197,7 @@ class _ElementBase(_AbstractFiniteElement):
 
     @_abstractmethod
     def get_component_element(self, flat_component: int) -> tuple[_typing.Any, int, int]:
-        """Get element that represents a component of the element, and the offset and stride of the component.
+        """Get element that represents a component, and the offset and stride of the component.
 
         For example, for a mixed element, this will return the
         sub-element that represents the given component, the offset of
@@ -287,8 +305,9 @@ class _ElementBase(_AbstractFiniteElement):
     def has_tensor_product_factorisation(self) -> bool:
         """Indicates whether or not this element has a tensor product factorisation.
 
-        If this value is true, this element's basis functions can be computed
-        as a tensor product of the basis elements of the elements in the factoriaation.
+        If this value is true, this element's basis functions can be
+        computed as a tensor product of the basis elements of the
+        elements in the factoriaation.
         """
         return False
 
@@ -344,21 +363,30 @@ class _BasixElement(_ElementBase):
 
     _element: _basix.finite_element.FiniteElement
 
-    def __init__(self, element: _basix.finite_element.FiniteElement):
+    def __init__(
+        self, element: _basix.finite_element.FiniteElement
+    ):
         """Create a Basix element."""
         if element.family == _basix.ElementFamily.custom:
             self._is_custom = True
-            repr = f"custom Basix element ({_compute_signature(element)}"
+            repr = f"custom Basix element ({_compute_signature(element)})"
         else:
             self._is_custom = False
-            repr = (f"Basix element ({element.family.name}, {element.cell_type.name}, {element.degree}, "
-                    f"{element.lagrange_variant.name}, {element.dpc_variant.name}, {element.discontinuous}, "
-                    f"{element.dtype}, {element.dof_ordering}")
-        repr += ")"
+            repr = (
+                f"Basix element ({element.family.name}, {element.cell_type.name}, "
+                f"{element.degree}, "
+                f"{element.lagrange_variant.name}, {element.dpc_variant.name}, "
+                f"{element.discontinuous}, "
+                f"{element.dtype}, {element.dof_ordering})"
+            )
 
         super().__init__(
-            repr, element.cell_type.name, tuple(element.value_shape), element.degree,
-            _ufl_pullback_from_enum(element.map_type))
+            repr,
+            element.cell_type.name,
+            tuple(element.value_shape),
+            element.degree,
+            _ufl_pullback_from_enum(element.map_type),
+        )
 
         self._element = element
 
@@ -386,7 +414,10 @@ class _BasixElement(_ElementBase):
         return tab.transpose((0, 1, 3, 2)).reshape((tab.shape[0], tab.shape[1], -1))
 
     def get_component_element(self, flat_component: int) -> tuple[_ElementBase, int, int]:
-        """Get element that represents a component of the element, and the offset and stride of the component.
+        """Get element that represents a component.
+
+        Element that represents a component of the element, and the
+        offset and stride of the component.
 
         For example, for a mixed element, this will return the
         sub-element that represents the given component, the offset of
@@ -516,13 +547,15 @@ class _BasixElement(_ElementBase):
     def embedded_superdegree(self) -> int:
         """Return the degree of the minimum degree Lagrange space that spans this element.
 
-        This returns the degree of the lowest degree Lagrange space such that the polynomial
-        space of the Lagrange space is a superspace of this element's polynomial space. If this
-        element contains basis functions that are not in any Lagrange space, this function should
-        return None.
+        This returns the degree of the lowest degree Lagrange space such
+        that the polynomial space of the Lagrange space is a superspace
+        of this element's polynomial space. If this element contains
+        basis functions that are not in any Lagrange space, this
+        function should return None.
 
-        Note that on a simplex cells, the polynomial space of Lagrange space is a complete polynomial
-        space, but on other cells this is not true. For example, on quadrilateral cells, the degree 1
+        Note that on a simplex cells, the polynomial space of Lagrange
+        space is a complete polynomial space, but on other cells this is
+        not true. For example, on quadrilateral cells, the degree 1
         Lagrange space includes the degree 2 polynomial xy.
         """
         return self._element.embedded_superdegree
@@ -531,13 +564,15 @@ class _BasixElement(_ElementBase):
     def embedded_subdegree(self) -> int:
         """Return the degree of the maximum degree Lagrange space that is spanned by this element.
 
-        This returns the degree of the highest degree Lagrange space such that the polynomial
-        space of the Lagrange space is a subspace of this element's polynomial space. If this
-        element's polynomial space does not include the constant function, this function should
-        return -1.
+        This returns the degree of the highest degree Lagrange space
+        such that the polynomial space of the Lagrange space is a
+        subspace of this element's polynomial space. If this element's
+        polynomial space does not include the constant function, this
+        function should return -1.
 
-        Note that on a simplex cells, the polynomial space of Lagrange space is a complete polynomial
-        space, but on other cells this is not true. For example, on quadrilateral cells, the degree 1
+        Note that on a simplex cells, the polynomial space of Lagrange
+        space is a complete polynomial space, but on other cells this is
+        not true. For example, on quadrilateral cells, the degree 1
         Lagrange space includes the degree 2 polynomial xy.
         """
         return self._element.embedded_subdegree
@@ -585,6 +620,7 @@ class _ComponentElement(_ElementBase):
     function is called.
 
     """
+
     _element: _ElementBase
     _component: int
 
@@ -594,20 +630,26 @@ class _ComponentElement(_ElementBase):
         self._component = component
         repr = f"component element ({element!r}, {component}"
         repr += ")"
-        super().__init__(repr, element.cell_type.name, (1, ), element._degree)
+        super().__init__(repr, element.cell_type.name, (1,), element._degree)
 
     def __eq__(self, other) -> bool:
         """Check if two elements are equal."""
-        return (isinstance(other, _ComponentElement) and self._element == other._element
-                and self._component == other._component)
+        return (
+            isinstance(other, _ComponentElement)
+            and self._element == other._element
+            and self._component == other._component
+        )
 
     def __hash__(self) -> int:
         """Return a hash."""
         return super().__hash__()
 
     def __mul__(self, other):
-        _warn("Use of * to create mixed elements is deprecated and will be removed after December 2023. "
-              "Please, use basix.ufl.mixed_element.", FutureWarning)
+        _warn(
+            "Use of * to create mixed elements is deprecated and will be removed after "
+            "December 2023. Please, use basix.ufl.mixed_element.",
+            FutureWarning,
+        )
         return mixed_element([self, other])
 
     def tabulate(self, nderivs: int, points: _npt.NDArray[np.float64]) -> _npt.NDArray[np.float64]:
@@ -642,7 +684,10 @@ class _ComponentElement(_ElementBase):
         return np.asarray(output, dtype=np.float64)
 
     def get_component_element(self, flat_component: int) -> tuple[_ElementBase, int, int]:
-        """Get element that represents a component of the element, and the offset and stride of the component.
+        """Get element that represents a component.
+
+        Element that represents a component of the element, and the
+        offset and stride of the component.
 
         Args:
             flat_component: The component
@@ -753,13 +798,15 @@ class _ComponentElement(_ElementBase):
     def embedded_superdegree(self) -> int:
         """Return the degree of the minimum degree Lagrange space that spans this element.
 
-        This returns the degree of the lowest degree Lagrange space such that the polynomial
-        space of the Lagrange space is a superspace of this element's polynomial space. If this
-        element contains basis functions that are not in any Lagrange space, this function should
-        return None.
+        This returns the degree of the lowest degree Lagrange space such
+        that the polynomial space of the Lagrange space is a superspace
+        of this element's polynomial space. If this element contains
+        basis functions that are not in any Lagrange space, this
+        function should return ``None``.
 
-        Note that on a simplex cells, the polynomial space of Lagrange space is a complete polynomial
-        space, but on other cells this is not true. For example, on quadrilateral cells, the degree 1
+        Note that on a simplex cells, the polynomial space of Lagrange
+        space is a complete polynomial space, but on other cells this is
+        not true. For example, on quadrilateral cells, the degree 1
         Lagrange space includes the degree 2 polynomial xy.
         """
         return self._element.embedded_superdegree
@@ -768,13 +815,15 @@ class _ComponentElement(_ElementBase):
     def embedded_subdegree(self) -> int:
         """Return the degree of the maximum degree Lagrange space that is spanned by this element.
 
-        This returns the degree of the highest degree Lagrange space such that the polynomial
-        space of the Lagrange space is a subspace of this element's polynomial space. If this
-        element's polynomial space does not include the constant function, this function should
-        return -1.
+        This returns the degree of the highest degree Lagrange space
+        such that the polynomial space of the Lagrange space is a
+        subspace of this element's polynomial space. If this element's
+        polynomial space does not include the constant function, this
+        function should return -1.
 
-        Note that on a simplex cells, the polynomial space of Lagrange space is a complete polynomial
-        space, but on other cells this is not true. For example, on quadrilateral cells, the degree 1
+        Note that on a simplex cells, the polynomial space of Lagrange
+        space is a complete polynomial space, but on other cells this is
+        not true. For example, on quadrilateral cells, the degree 1
         Lagrange space includes the degree 2 polynomial xy.
         """
         return self._element.embedded_subdegree
@@ -806,8 +855,12 @@ class _MixedElement(_ElementBase):
             pullback = _MixedPullback(self)
 
         repr = "mixed element (" + ", ".join(i._repr for i in sub_elements) + ")"
-        super().__init__(repr, sub_elements[0].cell_type.name,
-                         (sum(i.reference_value_size for i in sub_elements), ), pullback=pullback)
+        super().__init__(
+            repr,
+            sub_elements[0].cell_type.name,
+            (sum(i.value_size for i in sub_elements),),
+            pullback=pullback,
+        )
 
     def __eq__(self, other) -> bool:
         """Check if two elements are equal."""
@@ -851,14 +904,16 @@ class _MixedElement(_ElementBase):
         return np.asarray(tables, dtype=np.float64)
 
     def get_component_element(self, flat_component: int) -> tuple[_ElementBase, int, int]:
-        """Get element that represents a component of the element, and the offset and stride of the component.
+        """Get element that represents a component.
+
+        Element that represents a component of the element, and the
+        offset and stride of the component.
 
         Args:
             flat_component: The component
 
         Returns:
             component element, offset of the component, stride of the component
-
         """
         sub_dims = [0] + [e.dim for e in self._sub_elements]
         sub_cmps = [0] + [e.reference_value_size for e in self._sub_elements]
@@ -872,7 +927,9 @@ class _MixedElement(_ElementBase):
 
         sub_e = self._sub_elements[component_element_index]
 
-        e, offset, stride = sub_e.get_component_element(flat_component - crange[component_element_index])
+        e, offset, stride = sub_e.get_component_element(
+            flat_component - crange[component_element_index]
+        )
         # TODO: is this offset correct?
         return e, irange[component_element_index] + offset, stride
 
@@ -880,13 +937,15 @@ class _MixedElement(_ElementBase):
     def embedded_superdegree(self) -> int:
         """Return the degree of the minimum degree Lagrange space that spans this element.
 
-        This returns the degree of the lowest degree Lagrange space such that the polynomial
-        space of the Lagrange space is a superspace of this element's polynomial space. If this
-        element contains basis functions that are not in any Lagrange space, this function should
-        return None.
+        This returns the degree of the lowest degree Lagrange space such
+        that the polynomial space of the Lagrange space is a superspace
+        of this element's polynomial space. If this element contains
+        basis functions that are not in any Lagrange space, this
+        function should return None.
 
-        Note that on a simplex cells, the polynomial space of Lagrange space is a complete polynomial
-        space, but on other cells this is not true. For example, on quadrilateral cells, the degree 1
+        Note that on a simplex cells, the polynomial space of Lagrange
+        space is a complete polynomial space, but on other cells this is
+        not true. For example, on quadrilateral cells, the degree 1
         Lagrange space includes the degree 2 polynomial xy.
         """
         return max(e.embedded_superdegree for e in self._sub_elements)
@@ -895,13 +954,15 @@ class _MixedElement(_ElementBase):
     def embedded_subdegree(self) -> int:
         """Return the degree of the maximum degree Lagrange space that is spanned by this element.
 
-        This returns the degree of the highest degree Lagrange space such that the polynomial
-        space of the Lagrange space is a subspace of this element's polynomial space. If this
-        element's polynomial space does not include the constant function, this function should
-        return -1.
+        This returns the degree of the highest degree Lagrange space
+        such that the polynomial space of the Lagrange space is a
+        subspace of this element's polynomial space. If this element's
+        polynomial space does not include the constant function, this
+        function should return -1.
 
-        Note that on a simplex cells, the polynomial space of Lagrange space is a complete polynomial
-        space, but on other cells this is not true. For example, on quadrilateral cells, the degree 1
+        Note that on a simplex cells, the polynomial space of Lagrange
+        space is a complete polynomial space, but on other cells this is
+        not true. For example, on quadrilateral cells, the degree 1
         Lagrange space includes the degree 2 polynomial xy.
         """
         raise NotImplementedError()
@@ -914,7 +975,9 @@ class _MixedElement(_ElementBase):
     @property
     def basix_sobolev_space(self):
         """Basix Sobolev space that the element belongs to."""
-        return _basix.sobolev_spaces.intersection([e.basix_sobolev_space for e in self._sub_elements])
+        return _basix.sobolev_spaces.intersection(
+            [e.basix_sobolev_space for e in self._sub_elements]
+        )
 
     @property
     def sub_elements(self) -> list[_ElementBase]:
@@ -935,15 +998,17 @@ class _MixedElement(_ElementBase):
     def num_entity_dofs(self) -> list[list[int]]:
         """Number of DOFs associated with each entity."""
         data = [e.num_entity_dofs for e in self._sub_elements]
-        return [[sum(d[tdim][entity_n] for d in data) for entity_n, _ in enumerate(entities)]
-                for tdim, entities in enumerate(data[0])]
+        return [
+            [sum(d[tdim][entity_n] for d in data) for entity_n, _ in enumerate(entities)]
+            for tdim, entities in enumerate(data[0])
+        ]
 
     @property
     def entity_dofs(self) -> list[list[list[int]]]:
         """DOF numbers associated with each entity."""
         dofs: list[list[list[int]]] = [
-            [[] for i in entities]
-            for entities in self._sub_elements[0].entity_dofs]
+            [[] for i in entities] for entities in self._sub_elements[0].entity_dofs
+        ]
         start_dof = 0
         for e in self._sub_elements:
             for tdim, entities in enumerate(e.entity_dofs):
@@ -956,15 +1021,17 @@ class _MixedElement(_ElementBase):
     def num_entity_closure_dofs(self) -> list[list[int]]:
         """Number of DOFs associated with the closure of each entity."""
         data = [e.num_entity_closure_dofs for e in self._sub_elements]
-        return [[sum(d[tdim][entity_n] for d in data) for entity_n, _ in enumerate(entities)]
-                for tdim, entities in enumerate(data[0])]
+        return [
+            [sum(d[tdim][entity_n] for d in data) for entity_n, _ in enumerate(entities)]
+            for tdim, entities in enumerate(data[0])
+        ]
 
     @property
     def entity_closure_dofs(self) -> list[list[list[int]]]:
         """DOF numbers associated with the closure of each entity."""
         dofs: list[list[list[int]]] = [
-            [[] for i in entities]
-            for entities in self._sub_elements[0].entity_closure_dofs]
+            [[] for i in entities] for entities in self._sub_elements[0].entity_closure_dofs
+        ]
         start_dof = 0
         for e in self._sub_elements:
             for tdim, entities in enumerate(e.entity_closure_dofs):
@@ -1040,7 +1107,9 @@ class _MixedElement(_ElementBase):
                 else:
                     p, w = e.custom_quadrature()
                     if not np.allclose(p, custom_q[0]) or not np.allclose(w, custom_q[1]):
-                        raise ValueError("Subelements of mixed element use different quadrature rules")
+                        raise ValueError(
+                            "Subelements of mixed element use different quadrature rules"
+                        )
         if custom_q is not None:
             return custom_q
         raise ValueError("Element does not have custom quadrature")
@@ -1062,15 +1131,23 @@ class _BlockedElement(_ElementBase):
     but should use the `blocked_element` function instead.
 
     """
+
     _block_shape: tuple[int, ...]
     _sub_element: _ElementBase
     _block_size: int
 
-    def __init__(self, sub_element: _ElementBase, shape: tuple[int, ...],
-                 symmetry: _typing.Optional[bool] = None):
+    def __init__(
+        self,
+        sub_element: _ElementBase,
+        shape: tuple[int, ...],
+        symmetry: _typing.Optional[bool] = None,
+    ):
+        """Initialise the element."""
         if sub_element.reference_value_size != 1:
-            raise ValueError("Blocked elements of non-scalar elements are not supported. "
-                             "Try using _MixedElement instead.")
+            raise ValueError(
+                "Blocked elements of non-scalar elements are not supported. "
+                "Try using _MixedElement instead."
+            )
         if symmetry is not None:
             if len(shape) != 2:
                 raise ValueError("symmetry argument can only be passed to elements of rank 2.")
@@ -1096,8 +1173,13 @@ class _BlockedElement(_ElementBase):
             repr += f", symmetry={symmetry}"
         repr += ")"
 
-        super().__init__(repr, sub_element.cell_type.name, shape,
-                         sub_element._degree, sub_element._pullback)
+        super().__init__(
+            repr,
+            sub_element.cell_type.name,
+            shape,
+            sub_element._degree,
+            sub_element._pullback,
+        )
 
         if symmetry:
             n = 0
@@ -1113,8 +1195,11 @@ class _BlockedElement(_ElementBase):
     def __eq__(self, other) -> bool:
         """Check if two elements are equal."""
         return (
-            isinstance(other, _BlockedElement) and self._block_size == other._block_size
-            and self._block_shape == other._block_shape and self._sub_element == other._sub_element)
+            isinstance(other, _BlockedElement)
+            and self._block_size == other._block_size
+            and self._block_shape == other._block_shape
+            and self._sub_element == other._sub_element
+        )
 
     def __hash__(self) -> int:
         """Return a hash."""
@@ -1137,20 +1222,24 @@ class _BlockedElement(_ElementBase):
         for table in self._sub_element.tabulate(nderivs, points):
             # Repeat sub element horizontally
             assert len(table.shape) == 2
-            new_table = np.zeros((table.shape[0], *self._block_shape,
-                                  self._block_size * table.shape[1]))
+            new_table = np.zeros(
+                (table.shape[0], *self._block_shape, self._block_size * table.shape[1])
+            )
             for i, j in enumerate(_itertools.product(*[range(s) for s in self._block_shape])):
                 if len(j) == 1:
-                    new_table[:, j[0], i::self._block_size] = table
+                    new_table[:, j[0], i :: self._block_size] = table
                 elif len(j) == 2:
-                    new_table[:, j[0], j[1], i::self._block_size] = table
+                    new_table[:, j[0], j[1], i :: self._block_size] = table
                 else:
                     raise NotImplementedError()
             output.append(new_table)
         return np.asarray(output, dtype=np.float64)
 
     def get_component_element(self, flat_component: int) -> tuple[_ElementBase, int, int]:
-        """Get element that represents a component of the element, and the offset and stride of the component.
+        """Get element that represents a component.
+
+        Element that represents a component of the element, and the
+        offset and stride of the component.
 
         Args:
             flat_component: The component
@@ -1177,7 +1266,7 @@ class _BlockedElement(_ElementBase):
         """Reference value shape of the element basis function."""
         if self._has_symmetry:
             assert len(self._block_shape) == 2 and self._block_shape[0] == self._block_shape[1]
-            return (self._block_shape[0] * (self._block_shape[0] + 1) // 2, )
+            return (self._block_shape[0] * (self._block_shape[0] + 1) // 2,)
         return self._reference_value_shape
 
     @property
@@ -1210,21 +1299,27 @@ class _BlockedElement(_ElementBase):
         """DOF numbers associated with each entity."""
         # TODO: should this return this, or should it take blocks into
         # account?
-        return [[[k * self._block_size + b for k in j for b in range(self._block_size)]
-                 for j in i] for i in self._sub_element.entity_dofs]
+        return [
+            [[k * self._block_size + b for k in j for b in range(self._block_size)] for j in i]
+            for i in self._sub_element.entity_dofs
+        ]
 
     @property
     def num_entity_closure_dofs(self) -> list[list[int]]:
         """Number of DOFs associated with the closure of each entity."""
-        return [[j * self._block_size for j in i] for i in self._sub_element.num_entity_closure_dofs]
+        return [
+            [j * self._block_size for j in i] for i in self._sub_element.num_entity_closure_dofs
+        ]
 
     @property
     def entity_closure_dofs(self) -> list[list[list[int]]]:
         """DOF numbers associated with the closure of each entity."""
         # TODO: should this return this, or should it take blocks into
         # account?
-        return [[[k * self._block_size + b for k in j for b in range(self._block_size)]
-                 for j in i] for i in self._sub_element.entity_closure_dofs]
+        return [
+            [[k * self._block_size + b for k in j for b in range(self._block_size)] for j in i]
+            for i in self._sub_element.entity_closure_dofs
+        ]
 
     @property
     def num_global_support_dofs(self) -> int:
@@ -1285,13 +1380,15 @@ class _BlockedElement(_ElementBase):
     def embedded_superdegree(self) -> int:
         """Return the degree of the minimum degree Lagrange space that spans this element.
 
-        This returns the degree of the lowest degree Lagrange space such that the polynomial
-        space of the Lagrange space is a superspace of this element's polynomial space. If this
-        element contains basis functions that are not in any Lagrange space, this function should
-        return None.
+        This returns the degree of the lowest degree Lagrange space such
+        that the polynomial space of the Lagrange space is a superspace
+        of this element's polynomial space. If this element contains
+        basis functions that are not in any Lagrange space, this
+        function should return None.
 
-        Note that on a simplex cells, the polynomial space of Lagrange space is a complete polynomial
-        space, but on other cells this is not true. For example, on quadrilateral cells, the degree 1
+        Note that on a simplex cells, the polynomial space of Lagrange
+        space is a complete polynomial space, but on other cells this is
+        not true. For example, on quadrilateral cells, the degree 1
         Lagrange space includes the degree 2 polynomial xy.
         """
         return self._sub_element.embedded_superdegree
@@ -1300,13 +1397,15 @@ class _BlockedElement(_ElementBase):
     def embedded_subdegree(self) -> int:
         """Return the degree of the maximum degree Lagrange space that is spanned by this element.
 
-        This returns the degree of the highest degree Lagrange space such that the polynomial
-        space of the Lagrange space is a subspace of this element's polynomial space. If this
-        element's polynomial space does not include the constant function, this function should
-        return -1.
+        This returns the degree of the highest degree Lagrange space
+        such that the polynomial space of the Lagrange space is a
+        subspace of this element's polynomial space. If this element's
+        polynomial space does not include the constant function, this
+        function should return -1.
 
-        Note that on a simplex cells, the polynomial space of Lagrange space is a complete polynomial
-        space, but on other cells this is not true. For example, on quadrilateral cells, the degree 1
+        Note that on a simplex cells, the polynomial space of Lagrange
+        space is a complete polynomial space, but on other cells this is
+        not true. For example, on quadrilateral cells, the degree 1
         Lagrange space includes the degree 2 polynomial xy.
         """
         return self._sub_element.embedded_subdegree
@@ -1321,8 +1420,10 @@ class _BlockedElement(_ElementBase):
         sub_wc = self._sub_element._wcoeffs
         wcoeffs = np.zeros((sub_wc.shape[0] * self._block_size, sub_wc.shape[1] * self._block_size))
         for i in range(self._block_size):
-            wcoeffs[sub_wc.shape[0] * i: sub_wc.shape[0]
-                    * (i + 1), sub_wc.shape[1] * i: sub_wc.shape[1] * (i + 1)] = sub_wc
+            wcoeffs[
+                sub_wc.shape[0] * i : sub_wc.shape[0] * (i + 1),
+                sub_wc.shape[1] * i : sub_wc.shape[1] * (i + 1),
+            ] = sub_wc
         return wcoeffs
 
     @property
@@ -1337,11 +1438,21 @@ class _BlockedElement(_ElementBase):
         for M_list in self._sub_element._M:
             M_row = []
             for mat in M_list:
-                new_mat = np.zeros((mat.shape[0] * self._block_size,
-                                    mat.shape[1] * self._block_size, mat.shape[2], mat.shape[3]))
+                new_mat = np.zeros(
+                    (
+                        mat.shape[0] * self._block_size,
+                        mat.shape[1] * self._block_size,
+                        mat.shape[2],
+                        mat.shape[3],
+                    )
+                )
                 for i in range(self._block_size):
-                    new_mat[i * mat.shape[0]: (i + 1) * mat.shape[0],
-                            i * mat.shape[1]: (i + 1) * mat.shape[1], :, :] = mat
+                    new_mat[
+                        i * mat.shape[0] : (i + 1) * mat.shape[0],
+                        i * mat.shape[1] : (i + 1) * mat.shape[1],
+                        :,
+                        :,
+                    ] = mat
                 M_row.append(new_mat)
             M.append(M_row)
         return M
@@ -1353,7 +1464,6 @@ class _BlockedElement(_ElementBase):
         If this value is true, this element's basis functions can be
         computed as a tensor product of the basis elements of the
         elements in the factoriaation.
-
         """
         return self._sub_element.has_tensor_product_factorisation
 
@@ -1375,13 +1485,20 @@ class _BlockedElement(_ElementBase):
 class _QuadratureElement(_ElementBase):
     """A quadrature element."""
 
-    def __init__(self, cell: _basix.CellType, points: _npt.NDArray[np.float64],
-                 weights: _npt.NDArray[np.float64], pullback: _AbstractPullback,
-                 degree: _typing.Optional[int] = None):
+    def __init__(
+        self,
+        cell: _basix.CellType,
+        points: _npt.NDArray[np.float64],
+        weights: _npt.NDArray[np.float64],
+        pullback: _AbstractPullback,
+        degree: _typing.Optional[int] = None,
+    ):
         """Initialise the element."""
         self._points = points
         self._weights = weights
-        repr = f"QuadratureElement({cell.name}, {points!r}, {weights!r}, {pullback})".replace("\n", "")
+        repr = f"QuadratureElement({cell.name}, {points!r}, {weights!r}, {pullback})".replace(
+            "\n", ""
+        )
         self._cell_type = cell
         self._entity_counts = [len(i) for i in _basix.topology(cell)]
 
@@ -1428,14 +1545,16 @@ class _QuadratureElement(_ElementBase):
         return tables
 
     def get_component_element(self, flat_component: int) -> tuple[_ElementBase, int, int]:
-        """Get element that represents a component of the element, and the offset and stride of the component.
+        """Get element that represents a component.
+
+        Element that represents a component of the element, and the
+        offset and stride of the component.
 
         Args:
             flat_component: The component
 
         Returns:
             component element, offset of the component, stride of the component
-
         """
         return self, 0, 1
 
@@ -1550,13 +1669,15 @@ class _QuadratureElement(_ElementBase):
     def embedded_superdegree(self) -> int:
         """Return the degree of the minimum degree Lagrange space that spans this element.
 
-        This returns the degree of the lowest degree Lagrange space such that the polynomial
-        space of the Lagrange space is a superspace of this element's polynomial space. If this
-        element contains basis functions that are not in any Lagrange space, this function should
-        return None.
+        This returns the degree of the lowest degree Lagrange space such
+        that the polynomial space of the Lagrange space is a superspace
+        of this element's polynomial space. If this element contains
+        basis functions that are not in any Lagrange space, this
+        function should return ``None``.
 
-        Note that on a simplex cells, the polynomial space of Lagrange space is a complete polynomial
-        space, but on other cells this is not true. For example, on quadrilateral cells, the degree 1
+        Note that on a simplex cells, the polynomial space of Lagrange
+        space is a complete polynomial space, but on other cells this is
+        not true. For example, on quadrilateral cells, the degree 1
         Lagrange space includes the degree 2 polynomial xy.
         """
         return self.degree
@@ -1565,13 +1686,15 @@ class _QuadratureElement(_ElementBase):
     def embedded_subdegree(self) -> int:
         """Return the degree of the maximum degree Lagrange space that is spanned by this element.
 
-        This returns the degree of the highest degree Lagrange space such that the polynomial
-        space of the Lagrange space is a subspace of this element's polynomial space. If this
-        element's polynomial space does not include the constant function, this function should
-        return -1.
+        This returns the degree of the highest degree Lagrange space
+        such that the polynomial space of the Lagrange space is a
+        subspace of this element's polynomial space. If this element's
+        polynomial space does not include the constant function, this
+        function should return -1.
 
-        Note that on a simplex cells, the polynomial space of Lagrange space is a complete polynomial
-        space, but on other cells this is not true. For example, on quadrilateral cells, the degree 1
+        Note that on a simplex cells, the polynomial space of Lagrange
+        space is a complete polynomial space, but on other cells this is
+        not true. For example, on quadrilateral cells, the degree 1
         Lagrange space includes the degree 2 polynomial xy.
         """
         return -1
@@ -1598,8 +1721,11 @@ class _RealElement(_ElementBase):
 
     def __eq__(self, other) -> bool:
         """Check if two elements are equal."""
-        return isinstance(other, _RealElement) and (self._cell_type == other._cell_type
-                                                    and self._reference_value_shape == other._reference_value_shape)
+        return (
+            isinstance(other, _RealElement)
+            and self._cell_type == other._cell_type
+            and self._reference_value_shape == other._reference_value_shape
+        )
 
     def __hash__(self) -> int:
         """Return a hash."""
@@ -1618,11 +1744,14 @@ class _RealElement(_ElementBase):
         """
         out = np.zeros((nderivs + 1, len(points), self.reference_value_size**2))
         for v in range(self.reference_value_size):
-            out[0, :, self.reference_value_size * v + v] = 1.
+            out[0, :, self.reference_value_size * v + v] = 1.0
         return out
 
     def get_component_element(self, flat_component: int) -> tuple[_ElementBase, int, int]:
-        """Get element that represents a component of the element, and the offset and stride of the component.
+        """Get element that represents a component.
+
+        Element that represents a component of the element, and the
+        offset and stride of the component.
 
         Args:
             flat_component: The component
@@ -1648,13 +1777,15 @@ class _RealElement(_ElementBase):
     def embedded_superdegree(self) -> int:
         """Return the degree of the minimum degree Lagrange space that spans this element.
 
-        This returns the degree of the lowest degree Lagrange space such that the polynomial
-        space of the Lagrange space is a superspace of this element's polynomial space. If this
-        element contains basis functions that are not in any Lagrange space, this function should
-        return None.
+        This returns the degree of the lowest degree Lagrange space such
+        that the polynomial space of the Lagrange space is a superspace
+        of this element's polynomial space. If this element contains
+        basis functions that are not in any Lagrange space, this
+        function should return ``None``.
 
-        Note that on a simplex cells, the polynomial space of Lagrange space is a complete polynomial
-        space, but on other cells this is not true. For example, on quadrilateral cells, the degree 1
+        Note that on a simplex cells, the polynomial space of Lagrange
+        space is a complete polynomial space, but on other cells this is
+        not true. For example, on quadrilateral cells, the degree 1
         Lagrange space includes the degree 2 polynomial xy.
         """
         return 0
@@ -1663,13 +1794,15 @@ class _RealElement(_ElementBase):
     def embedded_subdegree(self) -> int:
         """Return the degree of the maximum degree Lagrange space that is spanned by this element.
 
-        This returns the degree of the highest degree Lagrange space such that the polynomial
-        space of the Lagrange space is a subspace of this element's polynomial space. If this
-        element's polynomial space does not include the constant function, this function should
-        return -1.
+        This returns the degree of the highest degree Lagrange space
+        such that the polynomial space of the Lagrange space is a
+        subspace of this element's polynomial space. If this element's
+        polynomial space does not include the constant function, this
+        function should return -1.
 
-        Note that on a simplex cells, the polynomial space of Lagrange space is a complete polynomial
-        space, but on other cells this is not true. For example, on quadrilateral cells, the degree 1
+        Note that on a simplex cells, the polynomial space of Lagrange
+        space is a complete polynomial space, but on other cells this is
+        not true. For example, on quadrilateral cells, the degree 1
         Lagrange space includes the degree 2 polynomial xy.
         """
         return 0
@@ -1779,9 +1912,11 @@ def _compute_signature(element: _basix.finite_element.FiniteElement) -> str:
 
     """
     assert element.family == _basix.ElementFamily.custom
-    signature = (f"{element.cell_type.name}, {element.value_shape}, {element.map_type.name}, "
-                 f"{element.discontinuous}, {element.embedded_subdegree}, {element.embedded_superdegree}, "
-                 f"{element.dtype}, {element.dof_ordering}")
+    signature = (
+        f"{element.cell_type.name}, {element.value_shape}, {element.map_type.name}, "
+        f"{element.discontinuous}, {element.embedded_subdegree}, {element.embedded_superdegree}, "
+        f"{element.dtype}, {element.dof_ordering}"
+    )
     data = ",".join([f"{i}" for row in element.wcoeffs for i in row])
     data += "__"
     for entity in element.x:
@@ -1799,17 +1934,23 @@ def _compute_signature(element: _basix.finite_element.FiniteElement) -> str:
     for mat in element.entity_transformations().values():
         data += ",".join([f"{i}" for row in mat for i in row])
         data += "__"
-    signature += _hashlib.sha1(data.encode('utf-8')).hexdigest()
+    signature += _hashlib.sha1(data.encode("utf-8")).hexdigest()
 
     return signature
 
 
 @_functools.lru_cache
-def element(family: _typing.Union[_basix.ElementFamily, str], cell: _typing.Union[_basix.CellType, str], degree: int,
-            lagrange_variant: _basix.LagrangeVariant = _basix.LagrangeVariant.unset,
-            dpc_variant: _basix.DPCVariant = _basix.DPCVariant.unset, discontinuous: bool = False,
-            shape: _typing.Optional[tuple[int, ...]] = None,
-            symmetry: _typing.Optional[bool] = None, dtype: _npt.DTypeLike = np.float64) -> _ElementBase:
+def element(
+    family: _typing.Union[_basix.ElementFamily, str],
+    cell: _typing.Union[_basix.CellType, str],
+    degree: int,
+    lagrange_variant: _basix.LagrangeVariant = _basix.LagrangeVariant.unset,
+    dpc_variant: _basix.DPCVariant = _basix.DPCVariant.unset,
+    discontinuous: bool = False,
+    shape: _typing.Optional[tuple[int, ...]] = None,
+    symmetry: _typing.Optional[bool] = None,
+    dtype: _npt.DTypeLike = np.float64,
+) -> _ElementBase:
     """Create a UFL compatible element using Basix.
 
     Args:
@@ -1841,8 +1982,11 @@ def element(family: _typing.Union[_basix.ElementFamily, str], cell: _typing.Unio
             family = "P"
             discontinuous = True
         if family == "CG":
-            _warn("\"CG\" element name is deprecated. Consider using \"Lagrange\" or \"P\" instead",
-                  DeprecationWarning, stacklevel=2)
+            _warn(
+                '"CG" element name is deprecated. Consider using "Lagrange" or "P" instead',
+                DeprecationWarning,
+                stacklevel=2,
+            )
             family = "P"
             discontinuous = False
         if family == "DPC":
@@ -1866,8 +2010,9 @@ def element(family: _typing.Union[_basix.ElementFamily, str], cell: _typing.Unio
         elif family == EF.DPC:
             dpc_variant = _basix.DPCVariant.diagonal_gll
 
-    e = _basix.create_element(family, cell, degree, lagrange_variant, dpc_variant,
-                              discontinuous, dtype=dtype)
+    e = _basix.create_element(
+        family, cell, degree, lagrange_variant, dpc_variant, discontinuous, dtype=dtype
+    )
     ufl_e = _BasixElement(e)
 
     if shape is None or shape == tuple(e.value_shape):
@@ -1878,8 +2023,10 @@ def element(family: _typing.Union[_basix.ElementFamily, str], cell: _typing.Unio
         return blocked_element(ufl_e, shape=shape, symmetry=symmetry)
 
 
-def enriched_element(elements: list[_ElementBase],
-                     map_type: _typing.Optional[_basix.MapType] = None) -> _ElementBase:
+def enriched_element(
+    elements: list[_ElementBase],
+    map_type: _typing.Optional[_basix.MapType] = None,
+) -> _ElementBase:
     """Create an UFL compatible enriched element from a list of elements.
 
     Args:
@@ -1928,30 +2075,52 @@ def enriched_element(elements: list[_ElementBase],
             new_M = np.zeros((ndofs, vsize, npts, deriv_dim))
             pt = 0
             dof = 0
-            for i, mat in enumerate(M_parts):
-                new_M[dof: dof + mat.shape[0], :, pt: pt + mat.shape[2], :mat.shape[3]] = mat
+            for mat in M_parts:
+                new_M[dof : dof + mat.shape[0], :, pt : pt + mat.shape[2], : mat.shape[3]] = mat
                 dof += mat.shape[0]
                 pt += mat.shape[2]
             M_row.append(new_M)
         M.append(M_row)
 
     dim = sum(e.dim for e in elements)
-    wcoeffs = np.zeros((dim, _basix.polynomials.dim(_basix.PolynomialType.legendre, ct, hd) * vsize))
+    wcoeffs = np.zeros(
+        (dim, _basix.polynomials.dim(_basix.PolynomialType.legendre, ct, hd) * vsize)
+    )
     row = 0
     for e in elements:
-        wcoeffs[row: row + e.dim, :] = _basix.polynomials.reshape_coefficients(
-            _basix.PolynomialType.legendre, ct, e._wcoeffs, vsize, e.embedded_superdegree, hd)
+        wcoeffs[row : row + e.dim, :] = _basix.polynomials.reshape_coefficients(
+            _basix.PolynomialType.legendre, ct, e._wcoeffs, vsize, e.embedded_superdegree, hd
+        )
         row += e.dim
 
-    return custom_element(ct, list(vshape), wcoeffs, x, M, nderivs,
-                          map_type, ss, discontinuous, hcd, hd, ptype)
+    return custom_element(
+        ct,
+        list(vshape),
+        wcoeffs,
+        x,
+        M,
+        nderivs,
+        map_type,
+        ss,
+        discontinuous,
+        hcd,
+        hd,
+        ptype,
+    )
 
 
 def custom_element(
-    cell_type: _basix.CellType, reference_value_shape: _typing.Union[list[int], tuple[int, ...]],
-    wcoeffs: _npt.NDArray[np.float64], x: list[list[_npt.NDArray[np.float64]]],
-    M: list[list[_npt.NDArray[np.float64]]], interpolation_nderivs: int, map_type: _basix.MapType,
-    sobolev_space: _basix.SobolevSpace, discontinuous: bool, embedded_subdegree: int, embedded_superdegree: int,
+    cell_type: _basix.CellType,
+    reference_value_shape: _typing.Union[list[int], tuple[int, ...]],
+    wcoeffs: _npt.NDArray[np.float64],
+    x: list[list[_npt.NDArray[np.float64]]],
+    M: list[list[_npt.NDArray[np.float64]]],
+    interpolation_nderivs: int,
+    map_type: _basix.MapType,
+    sobolev_space: _basix.SobolevSpace,
+    discontinuous: bool,
+    embedded_subdegree: int,
+    embedded_superdegree: int,
     polyset_type: _basix.PolysetType = _basix.PolysetType.standard,
 ) -> _ElementBase:
     """Create a UFL compatible custom Basix element.
@@ -1964,7 +2133,7 @@ def custom_element(
             the polynomial space for this element. Shape is
             ``(dim(finite element polyset), dim(Legenre polynomials))``.
         x: Interpolation points. Indices are ``(tdim, entity index,
-            point index, dim)``
+            point index, dim)``.
         M: The interpolation matrices. Indices are ``(tdim, entity
             index, dof, vs, point_index, derivative)``.
         interpolation_nderivs: The number of derivatives that need to be
@@ -1977,17 +2146,16 @@ def custom_element(
         embedded_subdegree: The highest degree ``n`` such that a
             Lagrange (or vector Lagrange) element of degree ``n`` is a
             subspace of this element.
-        embedded_superdegree: The highest degree of a polynomial in this element's
-            polyset.
+        embedded_superdegree: The highest degree of a polynomial in this
+            element's polyset.
         polyset_type: Polyset type for the element.
 
     Returns:
         A custom finite element.
-
     """
     e = _basix.create_custom_element(
         cell_type,
-        list(reference_value_shape),
+        tuple(reference_value_shape),
         wcoeffs,
         x,
         M,
@@ -1997,7 +2165,7 @@ def custom_element(
         discontinuous,
         embedded_subdegree,
         embedded_superdegree,
-        polyset_type
+        polyset_type,
     )
     return _BasixElement(e)
 
@@ -2010,18 +2178,19 @@ def mixed_element(elements: list[_ElementBase]) -> _ElementBase:
 
     Returns:
         A mixed finite element.
-
     """
     return _MixedElement(elements)
 
 
-def quadrature_element(cell: _typing.Union[str, _basix.CellType],
-                       value_shape: tuple[int, ...] = (),
-                       scheme: _typing.Optional[str] = None,
-                       degree: _typing.Optional[int] = None,
-                       points: _typing.Optional[_npt.NDArray[np.float64]] = None,
-                       weights: _typing.Optional[_npt.NDArray[np.float64]] = None,
-                       pullback: _AbstractPullback = _ufl.identity_pullback) -> _ElementBase:
+def quadrature_element(
+    cell: _typing.Union[str, _basix.CellType],
+    value_shape: tuple[int, ...] = (),
+    scheme: _typing.Optional[str] = None,
+    degree: _typing.Optional[int] = None,
+    points: _typing.Optional[_npt.NDArray[np.float64]] = None,
+    weights: _typing.Optional[_npt.NDArray[np.float64]] = None,
+    pullback: _AbstractPullback = _ufl.identity_pullback,
+) -> _ElementBase:
     """Create a quadrature element.
 
     When creating this element, either the quadrature scheme and degree
@@ -2038,7 +2207,6 @@ def quadrature_element(cell: _typing.Union[str, _basix.CellType],
 
     Returns:
         A 'quadrature' finite element.
-
     """
     if isinstance(cell, str):
         cell = _basix.cell.string_to_type(cell)
@@ -2050,7 +2218,8 @@ def quadrature_element(cell: _typing.Union[str, _basix.CellType],
             points, weights = _basix.make_quadrature(cell, degree)
         else:
             points, weights = _basix.make_quadrature(
-                cell, degree, rule=_basix.quadrature.string_to_type(scheme))
+                cell, degree, rule=_basix.quadrature.string_to_type(scheme)
+            )
 
     assert points is not None
     assert weights is not None
@@ -2062,8 +2231,9 @@ def quadrature_element(cell: _typing.Union[str, _basix.CellType],
         return _BlockedElement(e, value_shape)
 
 
-def real_element(cell: _typing.Union[_basix.CellType, str],
-                 value_shape: tuple[int, ...]) -> _ElementBase:
+def real_element(
+    cell: _typing.Union[_basix.CellType, str], value_shape: tuple[int, ...]
+) -> _ElementBase:
     """Create a real element.
 
     Args:
@@ -2082,8 +2252,9 @@ def real_element(cell: _typing.Union[_basix.CellType, str],
 
 @_functools.lru_cache
 def blocked_element(
-    sub_element: _ElementBase, shape: tuple[int, ...],
-    symmetry: _typing.Optional[bool] = None
+    sub_element: _ElementBase,
+    shape: tuple[int, ...],
+    symmetry: _typing.Optional[bool] = None,
 ) -> _ElementBase:
     """Create a UFL compatible blocked element.
 
@@ -2096,9 +2267,15 @@ def blocked_element(
 
     Returns:
         A blocked finite element.
-
     """
     if len(sub_element.reference_value_shape) != 0:
         raise ValueError("Cannot create a blocked element containing a non-scalar element.")
 
     return _BlockedElement(sub_element, shape=shape, symmetry=symmetry)
+
+
+def wrap_element(
+    element: _basix.finite_element.FiniteElement
+) -> _ElementBase:
+    """Wrap a Basix element as a Basix UFL element."""
+    return _BasixElement(element)

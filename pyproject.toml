@@ -7,7 +7,7 @@ name = "fenics-basix"
 version = "0.8.0.dev0"
 description = "Basix Python interface"
 readme = "README.md"
-requires-python = ">=3.9.0"
+requires-python = ">=3.9"
 license = { file = "LICENSE" }
 authors = [
     { email = "fenics-steering-council@googlegroups.com" },
@@ -22,7 +22,7 @@ documentation = "https://docs.fenicsproject.org"
 
 [project.optional-dependencies]
 docs = ["markdown", "pylit3", "pyyaml", "sphinx", "sphinx_rtd_theme"]
-lint = ["ruff", "isort"]
+lint = ["ruff"]
 optional = ["numba", "fenics-ufl@git+https://github.com/fenics/ufl"]
 test = ["pytest", "sympy", "scipy", "matplotlib", "fenics-basix[optional]"]
 ci = ["mypy", "pytest-xdist", "fenics-basix[docs,lint,test,optional]"]
@@ -70,28 +70,40 @@ before-build = "export HOMEBREW_AUTO_UPDATING=0 && brew update && brew install n
 [tool.mypy]
 ignore_missing_imports = true
 
-[tool.isort]
-line_length = 120
-skip_glob = ["*.pyi"]
-
 [tool.ruff]
-line-length = 120
+line-length = 100
 indent-width = 4
+exclude = ["./joss", "make_html.py"]
 
+[tool.ruff.format]
+docstring-code-format = true
+
+exclude = ["make_html.py"]
 [tool.ruff.lint]
+exclude = ["joss/"]
 select = [
+    # "N", # pep8-naming
     "E",   # pycodestyle
     "W",   # pycodestyle
     "D",   # pydocstyle - used only in python/
     "F",   # pyflakes
-    # "I",   # isort - use standalone isort
+    "I",   # isort
     "RUF", # Ruff-specific rules
     "UP",  # pyupgrade
     "ICN", # flake8-import-conventions
     "NPY", # numpy-specific rules
     "FLY", # use f-string not static joins
+    "LOG", # https://docs.astral.sh/ruff/rules/#flake8-logging-log
+    "ISC", # https://docs.astral.sh/ruff/rules/#flake8-implicit-str-concat-isc
+    # "B", https://docs.astral.sh/ruff/rules/#flake8-bugbear-b
+    # "A", # https://docs.astral.sh/ruff/rules/#flake8-builtins-a
 ]
-ignore = ["UP007", "RUF012"]
+# ignore = ["UP007", "RUF012"]
+
+[tool.ruff.lint.per-file-ignores]
+"test/*" = ["D"]
+"demo/*" = ["D"]
+"doc/*" = ["D"]
 
 [tool.ruff.lint.pydocstyle]
 convention = "google"

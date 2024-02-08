@@ -14,9 +14,8 @@
 #
 # First, we import Basix and Numpy.
 
-import numpy as np
-
 import basix
+import numpy as np
 from basix import CellType, ElementFamily, LagrangeVariant
 
 # To get a quadrature rule on a triangle, we use the function `make_quadrature`.
@@ -36,7 +35,8 @@ points, weights = basix.make_quadrature(CellType.triangle, 4)
 # to use a Gauss-Jacobi quadrature rule:
 
 points, weights = basix.make_quadrature(
-    CellType.triangle, 4, rule=basix.QuadratureType.gauss_jacobi)
+    CellType.triangle, 4, rule=basix.QuadratureType.gauss_jacobi
+)
 
 # We now use this quadrature rule to integrate the functions :math:`f(x,y)=x^3y`
 # and :math:`g(x,y)=x^3y^2` over the triangle. The exact values of these integrals
@@ -74,8 +74,7 @@ print(np.sum(weights * g(points)))
 # a degree 3 Lagrange space. We first create the space and tabulate its basis
 # functions at the quadrature points.
 
-lagrange = basix.create_element(
-    ElementFamily.P, CellType.triangle, 3, LagrangeVariant.equispaced)
+lagrange = basix.create_element(ElementFamily.P, CellType.triangle, 3, LagrangeVariant.equispaced)
 
 values = lagrange.tabulate(0, points)
 

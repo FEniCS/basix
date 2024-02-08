@@ -2,14 +2,16 @@
 
 Example usage
 -------------
-To update the version numbers in all files to "1.0.0", run either of the following:
+
+To update the version numbers in all files to "1.0.0", run either of the
+following:
 ```bash
 python3 update_version.py -v 1.0.0
 python3 update_version.py --version 1.0.0
 ```
 
-To update the C++ version numbers to "1.0.0.3" and the Python version numbers to "1.0.0dev3", run
-either of the following:
+To update the C++ version numbers to "1.0.0.3" and the Python version
+numbers to "1.0.0dev3", run either of the following:
 ```bash
 python3 update_version.py -v 1.0.0.dev3
 python3 update_version.py --version 1.0.0.dev3
@@ -23,13 +25,23 @@ import re
 
 def replace_version(content, version):
     """Replace all occurences of version in content."""
-    content = re.sub(r"((?:VERSION)|(?:version))([\s=]+)([\"']).+?\3",
-                     lambda matches: f"{matches[1]}{matches[2]}{matches[3]}{version}{matches[3]}", content)
+    content = re.sub(
+        r"((?:VERSION)|(?:version))([\s=]+)([\"']).+?\3",
+        lambda matches: f"{matches[1]}{matches[2]}{
+            matches[3]}{version}{matches[3]}",
+        content,
+    )
     return content
 
 
 parser = argparse.ArgumentParser(description="Update version numbering")
-parser.add_argument('-v', '--version', metavar='version', help="Version number to update to", required=True)
+parser.add_argument(
+    "-v",
+    "--version",
+    metavar="version",
+    help="Version number to update to",
+    required=True,
+)
 
 args = parser.parse_args()
 

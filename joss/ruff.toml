@@ -1,3 +1,0 @@
-extend = "../pyproject.toml"
-
-ignore = ["D"]

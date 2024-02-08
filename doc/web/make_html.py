@@ -2,9 +2,8 @@ import argparse
 import os
 import re
 
-from markdown import markdown as _markdown
-
 import basix
+from markdown import markdown as _markdown
 
 _path = os.path.dirname(os.path.realpath(__file__))
 

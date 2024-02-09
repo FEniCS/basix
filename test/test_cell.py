@@ -2,10 +2,9 @@
 # FEniCS Project
 # SPDX-License-Identifier: MIT
 
+import basix
 import numpy as np
 import pytest
-
-import basix
 
 cells = ["triangle", "quadrilateral", "tetrahedron", "hexahedron", "pyramid", "prism"]
 
@@ -19,7 +18,7 @@ def test_volume(cell):
         "tetrahedron": 1 / 6,
         "hexahedron": 1,
         "pyramid": 1 / 3,
-        "prism": 1 / 2
+        "prism": 1 / 2,
     }
     assert np.isclose(basix.cell.volume(cell_type), volumes[cell])
 

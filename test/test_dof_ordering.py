@@ -1,15 +1,16 @@
-import numpy as np
-
 import basix
+import numpy as np
 
 np.set_printoptions(suppress=True)
 
 
 def test_ordering():
-    pt = np.array([[1 / 3, 1 / 3], [.3, .2]])
+    pt = np.array([[1 / 3, 1 / 3], [0.3, 0.2]])
 
     # reordered element
-    el = basix.create_element(basix.ElementFamily.P, basix.CellType.triangle, 2, dof_ordering=[0, 3, 5, 1, 2, 4])
+    el = basix.create_element(
+        basix.ElementFamily.P, basix.CellType.triangle, 2, dof_ordering=[0, 3, 5, 1, 2, 4]
+    )
     order = el.dof_ordering
     result1 = el.tabulate(1, pt)
 

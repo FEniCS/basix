@@ -25,9 +25,8 @@
 #
 # We begin by importing Basix and Numpy.
 
-import numpy as np
-
 import basix
+import numpy as np
 from basix import CellType, ElementFamily, LagrangeVariant, LatticeType
 
 # In this demo, we consider Lagrange elements defined on a triangle. We start
@@ -35,8 +34,7 @@ from basix import CellType, ElementFamily, LagrangeVariant, LatticeType
 # This element will exhibit Runge's phenomenon, so we expect a large Lebesgue
 # constant.
 
-lagrange = basix.create_element(
-    ElementFamily.P, CellType.triangle, 15, LagrangeVariant.equispaced)
+lagrange = basix.create_element(ElementFamily.P, CellType.triangle, 15, LagrangeVariant.equispaced)
 
 # To estimate the Lebesgue constant, we create a lattice of points on the
 # triangle and compute
@@ -56,8 +54,7 @@ lagrange = basix.create_element(
 #
 # As expected, the value is large.
 
-points = basix.create_lattice(
-    CellType.triangle, 50, LatticeType.equispaced, True)
+points = basix.create_lattice(CellType.triangle, 50, LatticeType.equispaced, True)
 tab = lagrange.tabulate(0, points)[0]
 print(max(np.sum(np.abs(tab), axis=0)))
 
@@ -71,8 +68,7 @@ print(max(np.sum(np.abs(tab), axis=0)))
 # The Lebesgue constant for this variant of the element is much smaller than
 # for the equally spaced element.
 
-gll = basix.create_element(
-    ElementFamily.P, CellType.triangle, 15, LagrangeVariant.gll_warped)
+gll = basix.create_element(ElementFamily.P, CellType.triangle, 15, LagrangeVariant.gll_warped)
 print(max(np.sum(np.abs(gll.tabulate(0, points)[0]), axis=0)))
 
 # An even lower Lebesgue constant can be obtained by placing the DOF points
@@ -80,6 +76,5 @@ print(max(np.sum(np.abs(gll.tabulate(0, points)[0]), axis=0)))
 # `Recursive, Parameter-Free, Explicitly Defined Interpolation Nodes for
 # Simplices (Isaac, 2020) <https://doi.org/10.1137/20M1321802>`_.
 
-gll2 = basix.create_element(
-    ElementFamily.P, CellType.triangle, 15, LagrangeVariant.gll_isaac)
+gll2 = basix.create_element(ElementFamily.P, CellType.triangle, 15, LagrangeVariant.gll_isaac)
 print(max(np.sum(np.abs(gll2.tabulate(0, points)[0]), axis=0)))

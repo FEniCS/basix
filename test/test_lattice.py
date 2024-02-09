@@ -2,22 +2,26 @@
 # FEniCS Project
 # SPDX-License-Identifier: MIT
 
+import basix
 import numpy as np
 import pytest
 
-import basix
 
-
-@pytest.mark.parametrize("lattice_type, simplex_method", [
-    (basix.LatticeType.equispaced, basix.LatticeSimplexMethod.none),
-    # (basix.LatticeType.gll, basix.LatticeSimplexMethod.warp),
-])
+@pytest.mark.parametrize(
+    "lattice_type, simplex_method",
+    [
+        (basix.LatticeType.equispaced, basix.LatticeSimplexMethod.none),
+        # (basix.LatticeType.gll, basix.LatticeSimplexMethod.warp),
+    ],
+)
 @pytest.mark.parametrize("n", [1, 2, 4, 8])
 def test_pyramid(n, lattice_type, simplex_method):
     # Check that all the surface points of the pyramid match up with the
     # same points on quad and triangle
     tri_pts = basix.create_lattice(basix.CellType.triangle, n, lattice_type, True, simplex_method)
-    quad_pts = basix.create_lattice(basix.CellType.quadrilateral, n, lattice_type, True, simplex_method)
+    quad_pts = basix.create_lattice(
+        basix.CellType.quadrilateral, n, lattice_type, True, simplex_method
+    )
     pyr_pts = basix.create_lattice(basix.CellType.pyramid, n, lattice_type, True, simplex_method)
 
     # Remove any near-zero values to make sorting robust
@@ -46,17 +50,22 @@ def test_pyramid(n, lattice_type, simplex_method):
     assert np.allclose(np.sort(quad_pts), np.sort(pyr_z0))
 
 
-@pytest.mark.parametrize("lattice_type, simplex_method", [
-    (basix.LatticeType.equispaced, basix.LatticeSimplexMethod.none),
-    (basix.LatticeType.gll, basix.LatticeSimplexMethod.warp),
-    (basix.LatticeType.gll, basix.LatticeSimplexMethod.isaac),
-])
+@pytest.mark.parametrize(
+    "lattice_type, simplex_method",
+    [
+        (basix.LatticeType.equispaced, basix.LatticeSimplexMethod.none),
+        (basix.LatticeType.gll, basix.LatticeSimplexMethod.warp),
+        (basix.LatticeType.gll, basix.LatticeSimplexMethod.isaac),
+    ],
+)
 @pytest.mark.parametrize("n", [1, 2, 4, 8])
 def test_tetrahedron(n, lattice_type, simplex_method):
     # Check that all the surface points of the tet match up with the same points on
     # triangle
     tri_pts = basix.create_lattice(basix.CellType.triangle, n, lattice_type, True, simplex_method)
-    tet_pts = basix.create_lattice(basix.CellType.tetrahedron, n, lattice_type, True, simplex_method)
+    tet_pts = basix.create_lattice(
+        basix.CellType.tetrahedron, n, lattice_type, True, simplex_method
+    )
 
     tet_pts[np.where(abs(tet_pts) < 1e-12)] = 0.0
     tri_pts[np.where(abs(tri_pts) < 1e-12)] = 0.0
@@ -79,17 +88,22 @@ def test_tetrahedron(n, lattice_type, simplex_method):
     assert np.allclose(np.sort(tri_pts), np.sort(tet_xyz))
 
 
-@pytest.mark.parametrize("lattice_type, simplex_method", [
-    (basix.LatticeType.equispaced, basix.LatticeSimplexMethod.none),
-    (basix.LatticeType.gll, basix.LatticeSimplexMethod.warp),
-    (basix.LatticeType.gll, basix.LatticeSimplexMethod.isaac),
-])
+@pytest.mark.parametrize(
+    "lattice_type, simplex_method",
+    [
+        (basix.LatticeType.equispaced, basix.LatticeSimplexMethod.none),
+        (basix.LatticeType.gll, basix.LatticeSimplexMethod.warp),
+        (basix.LatticeType.gll, basix.LatticeSimplexMethod.isaac),
+    ],
+)
 @pytest.mark.parametrize("n", [1, 2, 4, 8])
 def test_triangle(n, lattice_type, simplex_method):
     # Check that all the surface points of the triangle match up with the same points on
     # an interval
     tri_pts = basix.create_lattice(basix.CellType.triangle, n, lattice_type, True, simplex_method)
-    interval_pts = basix.create_lattice(basix.CellType.interval, n, lattice_type, True, simplex_method)
+    interval_pts = basix.create_lattice(
+        basix.CellType.interval, n, lattice_type, True, simplex_method
+    )
 
     tri_pts[np.where(abs(tri_pts) < 1e-12)] = 0.0
     interval_pts[np.where(abs(interval_pts) < 1e-12)] = 0.0

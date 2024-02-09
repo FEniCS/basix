@@ -13,15 +13,15 @@
 #
 # We start by importing Basis and Numpy.
 
-import numpy as np
-
 import basix
+import numpy as np
 from basix import CellType, ElementFamily, LagrangeVariant
 
 # We define a degree 3 Lagrange space on a tetrahedron.
 
 lagrange = basix.create_element(
-    ElementFamily.P, CellType.tetrahedron, 3, LagrangeVariant.equispaced)
+    ElementFamily.P, CellType.tetrahedron, 3, LagrangeVariant.equispaced
+)
 
 # The facets of a tetrahedron are triangular, so we create a quadrature
 # rule on a triangle. We use an order 3 rule so that we can integrate the
@@ -40,10 +40,12 @@ points, weights = basix.make_quadrature(CellType.triangle, 3)
 
 vertices = basix.geometry(CellType.tetrahedron)
 facet = basix.cell.sub_entity_connectivity(CellType.tetrahedron)[2][0][0]
-mapped_points = np.array([
-    vertices[facet[0]] * (1 - x - y) + vertices[facet[1]] * x + vertices[facet[2]] * y
-    for x, y in points
-])
+mapped_points = np.array(
+    [
+        vertices[facet[0]] * (1 - x - y) + vertices[facet[1]] * x + vertices[facet[2]] * y
+        for x, y in points
+    ]
+)
 
 # We now compute the normal derivative of the fifth basis function at
 # the quadrature points. First, we use `facet_outward_normals` to get

@@ -4,7 +4,6 @@
 """Test utilities."""
 
 import pytest
-
 from basix import CellType, DPCVariant, ElementFamily, LagrangeVariant
 
 
@@ -14,20 +13,38 @@ def parametrize_over_elements(degree, reference=None, discontinuous=False):
 
     for k in range(1, degree + 1):
         # Elements on all cells
-        for c in [CellType.interval, CellType.triangle, CellType.tetrahedron, CellType.quadrilateral,
-                  CellType.hexahedron, CellType.prism, CellType.pyramid]:
+        for c in [
+            CellType.interval,
+            CellType.triangle,
+            CellType.tetrahedron,
+            CellType.quadrilateral,
+            CellType.hexahedron,
+            CellType.prism,
+            CellType.pyramid,
+        ]:
             if k < 4:
                 elementlist.append((c, ElementFamily.P, k, [LagrangeVariant.equispaced]))
 
         # Elements on all cells except pyramid
-        for c in [CellType.interval, CellType.triangle, CellType.tetrahedron, CellType.quadrilateral,
-                  CellType.hexahedron, CellType.prism]:
+        for c in [
+            CellType.interval,
+            CellType.triangle,
+            CellType.tetrahedron,
+            CellType.quadrilateral,
+            CellType.hexahedron,
+            CellType.prism,
+        ]:
             elementlist.append((c, ElementFamily.P, k, [LagrangeVariant.gll_isaac]))
             elementlist.append((c, ElementFamily.P, k, [LagrangeVariant.gll_warped]))
 
         # Elements on all cells except prism and pyramid
-        for c in [CellType.interval, CellType.triangle, CellType.tetrahedron, CellType.quadrilateral,
-                  CellType.hexahedron]:
+        for c in [
+            CellType.interval,
+            CellType.triangle,
+            CellType.tetrahedron,
+            CellType.quadrilateral,
+            CellType.hexahedron,
+        ]:
             if discontinuous:
                 elementlist.append((c, ElementFamily.P, k, [LagrangeVariant.legendre]))
 
@@ -38,11 +55,20 @@ def parametrize_over_elements(degree, reference=None, discontinuous=False):
                 elementlist.append((c, ElementFamily.iso, k, [LagrangeVariant.gll_isaac]))
 
         # Elements on all cells except prism, pyramid and interval
-        for c in [CellType.triangle, CellType.tetrahedron, CellType.quadrilateral, CellType.hexahedron]:
+        for c in [
+            CellType.triangle,
+            CellType.tetrahedron,
+            CellType.quadrilateral,
+            CellType.hexahedron,
+        ]:
             elementlist.append((c, ElementFamily.N1E, k, [LagrangeVariant.legendre]))
-            elementlist.append((c, ElementFamily.N2E, k, [LagrangeVariant.legendre, DPCVariant.legendre]))
+            elementlist.append(
+                (c, ElementFamily.N2E, k, [LagrangeVariant.legendre, DPCVariant.legendre])
+            )
             elementlist.append((c, ElementFamily.RT, k, [LagrangeVariant.legendre]))
-            elementlist.append((c, ElementFamily.BDM, k, [LagrangeVariant.legendre, DPCVariant.legendre]))
+            elementlist.append(
+                (c, ElementFamily.BDM, k, [LagrangeVariant.legendre, DPCVariant.legendre])
+            )
 
         # Elements on simplex cells
         for c in [CellType.triangle, CellType.tetrahedron]:
@@ -65,9 +91,14 @@ def parametrize_over_elements(degree, reference=None, discontinuous=False):
         # Elements on quads and hexes
         for c in [CellType.quadrilateral, CellType.hexahedron]:
             if discontinuous:
-                for v in [DPCVariant.simplex_equispaced, DPCVariant.simplex_gll,
-                          DPCVariant.horizontal_equispaced, DPCVariant.horizontal_gll,
-                          DPCVariant.diagonal_equispaced, DPCVariant.diagonal_gll]:
+                for v in [
+                    DPCVariant.simplex_equispaced,
+                    DPCVariant.simplex_gll,
+                    DPCVariant.horizontal_equispaced,
+                    DPCVariant.horizontal_gll,
+                    DPCVariant.diagonal_equispaced,
+                    DPCVariant.diagonal_gll,
+                ]:
                     elementlist.append((c, ElementFamily.DPC, k, [v]))
 
         # Bubble elements

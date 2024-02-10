@@ -1,3 +1,8 @@
+# Copyright (C) 2023-204  Matthew Scroggs and Garth N. Wells
+#
+# This file is part of Basix (https://www.fenicsproject.org)
+#
+# SPDX-License-Identifier:    MIT
 """Functions to manipulate quadrature types."""
 
 
@@ -30,16 +35,14 @@ def string_to_type(rule: str) -> QuadratureType:
 
     Returns:
         The quadrature type.
-
     """
     if rule == "default":
         return QuadratureType.Default
-
-    if rule in ["Gauss-Lobatto-Legendre", "GLL"]:
+    elif rule in ["Gauss-Lobatto-Legendre", "GLL"]:
         return QuadratureType.gll
-    if rule in ["Gauss-Legendre", "GL", "Gauss-Jacobi"]:
+    elif rule in ["Gauss-Legendre", "GL", "Gauss-Jacobi"]:
         return QuadratureType.gauss_jacobi
-    if rule == "Xiao-Gimbutas":
+    elif rule == "Xiao-Gimbutas":
         return QuadratureType.xiao_gimbutas
 
     if not hasattr(QuadratureType, rule):
@@ -56,7 +59,7 @@ def make_quadrature(
     """Create a quadrature rule.
 
     Args:
-        cell: Cell type
+        cell: Cell type.
         degree: Maximum polynomial degree that will be integrated
             exactly.
         rule: Quadrature rule.
@@ -64,7 +67,6 @@ def make_quadrature(
             exactly.
 
     Returns:
-        The quadrature points and weights.
-
+        Quadrature points and weights.
     """
     return _mq(rule.value, cell.value, polyset_type.value, degree)

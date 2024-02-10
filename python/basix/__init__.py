@@ -1,4 +1,9 @@
-"""Basix is a finite element definition and tabulation runtime library.
+# Copyright (C) 2023-204  Matthew Scroggs and Garth N. Wells
+#
+# This file is part of Basix (https://www.fenicsproject.org)
+#
+# SPDX-License-Identifier:    MIT
+"""Basix is a finite element definition and tabulation library.
 
 The core of the library is written in C++, but the majority of Basix's
 functionality can be used via this Python interface.

@@ -1,3 +1,8 @@
+# Copyright (C) 2023-204  Matthew Scroggs
+#
+# This file is part of Basix (https://www.fenicsproject.org)
+#
+# SPDX-License-Identifier:    MIT
 """Functions for creating finite elements."""
 
 import typing
@@ -102,25 +107,25 @@ class FiniteElement:
 
         Note:
             The version of `FiniteElement::tabulate` with the basis data
-            as an out argument should be preferred for repeated call where
-            performance is critical
+            as an out argument should be preferred for repeated call
+            where performance is critical
 
         Args:
             n: The order of derivatives, up to and including, to
-              compute. Use 0 for the basis functions only.
+                compute. Use 0 for the basis functions only.
             x: The points at which to compute the basis functions. The
                 shape of x is (number of points, geometric dimension).
 
         Returns:
             The basis functions (and derivatives). The shape is
-            (derivative, point, basis fn index, value index).
+            ``(derivative, point, basis fn index, value index)``.
 
             * The first index is the derivative, with higher derivatives
-                are stored in triangular (2D) or tetrahedral (3D) ordering,
-                ie for the (x,y) derivatives in 2D: (0,0), (1,0), (0,1),
-                (2,0), (1,1), (0,2), (3,0)... The function
-                basix::indexing::idx can be used to find the appropriate
-                derivative.
+                are stored in triangular (2D) or tetrahedral (3D)
+                ordering, i.e. for the ``(x,y)`` derivatives in 2D:
+                ``(0,0), (1,0), (0,1), (2,0), (1,1), (0,2), (3,0)...``.
+                The function basix::indexing::idx can be used to find
+                the appropriate derivative.
 
             * The second index is the point index
 
@@ -146,17 +151,17 @@ class FiniteElement:
 
         Args:
             U: The function values on the reference cell. The indices are
-                [Jacobian index, point index, components].
-            J: The Jacobian of the mapping. The indices are [Jacobian
-                index, J_i, J_j].
+                ``(Jacobian index, point index, components)``.
+            J: The Jacobian of the mapping. The indices are ``(Jacobian
+                index, J_i, J_j)``.
             detJ: The determinant of the Jacobian of the mapping. It has
-                length `J.shape(0)`
+                length ``J.shape(0)``.
             K: The inverse of the Jacobian of the
-               mapping. The indices are [Jacobian index, K_i, K_j].
+               mapping. The indices are ``(Jacobian index, K_i, K_j)``.
 
         Returns:
-            The function values on the cell. The indices are [Jacobian
-            index, point index, components].
+            The function values on the cell. The indices are ``(Jacobian
+            index, point index, components)``.
         """
         return self._e.push_forward(U, J, detJ, K)
 
@@ -166,14 +171,14 @@ class FiniteElement:
         """Map function values from a physical cell to the reference.
 
         Args:
-            u: The function values on the cell
-            J: The Jacobian of the mapping
-            detJ: The determinant of the Jacobian of the mapping
-            K: The inverse of the Jacobian of the mapping
+            u: The function values on the cell.
+            J: The Jacobian of the mapping.
+            detJ: The determinant of the Jacobian of the mapping.
+            K: The inverse of the Jacobian of the mapping.
 
         Returns:
             The function values on the reference. The indices are
-            [Jacobian index, point index, components].
+            ``(Jacobian index, point index, components``).
         """
         return self._e.pull_back(u, J, detJ, K)
 
@@ -200,9 +205,9 @@ class FiniteElement:
             performance is critical.
 
         Args:
-            data: The data
-            block_size: The number of data points per DOF
-            cell_info: The permutation info for the cell
+            data: The data.
+            block_size: The number of data points per DOF.
+            cell_info: The permutation info for the cell.
         """
         self._e.post_apply_transpose_dof_transformation(data, block_size, cell_info)
 
@@ -214,19 +219,20 @@ class FiniteElement:
             performance is critical.
 
         Args:
-            data: The data
-            block_size: The number of data points per DOF
-            cell_info: The permutation info for the cell
+            data: The data.
+            block_size: The number of data points per DOF.
+            cell_info: The permutation info for the cell.
         """
         self._e.pre_apply_inverse_transpose_dof_transformation(data, block_size, cell_info)
 
     def base_transformations(self) -> npt.NDArray[np.floating]:
         r"""Get the base transformations.
 
-        The base transformations represent the effect of rotating or reflecting
-        a subentity of the cell on the numbering and orientation of the DOFs.
-        This returns a list of matrices with one matrix for each subentity
-        permutation in the following order:
+        The base transformations represent the effect of rotating or
+        reflecting a subentity of the cell on the numbering and
+        orientation of the DOFs. This returns a list of matrices with
+        one matrix for each subentity permutation in the following
+        order:
         Reversing edge 0, reversing edge 1, ...
         Rotate face 0, reflect face 0, rotate face 1, reflect face 1, ...
 
@@ -313,12 +319,12 @@ class FiniteElement:
 
         Returns:
             The base transformations for this element. The shape is
-            (ntranformations, ndofs, ndofs)
+            ``(ntranformations, ndofs, ndofs)``.
         """
         return self._e.base_transformations()
 
     def entity_transformations(self) -> dict:
-        """Return the entity dof transformation matrices.
+        """Entity dof transformation matrices.
 
         Returns:
             The base transformations for this element. The shape is
@@ -354,9 +360,9 @@ class FiniteElement:
     def embedded_superdegree(self) -> int:
         """Embedded polynomial degree.
 
-        Lowest degree `n` such that the highest degree polynomial in
+        Lowest degree ``n`` such that the highest degree polynomial in
         this element is contained in a Lagrange (or vector Lagrange)
-        element of degree `n`.
+        element of degree ``n``.
         """
         return self._e.embedded_superdegree
 
@@ -364,8 +370,8 @@ class FiniteElement:
     def embedded_subdegree(self) -> int:
         """Embedded polynomial sub-degree.
 
-        Highest degree `n` such that a Lagrange (or vector Lagrange)
-        element of degree n is a subspace of this element.
+        Highest degree ``n`` such that a Lagrange (or vector Lagrange)
+        element of degree ``n`` is a subspace of this element.
         """
         return self._e.embedded_subdegree
 
@@ -383,7 +389,7 @@ class FiniteElement:
     def dim(self) -> int:
         """Dimension of the finite element space.
 
-        Number of degrees-of-freedom for the element.
+        This is the number of degrees-of-freedom for the element.
         """
         return self._e.dim
 
@@ -398,11 +404,11 @@ class FiniteElement:
 
     @property
     def entity_dofs(self) -> list[list[list[int]]]:
-        """Get the dofs on each topological entity.
+        """Dofs on each topological entity.
 
-        Data is order (vertices, edges, faces, cell). For example,
-        Lagrange degree 2 on a triangle has vertices: ``[[0], [1], [2]]``,
-        edges: ``[[3], [4], [5]]``, cell: ``[[]]``.
+        Data is order ``(vertices, edges, faces, cell)``. For example,
+        Lagrange degree 2 on a triangle has vertices: ``[[0], [1],
+        [2]]``, edges: ``[[3], [4], [5]]``, cell: ``[[]]``.
         """
         return self._e.entity_dofs
 
@@ -419,7 +425,7 @@ class FiniteElement:
     def entity_closure_dofs(self) -> list[list[list[int]]]:
         """Get the dofs on the closure of each topological entity.
 
-        Data is in the order (vertices, edges, faces, cell). For
+        Data is in the order ``(vertices, edges, faces, cell)``. For
         example, Lagrange degree 2 on a triangle has vertices: ``[[0],
         [1], [2]]``, edges: ``[[1, 2, 3], [0, 2, 4], [0, 1, 5]]``, cell:
         ``[[0, 1, 2, 3, 4, 5]]``.
@@ -515,7 +521,7 @@ class FiniteElement:
 
     @property
     def coefficient_matrix(self) -> npt.NDArray[np.floating]:
-        """Matrix of coefficients.."""
+        """Matrix of coefficients."""
         return self._e.coefficient_matrix
 
     @property
@@ -528,7 +534,7 @@ class FiniteElement:
 
     @property
     def M(self) -> list[list[npt.NDArray[np.floating]]]:
-        """Interpolation matrices for each subentity.
+        """Interpolation matrices for each sub-entity.
 
         See C++ documentation for details.
         """
@@ -538,8 +544,8 @@ class FiniteElement:
     def x(self) -> list[list[npt.NDArray[np.floating]]]:
         """Interpolation points for each sub-entity.
 
-        The indices of this data are (tdim, entity index, point index,
-        dim).
+        The indices of this data are ``(tdim, entity index, point index,
+        dim)``.
         """
         return self._e.x
 
@@ -578,7 +584,7 @@ def create_element(
 
     Args:
         family: Finite element family.
-        celltype: Reference cell type that the element is defined on
+        celltype: Reference cell type that the element is defined on.
         degree: Polynomial degree of the element.
         lagrange_variant: Lagrange variant type.
         dpc_variant: DPC variant type.
@@ -586,7 +592,7 @@ def create_element(
             discontinuous element will have the same DOFs as a
             continuous element, but the DOFs will all be associated with
             the interior of the cell.
-        dof_ordering: Ordering of dofs for ElementDofLayout
+        dof_ordering: Ordering of dofs for ``ElementDofLayout``.
         dtype: Element scalar type.
 
     Returns:
@@ -623,32 +629,33 @@ def create_custom_element(
     """Create a custom finite element.
 
     Args:
-        cell_type: The cell type
-        value_shape: The value shape of the element
-        wcoeffs: Matrices for the kth value index containing the
-            expansion coefficients defining a polynomial basis spanning the
-            polynomial space for this element. Shape is (dim(finite element
-            polyset), dim(Legendre polynomials))
-        x: Interpolation points. Indices are (tdim, entity index, point
-            index, dim)
-        M: The interpolation matrices. Indices are (tdim, entity index,
-            dof, vs, point_index, derivative)
-        interpolation_nderivs: The number of derivatives that need to be
-            used during interpolation
-        map_type: The type of map to be used to map values from the reference
-                   to a physical cell
-        sobolev_space: The underlying Sobolev space for the element
-        discontinuous: Indicates whether or not this is the
-            discontinuous version of the element
-        embedded_subdegree: The highest degree n such that a Lagrange
+        cell_type: Element cell type.
+        value_shape: Value shape of the element.
+        wcoeffs: Matrices for the k-th value index containing the
+            expansion coefficients defining a polynomial basis spanning
+            the polynomial space for this element. Shape is
+            ``(dim(finite element polyset), dim(Legendre
+            polynomials))``.
+        x: Interpolation points. Indices are ``(tdim, entity index,
+            point index, dim)``.
+        M: Interpolation matrices. Indices are ``(tdim, entity
+            index, dof, vs, point_index, derivative)``.
+        interpolation_nderivs: Number of derivatives that need to be
+            used during interpolation.
+        map_type: Type of map to be used to map values from the
+            reference to a physical cell.
+        sobolev_space: Underlying Sobolev space for the element.
+        discontinuous: If ``True`` create the discontinuous version of
+            the element.
+        embedded_subdegree: Highest degree n such that a Lagrange
             (or vector Lagrange) element of degree n is a subspace of
-            this element
-        embedded_superdegree: The degree of a polynomial in this
-            element's polyset
-        poly_type: The type of polyset to use for this element
+            this element.
+        embedded_superdegree: Degree of a polynomial in this
+            element's polyset.
+        poly_type: Type of polyset to use for this element.
 
     Returns:
-        A custom finite element
+        A custom finite element.
     """
     return FiniteElement(
         _create_custom_element(
@@ -717,7 +724,7 @@ def tp_factors(
     dof_ordering: typing.Optional[list[int]] = None,
     dtype: npt.DTypeLike = np.float64,
 ) -> list[list[FiniteElement]]:
-    """Get the elements in the tensor product factorisation of an element.
+    """Elements in the tensor product factorisation of an element.
 
     If the element has no factorisation, an empty list is returned.
 
@@ -760,12 +767,13 @@ def tp_dof_ordering(
     dpc_variant: DPCVariant = DPCVariant.unset,
     discontinuous: bool = False,
 ) -> list[int]:
-    """Get the tensor product DOF ordering for an element.
+    """Tensor product DOF ordering for an element.
 
-    This DOF ordering can be passed into create_element to create the element with
-    DOFs ordered in a tensor product order.
+    This DOF ordering can be passed into create_element to create the
+    element with DOFs ordered in a tensor product order.
 
-    If the element has no tensor product factorisation, an empty list is returned.
+    If the element has no tensor product factorisation, an empty list is
+    returned.
 
     Args:
         family: Finite element family.
@@ -792,14 +800,14 @@ def tp_dof_ordering(
 
 
 def string_to_family(family: str, cell: str) -> ElementFamily:
-    """Get a Basix ElementFamily enum representing the family type on the given cell.
+    """Basix ElementFamily enum representing the family type on the given cell.
 
     Args:
-        family: The element family as a string.
-        cell: The cell type as a string.
+        family: Element family as a string.
+        cell: Cell type as a string.
 
     Returns:
-        The element family.
+        Element family.
     """
     # Family names that are valid for all cells
     families = {
@@ -879,7 +887,7 @@ def string_to_family(family: str, cell: str) -> ElementFamily:
         )
 
     # Family names that are valid for triangles
-    if cell in "triangle":
+    if cell in ["triangle"]:
         families.update(
             {
                 "HHJ": ElementFamily.HHJ,
@@ -887,27 +895,26 @@ def string_to_family(family: str, cell: str) -> ElementFamily:
             }
         )
 
-    if family in families:
+    try:
         return families[family]
-
-    raise ValueError(f"Unknown element family: {family} with cell type {cell}")
+    except KeyError:
+        raise ValueError(f"Unknown element family: {family} with cell type {cell}")
 
 
 def string_to_lagrange_variant(variant: str) -> LagrangeVariant:
     """Convert a string to a Basix LagrangeVariant enum.
 
     Args:
-        variant: Lagrange variant as a string.
+        variant: Lagrange variant string.
 
     Returns:
         The Lagrange variant.
-
     """
     if variant.lower() == "gll":
         return LagrangeVariant.gll_warped
-    if variant.lower() == "chebyshev":
+    elif variant.lower() == "chebyshev":
         return LagrangeVariant.chebyshev_isaac
-    if variant.lower() == "gl":
+    elif variant.lower() == "gl":
         return LagrangeVariant.gl_isaac
 
     if not hasattr(LagrangeVariant, variant.lower()):
@@ -923,7 +930,6 @@ def string_to_dpc_variant(variant: str) -> DPCVariant:
 
     Returns:
         The DPC variant.
-
     """
     if not hasattr(DPCVariant, variant.lower()):
         raise ValueError(f"Unknown variant: {variant}")

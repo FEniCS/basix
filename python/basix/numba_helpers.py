@@ -9,7 +9,7 @@ try:
     import numba as _numba
 except ImportError:
     print("You must have Numba installed to use the Numba helper functions.")
-    raise e
+    raise
 
 import numpy as np
 import numpy.typing as npt

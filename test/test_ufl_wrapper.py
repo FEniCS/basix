@@ -179,17 +179,14 @@ def test_component_element_eq_hash(component):
         (
             basix.ufl.element("Lagrange", "triangle", 1),
             basix.ufl.element("Lagrange", "triangle", 1, shape=(2, 2), symmetry=True),
-            None,
         ),
         (
             basix.ufl.element("Lagrange", "triangle", 1),
             basix.ufl.element("Lagrange", "triangle", 1, shape=(2, 2)),
-            None,
         ),
         (
             basix.ufl.element("Lagrange", "triangle", 1),
             basix.ufl.element("Lagrange", "triangle", 1, shape=(2, 2), symmetry=True),
-            2,
         ),
     ],
 )

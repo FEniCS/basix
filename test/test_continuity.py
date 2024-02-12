@@ -1,3 +1,7 @@
+# Copyright (c) 2024 Matthew Scroggs
+# FEniCS Project
+# SPDX-License-Identifier: MIT
+
 import basix
 import numpy as np
 import pytest
@@ -13,8 +17,10 @@ elements = [
     (ElementFamily.Regge, []),
     (ElementFamily.HHJ, []),
     (ElementFamily.bubble, []),
-    (ElementFamily.serendipity, [basix.LagrangeVariant.legendre, basix.DPCVariant.legendre]),
-    (ElementFamily.DPC, [basix.LagrangeVariant.unset, basix.DPCVariant.legendre]),
+    (ElementFamily.serendipity, [
+     basix.LagrangeVariant.legendre, basix.DPCVariant.legendre]),
+    (ElementFamily.DPC, [
+     basix.LagrangeVariant.unset, basix.DPCVariant.legendre]),
     (ElementFamily.CR, []),
 ]
 
@@ -57,7 +63,8 @@ def test_continuity_interval_facet(degree, element, variant):
     elements = {}
     for cell in [basix.CellType.triangle, basix.CellType.quadrilateral]:
         try:
-            elements[cell] = basix.create_element(element, cell, degree, *variant)
+            elements[cell] = basix.create_element(
+                element, cell, degree, *variant)
         except RuntimeError:
             pass
 
@@ -82,8 +89,10 @@ def test_continuity_interval_facet(degree, element, variant):
         data = None
         for c, e in elements.items():
             tab = e.tabulate(0, points)[0]
-            continuity_map = create_continuity_map_interval(e.map_type, start, end)
-            entity_tab = [continuity_map(tab[:, i, :]) for i in e.entity_dofs[1][cellmap[c]]]
+            continuity_map = create_continuity_map_interval(
+                e.map_type, start, end)
+            entity_tab = [continuity_map(tab[:, i, :])
+                          for i in e.entity_dofs[1][cellmap[c]]]
             if data is None:
                 data = entity_tab
             else:
@@ -98,7 +107,8 @@ def test_continuity_triangle_facet(degree, element, variant):
     # , basix.CellType.pyramid]:
     for cell in [basix.CellType.tetrahedron, basix.CellType.prism]:
         try:
-            elements[cell] = basix.create_element(element, cell, degree, *variant)
+            elements[cell] = basix.create_element(
+                element, cell, degree, *variant)
         except RuntimeError:
             pass
 
@@ -128,14 +138,17 @@ def test_continuity_triangle_facet(degree, element, variant):
 
     for v0, v1, v2, cellmap in facets:
         points = np.array(
-            [v0 + i / 10 * (v1 - v0) + j / 10 * (v2 - v0) for i in range(11) for j in range(11 - i)]
+            [v0 + i / 10 * (v1 - v0) + j / 10 * (v2 - v0)
+             for i in range(11) for j in range(11 - i)]
         )
         data = None
         for c, e in elements.items():
             if c in cellmap:
                 tab = e.tabulate(0, points)
-                continuity_map = create_continuity_map_triangle(e.map_type, v0, v1, v2)
-                entity_tab = [continuity_map(tab[:, :, i, :]) for i in e.entity_dofs[2][cellmap[c]]]
+                continuity_map = create_continuity_map_triangle(
+                    e.map_type, v0, v1, v2)
+                entity_tab = [continuity_map(tab[:, :, i, :])
+                              for i in e.entity_dofs[2][cellmap[c]]]
                 if data is None:
                     data = entity_tab
                 else:
@@ -150,7 +163,8 @@ def test_continuity_quadrilateral_facet(degree, element, variant):
     # , basix.CellType.pyramid]:
     for cell in [basix.CellType.hexahedron, basix.CellType.prism]:
         try:
-            elements[cell] = basix.create_element(element, cell, degree, *variant)
+            elements[cell] = basix.create_element(
+                element, cell, degree, *variant)
         except RuntimeError:
             pass
 
@@ -184,14 +198,17 @@ def test_continuity_quadrilateral_facet(degree, element, variant):
     for v0, v1, v2, v3, cellmap in facets:
         assert np.allclose(v0 + v3, v1 + v2)
         points = np.array(
-            [v0 + i / 10 * (v1 - v0) + j / 10 * (v2 - v0) for i in range(11) for j in range(11)]
+            [v0 + i / 10 * (v1 - v0) + j / 10 * (v2 - v0)
+             for i in range(11) for j in range(11)]
         )
         data = None
         for c, e in elements.items():
             if c in cellmap:
                 tab = e.tabulate(0, points)
-                continuity_map = create_continuity_map_quadrilateral(e.map_type, v0, v1, v2)
-                entity_tab = [continuity_map(tab[:, :, i, :]) for i in e.entity_dofs[2][cellmap[c]]]
+                continuity_map = create_continuity_map_quadrilateral(
+                    e.map_type, v0, v1, v2)
+                entity_tab = [continuity_map(tab[:, :, i, :])
+                              for i in e.entity_dofs[2][cellmap[c]]]
                 if data is None:
                     data = entity_tab
                 else:

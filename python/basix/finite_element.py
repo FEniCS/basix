@@ -1,4 +1,4 @@
-# Copyright (C) 2023-2024  Matthew Scroggs
+# Copyright (C) 2023-2024 Matthew Scroggs
 #
 # This file is part of Basix (https://www.fenicsproject.org)
 #

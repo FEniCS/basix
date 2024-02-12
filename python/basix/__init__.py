@@ -1,4 +1,4 @@
-# Copyright (C) 2023-2024  Matthew Scroggs and Garth N. Wells
+# Copyright (C) 2023-2024 Matthew Scroggs and Garth N. Wells
 #
 # This file is part of Basix (https://www.fenicsproject.org)
 #

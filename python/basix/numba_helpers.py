@@ -1,10 +1,15 @@
+# Copyright (C) 2023-2024 Matthew Scroggs and Garth N. Wells
+#
+# This file is part of Basix (https://www.fenicsproject.org)
+#
+# SPDX-License-Identifier:    MIT
 """Helper functions for writing DOLFINx custom kernels using Numba."""
 
 try:
     import numba as _numba
 except ImportError:
-    raise RuntimeError("You must have Numba installed to use the Numba helper functions.")
-
+    print("You must have Numba installed to use the Numba helper functions.")
+    raise
 
 import numpy as np
 import numpy.typing as npt

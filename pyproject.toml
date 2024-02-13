@@ -73,12 +73,11 @@ ignore_missing_imports = true
 [tool.ruff]
 line-length = 100
 indent-width = 4
-exclude = ["./joss", "make_html.py"]
+extend-exclude = ["./joss", "make_html.py"]
 
 [tool.ruff.format]
 docstring-code-format = true
 
-exclude = ["make_html.py"]
 [tool.ruff.lint]
 exclude = ["joss/"]
 select = [
@@ -94,7 +93,7 @@ select = [
     "NPY", # numpy-specific rules
     "FLY", # use f-string not static joins
     "LOG", # https://docs.astral.sh/ruff/rules/#flake8-logging-log
-    "ISC", # https://docs.astral.sh/ruff/rules/#flake8-implicit-str-concat-isc
+    # "ISC", # https://docs.astral.sh/ruff/rules/#flake8-implicit-str-concat-isc
     # "B", https://docs.astral.sh/ruff/rules/#flake8-bugbear-b
     # "A", # https://docs.astral.sh/ruff/rules/#flake8-builtins-a
 ]

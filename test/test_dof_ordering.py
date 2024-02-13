@@ -1,3 +1,7 @@
+# Copyright (c) 2024 Matthew Scroggs
+# FEniCS Project
+# SPDX-License-Identifier: MIT
+
 import basix
 import numpy as np
 

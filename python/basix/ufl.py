@@ -1,3 +1,8 @@
+# Copyright (C) 2023-2024 Matthew Scroggs and Garth N. Wells
+#
+# This file is part of Basix (https://www.fenicsproject.org)
+#
+# SPDX-License-Identifier:    MIT
 """Functions to directly wrap Basix elements in UFL."""
 
 import functools as _functools
@@ -123,17 +128,17 @@ class _ElementBase(_AbstractFiniteElement):
 
     @property
     def sobolev_space(self):
-        """Return the underlying Sobolev space."""
+        """Underlying Sobolev space."""
         return _ufl_sobolev_space_from_enum(self.basix_sobolev_space)
 
     @property
     def pullback(self) -> _AbstractPullback:
-        """Return the pullback for this element."""
+        """Pullback for this element."""
         return self._pullback
 
     @_abstractproperty
     def embedded_superdegree(self) -> int:
-        """Return the degree of the minimum degree Lagrange space that spans this element.
+        """Degree of the minimum degree Lagrange space that spans this element.
 
         This returns the degree of the lowest degree Lagrange space such
         that the polynomial space of the Lagrange space is a superspace
@@ -149,7 +154,7 @@ class _ElementBase(_AbstractFiniteElement):
 
     @_abstractproperty
     def embedded_subdegree(self) -> int:
-        """Return the degree of the maximum degree Lagrange space that is spanned by this element.
+        """Degree of the maximum degree Lagrange space that is spanned by this element.
 
         This returns the degree of the highest degree Lagrange space
         such that the polynomial space of the Lagrange space is a
@@ -165,17 +170,17 @@ class _ElementBase(_AbstractFiniteElement):
 
     @property
     def cell(self) -> _ufl.Cell:
-        """Return the cell of the finite element."""
+        """Cell of the finite element."""
         return _ufl.cell.Cell(self._cellname)
 
     @property
     def reference_value_shape(self) -> tuple[int, ...]:
-        """Return the shape of the value space on the reference cell."""
+        """Shape of the value space on the reference cell."""
         return self._reference_value_shape
 
     @property
     def sub_elements(self) -> list[_AbstractFiniteElement]:
-        """Return a list of sub elements.
+        """List of sub elements.
 
         This function does not recurse: i.e. it does not extract the
         sub-elements of sub-elements.
@@ -348,7 +353,7 @@ class _ElementBase(_AbstractFiniteElement):
 
     @property
     def basix_element(self):
-        """Return the underlying Basix element."""
+        """Underlying Basix element."""
         raise NotImplementedError()
 
 
@@ -543,7 +548,7 @@ class _BasixElement(_ElementBase):
 
     @property
     def embedded_superdegree(self) -> int:
-        """Return the degree of the minimum degree Lagrange space that spans this element.
+        """Degree of the minimum degree Lagrange space that spans this element.
 
         This returns the degree of the lowest degree Lagrange space such
         that the polynomial space of the Lagrange space is a superspace
@@ -560,7 +565,7 @@ class _BasixElement(_ElementBase):
 
     @property
     def embedded_subdegree(self) -> int:
-        """Return the degree of the maximum degree Lagrange space that is spanned by this element.
+        """Degree of the maximum degree Lagrange space that is spanned by this element.
 
         This returns the degree of the highest degree Lagrange space
         such that the polynomial space of the Lagrange space is a
@@ -607,7 +612,7 @@ class _BasixElement(_ElementBase):
 
     @property
     def basix_element(self):
-        """Return the underlying Basix element."""
+        """Underlying Basix element."""
         return self._element
 
 
@@ -642,14 +647,6 @@ class _ComponentElement(_ElementBase):
         """Return a hash."""
         return super().__hash__()
 
-    def __mul__(self, other):
-        _warn(
-            "Use of * to create mixed elements is deprecated and will be removed after "
-            "December 2023. Please, use basix.ufl.mixed_element.",
-            FutureWarning,
-        )
-        return mixed_element([self, other])
-
     def tabulate(self, nderivs: int, points: _npt.NDArray[np.float64]) -> _npt.NDArray[np.float64]:
         """Tabulate the basis functions of the element.
 
@@ -659,7 +656,6 @@ class _ComponentElement(_ElementBase):
 
         Returns:
             Tabulated basis functions.
-
         """
         tables = self._element.tabulate(nderivs, points)
         output = []
@@ -692,11 +688,11 @@ class _ComponentElement(_ElementBase):
 
         Returns:
             component element, offset of the component, stride of the component
-
         """
         if flat_component == 0:
             return self, 0, 1
-        raise NotImplementedError()
+        else:
+            raise NotImplementedError()
 
     @property
     def basix_sobolev_space(self):
@@ -794,7 +790,7 @@ class _ComponentElement(_ElementBase):
 
     @property
     def embedded_superdegree(self) -> int:
-        """Return the degree of the minimum degree Lagrange space that spans this element.
+        """Degree of the minimum degree Lagrange space that spans this element.
 
         This returns the degree of the lowest degree Lagrange space such
         that the polynomial space of the Lagrange space is a superspace
@@ -811,7 +807,7 @@ class _ComponentElement(_ElementBase):
 
     @property
     def embedded_subdegree(self) -> int:
-        """Return the degree of the maximum degree Lagrange space that is spanned by this element.
+        """Degree of the maximum degree Lagrange space that is spanned by this element.
 
         This returns the degree of the highest degree Lagrange space
         such that the polynomial space of the Lagrange space is a
@@ -828,7 +824,7 @@ class _ComponentElement(_ElementBase):
 
     @property
     def basix_element(self):
-        """Return the underlying Basix element."""
+        """Underlying Basix element."""
         return self._element
 
 
@@ -838,7 +834,6 @@ class _MixedElement(_ElementBase):
     This can be used when multiple different elements appear in a form.
     Users should not directly call this class's initilizer, but should
     use the :func:`mixed_element` function instead.
-
     """
 
     _sub_elements: list[_ElementBase]
@@ -887,7 +882,6 @@ class _MixedElement(_ElementBase):
 
         Returns:
             Tabulated basis functions
-
         """
         tables = []
         results = [e.tabulate(nderivs, points) for e in self._sub_elements]
@@ -935,7 +929,7 @@ class _MixedElement(_ElementBase):
 
     @property
     def embedded_superdegree(self) -> int:
-        """Return the degree of the minimum degree Lagrange space that spans this element.
+        """Degree of the minimum degree Lagrange space that spans this element.
 
         This returns the degree of the lowest degree Lagrange space such
         that the polynomial space of the Lagrange space is a superspace
@@ -952,7 +946,7 @@ class _MixedElement(_ElementBase):
 
     @property
     def embedded_subdegree(self) -> int:
-        """Return the degree of the maximum degree Lagrange space that is spanned by this element.
+        """Degree of the maximum degree Lagrange space that is spanned by this element.
 
         This returns the degree of the highest degree Lagrange space
         such that the polynomial space of the Lagrange space is a
@@ -1378,7 +1372,7 @@ class _BlockedElement(_ElementBase):
 
     @property
     def embedded_superdegree(self) -> int:
-        """Return the degree of the minimum degree Lagrange space that spans this element.
+        """Degree of the minimum degree Lagrange space that spans this element.
 
         This returns the degree of the lowest degree Lagrange space such
         that the polynomial space of the Lagrange space is a superspace
@@ -1395,7 +1389,7 @@ class _BlockedElement(_ElementBase):
 
     @property
     def embedded_subdegree(self) -> int:
-        """Return the degree of the maximum degree Lagrange space that is spanned by this element.
+        """Degree of the maximum degree Lagrange space that is spanned by this element.
 
         This returns the degree of the highest degree Lagrange space
         such that the polynomial space of the Lagrange space is a
@@ -1478,7 +1472,7 @@ class _BlockedElement(_ElementBase):
 
     @property
     def basix_element(self):
-        """Return the underlying Basix element."""
+        """Underlying Basix element."""
         return self._sub_element.basix_element
 
 
@@ -1508,7 +1502,7 @@ class _QuadratureElement(_ElementBase):
         super().__init__(repr, cell.name, (), degree, pullback=pullback)
 
     def basix_sobolev_space(self):
-        """Return the underlying Sobolev space."""
+        """Underlying Sobolev space."""
         return _basix.sobolev_spaces.L2
 
     def __eq__(self, other) -> bool:
@@ -1667,7 +1661,7 @@ class _QuadratureElement(_ElementBase):
 
     @property
     def embedded_superdegree(self) -> int:
-        """Return the degree of the minimum degree Lagrange space that spans this element.
+        """Degree of the minimum degree Lagrange space that spans this element.
 
         This returns the degree of the lowest degree Lagrange space such
         that the polynomial space of the Lagrange space is a superspace
@@ -1684,7 +1678,7 @@ class _QuadratureElement(_ElementBase):
 
     @property
     def embedded_subdegree(self) -> int:
-        """Return the degree of the maximum degree Lagrange space that is spanned by this element.
+        """Degree of the maximum degree Lagrange space that is spanned by this element.
 
         This returns the degree of the highest degree Lagrange space
         such that the polynomial space of the Lagrange space is a
@@ -1775,7 +1769,7 @@ class _RealElement(_ElementBase):
 
     @property
     def embedded_superdegree(self) -> int:
-        """Return the degree of the minimum degree Lagrange space that spans this element.
+        """Degree of the minimum degree Lagrange space that spans this element.
 
         This returns the degree of the lowest degree Lagrange space such
         that the polynomial space of the Lagrange space is a superspace
@@ -1792,7 +1786,7 @@ class _RealElement(_ElementBase):
 
     @property
     def embedded_subdegree(self) -> int:
-        """Return the degree of the maximum degree Lagrange space that is spanned by this element.
+        """Degree of the maximum degree Lagrange space that is spanned by this element.
 
         This returns the degree of the highest degree Lagrange space
         such that the polynomial space of the Lagrange space is a
@@ -1887,17 +1881,17 @@ class _RealElement(_ElementBase):
 
     @property
     def basix_sobolev_space(self):
-        """Return the underlying Sobolev space."""
+        """Underlying Sobolev space."""
         return _basix.sobolev_spaces.Hinf
 
     @property
     def map_type(self) -> _basix.MapType:
-        """The Basix map type."""
+        """Basix map type."""
         return _basix.MapType.identity
 
     @property
     def polyset_type(self) -> _basix.PolysetType:
-        """The polyset type of the element."""
+        """Polyset type of the element."""
         raise NotImplementedError()
 
 
@@ -1909,7 +1903,6 @@ def _compute_signature(element: _basix.finite_element.FiniteElement) -> str:
 
     Returns:
         A hash identifying this element.
-
     """
     assert element.family == _basix.ElementFamily.custom
     signature = (

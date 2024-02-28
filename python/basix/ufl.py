@@ -2019,12 +2019,18 @@ def element(
 def enriched_element(
     elements: list[_ElementBase],
     map_type: _typing.Optional[_basix.MapType] = None,
+    preserve_basis: _typing.Optional[bool] = None,
+    preserve_functionals: _typing.Optional[bool] = None,
 ) -> _ElementBase:
     """Create an UFL compatible enriched element from a list of elements.
 
     Args:
         elements: The list of elements
         map_type: The map type for the enriched element.
+        preserve_basis: If True, the basis functions of the enriched element will be the
+            union of the basis functions of the elements that are being combined
+        preserve_functionals: If True, the DOF functionals of the enriched element will be
+            the union of the DOF functionals of the elements that are being combined
 
     Returns:
         An enriched finite element.

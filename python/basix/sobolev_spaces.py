@@ -1,3 +1,8 @@
+# Copyright (C) 2023-2024 Matthew Scroggs and Garth N. Wells
+#
+# This file is part of Basix (https://www.fenicsproject.org)
+#
+# SPDX-License-Identifier:    MIT
 """Functions for handling Sobolev spaces."""
 
 
@@ -26,11 +31,10 @@ def intersection(spaces: list[SobolevSpace]) -> SobolevSpace:
     """Compute the intersection of a list of Sobolev spaces.
 
     Args:
-        spaces: A list of Sobolev spaces.
+        spaces: List of Sobolev spaces.
 
     Returns:
-        The intersection of the Sobolev spaces.
-
+        Intersection of the Sobolev spaces.
     """
     space = spaces[0].value
     for s in spaces[1:]:
@@ -45,7 +49,7 @@ def string_to_sobolev_space(space: str) -> SobolevSpace:
         space: Name of the space.
 
     Returns:
-        The cell type.
+        Cell type.
     """
     if not hasattr(SobolevSpace, space):
         raise ValueError(f"Unknown Sobolev space: {space}")

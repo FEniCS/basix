@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2023 Chris Richardson, Matthew Scroggs and Garth N. Wells
+// Copyright (c) 2020-2024 Chris Richardson, Matthew Scroggs and Garth N. Wells
 // FEniCS Project
 // SPDX-License-Identifier:    MIT
 

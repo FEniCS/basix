@@ -1,3 +1,8 @@
+# Copyright (C) 2023-2024 Matthew Scroggs and Garth N. Wells
+#
+# This file is part of Basix (https://www.fenicsproject.org)
+#
+# SPDX-License-Identifier:    MIT
 """Functions to directly wrap Basix elements in UFL."""
 
 import functools as _functools
@@ -11,8 +16,6 @@ from warnings import warn as _warn
 import numpy as np
 import numpy.typing as _npt
 import ufl as _ufl
-
-# TODO: remove gdim arguments once UFL handles cells better
 from ufl.finiteelement import AbstractFiniteElement as _AbstractFiniteElement
 from ufl.pullback import AbstractPullback as _AbstractPullback
 from ufl.pullback import IdentityPullback as _IdentityPullback
@@ -83,28 +86,6 @@ def _ufl_pullback_from_enum(m: _basix.maps.MapType) -> _AbstractPullback:
     return _pullbackmap[m]
 
 
-def _repr_optional_args(**kwargs: _typing.Any) -> str:
-    """Augment an element `repr` by appending non-None optional arguments.
-
-    Args:
-        kwargs: Optional arguments to include in repr. All arguments for which
-            `value is not None` will be appended to `partial_repr`.
-
-    Returns:
-        A string representation of a finite element
-    """
-    out = ""
-    for name, value in kwargs.items():
-        if value is not None:
-            out += f", {name}={value}"
-    return out
-
-
-def _cellname_to_tdim(cellname: str) -> int:
-    """Get the tdim of a cell."""
-    return len(_basix.topology(_basix.cell.string_to_type(cellname))) - 1
-
-
 class _ElementBase(_AbstractFiniteElement):
     """A base wrapper to allow elements to be used with UFL.
 
@@ -117,18 +98,16 @@ class _ElementBase(_AbstractFiniteElement):
         self,
         repr: str,
         cellname: str,
-        value_shape: tuple[int, ...],
+        reference_value_shape: tuple[int, ...],
         degree: int = -1,
         pullback: _AbstractPullback = _UndefinedPullback(),
-        gdim: _typing.Optional[int] = None,
     ):
         """Initialise the element."""
         self._repr = repr
         self._cellname = cellname
-        self._value_shape = value_shape
+        self._reference_value_shape = reference_value_shape
         self._degree = degree
         self._pullback = pullback
-        self._gdim = _cellname_to_tdim(cellname) if gdim is None else gdim
 
     # Implementation of methods for UFL AbstractFiniteElement
     def __repr__(self):
@@ -149,17 +128,17 @@ class _ElementBase(_AbstractFiniteElement):
 
     @property
     def sobolev_space(self):
-        """Return the underlying Sobolev space."""
+        """Underlying Sobolev space."""
         return _ufl_sobolev_space_from_enum(self.basix_sobolev_space)
 
     @property
     def pullback(self) -> _AbstractPullback:
-        """Return the pullback for this element."""
+        """Pullback for this element."""
         return self._pullback
 
     @_abstractproperty
     def embedded_superdegree(self) -> int:
-        """Return the degree of the minimum degree Lagrange space that spans this element.
+        """Degree of the minimum degree Lagrange space that spans this element.
 
         This returns the degree of the lowest degree Lagrange space such
         that the polynomial space of the Lagrange space is a superspace
@@ -175,7 +154,7 @@ class _ElementBase(_AbstractFiniteElement):
 
     @_abstractproperty
     def embedded_subdegree(self) -> int:
-        """Return the degree of the maximum degree Lagrange space that is spanned by this element.
+        """Degree of the maximum degree Lagrange space that is spanned by this element.
 
         This returns the degree of the highest degree Lagrange space
         such that the polynomial space of the Lagrange space is a
@@ -191,17 +170,17 @@ class _ElementBase(_AbstractFiniteElement):
 
     @property
     def cell(self) -> _ufl.Cell:
-        """Return the cell of the finite element."""
-        return _ufl.cell.Cell(self._cellname, self._gdim)
+        """Cell of the finite element."""
+        return _ufl.cell.Cell(self._cellname)
 
     @property
     def reference_value_shape(self) -> tuple[int, ...]:
-        """Return the shape of the value space on the reference cell."""
-        return self._value_shape
+        """Shape of the value space on the reference cell."""
+        return self._reference_value_shape
 
     @property
     def sub_elements(self) -> list[_AbstractFiniteElement]:
-        """Return a list of sub elements.
+        """List of sub elements.
 
         This function does not recurse: i.e. it does not extract the
         sub-elements of sub-elements.
@@ -374,7 +353,7 @@ class _ElementBase(_AbstractFiniteElement):
 
     @property
     def basix_element(self):
-        """Return the underlying Basix element."""
+        """Underlying Basix element."""
         raise NotImplementedError()
 
 
@@ -389,13 +368,11 @@ class _BasixElement(_ElementBase):
 
     _element: _basix.finite_element.FiniteElement
 
-    def __init__(
-        self, element: _basix.finite_element.FiniteElement, gdim: _typing.Optional[int] = None
-    ):
+    def __init__(self, element: _basix.finite_element.FiniteElement):
         """Create a Basix element."""
         if element.family == _basix.ElementFamily.custom:
             self._is_custom = True
-            repr = f"custom Basix element ({_compute_signature(element)}"
+            repr = f"custom Basix element ({_compute_signature(element)})"
         else:
             self._is_custom = False
             repr = (
@@ -403,11 +380,8 @@ class _BasixElement(_ElementBase):
                 f"{element.degree}, "
                 f"{element.lagrange_variant.name}, {element.dpc_variant.name}, "
                 f"{element.discontinuous}, "
-                f"{element.dtype}, {element.dof_ordering}"
+                f"{element.dtype}, {element.dof_ordering})"
             )
-        if gdim != _cellname_to_tdim(element.cell_type.name):
-            repr += _repr_optional_args(gdim=gdim)
-        repr += ")"
 
         super().__init__(
             repr,
@@ -415,16 +389,13 @@ class _BasixElement(_ElementBase):
             tuple(element.value_shape),
             element.degree,
             _ufl_pullback_from_enum(element.map_type),
-            gdim=gdim,
         )
 
         self._element = element
 
     def __eq__(self, other) -> bool:
         """Check if two elements are equal."""
-        return isinstance(other, _BasixElement) and (
-            self._element == other._element and self._gdim == other._gdim
-        )
+        return isinstance(other, _BasixElement) and self._element == other._element
 
     def __hash__(self) -> int:
         """Return a hash."""
@@ -468,7 +439,7 @@ class _BasixElement(_ElementBase):
             component element, offset of the component, stride of the component
 
         """
-        assert flat_component < self.value_size
+        assert flat_component < self.reference_value_size
         return _ComponentElement(self, flat_component), 0, 1
 
     def get_tensor_product_representation(self):
@@ -577,7 +548,7 @@ class _BasixElement(_ElementBase):
 
     @property
     def embedded_superdegree(self) -> int:
-        """Return the degree of the minimum degree Lagrange space that spans this element.
+        """Degree of the minimum degree Lagrange space that spans this element.
 
         This returns the degree of the lowest degree Lagrange space such
         that the polynomial space of the Lagrange space is a superspace
@@ -594,7 +565,7 @@ class _BasixElement(_ElementBase):
 
     @property
     def embedded_subdegree(self) -> int:
-        """Return the degree of the maximum degree Lagrange space that is spanned by this element.
+        """Degree of the maximum degree Lagrange space that is spanned by this element.
 
         This returns the degree of the highest degree Lagrange space
         such that the polynomial space of the Lagrange space is a
@@ -641,7 +612,7 @@ class _BasixElement(_ElementBase):
 
     @property
     def basix_element(self):
-        """Return the underlying Basix element."""
+        """Underlying Basix element."""
         return self._element
 
 
@@ -656,15 +627,13 @@ class _ComponentElement(_ElementBase):
     _element: _ElementBase
     _component: int
 
-    def __init__(self, element: _ElementBase, component: int, gdim: _typing.Optional[int] = None):
+    def __init__(self, element: _ElementBase, component: int):
         """Initialise the element."""
         self._element = element
         self._component = component
         repr = f"component element ({element!r}, {component}"
-        if gdim != _cellname_to_tdim(element.cell_type.name):
-            repr += _repr_optional_args(gdim=gdim)
         repr += ")"
-        super().__init__(repr, element.cell_type.name, (1,), element._degree, gdim=gdim)
+        super().__init__(repr, element.cell_type.name, (1,), element._degree)
 
     def __eq__(self, other) -> bool:
         """Check if two elements are equal."""
@@ -672,20 +641,11 @@ class _ComponentElement(_ElementBase):
             isinstance(other, _ComponentElement)
             and self._element == other._element
             and self._component == other._component
-            and self._gdim == other._gdim
         )
 
     def __hash__(self) -> int:
         """Return a hash."""
         return super().__hash__()
-
-    def __mul__(self, other):
-        _warn(
-            "Use of * to create mixed elements is deprecated and will be removed after "
-            "December 2023. Please, use basix.ufl.mixed_element.",
-            FutureWarning,
-        )
-        return mixed_element([self, other])
 
     def tabulate(self, nderivs: int, points: _npt.NDArray[np.float64]) -> _npt.NDArray[np.float64]:
         """Tabulate the basis functions of the element.
@@ -696,23 +656,22 @@ class _ComponentElement(_ElementBase):
 
         Returns:
             Tabulated basis functions.
-
         """
         tables = self._element.tabulate(nderivs, points)
         output = []
         for tbl in tables:
-            shape = (points.shape[0], *self._element._value_shape, -1)
+            shape = (points.shape[0], *self._element._reference_value_shape, -1)
             tbl = tbl.reshape(shape)
-            if len(self._element._value_shape) == 0:
+            if len(self._element._reference_value_shape) == 0:
                 output.append(tbl)
-            elif len(self._element._value_shape) == 1:
+            elif len(self._element._reference_value_shape) == 1:
                 output.append(tbl[:, self._component, :])
-            elif len(self._element._value_shape) == 2:
+            elif len(self._element._reference_value_shape) == 2:
                 if isinstance(self._element, _BlockedElement) and self._element._has_symmetry:
                     # FIXME: check that this behaves as expected
                     output.append(tbl[:, self._component, :])
                 else:
-                    vs0 = self._element._value_shape[0]
+                    vs0 = self._element._reference_value_shape[0]
                     output.append(tbl[:, self._component // vs0, self._component % vs0, :])
             else:
                 raise NotImplementedError()
@@ -729,11 +688,11 @@ class _ComponentElement(_ElementBase):
 
         Returns:
             component element, offset of the component, stride of the component
-
         """
         if flat_component == 0:
             return self, 0, 1
-        raise NotImplementedError()
+        else:
+            raise NotImplementedError()
 
     @property
     def basix_sobolev_space(self):
@@ -831,7 +790,7 @@ class _ComponentElement(_ElementBase):
 
     @property
     def embedded_superdegree(self) -> int:
-        """Return the degree of the minimum degree Lagrange space that spans this element.
+        """Degree of the minimum degree Lagrange space that spans this element.
 
         This returns the degree of the lowest degree Lagrange space such
         that the polynomial space of the Lagrange space is a superspace
@@ -848,7 +807,7 @@ class _ComponentElement(_ElementBase):
 
     @property
     def embedded_subdegree(self) -> int:
-        """Return the degree of the maximum degree Lagrange space that is spanned by this element.
+        """Degree of the maximum degree Lagrange space that is spanned by this element.
 
         This returns the degree of the highest degree Lagrange space
         such that the polynomial space of the Lagrange space is a
@@ -865,7 +824,7 @@ class _ComponentElement(_ElementBase):
 
     @property
     def basix_element(self):
-        """Return the underlying Basix element."""
+        """Underlying Basix element."""
         return self._element
 
 
@@ -875,12 +834,11 @@ class _MixedElement(_ElementBase):
     This can be used when multiple different elements appear in a form.
     Users should not directly call this class's initilizer, but should
     use the :func:`mixed_element` function instead.
-
     """
 
     _sub_elements: list[_ElementBase]
 
-    def __init__(self, sub_elements: list[_ElementBase], gdim: _typing.Optional[int] = None):
+    def __init__(self, sub_elements: list[_ElementBase]):
         """Initialise the element."""
         assert len(sub_elements) > 0
         self._sub_elements = sub_elements
@@ -889,23 +847,17 @@ class _MixedElement(_ElementBase):
         else:
             pullback = _MixedPullback(self)
 
-        repr = "mixed element (" + ", ".join(i._repr for i in sub_elements)
-        if gdim != _cellname_to_tdim(sub_elements[0].cell_type.name):
-            repr += _repr_optional_args(gdim=gdim)
-        repr += ")"
+        repr = "mixed element (" + ", ".join(i._repr for i in sub_elements) + ")"
         super().__init__(
             repr,
             sub_elements[0].cell_type.name,
-            (sum(i.value_size for i in sub_elements),),
+            (sum(i.reference_value_size for i in sub_elements),),
             pullback=pullback,
-            gdim=gdim,
         )
 
     def __eq__(self, other) -> bool:
         """Check if two elements are equal."""
-        if isinstance(other, _MixedElement) and (
-            len(self._sub_elements) == len(other._sub_elements) and self._gdim == other._gdim
-        ):
+        if isinstance(other, _MixedElement) and len(self._sub_elements) == len(other._sub_elements):
             for i, j in zip(self._sub_elements, other._sub_elements):
                 if i != j:
                     return False
@@ -930,17 +882,18 @@ class _MixedElement(_ElementBase):
 
         Returns:
             Tabulated basis functions
-
         """
         tables = []
         results = [e.tabulate(nderivs, points) for e in self._sub_elements]
         for deriv_tables in zip(*results):
-            new_table = np.zeros((len(points), self.value_size * self.dim))
+            new_table = np.zeros((len(points), self.reference_value_size * self.dim))
             start = 0
             for e, t in zip(self._sub_elements, deriv_tables):
-                for i in range(0, e.dim, e.value_size):
-                    new_table[:, start : start + e.value_size] = t[:, i : i + e.value_size]
-                    start += self.value_size
+                for i in range(0, e.dim, e.reference_value_size):
+                    new_table[:, start : start + e.reference_value_size] = t[
+                        :, i : i + e.reference_value_size
+                    ]
+                    start += self.reference_value_size
             tables.append(new_table)
         return np.asarray(tables, dtype=np.float64)
 
@@ -976,7 +929,7 @@ class _MixedElement(_ElementBase):
 
     @property
     def embedded_superdegree(self) -> int:
-        """Return the degree of the minimum degree Lagrange space that spans this element.
+        """Degree of the minimum degree Lagrange space that spans this element.
 
         This returns the degree of the lowest degree Lagrange space such
         that the polynomial space of the Lagrange space is a superspace
@@ -993,7 +946,7 @@ class _MixedElement(_ElementBase):
 
     @property
     def embedded_subdegree(self) -> int:
-        """Return the degree of the maximum degree Lagrange space that is spanned by this element.
+        """Degree of the maximum degree Lagrange space that is spanned by this element.
 
         This returns the degree of the highest degree Lagrange space
         such that the polynomial space of the Lagrange space is a
@@ -1182,10 +1135,9 @@ class _BlockedElement(_ElementBase):
         sub_element: _ElementBase,
         shape: tuple[int, ...],
         symmetry: _typing.Optional[bool] = None,
-        gdim: _typing.Optional[int] = None,
     ):
         """Initialise the element."""
-        if sub_element.value_size != 1:
+        if sub_element.reference_value_size != 1:
             raise ValueError(
                 "Blocked elements of non-scalar elements are not supported. "
                 "Try using _MixedElement instead."
@@ -1211,10 +1163,8 @@ class _BlockedElement(_ElementBase):
         self._block_shape = shape
 
         repr = f"blocked element ({sub_element!r}, {shape}"
-        if gdim != _cellname_to_tdim(sub_element.cell_type.name):
-            repr += _repr_optional_args(symmetry=symmetry, gdim=gdim)
-        else:
-            repr += _repr_optional_args(symmetry=symmetry)
+        if symmetry is not None:
+            repr += f", symmetry={symmetry}"
         repr += ")"
 
         super().__init__(
@@ -1223,7 +1173,6 @@ class _BlockedElement(_ElementBase):
             shape,
             sub_element._degree,
             sub_element._pullback,
-            gdim=gdim,
         )
 
         if symmetry:
@@ -1244,7 +1193,6 @@ class _BlockedElement(_ElementBase):
             and self._block_size == other._block_size
             and self._block_shape == other._block_shape
             and self._sub_element == other._sub_element
-            and self._gdim == other._gdim
         )
 
     def __hash__(self) -> int:
@@ -1263,7 +1211,7 @@ class _BlockedElement(_ElementBase):
 
         """
         assert len(self._block_shape) == 1  # TODO: block shape
-        assert self.value_size == self._block_size  # TODO: remove this assumption
+        assert self.reference_value_size == self._block_size  # TODO: remove this assumption
         output = []
         for table in self._sub_element.tabulate(nderivs, points):
             # Repeat sub element horizontally
@@ -1313,7 +1261,7 @@ class _BlockedElement(_ElementBase):
         if self._has_symmetry:
             assert len(self._block_shape) == 2 and self._block_shape[0] == self._block_shape[1]
             return (self._block_shape[0] * (self._block_shape[0] + 1) // 2,)
-        return self._value_shape
+        return self._reference_value_shape
 
     @property
     def basix_sobolev_space(self):
@@ -1424,7 +1372,7 @@ class _BlockedElement(_ElementBase):
 
     @property
     def embedded_superdegree(self) -> int:
-        """Return the degree of the minimum degree Lagrange space that spans this element.
+        """Degree of the minimum degree Lagrange space that spans this element.
 
         This returns the degree of the lowest degree Lagrange space such
         that the polynomial space of the Lagrange space is a superspace
@@ -1441,7 +1389,7 @@ class _BlockedElement(_ElementBase):
 
     @property
     def embedded_subdegree(self) -> int:
-        """Return the degree of the maximum degree Lagrange space that is spanned by this element.
+        """Degree of the maximum degree Lagrange space that is spanned by this element.
 
         This returns the degree of the highest degree Lagrange space
         such that the polynomial space of the Lagrange space is a
@@ -1524,7 +1472,7 @@ class _BlockedElement(_ElementBase):
 
     @property
     def basix_element(self):
-        """Return the underlying Basix element."""
+        """Underlying Basix element."""
         return self._sub_element.basix_element
 
 
@@ -1554,7 +1502,7 @@ class _QuadratureElement(_ElementBase):
         super().__init__(repr, cell.name, (), degree, pullback=pullback)
 
     def basix_sobolev_space(self):
-        """Return the underlying Sobolev space."""
+        """Underlying Sobolev space."""
         return _basix.sobolev_spaces.L2
 
     def __eq__(self, other) -> bool:
@@ -1713,7 +1661,7 @@ class _QuadratureElement(_ElementBase):
 
     @property
     def embedded_superdegree(self) -> int:
-        """Return the degree of the minimum degree Lagrange space that spans this element.
+        """Degree of the minimum degree Lagrange space that spans this element.
 
         This returns the degree of the lowest degree Lagrange space such
         that the polynomial space of the Lagrange space is a superspace
@@ -1730,7 +1678,7 @@ class _QuadratureElement(_ElementBase):
 
     @property
     def embedded_subdegree(self) -> int:
-        """Return the degree of the maximum degree Lagrange space that is spanned by this element.
+        """Degree of the maximum degree Lagrange space that is spanned by this element.
 
         This returns the degree of the highest degree Lagrange space
         such that the polynomial space of the Lagrange space is a
@@ -1767,8 +1715,10 @@ class _RealElement(_ElementBase):
 
     def __eq__(self, other) -> bool:
         """Check if two elements are equal."""
-        return isinstance(other, _RealElement) and (
-            self._cell_type == other._cell_type and self._value_shape == other._value_shape
+        return (
+            isinstance(other, _RealElement)
+            and self._cell_type == other._cell_type
+            and self._reference_value_shape == other._reference_value_shape
         )
 
     def __hash__(self) -> int:
@@ -1786,9 +1736,9 @@ class _RealElement(_ElementBase):
             Tabulated basis functions
 
         """
-        out = np.zeros((nderivs + 1, len(points), self.value_size**2))
-        for v in range(self.value_size):
-            out[0, :, self.value_size * v + v] = 1.0
+        out = np.zeros((nderivs + 1, len(points), self.reference_value_size**2))
+        for v in range(self.reference_value_size):
+            out[0, :, self.reference_value_size * v + v] = 1.0
         return out
 
     def get_component_element(self, flat_component: int) -> tuple[_ElementBase, int, int]:
@@ -1804,7 +1754,7 @@ class _RealElement(_ElementBase):
             component element, offset of the component, stride of the component
 
         """
-        assert flat_component < self.value_size
+        assert flat_component < self.reference_value_size
         return self, 0, 1
 
     @property
@@ -1819,7 +1769,7 @@ class _RealElement(_ElementBase):
 
     @property
     def embedded_superdegree(self) -> int:
-        """Return the degree of the minimum degree Lagrange space that spans this element.
+        """Degree of the minimum degree Lagrange space that spans this element.
 
         This returns the degree of the lowest degree Lagrange space such
         that the polynomial space of the Lagrange space is a superspace
@@ -1836,7 +1786,7 @@ class _RealElement(_ElementBase):
 
     @property
     def embedded_subdegree(self) -> int:
-        """Return the degree of the maximum degree Lagrange space that is spanned by this element.
+        """Degree of the maximum degree Lagrange space that is spanned by this element.
 
         This returns the degree of the highest degree Lagrange space
         such that the polynomial space of the Lagrange space is a
@@ -1931,17 +1881,17 @@ class _RealElement(_ElementBase):
 
     @property
     def basix_sobolev_space(self):
-        """Return the underlying Sobolev space."""
+        """Underlying Sobolev space."""
         return _basix.sobolev_spaces.Hinf
 
     @property
     def map_type(self) -> _basix.MapType:
-        """The Basix map type."""
+        """Basix map type."""
         return _basix.MapType.identity
 
     @property
     def polyset_type(self) -> _basix.PolysetType:
-        """The polyset type of the element."""
+        """Polyset type of the element."""
         raise NotImplementedError()
 
 
@@ -1953,7 +1903,6 @@ def _compute_signature(element: _basix.finite_element.FiniteElement) -> str:
 
     Returns:
         A hash identifying this element.
-
     """
     assert element.family == _basix.ElementFamily.custom
     signature = (
@@ -1993,7 +1942,6 @@ def element(
     discontinuous: bool = False,
     shape: _typing.Optional[tuple[int, ...]] = None,
     symmetry: _typing.Optional[bool] = None,
-    gdim: _typing.Optional[int] = None,
     dtype: _npt.DTypeLike = np.float64,
 ) -> _ElementBase:
     """Create a UFL compatible element using Basix.
@@ -2010,8 +1958,6 @@ def element(
             this can be used to create vector and tensor elements.
         symmetry: Set to ``True`` if the tensor is symmetric. Valid for
             rank 2 elements only.
-        gdim: Geometric dimension. If not set the geometric dimension is
-            set equal to the topological dimension of the cell.
         dtype: Floating point data type.
 
     Returns:
@@ -2060,28 +2006,25 @@ def element(
     e = _basix.create_element(
         family, cell, degree, lagrange_variant, dpc_variant, discontinuous, dtype=dtype
     )
-    ufl_e = _BasixElement(e, gdim=gdim)
+    ufl_e = _BasixElement(e)
 
     if shape is None or shape == tuple(e.value_shape):
         if symmetry is not None:
             raise ValueError("Cannot pass a symmetry argument to this element.")
         return ufl_e
     else:
-        return blocked_element(ufl_e, shape=shape, gdim=gdim, symmetry=symmetry)
+        return blocked_element(ufl_e, shape=shape, symmetry=symmetry)
 
 
 def enriched_element(
     elements: list[_ElementBase],
     map_type: _typing.Optional[_basix.MapType] = None,
-    gdim: _typing.Optional[int] = None,
 ) -> _ElementBase:
     """Create an UFL compatible enriched element from a list of elements.
 
     Args:
         elements: The list of elements
         map_type: The map type for the enriched element.
-        gdim: Geometric dimension. If not set the geometric dimension is
-            set equal to the topological dimension of the cell.
 
     Returns:
         An enriched finite element.
@@ -2089,8 +2032,8 @@ def enriched_element(
     """
     ct = elements[0].cell_type
     ptype = elements[0].polyset_type
-    vshape = elements[0].value_shape
-    vsize = elements[0].value_size
+    vshape = elements[0].reference_value_shape
+    vsize = elements[0].reference_value_size
     if map_type is None:
         map_type = elements[0].map_type
         for e in elements:
@@ -2108,7 +2051,7 @@ def enriched_element(
             raise ValueError("Enriched elements on different cell types not supported.")
         if e.polyset_type != ptype:
             raise ValueError("Enriched elements on different polyset types not supported.")
-        if e.value_shape != vshape or e.value_size != vsize:
+        if e.reference_value_shape != vshape or e.reference_value_size != vsize:
             raise ValueError("Enriched elements on different value shapes not supported.")
     nderivs = max(e.interpolation_nderivs for e in elements)
 
@@ -2156,13 +2099,12 @@ def enriched_element(
         hcd,
         hd,
         ptype,
-        gdim=gdim,
     )
 
 
 def custom_element(
     cell_type: _basix.CellType,
-    value_shape: _typing.Union[list[int], tuple[int, ...]],
+    reference_value_shape: _typing.Union[list[int], tuple[int, ...]],
     wcoeffs: _npt.NDArray[np.float64],
     x: list[list[_npt.NDArray[np.float64]]],
     M: list[list[_npt.NDArray[np.float64]]],
@@ -2173,13 +2115,12 @@ def custom_element(
     embedded_subdegree: int,
     embedded_superdegree: int,
     polyset_type: _basix.PolysetType = _basix.PolysetType.standard,
-    gdim: _typing.Optional[int] = None,
 ) -> _ElementBase:
     """Create a UFL compatible custom Basix element.
 
     Args:
-        cell_type: The cell type.
-        value_shape: The value shape of the element.
+        cell_type: The cell type
+        reference_value_shape: The reference value shape of the element
         wcoeffs: Matrices for the kth value index containing the
             expansion coefficients defining a polynomial basis spanning
             the polynomial space for this element. Shape is
@@ -2201,15 +2142,13 @@ def custom_element(
         embedded_superdegree: The highest degree of a polynomial in this
             element's polyset.
         polyset_type: Polyset type for the element.
-        gdim: Geometric dimension. If not set the geometric dimension is
-            set equal to the topological dimension of the cell.
 
     Returns:
         A custom finite element.
     """
     e = _basix.create_custom_element(
         cell_type,
-        tuple(value_shape),
+        tuple(reference_value_shape),
         wcoeffs,
         x,
         M,
@@ -2221,26 +2160,19 @@ def custom_element(
         embedded_superdegree,
         polyset_type,
     )
-    return _BasixElement(e, gdim=gdim)
+    return _BasixElement(e)
 
 
-def mixed_element(elements: list[_ElementBase], gdim: _typing.Optional[int] = None) -> _ElementBase:
+def mixed_element(elements: list[_ElementBase]) -> _ElementBase:
     """Create a UFL compatible mixed element from a list of elements.
 
     Args:
         elements: The list of elements
-        gdim: Geometric dimension. If not set the geometric dimension is
-            set equal to the topological dimension of the cell.
 
     Returns:
         A mixed finite element.
     """
-    if gdim is None:
-        gdim = elements[0]._gdim
-        for e in elements:
-            if e._gdim != gdim:
-                raise ValueError("Incompatible gdim in sub-elements.")
-    return _MixedElement(elements, gdim=gdim)
+    return _MixedElement(elements)
 
 
 def quadrature_element(
@@ -2316,7 +2248,6 @@ def blocked_element(
     sub_element: _ElementBase,
     shape: tuple[int, ...],
     symmetry: _typing.Optional[bool] = None,
-    gdim: _typing.Optional[int] = None,
 ) -> _ElementBase:
     """Create a UFL compatible blocked element.
 
@@ -2326,20 +2257,16 @@ def blocked_element(
             this can be used to create vector and tensor elements.
         symmetry: Set to ``True`` if the tensor is symmetric. Valid for
             rank 2 elements only.
-        gdim: Geometric dimension. If not set the geometric dimension is
-            set equal to the topological dimension of the cell.
 
     Returns:
         A blocked finite element.
     """
-    if len(sub_element.value_shape) != 0:
+    if len(sub_element.reference_value_shape) != 0:
         raise ValueError("Cannot create a blocked element containing a non-scalar element.")
 
-    return _BlockedElement(sub_element, shape=shape, symmetry=symmetry, gdim=gdim)
+    return _BlockedElement(sub_element, shape=shape, symmetry=symmetry)
 
 
-def wrap_element(
-    element: _basix.finite_element.FiniteElement, gdim: _typing.Optional[int] = None
-) -> _ElementBase:
+def wrap_element(element: _basix.finite_element.FiniteElement) -> _ElementBase:
     """Wrap a Basix element as a Basix UFL element."""
-    return _BasixElement(element, gdim=gdim)
+    return _BasixElement(element)

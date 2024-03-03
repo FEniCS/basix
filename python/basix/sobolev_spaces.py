@@ -5,7 +5,6 @@
 # SPDX-License-Identifier:    MIT
 """Functions for handling Sobolev spaces."""
 
-
 from basix._basixcpp import SobolevSpace as _SS
 from basix._basixcpp import sobolev_space_intersection as _ssi
 from basix.utils import Enum

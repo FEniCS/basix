@@ -5,7 +5,6 @@
 # SPDX-License-Identifier:    MIT
 """Functions to manipulate quadrature types."""
 
-
 import numpy as np
 import numpy.typing as _npt
 

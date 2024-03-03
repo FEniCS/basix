@@ -83,7 +83,7 @@ FiniteElement<T> basix::element::create_bubble(cell::type celltype, int degree,
     const auto [points, pshape] = lattice::create<T>(
         celltype, degree, lattice::type::equispaced, false);
     ndofs = pshape[0];
-    x[tdim].emplace_back(points, pshape[0], pshape[1]);
+    x[tdim].emplace_back(std::array{pshape[0], pshape[1]}, points);
   }
 
   auto create_phi1 = [](auto& phi, auto& buffer)

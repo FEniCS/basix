@@ -219,8 +219,8 @@ FiniteElement<T> element::create_nedelec(cell::type celltype, int degree,
     assert(_x.size() == _M.size());
     for (std::size_t i = 0; i < _x.size(); ++i)
     {
-      x[1].emplace_back(_x[i], xshape[0], xshape[1]);
-      M[1].emplace_back(_M[i], Mshape[0], Mshape[1], Mshape[2], Mshape[3]);
+      x[1].emplace_back( std::array{xshape[0], xshape[1]}, _x[i]);
+      M[1].emplace_back(std::array{Mshape[0], Mshape[1], Mshape[2], Mshape[3]},_M[i] );
     }
   }
 
@@ -234,8 +234,8 @@ FiniteElement<T> element::create_nedelec(cell::type celltype, int degree,
     assert(_x.size() == _M.size());
     for (std::size_t i = 0; i < _x.size(); ++i)
     {
-      x[2].emplace_back(_x[i], xshape[0], xshape[1]);
-      M[2].emplace_back(_M[i], Mshape[0], Mshape[1], Mshape[2], Mshape[3]);
+      x[2].emplace_back(std::array{xshape[0], xshape[1]}, _x[i] );
+      M[2].emplace_back(std::array{Mshape[0], Mshape[1], Mshape[2], Mshape[3]}, _M[i] );
     }
   }
   else
@@ -257,8 +257,8 @@ FiniteElement<T> element::create_nedelec(cell::type celltype, int degree,
       assert(_x.size() == _M.size());
       for (std::size_t i = 0; i < _x.size(); ++i)
       {
-        x[3].emplace_back(_x[i], xshape[0], xshape[1]);
-        M[3].emplace_back(_M[i], Mshape[0], Mshape[1], Mshape[2], Mshape[3]);
+        x[3].emplace_back(std::array{xshape[0], xshape[1]}, _x[i] );
+        M[3].emplace_back(std::array{Mshape[0], Mshape[1], Mshape[2], Mshape[3]}, _M[i] );
       }
     }
     else
@@ -324,8 +324,8 @@ FiniteElement<T> element::create_nedelec2(cell::type celltype, int degree,
     assert(_x.size() == _M.size());
     for (std::size_t i = 0; i < _x.size(); ++i)
     {
-      x[1].emplace_back(_x[i], xshape[0], xshape[1]);
-      M[1].emplace_back(_M[i], Mshape[0], Mshape[1], Mshape[2], Mshape[3]);
+      x[1].emplace_back(std::array{xshape[0], xshape[1]}, _x[i] );
+      M[1].emplace_back(std::array{Mshape[0], Mshape[1], Mshape[2], Mshape[3]}, _M[i]);
     }
   }
 
@@ -339,8 +339,8 @@ FiniteElement<T> element::create_nedelec2(cell::type celltype, int degree,
     assert(_x.size() == _M.size());
     for (std::size_t i = 0; i < _x.size(); ++i)
     {
-      x[2].emplace_back(_x[i], xshape[0], xshape[1]);
-      M[2].emplace_back(_M[i], Mshape[0], Mshape[1], Mshape[2], Mshape[3]);
+      x[2].emplace_back(std::array{xshape[0], xshape[1]}, _x[i] );
+      M[2].emplace_back(std::array{Mshape[0], Mshape[1], Mshape[2], Mshape[3]}, _M[i] );
     }
   }
   else
@@ -361,8 +361,8 @@ FiniteElement<T> element::create_nedelec2(cell::type celltype, int degree,
       assert(_x.size() == _M.size());
       for (std::size_t i = 0; i < _x.size(); ++i)
       {
-        x[3].emplace_back(_x[i], xshape[0], xshape[1]);
-        M[3].emplace_back(_M[i], Mshape[0], Mshape[1], Mshape[2], Mshape[3]);
+        x[3].emplace_back(std::array{xshape[0], xshape[1]}, _x[i] );
+        M[3].emplace_back(std::array{Mshape[0], Mshape[1], Mshape[2], Mshape[3]}, _M[i] );
       }
     }
     else

@@ -48,7 +48,7 @@ FiniteElement<T> basix::element::create_hermite(cell::type celltype, int degree,
   {
     const auto [entity_x, entity_shape]
         = cell::sub_entity_geometry<T>(celltype, 0, e);
-    x[0].emplace_back(entity_x, entity_shape[0], entity_shape[1]);
+    x[0].emplace_back(std::array{entity_shape[0], entity_shape[1]}, entity_x );
     auto& _M = M[0].emplace_back(1 + tdim, 1, 1, deriv_count);
     _M(0, 0, 0, 0) = 1;
     for (std::size_t d = 0; d < tdim; ++d)

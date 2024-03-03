@@ -5,7 +5,6 @@
 # SPDX-License-Identifier:    MIT
 """Functions to get cell geometry information and manipulate cell types."""
 
-
 import numpy.typing as npt
 
 from basix._basixcpp import CellType as _CT

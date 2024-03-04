@@ -139,7 +139,7 @@ void prepare_permutation(std::span<std::size_t> perm);
 /// @param[in] block_size The block size of the data
 template <typename E>
 void pre_apply_permutation(std::span<const std::size_t> perm, std::span<E> data,
-                       std::size_t offset = 0, std::size_t block_size = 1)
+                           std::size_t offset = 0, std::size_t block_size = 1)
 {
   for (std::size_t i = 0; i < perm.size(); ++i)
   {
@@ -154,8 +154,8 @@ void pre_apply_permutation(std::span<const std::size_t> perm, std::span<E> data,
 /// Permutation of mapped data
 template <typename E>
 void pre_apply_permutation_mapped(std::span<const std::size_t> perm,
-                              std::span<E> data, std::span<const int> emap,
-                              std::size_t block_size = 1)
+                                  std::span<E> data, std::span<const int> emap,
+                                  std::size_t block_size = 1)
 {
   for (std::size_t i = 0; i < perm.size(); ++i)
   {
@@ -175,8 +175,8 @@ void pre_apply_permutation_mapped(std::span<const std::size_t> perm,
 /// see `pre_apply_permutation()`.
 template <typename E>
 void post_apply_transpose_permutation(std::span<const std::size_t> perm,
-                                    std::span<E> data, std::size_t offset = 0,
-                                    std::size_t block_size = 1)
+                                      std::span<E> data, std::size_t offset = 0,
+                                      std::size_t block_size = 1)
 {
   const std::size_t dim = perm.size();
   const std::size_t data_size

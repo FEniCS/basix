@@ -692,8 +692,9 @@ FiniteElement<T> create_legendre_dpc(cell::type celltype, int degree,
     M[i] = std::vector(num_ent, impl::mdarray_t<T, 4>(0, 1, 0, 1));
   }
 
-  x[tdim].emplace_back(_pts, pts.extent(0), pts.extent(1));
-  auto& _M = M[tdim].emplace_back(ndofs, 1, pts.extent(0), 1);
+  x[tdim].emplace_back(pts.extents(), _pts);
+  auto& _M = M[tdim].emplace_back(
+      std::array<std::size_t, 4>{ndofs, 1, pts.extent(0), 1}, 0);
 
   impl::mdarray_t<T, 2> wcoeffs(ndofs, psize);
   if (celltype == cell::type::quadrilateral)
@@ -747,8 +748,8 @@ impl::mdarray_t<T, 2> make_dpc_points(cell::type celltype, int degree,
 {
   auto to_mdspan = [](auto& x, auto shape)
   { return impl::mdspan_t<const T, 2>(x.data(), shape); };
-  auto to_mdarray = [](auto& x, auto shape)
-  { return impl::mdarray_t<T, 2>(x, shape[0], shape[1]); };
+  auto to_mdarray
+      = [](auto& x, auto shape) { return impl::mdarray_t<T, 2>(shape, x); };
 
   if (degree == 0)
   {
@@ -1010,8 +1011,8 @@ FiniteElement<T> element::create_serendipity(cell::type celltype, int degree,
     assert(_x.size() == _M.size());
     for (std::size_t i = 0; i < _x.size(); ++i)
     {
-      x[1].emplace_back(_x[i], xshape[0], xshape[1]);
-      M[1].emplace_back(_M[i], Mshape[0], Mshape[1], Mshape[2], Mshape[3]);
+      x[1].emplace_back(xshape, _x[i]);
+      M[1].emplace_back(Mshape, _M[i]);
     }
   }
   else
@@ -1032,8 +1033,8 @@ FiniteElement<T> element::create_serendipity(cell::type celltype, int degree,
       assert(_x.size() == _M.size());
       for (std::size_t i = 0; i < _x.size(); ++i)
       {
-        x[2].emplace_back(_x[i], xshape[0], xshape[1]);
-        M[2].emplace_back(_M[i], Mshape[0], Mshape[1], Mshape[2], Mshape[3]);
+        x[2].emplace_back(xshape, _x[i]);
+        M[2].emplace_back(Mshape, _M[i]);
       }
     }
     else
@@ -1055,8 +1056,8 @@ FiniteElement<T> element::create_serendipity(cell::type celltype, int degree,
       assert(_x.size() == _M.size());
       for (std::size_t i = 0; i < _x.size(); ++i)
       {
-        x[3].emplace_back(_x[i], xshape[0], xshape[1]);
-        M[3].emplace_back(_M[i], Mshape[0], Mshape[1], Mshape[2], Mshape[3]);
+        x[3].emplace_back(xshape, _x[i]);
+        M[3].emplace_back(Mshape, _M[i]);
       }
     }
     else
@@ -1193,7 +1194,8 @@ FiniteElement<T> element::create_dpc(cell::type celltype, int degree,
     M[i] = std::vector(num_ent, impl::mdarray_t<T, 4>(0, 1, 0, 1));
   }
 
-  auto& _M = M[tdim].emplace_back(ndofs, 1, ndofs, 1);
+  auto& _M
+      = M[tdim].emplace_back(std::array<std::size_t, 4>{ndofs, 1, ndofs, 1}, 0);
   for (std::size_t i = 0; i < _M.extent(0); ++i)
     _M(i, 0, i, 0) = 1.0;
 
@@ -1246,9 +1248,8 @@ FiniteElement<T> element::create_serendipity_div(
     assert(_x.size() == _M.size());
     for (std::size_t i = 0; i < _x.size(); ++i)
     {
-      x[tdim - 1].emplace_back(_x[i], xshape[0], xshape[1]);
-      M[tdim - 1].emplace_back(_M[i], Mshape[0], Mshape[1], Mshape[2],
-                               Mshape[3]);
+      x[tdim - 1].emplace_back(xshape, _x[i]);
+      M[tdim - 1].emplace_back(Mshape, _M[i]);
     }
   }
 
@@ -1262,8 +1263,8 @@ FiniteElement<T> element::create_serendipity_div(
     assert(_x.size() == _M.size());
     for (std::size_t i = 0; i < _x.size(); ++i)
     {
-      x[tdim].emplace_back(_x[i], xshape[0], xshape[1]);
-      M[tdim].emplace_back(_M[i], Mshape[0], Mshape[1], Mshape[2], Mshape[3]);
+      x[tdim].emplace_back(xshape, _x[i]);
+      M[tdim].emplace_back(Mshape, _M[i]);
     }
   }
   else
@@ -1372,8 +1373,8 @@ FiniteElement<T> element::create_serendipity_curl(
     assert(_x.size() == _M.size());
     for (std::size_t i = 0; i < _x.size(); ++i)
     {
-      x[1].emplace_back(_x[i], xshape[0], xshape[1]);
-      M[1].emplace_back(_M[i], Mshape[0], Mshape[1], Mshape[2], Mshape[3]);
+      x[1].emplace_back(xshape, _x[i]);
+      M[1].emplace_back(Mshape, _M[i]);
     }
   }
 
@@ -1387,8 +1388,8 @@ FiniteElement<T> element::create_serendipity_curl(
     assert(_x.size() == _M.size());
     for (std::size_t i = 0; i < _x.size(); ++i)
     {
-      x[2].emplace_back(_x[i], xshape[0], xshape[1]);
-      M[2].emplace_back(_M[i], Mshape[0], Mshape[1], Mshape[2], Mshape[3]);
+      x[2].emplace_back(xshape, _x[i]);
+      M[2].emplace_back(Mshape, _M[i]);
     }
   }
   else
@@ -1410,8 +1411,8 @@ FiniteElement<T> element::create_serendipity_curl(
       assert(_x.size() == _M.size());
       for (std::size_t i = 0; i < _x.size(); ++i)
       {
-        x[3].emplace_back(_x[i], xshape[0], xshape[1]);
-        M[3].emplace_back(_M[i], Mshape[0], Mshape[1], Mshape[2], Mshape[3]);
+        x[3].emplace_back(xshape, _x[i]);
+        M[3].emplace_back(Mshape, _M[i]);
       }
     }
     else

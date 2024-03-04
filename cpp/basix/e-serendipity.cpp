@@ -694,7 +694,7 @@ FiniteElement<T> create_legendre_dpc(cell::type celltype, int degree,
 
   x[tdim].emplace_back(pts.extents(), _pts);
   auto& _M = M[tdim].emplace_back(
-      std::array<std::size_t, 4>{ndofs, 1, pts.extent(0), 1});
+      std::array<std::size_t, 4>{ndofs, 1, pts.extent(0), 1}, 0);
 
   impl::mdarray_t<T, 2> wcoeffs(ndofs, psize);
   if (celltype == cell::type::quadrilateral)

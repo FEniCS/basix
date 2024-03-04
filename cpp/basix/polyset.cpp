@@ -1720,9 +1720,9 @@ void tabulate_polyset_triangle_derivs(
 
         if (p > 1)
         {
-          auto p2
-              = MDSPAN_IMPL_STANDARD_NAMESPACE::submdspan(P, idx(kx, ky), idx(0, p - 2),
-                                 MDSPAN_IMPL_STANDARD_NAMESPACE::full_extent);
+          auto p2 = MDSPAN_IMPL_STANDARD_NAMESPACE::submdspan(
+              P, idx(kx, ky), idx(0, p - 2),
+              MDSPAN_IMPL_STANDARD_NAMESPACE::full_extent);
 
           // y^2 terms
           for (std::size_t i = 0; i < p0.extent(0); ++i)
@@ -1733,18 +1733,18 @@ void tabulate_polyset_triangle_derivs(
 
           if (ky > 0)
           {
-            auto p2y
-                = MDSPAN_IMPL_STANDARD_NAMESPACE::submdspan(P, idx(kx, ky - 1), idx(0, p - 2),
-                                   MDSPAN_IMPL_STANDARD_NAMESPACE::full_extent);
+            auto p2y = MDSPAN_IMPL_STANDARD_NAMESPACE::submdspan(
+                P, idx(kx, ky - 1), idx(0, p - 2),
+                MDSPAN_IMPL_STANDARD_NAMESPACE::full_extent);
             for (std::size_t i = 0; i < p0.extent(0); ++i)
               p0[i] -= ky * ((x1[i] * 2.0 - 1.0) - 1.0) * p2y[i] * (a - 1.0);
           }
 
           if (ky > 1)
           {
-            auto p2y2
-                = MDSPAN_IMPL_STANDARD_NAMESPACE::submdspan(P, idx(kx, ky - 2), idx(0, p - 2),
-                                   MDSPAN_IMPL_STANDARD_NAMESPACE::full_extent);
+            auto p2y2 = MDSPAN_IMPL_STANDARD_NAMESPACE::submdspan(
+                P, idx(kx, ky - 2), idx(0, p - 2),
+                MDSPAN_IMPL_STANDARD_NAMESPACE::full_extent);
             for (std::size_t i = 0; i < p0.extent(0); ++i)
               p0[i] -= ky * (ky - 1) * p2y2[i] * (a - 1.0);
           }
@@ -1753,18 +1753,20 @@ void tabulate_polyset_triangle_derivs(
 
       for (std::size_t p = 0; p < n; ++p)
       {
-        auto p0 = MDSPAN_IMPL_STANDARD_NAMESPACE::submdspan(P, idx(kx, ky), idx(0, p),
-                                   MDSPAN_IMPL_STANDARD_NAMESPACE::full_extent);
-        auto p1 = MDSPAN_IMPL_STANDARD_NAMESPACE::submdspan(P, idx(kx, ky), idx(1, p),
-                                   MDSPAN_IMPL_STANDARD_NAMESPACE::full_extent);
+        auto p0 = MDSPAN_IMPL_STANDARD_NAMESPACE::submdspan(
+            P, idx(kx, ky), idx(0, p),
+            MDSPAN_IMPL_STANDARD_NAMESPACE::full_extent);
+        auto p1 = MDSPAN_IMPL_STANDARD_NAMESPACE::submdspan(
+            P, idx(kx, ky), idx(1, p),
+            MDSPAN_IMPL_STANDARD_NAMESPACE::full_extent);
         for (std::size_t i = 0; i < p1.extent(0); ++i)
           p1[i] = p0[i] * ((x1[i] * 2.0 - 1.0) * (1.5 + p) + 0.5 + p);
 
         if (ky > 0)
         {
-          auto py
-              = MDSPAN_IMPL_STANDARD_NAMESPACE::submdspan(P, idx(kx, ky - 1), idx(0, p),
-                                 MDSPAN_IMPL_STANDARD_NAMESPACE::full_extent);
+          auto py = MDSPAN_IMPL_STANDARD_NAMESPACE::submdspan(
+              P, idx(kx, ky - 1), idx(0, p),
+              MDSPAN_IMPL_STANDARD_NAMESPACE::full_extent);
           for (std::size_t i = 0; i < p1.size(); ++i)
             p1[i] += 2 * ky * (1.5 + p) * py[i];
         }
@@ -1772,23 +1774,23 @@ void tabulate_polyset_triangle_derivs(
         for (std::size_t q = 1; q < n - p; ++q)
         {
           const auto [a1, a2, a3] = jrc<T>(2 * p + 1, q);
-          auto pqp1
-              = MDSPAN_IMPL_STANDARD_NAMESPACE::submdspan(P, idx(kx, ky), idx(q + 1, p),
-                                 MDSPAN_IMPL_STANDARD_NAMESPACE::full_extent);
-          auto pqm1
-              = MDSPAN_IMPL_STANDARD_NAMESPACE::submdspan(P, idx(kx, ky), idx(q - 1, p),
-                                 MDSPAN_IMPL_STANDARD_NAMESPACE::full_extent);
-          auto pq
-              = MDSPAN_IMPL_STANDARD_NAMESPACE::submdspan(P, idx(kx, ky), idx(q, p),
-                                 MDSPAN_IMPL_STANDARD_NAMESPACE::full_extent);
+          auto pqp1 = MDSPAN_IMPL_STANDARD_NAMESPACE::submdspan(
+              P, idx(kx, ky), idx(q + 1, p),
+              MDSPAN_IMPL_STANDARD_NAMESPACE::full_extent);
+          auto pqm1 = MDSPAN_IMPL_STANDARD_NAMESPACE::submdspan(
+              P, idx(kx, ky), idx(q - 1, p),
+              MDSPAN_IMPL_STANDARD_NAMESPACE::full_extent);
+          auto pq = MDSPAN_IMPL_STANDARD_NAMESPACE::submdspan(
+              P, idx(kx, ky), idx(q, p),
+              MDSPAN_IMPL_STANDARD_NAMESPACE::full_extent);
 
           for (std::size_t i = 0; i < pqp1.extent(0); ++i)
             pqp1[i] = pq[i] * ((x1[i] * 2.0 - 1.0) * a1 + a2) - pqm1[i] * a3;
           if (ky > 0)
           {
-            auto py
-                = MDSPAN_IMPL_STANDARD_NAMESPACE::submdspan(P, idx(kx, ky - 1), idx(q, p),
-                                   MDSPAN_IMPL_STANDARD_NAMESPACE::full_extent);
+            auto py = MDSPAN_IMPL_STANDARD_NAMESPACE::submdspan(
+                P, idx(kx, ky - 1), idx(q, p),
+                MDSPAN_IMPL_STANDARD_NAMESPACE::full_extent);
             for (std::size_t i = 0; i < pqp1.extent(0); ++i)
               pqp1[i] += 2 * ky * a1 * py[i];
           }
@@ -1830,9 +1832,12 @@ void tabulate_polyset_tetrahedron_derivs(
   assert(P.extent(1) == (n + 1) * (n + 2) * (n + 3) / 6);
   assert(P.extent(2) == x.extent(0));
 
-  auto x0 = MDSPAN_IMPL_STANDARD_NAMESPACE::submdspan(x, MDSPAN_IMPL_STANDARD_NAMESPACE::full_extent, 0);
-  auto x1 = MDSPAN_IMPL_STANDARD_NAMESPACE::submdspan(x, MDSPAN_IMPL_STANDARD_NAMESPACE::full_extent, 1);
-  auto x2 = MDSPAN_IMPL_STANDARD_NAMESPACE::submdspan(x, MDSPAN_IMPL_STANDARD_NAMESPACE::full_extent, 2);
+  auto x0 = MDSPAN_IMPL_STANDARD_NAMESPACE::submdspan(
+      x, MDSPAN_IMPL_STANDARD_NAMESPACE::full_extent, 0);
+  auto x1 = MDSPAN_IMPL_STANDARD_NAMESPACE::submdspan(
+      x, MDSPAN_IMPL_STANDARD_NAMESPACE::full_extent, 1);
+  auto x2 = MDSPAN_IMPL_STANDARD_NAMESPACE::submdspan(
+      x, MDSPAN_IMPL_STANDARD_NAMESPACE::full_extent, 2);
 
   // Traverse derivatives in increasing order
   std::fill(P.data_handle(), P.data_handle() + P.size(), 0.0);
@@ -1854,12 +1859,12 @@ void tabulate_polyset_tetrahedron_derivs(
       {
         for (std::size_t p = 1; p <= n; ++p)
         {
-          auto p00
-              = MDSPAN_IMPL_STANDARD_NAMESPACE::submdspan(P, idx(kx, ky, kz), idx(0, 0, p),
-                                 MDSPAN_IMPL_STANDARD_NAMESPACE::full_extent);
-          auto p0m1
-              = MDSPAN_IMPL_STANDARD_NAMESPACE::submdspan(P, idx(kx, ky, kz), idx(0, 0, p - 1),
-                                 MDSPAN_IMPL_STANDARD_NAMESPACE::full_extent);
+          auto p00 = MDSPAN_IMPL_STANDARD_NAMESPACE::submdspan(
+              P, idx(kx, ky, kz), idx(0, 0, p),
+              MDSPAN_IMPL_STANDARD_NAMESPACE::full_extent);
+          auto p0m1 = MDSPAN_IMPL_STANDARD_NAMESPACE::submdspan(
+              P, idx(kx, ky, kz), idx(0, 0, p - 1),
+              MDSPAN_IMPL_STANDARD_NAMESPACE::full_extent);
           T a = static_cast<T>(2 * p - 1) / static_cast<T>(p);
           for (std::size_t i = 0; i < p00.size(); ++i)
           {
@@ -1870,36 +1875,36 @@ void tabulate_polyset_tetrahedron_derivs(
 
           if (kx > 0)
           {
-            auto p0m1x
-                = MDSPAN_IMPL_STANDARD_NAMESPACE::submdspan(P, idx(kx - 1, ky, kz), idx(0, 0, p - 1),
-                                   MDSPAN_IMPL_STANDARD_NAMESPACE::full_extent);
+            auto p0m1x = MDSPAN_IMPL_STANDARD_NAMESPACE::submdspan(
+                P, idx(kx - 1, ky, kz), idx(0, 0, p - 1),
+                MDSPAN_IMPL_STANDARD_NAMESPACE::full_extent);
             for (std::size_t i = 0; i < p00.size(); ++i)
               p00[i] += 2 * kx * a * p0m1x[i];
           }
 
           if (ky > 0)
           {
-            auto p0m1y
-                = MDSPAN_IMPL_STANDARD_NAMESPACE::submdspan(P, idx(kx, ky - 1, kz), idx(0, 0, p - 1),
-                                   MDSPAN_IMPL_STANDARD_NAMESPACE::full_extent);
+            auto p0m1y = MDSPAN_IMPL_STANDARD_NAMESPACE::submdspan(
+                P, idx(kx, ky - 1, kz), idx(0, 0, p - 1),
+                MDSPAN_IMPL_STANDARD_NAMESPACE::full_extent);
             for (std::size_t i = 0; i < p00.size(); ++i)
               p00[i] += ky * a * p0m1y[i];
           }
 
           if (kz > 0)
           {
-            auto p0m1z
-                = MDSPAN_IMPL_STANDARD_NAMESPACE::submdspan(P, idx(kx, ky, kz - 1), idx(0, 0, p - 1),
-                                   MDSPAN_IMPL_STANDARD_NAMESPACE::full_extent);
+            auto p0m1z = MDSPAN_IMPL_STANDARD_NAMESPACE::submdspan(
+                P, idx(kx, ky, kz - 1), idx(0, 0, p - 1),
+                MDSPAN_IMPL_STANDARD_NAMESPACE::full_extent);
             for (std::size_t i = 0; i < p00.size(); ++i)
               p00[i] += kz * a * p0m1z[i];
           }
 
           if (p > 1)
           {
-            auto p0m2
-                = MDSPAN_IMPL_STANDARD_NAMESPACE::submdspan(P, idx(kx, ky, kz), idx(0, 0, p - 2),
-                                   MDSPAN_IMPL_STANDARD_NAMESPACE::full_extent);
+            auto p0m2 = MDSPAN_IMPL_STANDARD_NAMESPACE::submdspan(
+                P, idx(kx, ky, kz), idx(0, 0, p - 2),
+                MDSPAN_IMPL_STANDARD_NAMESPACE::full_extent);
             for (std::size_t i = 0; i < p00.size(); ++i)
             {
               T f2 = x1[i] + x2[i] - 1.0;
@@ -1958,12 +1963,12 @@ void tabulate_polyset_tetrahedron_derivs(
 
         for (std::size_t p = 0; p < n; ++p)
         {
-          auto p10
-              = MDSPAN_IMPL_STANDARD_NAMESPACE::submdspan(P, idx(kx, ky, kz), idx(0, 1, p),
-                                 MDSPAN_IMPL_STANDARD_NAMESPACE::full_extent);
-          auto p00
-              = MDSPAN_IMPL_STANDARD_NAMESPACE::submdspan(P, idx(kx, ky, kz), idx(0, 0, p),
-                                 MDSPAN_IMPL_STANDARD_NAMESPACE::full_extent);
+          auto p10 = MDSPAN_IMPL_STANDARD_NAMESPACE::submdspan(
+              P, idx(kx, ky, kz), idx(0, 1, p),
+              MDSPAN_IMPL_STANDARD_NAMESPACE::full_extent);
+          auto p00 = MDSPAN_IMPL_STANDARD_NAMESPACE::submdspan(
+              P, idx(kx, ky, kz), idx(0, 0, p),
+              MDSPAN_IMPL_STANDARD_NAMESPACE::full_extent);
           for (std::size_t i = 0; i < p10.size(); ++i)
             p10[i]
                 = p00[i]
@@ -1972,18 +1977,18 @@ void tabulate_polyset_tetrahedron_derivs(
                            * 0.5);
           if (ky > 0)
           {
-            auto p0y
-                = MDSPAN_IMPL_STANDARD_NAMESPACE::submdspan(P, idx(kx, ky - 1, kz), idx(0, 0, p),
-                                   MDSPAN_IMPL_STANDARD_NAMESPACE::full_extent);
+            auto p0y = MDSPAN_IMPL_STANDARD_NAMESPACE::submdspan(
+                P, idx(kx, ky - 1, kz), idx(0, 0, p),
+                MDSPAN_IMPL_STANDARD_NAMESPACE::full_extent);
             for (std::size_t i = 0; i < p10.size(); ++i)
               p10[i] += 2 * ky * p0y[i] * (1.5 + p);
           }
 
           if (kz > 0)
           {
-            auto p0z
-                = MDSPAN_IMPL_STANDARD_NAMESPACE::submdspan(P, idx(kx, ky, kz - 1), idx(0, 0, p),
-                                   MDSPAN_IMPL_STANDARD_NAMESPACE::full_extent);
+            auto p0z = MDSPAN_IMPL_STANDARD_NAMESPACE::submdspan(
+                P, idx(kx, ky, kz - 1), idx(0, 0, p),
+                MDSPAN_IMPL_STANDARD_NAMESPACE::full_extent);
             for (std::size_t i = 0; i < p10.size(); ++i)
               p10[i] += kz * p0z[i];
           }
@@ -1991,15 +1996,15 @@ void tabulate_polyset_tetrahedron_derivs(
           for (std::size_t q = 1; q < n - p; ++q)
           {
             auto [aq, bq, cq] = jrc<T>(2 * p + 1, q);
-            auto pq1
-                = MDSPAN_IMPL_STANDARD_NAMESPACE::submdspan(P, idx(kx, ky, kz), idx(0, q + 1, p),
-                                   MDSPAN_IMPL_STANDARD_NAMESPACE::full_extent);
-            auto pq
-                = MDSPAN_IMPL_STANDARD_NAMESPACE::submdspan(P, idx(kx, ky, kz), idx(0, q, p),
-                                   MDSPAN_IMPL_STANDARD_NAMESPACE::full_extent);
-            auto pqm1
-                = MDSPAN_IMPL_STANDARD_NAMESPACE::submdspan(P, idx(kx, ky, kz), idx(0, q - 1, p),
-                                   MDSPAN_IMPL_STANDARD_NAMESPACE::full_extent);
+            auto pq1 = MDSPAN_IMPL_STANDARD_NAMESPACE::submdspan(
+                P, idx(kx, ky, kz), idx(0, q + 1, p),
+                MDSPAN_IMPL_STANDARD_NAMESPACE::full_extent);
+            auto pq = MDSPAN_IMPL_STANDARD_NAMESPACE::submdspan(
+                P, idx(kx, ky, kz), idx(0, q, p),
+                MDSPAN_IMPL_STANDARD_NAMESPACE::full_extent);
+            auto pqm1 = MDSPAN_IMPL_STANDARD_NAMESPACE::submdspan(
+                P, idx(kx, ky, kz), idx(0, q - 1, p),
+                MDSPAN_IMPL_STANDARD_NAMESPACE::full_extent);
             for (std::size_t i = 0; i < pq1.size(); ++i)
             {
               T f4 = 1.0 - x2[i];
@@ -2046,12 +2051,12 @@ void tabulate_polyset_tetrahedron_derivs(
         {
           for (std::size_t q = 0; q < n - p; ++q)
           {
-            auto pq
-                = MDSPAN_IMPL_STANDARD_NAMESPACE::submdspan(P, idx(kx, ky, kz), idx(1, q, p),
-                                   MDSPAN_IMPL_STANDARD_NAMESPACE::full_extent);
-            auto pq0
-                = MDSPAN_IMPL_STANDARD_NAMESPACE::submdspan(P, idx(kx, ky, kz), idx(0, q, p),
-                                   MDSPAN_IMPL_STANDARD_NAMESPACE::full_extent);
+            auto pq = MDSPAN_IMPL_STANDARD_NAMESPACE::submdspan(
+                P, idx(kx, ky, kz), idx(1, q, p),
+                MDSPAN_IMPL_STANDARD_NAMESPACE::full_extent);
+            auto pq0 = MDSPAN_IMPL_STANDARD_NAMESPACE::submdspan(
+                P, idx(kx, ky, kz), idx(0, q, p),
+                MDSPAN_IMPL_STANDARD_NAMESPACE::full_extent);
             for (std::size_t i = 0; i < pq.size(); ++i)
             {
               pq[i] = pq0[i]
@@ -2150,12 +2155,12 @@ void tabulate_polyset_pyramid_derivs(
     return r0 + p * rv + q;
   };
 
-  const auto x0
-      = MDSPAN_IMPL_STANDARD_NAMESPACE::submdspan(x, MDSPAN_IMPL_STANDARD_NAMESPACE::full_extent, 0);
-  const auto x1
-      = MDSPAN_IMPL_STANDARD_NAMESPACE::submdspan(x, MDSPAN_IMPL_STANDARD_NAMESPACE::full_extent, 1);
-  const auto x2
-      = MDSPAN_IMPL_STANDARD_NAMESPACE::submdspan(x, MDSPAN_IMPL_STANDARD_NAMESPACE::full_extent, 2);
+  const auto x0 = MDSPAN_IMPL_STANDARD_NAMESPACE::submdspan(
+      x, MDSPAN_IMPL_STANDARD_NAMESPACE::full_extent, 0);
+  const auto x1 = MDSPAN_IMPL_STANDARD_NAMESPACE::submdspan(
+      x, MDSPAN_IMPL_STANDARD_NAMESPACE::full_extent, 1);
+  const auto x2 = MDSPAN_IMPL_STANDARD_NAMESPACE::submdspan(
+      x, MDSPAN_IMPL_STANDARD_NAMESPACE::full_extent, 2);
 
   // Traverse derivatives in increasing order
   std::fill(P.data_handle(), P.data_handle() + P.size(), 0.0);
@@ -2185,12 +2190,12 @@ void tabulate_polyset_pyramid_derivs(
           if (p > 0)
           {
             const T a = static_cast<T>(p - 1) / static_cast<T>(p);
-            auto p00
-                = MDSPAN_IMPL_STANDARD_NAMESPACE::submdspan(P, idx(kx, ky, kz), pyr_idx(p, 0, 0),
-                                   MDSPAN_IMPL_STANDARD_NAMESPACE::full_extent);
-            auto p1
-                = MDSPAN_IMPL_STANDARD_NAMESPACE::submdspan(P, idx(kx, ky, kz), pyr_idx(p - 1, 0, 0),
-                                   MDSPAN_IMPL_STANDARD_NAMESPACE::full_extent);
+            auto p00 = MDSPAN_IMPL_STANDARD_NAMESPACE::submdspan(
+                P, idx(kx, ky, kz), pyr_idx(p, 0, 0),
+                MDSPAN_IMPL_STANDARD_NAMESPACE::full_extent);
+            auto p1 = MDSPAN_IMPL_STANDARD_NAMESPACE::submdspan(
+                P, idx(kx, ky, kz), pyr_idx(p - 1, 0, 0),
+                MDSPAN_IMPL_STANDARD_NAMESPACE::full_extent);
             for (std::size_t i = 0; i < p00.size(); ++i)
               p00[i] = (0.5 + (x0[i] * 2.0 - 1.0) + (x2[i] * 2.0 - 1.0) * 0.5)
                        * p1[i] * (a + 1.0);
@@ -2250,13 +2255,13 @@ void tabulate_polyset_pyramid_derivs(
           for (std::size_t q = 1; q < n + 1; ++q)
           {
             const T a = static_cast<T>(q - 1) / static_cast<T>(q);
-            auto r_pq
-                = MDSPAN_IMPL_STANDARD_NAMESPACE::submdspan(P, idx(kx, ky, kz), pyr_idx(p, q, 0),
-                                   MDSPAN_IMPL_STANDARD_NAMESPACE::full_extent);
+            auto r_pq = MDSPAN_IMPL_STANDARD_NAMESPACE::submdspan(
+                P, idx(kx, ky, kz), pyr_idx(p, q, 0),
+                MDSPAN_IMPL_STANDARD_NAMESPACE::full_extent);
 
-            auto _p
-                = MDSPAN_IMPL_STANDARD_NAMESPACE::submdspan(P, idx(kx, ky, kz), pyr_idx(p, q - 1, 0),
-                                   MDSPAN_IMPL_STANDARD_NAMESPACE::full_extent);
+            auto _p = MDSPAN_IMPL_STANDARD_NAMESPACE::submdspan(
+                P, idx(kx, ky, kz), pyr_idx(p, q - 1, 0),
+                MDSPAN_IMPL_STANDARD_NAMESPACE::full_extent);
             for (std::size_t i = 0; i < r_pq.size(); ++i)
             {
               r_pq[i] = (0.5 + (x1[i] * 2.0 - 1.0) + (x2[i] * 2.0 - 1.0) * 0.5)
@@ -2318,13 +2323,13 @@ void tabulate_polyset_pyramid_derivs(
         {
           for (std::size_t q = 0; q < n; ++q)
           {
-            auto r_pq1
-                = MDSPAN_IMPL_STANDARD_NAMESPACE::submdspan(P, idx(kx, ky, kz), pyr_idx(p, q, 1),
-                                   MDSPAN_IMPL_STANDARD_NAMESPACE::full_extent);
+            auto r_pq1 = MDSPAN_IMPL_STANDARD_NAMESPACE::submdspan(
+                P, idx(kx, ky, kz), pyr_idx(p, q, 1),
+                MDSPAN_IMPL_STANDARD_NAMESPACE::full_extent);
 
-            auto r_pq0
-                = MDSPAN_IMPL_STANDARD_NAMESPACE::submdspan(P, idx(kx, ky, kz), pyr_idx(p, q, 0),
-                                   MDSPAN_IMPL_STANDARD_NAMESPACE::full_extent);
+            auto r_pq0 = MDSPAN_IMPL_STANDARD_NAMESPACE::submdspan(
+                P, idx(kx, ky, kz), pyr_idx(p, q, 0),
+                MDSPAN_IMPL_STANDARD_NAMESPACE::full_extent);
             for (std::size_t i = 0; i < r_pq1.size(); ++i)
             {
               r_pq1[i]
@@ -2418,10 +2423,10 @@ void tabulate_polyset_quad_derivs(
   { return (n + 1) * px + py; };
 
   // Compute 1D basis
-  auto x0
-      = MDSPAN_IMPL_STANDARD_NAMESPACE::submdspan(x, MDSPAN_IMPL_STANDARD_NAMESPACE::full_extent, 0);
-  auto x1
-      = MDSPAN_IMPL_STANDARD_NAMESPACE::submdspan(x, MDSPAN_IMPL_STANDARD_NAMESPACE::full_extent, 1);
+  auto x0 = MDSPAN_IMPL_STANDARD_NAMESPACE::submdspan(
+      x, MDSPAN_IMPL_STANDARD_NAMESPACE::full_extent, 0);
+  auto x1 = MDSPAN_IMPL_STANDARD_NAMESPACE::submdspan(
+      x, MDSPAN_IMPL_STANDARD_NAMESPACE::full_extent, 1);
 
   assert(x0.extent(0) > 0);
   assert(x1.extent(0) > 0);
@@ -2435,9 +2440,9 @@ void tabulate_polyset_quad_derivs(
     return;
 
   { // scope
-    auto result = MDSPAN_IMPL_STANDARD_NAMESPACE::submdspan(P, idx(0, 0),
-                                   MDSPAN_IMPL_STANDARD_NAMESPACE::full_extent,
-                                   MDSPAN_IMPL_STANDARD_NAMESPACE::full_extent);
+    auto result = MDSPAN_IMPL_STANDARD_NAMESPACE::submdspan(
+        P, idx(0, 0), MDSPAN_IMPL_STANDARD_NAMESPACE::full_extent,
+        MDSPAN_IMPL_STANDARD_NAMESPACE::full_extent);
     for (std::size_t i = 0; i < result.extent(1); ++i)
     {
       result(quad_idx(0, 1), i)
@@ -2458,9 +2463,9 @@ void tabulate_polyset_quad_derivs(
   for (std::size_t ky = 1; ky <= nderiv; ++ky)
   {
     // Get reference to this derivative
-    auto result = MDSPAN_IMPL_STANDARD_NAMESPACE::submdspan(P, idx(0, ky),
-                                   MDSPAN_IMPL_STANDARD_NAMESPACE::full_extent,
-                                   MDSPAN_IMPL_STANDARD_NAMESPACE::full_extent);
+    auto result = MDSPAN_IMPL_STANDARD_NAMESPACE::submdspan(
+        P, idx(0, ky), MDSPAN_IMPL_STANDARD_NAMESPACE::full_extent,
+        MDSPAN_IMPL_STANDARD_NAMESPACE::full_extent);
     auto result0 = MDSPAN_IMPL_STANDARD_NAMESPACE::submdspan(
         P, idx(0, ky - 1), MDSPAN_IMPL_STANDARD_NAMESPACE::full_extent,
         MDSPAN_IMPL_STANDARD_NAMESPACE::full_extent);
@@ -2487,9 +2492,9 @@ void tabulate_polyset_quad_derivs(
   // Take tensor product with another interval
   for (std::size_t ky = 0; ky <= nderiv; ++ky)
   {
-    auto result = MDSPAN_IMPL_STANDARD_NAMESPACE::submdspan(P, idx(0, ky),
-                                   MDSPAN_IMPL_STANDARD_NAMESPACE::full_extent,
-                                   MDSPAN_IMPL_STANDARD_NAMESPACE::full_extent);
+    auto result = MDSPAN_IMPL_STANDARD_NAMESPACE::submdspan(
+        P, idx(0, ky), MDSPAN_IMPL_STANDARD_NAMESPACE::full_extent,
+        MDSPAN_IMPL_STANDARD_NAMESPACE::full_extent);
     for (std::size_t py = 0; py <= n; ++py)
     {
       for (std::size_t i = 0; i < result.extent(1); ++i)
@@ -2604,12 +2609,12 @@ void tabulate_polyset_hex_derivs(
   { return (n + 1) * (n + 1) * px + (n + 1) * py + pz; };
 
   // Compute 1D basis
-  auto x0
-      = MDSPAN_IMPL_STANDARD_NAMESPACE::submdspan(x, MDSPAN_IMPL_STANDARD_NAMESPACE::full_extent, 0);
-  auto x1
-      = MDSPAN_IMPL_STANDARD_NAMESPACE::submdspan(x, MDSPAN_IMPL_STANDARD_NAMESPACE::full_extent, 1);
-  auto x2
-      = MDSPAN_IMPL_STANDARD_NAMESPACE::submdspan(x, MDSPAN_IMPL_STANDARD_NAMESPACE::full_extent, 2);
+  auto x0 = MDSPAN_IMPL_STANDARD_NAMESPACE::submdspan(
+      x, MDSPAN_IMPL_STANDARD_NAMESPACE::full_extent, 0);
+  auto x1 = MDSPAN_IMPL_STANDARD_NAMESPACE::submdspan(
+      x, MDSPAN_IMPL_STANDARD_NAMESPACE::full_extent, 1);
+  auto x2 = MDSPAN_IMPL_STANDARD_NAMESPACE::submdspan(
+      x, MDSPAN_IMPL_STANDARD_NAMESPACE::full_extent, 2);
   assert(x0.extent(0) > 0);
   assert(x1.extent(0) > 0);
   assert(x2.extent(0) > 0);
@@ -2624,9 +2629,9 @@ void tabulate_polyset_hex_derivs(
   // Tabulate interval for px=py=0
   // For kz = 0
   { // scope
-    auto result = MDSPAN_IMPL_STANDARD_NAMESPACE::submdspan(P, idx(0, 0, 0),
-                                   MDSPAN_IMPL_STANDARD_NAMESPACE::full_extent,
-                                   MDSPAN_IMPL_STANDARD_NAMESPACE::full_extent);
+    auto result = MDSPAN_IMPL_STANDARD_NAMESPACE::submdspan(
+        P, idx(0, 0, 0), MDSPAN_IMPL_STANDARD_NAMESPACE::full_extent,
+        MDSPAN_IMPL_STANDARD_NAMESPACE::full_extent);
     // for pz = 1
     for (std::size_t i = 0; i < result.extent(1); ++i)
     {
@@ -2651,9 +2656,9 @@ void tabulate_polyset_hex_derivs(
   for (std::size_t kz = 1; kz <= nderiv; ++kz)
   {
     // Get reference to this derivative
-    auto result = MDSPAN_IMPL_STANDARD_NAMESPACE::submdspan(P, idx(0, 0, kz),
-                                   MDSPAN_IMPL_STANDARD_NAMESPACE::full_extent,
-                                   MDSPAN_IMPL_STANDARD_NAMESPACE::full_extent);
+    auto result = MDSPAN_IMPL_STANDARD_NAMESPACE::submdspan(
+        P, idx(0, 0, kz), MDSPAN_IMPL_STANDARD_NAMESPACE::full_extent,
+        MDSPAN_IMPL_STANDARD_NAMESPACE::full_extent);
     auto result0 = MDSPAN_IMPL_STANDARD_NAMESPACE::submdspan(
         P, idx(0, 0, kz - 1), MDSPAN_IMPL_STANDARD_NAMESPACE::full_extent,
         MDSPAN_IMPL_STANDARD_NAMESPACE::full_extent);
@@ -2684,9 +2689,9 @@ void tabulate_polyset_hex_derivs(
   // for py = 1
   for (std::size_t kz = 0; kz <= nderiv; ++kz)
   {
-    auto result = MDSPAN_IMPL_STANDARD_NAMESPACE::submdspan(P, idx(0, 0, kz),
-                                   MDSPAN_IMPL_STANDARD_NAMESPACE::full_extent,
-                                   MDSPAN_IMPL_STANDARD_NAMESPACE::full_extent);
+    auto result = MDSPAN_IMPL_STANDARD_NAMESPACE::submdspan(
+        P, idx(0, 0, kz), MDSPAN_IMPL_STANDARD_NAMESPACE::full_extent,
+        MDSPAN_IMPL_STANDARD_NAMESPACE::full_extent);
     for (std::size_t pz = 0; pz <= n; ++pz)
     {
       for (std::size_t i = 0; i < result.extent(1); ++i)
@@ -2831,10 +2836,10 @@ void tabulate_polyset_hex_derivs(
           auto result = MDSPAN_IMPL_STANDARD_NAMESPACE::submdspan(
               P, idx(kx, ky, kz), MDSPAN_IMPL_STANDARD_NAMESPACE::full_extent,
               MDSPAN_IMPL_STANDARD_NAMESPACE::full_extent);
-          auto result0
-              = MDSPAN_IMPL_STANDARD_NAMESPACE::submdspan(P, idx(kx - 1, ky, kz),
-                                 MDSPAN_IMPL_STANDARD_NAMESPACE::full_extent,
-                                 MDSPAN_IMPL_STANDARD_NAMESPACE::full_extent);
+          auto result0 = MDSPAN_IMPL_STANDARD_NAMESPACE::submdspan(
+              P, idx(kx - 1, ky, kz),
+              MDSPAN_IMPL_STANDARD_NAMESPACE::full_extent,
+              MDSPAN_IMPL_STANDARD_NAMESPACE::full_extent);
           for (std::size_t py = 0; py <= n; ++py)
           {
             for (std::size_t pz = 0; pz <= n; ++pz)
@@ -2862,10 +2867,10 @@ void tabulate_polyset_hex_derivs(
           auto result = MDSPAN_IMPL_STANDARD_NAMESPACE::submdspan(
               P, idx(kx, ky, kz), MDSPAN_IMPL_STANDARD_NAMESPACE::full_extent,
               MDSPAN_IMPL_STANDARD_NAMESPACE::full_extent);
-          auto result0
-              = MDSPAN_IMPL_STANDARD_NAMESPACE::submdspan(P, idx(kx - 1, ky, kz),
-                                 MDSPAN_IMPL_STANDARD_NAMESPACE::full_extent,
-                                 MDSPAN_IMPL_STANDARD_NAMESPACE::full_extent);
+          auto result0 = MDSPAN_IMPL_STANDARD_NAMESPACE::submdspan(
+              P, idx(kx - 1, ky, kz),
+              MDSPAN_IMPL_STANDARD_NAMESPACE::full_extent,
+              MDSPAN_IMPL_STANDARD_NAMESPACE::full_extent);
           for (std::size_t py = 0; py <= n; ++py)
           {
             for (std::size_t pz = 0; pz <= n; ++pz)
@@ -2918,12 +2923,12 @@ void tabulate_polyset_prism_derivs(
   assert(P.extent(1) == (n + 1) * (n + 1) * (n + 2) / 2);
   assert(P.extent(2) == x.extent(0));
 
-  auto x0
-      = MDSPAN_IMPL_STANDARD_NAMESPACE::submdspan(x, MDSPAN_IMPL_STANDARD_NAMESPACE::full_extent, 0);
-  auto x1
-      = MDSPAN_IMPL_STANDARD_NAMESPACE::submdspan(x, MDSPAN_IMPL_STANDARD_NAMESPACE::full_extent, 1);
-  auto x2
-      = MDSPAN_IMPL_STANDARD_NAMESPACE::submdspan(x, MDSPAN_IMPL_STANDARD_NAMESPACE::full_extent, 2);
+  auto x0 = MDSPAN_IMPL_STANDARD_NAMESPACE::submdspan(
+      x, MDSPAN_IMPL_STANDARD_NAMESPACE::full_extent, 0);
+  auto x1 = MDSPAN_IMPL_STANDARD_NAMESPACE::submdspan(
+      x, MDSPAN_IMPL_STANDARD_NAMESPACE::full_extent, 1);
+  auto x2 = MDSPAN_IMPL_STANDARD_NAMESPACE::submdspan(
+      x, MDSPAN_IMPL_STANDARD_NAMESPACE::full_extent, 2);
 
   assert(x0.extent(0) > 0);
   assert(x1.extent(0) > 0);
@@ -2952,10 +2957,12 @@ void tabulate_polyset_prism_derivs(
     {
       for (std::size_t p = 1; p <= n; ++p)
       {
-        auto p0 = MDSPAN_IMPL_STANDARD_NAMESPACE::submdspan(P, idx(kx, ky, 0), prism_idx(p, 0, 0),
-                                   MDSPAN_IMPL_STANDARD_NAMESPACE::full_extent);
-        auto p1 = MDSPAN_IMPL_STANDARD_NAMESPACE::submdspan(P, idx(kx, ky, 0), prism_idx(p - 1, 0, 0),
-                                   MDSPAN_IMPL_STANDARD_NAMESPACE::full_extent);
+        auto p0 = MDSPAN_IMPL_STANDARD_NAMESPACE::submdspan(
+            P, idx(kx, ky, 0), prism_idx(p, 0, 0),
+            MDSPAN_IMPL_STANDARD_NAMESPACE::full_extent);
+        auto p1 = MDSPAN_IMPL_STANDARD_NAMESPACE::submdspan(
+            P, idx(kx, ky, 0), prism_idx(p - 1, 0, 0),
+            MDSPAN_IMPL_STANDARD_NAMESPACE::full_extent);
         const T a = static_cast<T>(2 * p - 1) / static_cast<T>(p);
         for (std::size_t i = 0; i < p0.size(); ++i)
         {
@@ -2965,18 +2972,18 @@ void tabulate_polyset_prism_derivs(
 
         if (kx > 0)
         {
-          auto result0
-              = MDSPAN_IMPL_STANDARD_NAMESPACE::submdspan(P, idx(kx - 1, ky, 0), prism_idx(p - 1, 0, 0),
-                                 MDSPAN_IMPL_STANDARD_NAMESPACE::full_extent);
+          auto result0 = MDSPAN_IMPL_STANDARD_NAMESPACE::submdspan(
+              P, idx(kx - 1, ky, 0), prism_idx(p - 1, 0, 0),
+              MDSPAN_IMPL_STANDARD_NAMESPACE::full_extent);
           for (std::size_t i = 0; i < p0.size(); ++i)
             p0[i] += 2 * kx * a * result0[i];
         }
 
         if (ky > 0)
         {
-          auto result0
-              = MDSPAN_IMPL_STANDARD_NAMESPACE::submdspan(P, idx(kx, ky - 1, 0), prism_idx(p - 1, 0, 0),
-                                 MDSPAN_IMPL_STANDARD_NAMESPACE::full_extent);
+          auto result0 = MDSPAN_IMPL_STANDARD_NAMESPACE::submdspan(
+              P, idx(kx, ky - 1, 0), prism_idx(p - 1, 0, 0),
+              MDSPAN_IMPL_STANDARD_NAMESPACE::full_extent);
           for (std::size_t i = 0; i < p0.size(); ++i)
             p0[i] += ky * a * result0[i];
         }
@@ -2984,9 +2991,9 @@ void tabulate_polyset_prism_derivs(
         if (p > 1)
         {
           // y^2 terms
-          auto p2
-              = MDSPAN_IMPL_STANDARD_NAMESPACE::submdspan(P, idx(kx, ky, 0), prism_idx(p - 2, 0, 0),
-                                 MDSPAN_IMPL_STANDARD_NAMESPACE::full_extent);
+          auto p2 = MDSPAN_IMPL_STANDARD_NAMESPACE::submdspan(
+              P, idx(kx, ky, 0), prism_idx(p - 2, 0, 0),
+              MDSPAN_IMPL_STANDARD_NAMESPACE::full_extent);
           for (std::size_t i = 0; i < p0.size(); ++i)
           {
             T f2 = (1.0 - x1[i]);
@@ -3018,42 +3025,44 @@ void tabulate_polyset_prism_derivs(
 
       for (std::size_t p = 0; p < n; ++p)
       {
-        auto p0 = MDSPAN_IMPL_STANDARD_NAMESPACE::submdspan(P, idx(kx, ky, 0), prism_idx(p, 0, 0),
-                                   MDSPAN_IMPL_STANDARD_NAMESPACE::full_extent);
-        auto p1 = MDSPAN_IMPL_STANDARD_NAMESPACE::submdspan(P, idx(kx, ky, 0), prism_idx(p, 1, 0),
-                                   MDSPAN_IMPL_STANDARD_NAMESPACE::full_extent);
+        auto p0 = MDSPAN_IMPL_STANDARD_NAMESPACE::submdspan(
+            P, idx(kx, ky, 0), prism_idx(p, 0, 0),
+            MDSPAN_IMPL_STANDARD_NAMESPACE::full_extent);
+        auto p1 = MDSPAN_IMPL_STANDARD_NAMESPACE::submdspan(
+            P, idx(kx, ky, 0), prism_idx(p, 1, 0),
+            MDSPAN_IMPL_STANDARD_NAMESPACE::full_extent);
         for (std::size_t i = 0; i < p1.size(); ++i)
           p1[i] = p0[i] * ((x1[i] * 2.0 - 1.0) * (1.5 + p) + 0.5 + p);
 
         if (ky > 0)
         {
-          auto result0
-              = MDSPAN_IMPL_STANDARD_NAMESPACE::submdspan(P, idx(kx, ky - 1, 0), prism_idx(p, 0, 0),
-                                 MDSPAN_IMPL_STANDARD_NAMESPACE::full_extent);
+          auto result0 = MDSPAN_IMPL_STANDARD_NAMESPACE::submdspan(
+              P, idx(kx, ky - 1, 0), prism_idx(p, 0, 0),
+              MDSPAN_IMPL_STANDARD_NAMESPACE::full_extent);
           for (std::size_t i = 0; i < p1.size(); ++i)
             p1[i] += 2 * ky * (1.5 + p) * result0[i];
         }
 
         for (std::size_t q = 1; q < n - p; ++q)
         {
-          auto pqp1
-              = MDSPAN_IMPL_STANDARD_NAMESPACE::submdspan(P, idx(kx, ky, 0), prism_idx(p, q + 1, 0),
-                                 MDSPAN_IMPL_STANDARD_NAMESPACE::full_extent);
-          auto pq
-              = MDSPAN_IMPL_STANDARD_NAMESPACE::submdspan(P, idx(kx, ky, 0), prism_idx(p, q, 0),
-                                 MDSPAN_IMPL_STANDARD_NAMESPACE::full_extent);
-          auto pqm1
-              = MDSPAN_IMPL_STANDARD_NAMESPACE::submdspan(P, idx(kx, ky, 0), prism_idx(p, q - 1, 0),
-                                 MDSPAN_IMPL_STANDARD_NAMESPACE::full_extent);
+          auto pqp1 = MDSPAN_IMPL_STANDARD_NAMESPACE::submdspan(
+              P, idx(kx, ky, 0), prism_idx(p, q + 1, 0),
+              MDSPAN_IMPL_STANDARD_NAMESPACE::full_extent);
+          auto pq = MDSPAN_IMPL_STANDARD_NAMESPACE::submdspan(
+              P, idx(kx, ky, 0), prism_idx(p, q, 0),
+              MDSPAN_IMPL_STANDARD_NAMESPACE::full_extent);
+          auto pqm1 = MDSPAN_IMPL_STANDARD_NAMESPACE::submdspan(
+              P, idx(kx, ky, 0), prism_idx(p, q - 1, 0),
+              MDSPAN_IMPL_STANDARD_NAMESPACE::full_extent);
           const auto [a1, a2, a3] = jrc<T>(2 * p + 1, q);
           for (std::size_t i = 0; i < p0.size(); ++i)
             pqp1[i] = pq[i] * ((x1[i] * 2.0 - 1.0) * a1 + a2) - pqm1[i] * a3;
 
           if (ky > 0)
           {
-            auto result0
-                = MDSPAN_IMPL_STANDARD_NAMESPACE::submdspan(P, idx(kx, ky - 1, 0), prism_idx(p, q, 0),
-                                   MDSPAN_IMPL_STANDARD_NAMESPACE::full_extent);
+            auto result0 = MDSPAN_IMPL_STANDARD_NAMESPACE::submdspan(
+                P, idx(kx, ky - 1, 0), prism_idx(p, q, 0),
+                MDSPAN_IMPL_STANDARD_NAMESPACE::full_extent);
             for (std::size_t i = 0; i < pqp1.size(); ++i)
               pqp1[i] += 2 * ky * a1 * result0[i];
           }
@@ -3075,10 +3084,10 @@ void tabulate_polyset_prism_derivs(
           auto result = MDSPAN_IMPL_STANDARD_NAMESPACE::submdspan(
               P, idx(kx, ky, kz), MDSPAN_IMPL_STANDARD_NAMESPACE::full_extent,
               MDSPAN_IMPL_STANDARD_NAMESPACE::full_extent);
-          auto result0
-              = MDSPAN_IMPL_STANDARD_NAMESPACE::submdspan(P, idx(kx, ky, kz - 1),
-                                 MDSPAN_IMPL_STANDARD_NAMESPACE::full_extent,
-                                 MDSPAN_IMPL_STANDARD_NAMESPACE::full_extent);
+          auto result0 = MDSPAN_IMPL_STANDARD_NAMESPACE::submdspan(
+              P, idx(kx, ky, kz - 1),
+              MDSPAN_IMPL_STANDARD_NAMESPACE::full_extent,
+              MDSPAN_IMPL_STANDARD_NAMESPACE::full_extent);
           for (std::size_t p = 0; p <= n; ++p)
           {
             for (std::size_t q = 0; q <= n - p; ++q)

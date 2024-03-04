@@ -1195,7 +1195,7 @@ FiniteElement<T> element::create_dpc(cell::type celltype, int degree,
   }
 
   auto& _M
-      = M[tdim].emplace_back(std::array<std::size_t, 4>{ndofs, 1, ndofs, 1});
+      = M[tdim].emplace_back(std::array<std::size_t, 4>{ndofs, 1, ndofs, 1}, 0);
   for (std::size_t i = 0; i < _M.extent(0); ++i)
     _M(i, 0, i, 0) = 1.0;
 

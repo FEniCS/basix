@@ -56,8 +56,7 @@ FiniteElement<T> basix::element::create_cr(cell::type celltype, int degree,
       = std::vector(facet_topology.size(), impl::mdarray_t<T, 2>(1, tdim));
   M[tdim - 1] = std::vector(
       facet_topology.size(),
-      impl::mdarray_t<T, 4>(std::array<std::size_t, 4>{1, 1, 1, 1},
-                            std::vector<T>{1.0}));
+      impl::mdarray_t<T, 4>(std::array<std::size_t, 4>{1, 1, 1, 1}, 1));
 
   // Compute facet midpoints
   for (std::size_t f = 0; f < facet_topology.size(); ++f)

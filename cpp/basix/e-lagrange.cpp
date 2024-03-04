@@ -338,9 +338,8 @@ FiniteElement<T> create_bernstein(cell::type celltype, int degree,
   for (std::size_t v = 0; v < topology[0].size(); ++v)
   {
     const auto [entity, shape] = cell::sub_entity_geometry<T>(celltype, 0, v);
-    x[0].emplace_back(std::array<std::size_t, 2>{shape[0], shape[1]}, entity);
-    M[0].emplace_back(std::array<std::size_t, 4>{1, 1, 1, 1},
-                      std::vector<T>{1.0});
+    x[0].emplace_back(shape, entity);
+    M[0].emplace_back(std::array<std::size_t, 4>{1, 1, 1, 1}, 1);
   }
 
   for (std::size_t d = 1; d <= tdim; ++d)
@@ -451,7 +450,7 @@ basix::element::create_lagrange(cell::type celltype, int degree,
     x[0].emplace_back(1, 0);
     M[0].emplace_back(
         MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 4>{1, 1, 1, 1},
-        std::vector<T>{1.0});
+        1);
     return FiniteElement<T>(
         family::P, cell::type::point, polyset::type::standard, 0, {},
         impl::mdspan_t<T, 2>(math::eye<T>(1).data(), 1, 1), impl::to_mdspan(x),
@@ -686,8 +685,8 @@ FiniteElement<T> basix::element::create_iso(cell::type celltype, int degree,
     const auto [pt, shape]
         = lattice::create<T>(celltype, 0, lattice_type, true, simplex_method);
     x[tdim].emplace_back(std::array<std::size_t, 2>{shape[0], shape[1]}, pt);
-    auto& _M = M[tdim].emplace_back(shape[0], 1, shape[0], 1);
-    std::fill(_M.data(), _M.data() + _M.size(), 0);
+    auto& _M = M[tdim].emplace_back(
+        std::array<std::size_t, 4>{shape[0], 1, shape[0], 1}, 0);
     for (std::size_t i = 0; i < shape[0]; ++i)
       _M(i, 0, i, 0) = 1;
   }
@@ -703,11 +702,11 @@ FiniteElement<T> basix::element::create_iso(cell::type celltype, int degree,
             = cell::sub_entity_geometry<T>(celltype, dim, e);
         if (dim == 0)
         {
-          x[dim].emplace_back(std::array{entity_x_shape[0], entity_x_shape[1]},
-                              entity_x);
-          auto& _M
-              = M[dim].emplace_back(entity_x_shape[0], 1, entity_x_shape[0], 1);
-          std::fill(_M.data(), _M.data() + _M.size(), 0);
+          x[dim].emplace_back(entity_x_shape, entity_x);
+          auto& _M = M[dim].emplace_back(
+              std::array<std::size_t, 4>{entity_x_shape[0], 1,
+                                         entity_x_shape[0], 1},
+              0);
           for (std::size_t i = 0; i < entity_x_shape[0]; ++i)
             _M(i, 0, i, 0) = 1;
         }
@@ -715,9 +714,9 @@ FiniteElement<T> basix::element::create_iso(cell::type celltype, int degree,
         {
           const auto [pt, shape] = lattice::create<T>(
               celltype, 2 * degree, lattice_type, false, simplex_method);
-          x[dim].emplace_back(std::array{shape[0], shape[1]}, pt);
-          auto& _M = M[dim].emplace_back(shape[0], 1, shape[0], 1);
-          std::fill(_M.data(), _M.data() + _M.size(), 0);
+          x[dim].emplace_back(shape, pt);
+          auto& _M = M[dim].emplace_back(
+              std::array<std::size_t, 4>{shape[0], 1, shape[0], 1}, 0);
           for (std::size_t i = 0; i < shape[0]; ++i)
             _M(i, 0, i, 0) = 1;
         }

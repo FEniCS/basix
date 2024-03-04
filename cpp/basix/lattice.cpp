@@ -212,13 +212,9 @@ tabulate_dlagrange(std::size_t n, std::span<const T> x)
       tabulated(i, j) = tabulated_values(0, i, j);
 
   std::vector<T> c = math::solve<T>(dualmat, tabulated);
-
   return stdex::mdarray<
       T, MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 2>>(
-      tabulated.extents(), c);
-  // return stdex::mdarray<
-  //     T, MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 2>>(
-  //     c, tabulated.extents());
+      tabulated.extents(), std::move(c));
 }
 //-----------------------------------------------------------------------------
 template <std::floating_point T>

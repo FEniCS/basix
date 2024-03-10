@@ -765,7 +765,7 @@ public:
   /// element degree-of-freedom ordering.
   ///
   /// Given an array \f$\tilde{d}\f$ that holds an integer associated
-  /// with each degree-of-freedom and follwoing the reference element
+  /// with each degree-of-freedom and following the reference element
   /// degree-of-freedom ordering, this function computes
   /// \f[
   ///  d = P \tilde{d},
@@ -833,23 +833,45 @@ public:
   /// ordering and orientation to the globally consistent physical
   /// element ordering and orientation.
   ///
-  /// Given an array \f$\phi\f$ of basis functions following the
-  /// reference element ordering and orientation, this function computes
+  /// Consider that the value of a finite element function \f$f_{h}\f$
+  /// at a point is given by
   /// \f[
-  ///  \phi = M \tilde{\phi},
+  ///  f_{h} = \phi^{T} c
   /// \f]
-  /// where \f$M\f$ is a matrix and \f$\phi\f$ is the basis functions
-  /// for the globally consistent physical element ordering and
-  /// orientation. The transformation is peformed in-place.
+  /// where \f$f_{h}\f$ has shape \f$r \times 1\f$, \f$\phi\f$ has shape
+  /// \f$d \times r\f$ and holds the finite element basis functionsm,
+  /// and \f$c\f$ has shape \f$d \times 1\f$ and holds the
+  /// degrees-of-freedom, where the basis functions and
+  /// degree-of-freedom are with respect to the physical element
+  /// orientation. If the degrees-of-freedom on the physical element
+  /// orientation are given by
+  /// \f[
+  ///  c = M^{T} \tilde{c}
+  /// \f]
+  /// where \f$M\f$ is a \f$d \times d\f$ matrix. It follows that
+  /// \f[
+  ///  \tilde{\phi} = M \phi.
+  /// \f]
+  ///
+  /// Given a \f$d \times n\f$ matrix \f$\tilde{\Phi}\f$, where the
+  /// columns of \f$\Phi\f$ hold basis functions with respect to the
+  /// reference cell orientation, this function computes:
+  /// \f[
+  ///  \Phi = M \tilde{\Phi},
+  /// \f]
+  /// where \f$\Phi\f$ holds the basis functions with respect to the
+  /// physical element orientation. The transformation is peformed
+  /// in-place.
   ///
   /// The operator \f$M\f$ is orthogonal for many elements but not all.
   ///
-  /// @param[in,out] data The data
-  /// @param block_size Nnumber of data points per DOF
+  /// @param[in,out] data Data to transform. It has shape `(ndofs, n)`
+  /// and uses row-major storage.
+  /// @param n Number of columns of `data`, which is the data points per
+  /// DOF.
   /// @param cell_info Permutation info for the cell
   template <typename T>
-  void M_apply(std::span<T> data, int block_size,
-               std::uint32_t cell_info) const;
+  void M_apply(std::span<T> data, int n, std::uint32_t cell_info) const;
 
   /// @brief Transform degrees-of-freedom from the globally consistent
   /// physical element ordering and orientation to the reference element
@@ -1485,8 +1507,10 @@ void FiniteElement<F>::permute_data(
       {
         // Reverse an edge
         if (cell_info >> (face_start + e) & 1)
+        {
           precompute::pre_apply_permutation_mapped(trans, data, _edofs[1][e],
                                                    block_size);
+        }
       }
     }
 
@@ -1601,19 +1625,23 @@ void FiniteElement<F>::transform_data(
 //-----------------------------------------------------------------------------
 template <std::floating_point F>
 template <typename T>
-void FiniteElement<F>::M_apply(std::span<T> data, int block_size,
+void FiniteElement<F>::M_apply(std::span<T> data, int n,
                                std::uint32_t cell_info) const
 {
+  std::cout << "X1M_apply: " << n << std::endl;
+
   if (_dof_transformations_are_identity)
     return;
 
   if (_dof_transformations_are_permutations)
   {
-    permute_data<T, false>(data, block_size, cell_info, _eperm);
+    std::cout << "X1M_apply: " << n << std::endl;
+    permute_data<T, false>(data, n, cell_info, _eperm);
   }
   else
   {
-    transform_data<T, false>(data, block_size, cell_info, _etrans,
+    std::cout << "X2M_apply: " << n << std::endl;
+    transform_data<T, false>(data, n, cell_info, _etrans,
                              precompute::pre_apply_matrix<F, T>);
   }
 }
@@ -1627,9 +1655,7 @@ void FiniteElement<F>::Mt_apply(std::span<T> data, int block_size,
     return;
 
   if (_dof_transformations_are_permutations)
-  {
     permute_data<T, true>(data, block_size, cell_info, _eperm_rev);
-  }
   else
   {
     transform_data<T, true>(data, block_size, cell_info, _etransT,
@@ -1646,9 +1672,7 @@ void FiniteElement<F>::Mt_inv_apply(std::span<T> data, int block_size,
     return;
 
   if (_dof_transformations_are_permutations)
-  {
     permute_data<T, false>(data, block_size, cell_info, _eperm);
-  }
   else
   {
     transform_data<T, false>(data, block_size, cell_info, _etrans_invT,
@@ -1665,9 +1689,7 @@ void FiniteElement<F>::Minv_apply(std::span<T> data, int block_size,
     return;
 
   if (_dof_transformations_are_permutations)
-  {
     permute_data<T, true>(data, block_size, cell_info, _eperm_rev);
-  }
   else
   {
     transform_data<T, true>(data, block_size, cell_info, _etrans_inv,

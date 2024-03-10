@@ -12,6 +12,8 @@
 #include <type_traits>
 #include <vector>
 
+#include <iostream>
+
 /// Matrix and permutation precomputation
 namespace basix::precompute
 {
@@ -141,6 +143,8 @@ template <typename E>
 void pre_apply_permutation(std::span<const std::size_t> perm, std::span<E> data,
                            std::size_t offset = 0, std::size_t block_size = 1)
 {
+  std::cout << "(A) Basix block_size: " << block_size << ", " << perm.size()
+            << std::endl;
   for (std::size_t i = 0; i < perm.size(); ++i)
   {
     for (std::size_t b = 0; b < block_size; ++b)
@@ -157,6 +161,8 @@ void pre_apply_permutation_mapped(std::span<const std::size_t> perm,
                                   std::span<E> data, std::span<const int> emap,
                                   std::size_t block_size = 1)
 {
+  std::cout << "Basix block_size: " << block_size << ", " << perm.size()
+            << std::endl;
   for (std::size_t i = 0; i < perm.size(); ++i)
   {
     for (std::size_t b = 0; b < block_size; ++b)
@@ -167,10 +173,10 @@ void pre_apply_permutation_mapped(std::span<const std::size_t> perm,
   }
 }
 
-/// Apply a (precomputed) permutation to some transposed data
+/// Apply a (precomputed) permutation to some transposed data.
 ///
-/// @note This function is designed to be called at runtime, so its performance
-/// is critical.
+/// @note This function is designed to be called at runtime, so its
+/// performance is critical.
 ///
 /// see `pre_apply_permutation()`.
 template <typename E>
@@ -191,9 +197,9 @@ void post_apply_transpose_permutation(std::span<const std::size_t> perm,
   }
 }
 
-/// Prepare a square matrix
+/// Prepare a square matrix.
 ///
-/// This computes the LU decomposition of the transpose of the matrix
+/// This computes the LU decomposition of the transpose of the matrix.
 ///
 /// This function returns the permutation @f$P@f$P in the representation
 /// @f$PA^t=LU@f$ (precomputed as in `prepare_permutation()`). The LU

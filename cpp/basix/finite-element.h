@@ -925,7 +925,7 @@ public:
   void Mt_post(std::span<T> data, int block_size,
                std::uint32_t cell_info) const;
 
-  /// @brief Post(right)-apply the operator applied by ::M.
+  /// @brief Post(right)-apply the operator applied by FiniteElement::M.
   ///
   /// Computes
   /// \f[

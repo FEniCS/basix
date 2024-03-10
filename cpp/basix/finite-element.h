@@ -856,7 +856,7 @@ public:
   /// ordering and orientation.
   ///
   /// This function applies the transpose of the operator appplied by
-  /// FiniteElement::M.
+  /// FiniteElement::M_apply.
   ///
   /// Given an array \f$d\f$ of degrees-of-freedom for physical element
   /// ordering and orientation, this function computes
@@ -879,7 +879,7 @@ public:
   /// orientation.
   ///
   /// This function applies the inverse of the operator applied by
-  /// FiniteElement::Mt.
+  /// FiniteElement::Mt_apply.
   ///
   /// @param[in,out] data Data to transform.
   /// @param block_size Number of data points per DOF.
@@ -893,7 +893,7 @@ public:
   /// ordering and orientation.
   ///
   /// This function applies the inverse of the operator applied by
-  /// FiniteElement::M.
+  /// FiniteElement::M_apply.
   ///
   /// @param[in,out] data Data to transform.
   /// @param block_size Number of data points per DOF.
@@ -903,7 +903,7 @@ public:
                   std::uint32_t cell_info) const;
 
   /// @brief Post(right)-apply the operator applied by
-  /// FiniteElement::Mt.
+  /// FiniteElement::Mt_apply.
   ///
   /// Computes
   /// \f[
@@ -918,7 +918,8 @@ public:
   void Mt_post_apply(std::span<T> data, int block_size,
                      std::uint32_t cell_info) const;
 
-  /// @brief Post(right)-apply the operator applied by FiniteElement::M.
+  /// @brief Post(right)-apply the operator applied by
+  /// FiniteElement::M_apply.
   ///
   /// Computes
   /// \f[
@@ -933,7 +934,8 @@ public:
   void M_post_apply(std::span<T> data, int block_size,
                     std::uint32_t cell_info) const;
 
-  /// @brief Post(right)-apply the operator applied by  FiniteElement::Minv.
+  /// @brief Post(right)-apply the operator applied by
+  /// FiniteElement::Minv_apply.
   ///
   /// Computes
   /// \f[
@@ -949,7 +951,7 @@ public:
                        std::uint32_t cell_info) const;
 
   /// @brief Post(right)-apply the operator applied by
-  /// FiniteElement::Mt_inv.
+  /// FiniteElement::Mt_inv_apply.
   ///
   /// Computes
   /// \f[

@@ -808,7 +808,7 @@ public:
   /// \f[
   ///  \tilde{d} = P^{T} d,
   /// \f]
-  /// where\f$P\f$ is a permutation matrix and \f$\tilde{d}\f$ hold the
+  /// where \f$P\f$ is a permutation matrix and \f$\tilde{d}\f$ hold the
   /// integers in \f$d\f$ but permuted to follow the reference element
   /// degree-of-freedom ordering. The permutation is computed in-place.
   ///
@@ -832,31 +832,62 @@ public:
     permute_data<std::int32_t, true>(d, 1, cell_info, _eperm_rev);
   }
 
-  /// Multiply data by DOF transformation matrix from the left
+  /// @brief Transform basis functions from the reference element
+  /// ordering and orientation to the globally consistent physical
+  /// element ordering and orientation.
+  ///
+  /// Given an array \f$\phi\f$ of basis functions following the
+  /// reference element ordering and orientation, this function computes
+  /// \f[
+  ///  \phi = M \tilde{\phi},
+  /// \f]
+  /// where \f$M\f$ is a matrix and \f$\phi\f$ is the basis functions
+  /// for the globally consistent physical element ordering and
+  /// orientation. The transformation is peformed in-place.
+  ///
+  /// The operator \f$M\f$ is orthogonal in many cases, but not all.
   ///
   /// @note This function is designed to be called at runtime, so its
   /// performance is critical.
   ///
   /// @param[in,out] data The data
-  /// @param block_size The number of data points per DOF
-  /// @param cell_info The permutation info for the cell
+  /// @param block_size Nnumber of data points per DOF
+  /// @param cell_info Permutation info for the cell
   template <typename T>
-  void pre_apply_dof_transformation(std::span<T> data, int block_size,
-                                    std::uint32_t cell_info) const;
+  void M(std::span<T> data, int block_size, std::uint32_t cell_info) const;
 
-  /// Multiply data by transpose DOF transformation matrix from the left
+  /// @brief Transform degrees-of-freedom from the globally consistent
+  /// physical element ordering and orientation to the reference element
+  /// ordering and orientation.
+  ///
+  /// This function applies the transpose of the operator appplied by
+  /// ::M.
+  ///
+  /// Given an array \f$d\f$ of degrees-of-freedom for physical element
+  /// ordering and orientation, this function computes
+  /// \f[
+  ///  \tilde{d} = M^{T} d,
+  /// \f]
+  /// where \f$M\f$ is a matrix and \f$\tilde{d}\f$ holds the
+  /// degrees-of-freedom for the reference element ordering and
+  /// orientation. The transformation is peformed in-place.
+  ///
+  /// The operator \f$M\f$ is orthogonal in many cases, but not all.
   ///
   /// @note This function is designed to be called at runtime, so its
   /// performance is critical.
   ///
   /// @param[in,out] data The data
-  /// @param block_size The number of data points per DOF
-  /// @param cell_info The permutation info for the cell
+  /// @param block_size Number of data points per DOF
+  /// @param cell_info Permutation info for the cell
   template <typename T>
-  void pre_apply_transpose_dof_transformation(std::span<T> data, int block_size,
-                                              std::uint32_t cell_info) const;
+  void Mt(std::span<T> data, int block_size, std::uint32_t cell_info) const;
 
-  /// Multiply data by inverse transpose DOF transformation matrix from the left
+  /// @brief Transform degrees-of-freedom from the reference element
+  /// ordering and orientation to the physical element ordering and
+  /// orientation.
+  ///
+  /// This function applies the inverse of the operator applied by ::Mt.
   ///
   /// @note This function is designed to be called at runtime, so its
   /// performance is critical.
@@ -865,10 +896,13 @@ public:
   /// @param block_size The number of data points per DOF
   /// @param cell_info The permutation info for the cell
   template <typename T>
-  void pre_apply_inverse_transpose_dof_transformation(
-      std::span<T> data, int block_size, std::uint32_t cell_info) const;
+  void Mt_inv(std::span<T> data, int block_size, std::uint32_t cell_info) const;
 
-  /// Multiply data by inverse DOF transformation matrix from the left
+  /// @brief Transform basis functions from the locally consistent physical
+  /// element ordering and orientation to the reference element
+  /// ordering and orientation.
+  ///
+  /// The function applied the inverse of the operator applied by ::M.
   ///
   /// @note This function is designed to be called at runtime, so its
   /// performance is critical.
@@ -877,8 +911,7 @@ public:
   /// @param block_size The number of data points per DOF
   /// @param cell_info The permutation info for the cell
   template <typename T>
-  void pre_apply_inverse_dof_transformation(std::span<T> data, int block_size,
-                                            std::uint32_t cell_info) const;
+  void Minv(std::span<T> data, int block_size, std::uint32_t cell_info) const;
 
   /// Multiply data by transpose DOF transformation matrix from the right
   ///
@@ -1568,8 +1601,8 @@ void FiniteElement<F>::transform_data(
 //-----------------------------------------------------------------------------
 template <std::floating_point F>
 template <typename T>
-void FiniteElement<F>::pre_apply_dof_transformation(
-    std::span<T> data, int block_size, std::uint32_t cell_info) const
+void FiniteElement<F>::M(std::span<T> data, int block_size,
+                         std::uint32_t cell_info) const
 {
   if (_dof_transformations_are_identity)
     return;
@@ -1587,8 +1620,8 @@ void FiniteElement<F>::pre_apply_dof_transformation(
 //-----------------------------------------------------------------------------
 template <std::floating_point F>
 template <typename T>
-void FiniteElement<F>::pre_apply_transpose_dof_transformation(
-    std::span<T> data, int block_size, std::uint32_t cell_info) const
+void FiniteElement<F>::Mt(std::span<T> data, int block_size,
+                          std::uint32_t cell_info) const
 {
   if (_dof_transformations_are_identity)
     return;
@@ -1606,8 +1639,8 @@ void FiniteElement<F>::pre_apply_transpose_dof_transformation(
 //-----------------------------------------------------------------------------
 template <std::floating_point F>
 template <typename T>
-void FiniteElement<F>::pre_apply_inverse_transpose_dof_transformation(
-    std::span<T> data, int block_size, std::uint32_t cell_info) const
+void FiniteElement<F>::Mt_inv(std::span<T> data, int block_size,
+                              std::uint32_t cell_info) const
 {
   if (_dof_transformations_are_identity)
     return;
@@ -1625,8 +1658,8 @@ void FiniteElement<F>::pre_apply_inverse_transpose_dof_transformation(
 //-----------------------------------------------------------------------------
 template <std::floating_point F>
 template <typename T>
-void FiniteElement<F>::pre_apply_inverse_dof_transformation(
-    std::span<T> data, int block_size, std::uint32_t cell_info) const
+void FiniteElement<F>::Minv(std::span<T> data, int block_size,
+                            std::uint32_t cell_info) const
 {
   if (_dof_transformations_are_identity)
     return;

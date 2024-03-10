@@ -131,24 +131,24 @@ void declare_float(nb::module_& m, std::string type)
                                       K.shape(2)));
              return as_nbarrayp(std::move(U));
            })
-      .def("M",
+      .def("M_apply",
            [](const FiniteElement<T>& self,
               nb::ndarray<T, nb::ndim<1>, nb::c_contig> data, int block_size,
               std::uint32_t cell_info) {
-             self.M(std::span(data.data(), data.size()), block_size, cell_info);
+             self.M_apply(std::span(data.data(), data.size()), block_size, cell_info);
            })
-      .def("Mt_post",
+      .def("Mt_post_apply",
            [](const FiniteElement<T>& self,
               nb::ndarray<T, nb::ndim<1>, nb::c_contig> data, int block_size,
               std::uint32_t cell_info) {
-             self.Mt_post(std::span(data.data(), data.size()), block_size,
+             self.Mt_post_apply(std::span(data.data(), data.size()), block_size,
                           cell_info);
            })
-      .def("Mt_inv",
+      .def("Mt_inv_apply",
            [](const FiniteElement<T>& self,
               nb::ndarray<T, nb::ndim<1>, nb::c_contig> data, int block_size,
               std::uint32_t cell_info) {
-             self.Mt_inv(std::span(data.data(), data.size()), block_size,
+             self.Mt_inv_apply(std::span(data.data(), data.size()), block_size,
                          cell_info);
            })
       .def("base_transformations", [](const FiniteElement<T>& self)
@@ -274,19 +274,19 @@ void declare_float(nb::module_& m, std::string type)
           {
             const std::array<std::vector<std::pair<std::vector<T>,
                                                    std::array<std::size_t, 4>>>,
-                             4>& _M
+                             4>& _Pi
                 = self.Pi();
-            std::vector<std::vector<nb::ndarray<const T, nb::numpy>>> M(4);
+            std::vector<std::vector<nb::ndarray<const T, nb::numpy>>> Pi(4);
             for (int i = 0; i < 4; ++i)
             {
-              for (std::size_t j = 0; j < _M[i].size(); ++j)
+              for (std::size_t j = 0; j < _Pi[i].size(); ++j)
               {
-                auto& mat = _M[i][j];
-                M[i].emplace_back(mat.first.data(), mat.second.size(),
+                auto& mat = _Pi[i][j];
+                Pi[i].emplace_back(mat.first.data(), mat.second.size(),
                                   mat.second.data());
               }
             }
-            return M;
+            return Pi;
           },
           nb::rv_policy::reference_internal)
       .def_prop_ro(
@@ -500,8 +500,7 @@ NB_MODULE(_basixcpp, m)
       .def_prop_ro("name",
                    [](nb::object obj) { return nb::getattr(obj, "__name__"); });
 
-  m.def("cell_volume",
-        [](cell::type cell_type) -> double
+  m.def("cell_volume", [](cell::type cell_type) -> double
         { return cell::volume<double>(cell_type); });
   m.def("cell_facet_normals", [](cell::type cell_type)
         { return as_nbarrayp(cell::facet_normals<double>(cell_type)); });

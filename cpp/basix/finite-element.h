@@ -848,7 +848,8 @@ public:
   /// @param block_size Nnumber of data points per DOF
   /// @param cell_info Permutation info for the cell
   template <typename T>
-  void M(std::span<T> data, int block_size, std::uint32_t cell_info) const;
+  void M_apply(std::span<T> data, int block_size,
+               std::uint32_t cell_info) const;
 
   /// @brief Transform degrees-of-freedom from the globally consistent
   /// physical element ordering and orientation to the reference element
@@ -870,7 +871,8 @@ public:
   /// @param block_size Number of data points per DOF,
   /// @param cell_info Permutation info for the cell,
   template <typename T>
-  void Mt(std::span<T> data, int block_size, std::uint32_t cell_info) const;
+  void Mt_apply(std::span<T> data, int block_size,
+                std::uint32_t cell_info) const;
 
   /// @brief Transform degrees-of-freedom from the reference element
   /// ordering and orientation to the physical element ordering and
@@ -883,7 +885,8 @@ public:
   /// @param block_size Number of data points per DOF.
   /// @param cell_info Permutation info for the cell.
   template <typename T>
-  void Mt_inv(std::span<T> data, int block_size, std::uint32_t cell_info) const;
+  void Mt_inv_apply(std::span<T> data, int block_size,
+                    std::uint32_t cell_info) const;
 
   /// @brief Transform basis functions from the locally consistent
   /// physical element ordering and orientation to the reference element
@@ -896,7 +899,8 @@ public:
   /// @param block_size Number of data points per DOF.
   /// @param cell_info Permutation info for the cell.
   template <typename T>
-  void Minv(std::span<T> data, int block_size, std::uint32_t cell_info) const;
+  void Minv_apply(std::span<T> data, int block_size,
+                  std::uint32_t cell_info) const;
 
   /// @brief Post(right)-apply the operator applied by
   /// FiniteElement::Mt.
@@ -911,8 +915,8 @@ public:
   /// @param block_size Number of data points per DOF.
   /// @param cell_info Permutation info for the cell.
   template <typename T>
-  void Mt_post(std::span<T> data, int block_size,
-               std::uint32_t cell_info) const;
+  void Mt_post_apply(std::span<T> data, int block_size,
+                     std::uint32_t cell_info) const;
 
   /// @brief Post(right)-apply the operator applied by FiniteElement::M.
   ///
@@ -926,7 +930,8 @@ public:
   /// @param block_size Number of data points per DOF.
   /// @param cell_info Permutation info for the cell.
   template <typename T>
-  void M_post(std::span<T> data, int block_size, std::uint32_t cell_info) const;
+  void M_post_apply(std::span<T> data, int block_size,
+                    std::uint32_t cell_info) const;
 
   /// @brief Post(right)-apply the operator applied by  FiniteElement::Minv.
   ///
@@ -940,8 +945,8 @@ public:
   /// @param block_size Number of data points per DOF.
   /// @param cell_info Permutation info for the cell.
   template <typename T>
-  void Minv_post(std::span<T> data, int block_size,
-                 std::uint32_t cell_info) const;
+  void Minv_post_apply(std::span<T> data, int block_size,
+                       std::uint32_t cell_info) const;
 
   /// @brief Post(right)-apply the operator applied by
   /// FiniteElement::Mt_inv.
@@ -955,8 +960,8 @@ public:
   /// @param block_size Number of data points per DOF.
   /// @param cell_info Permutation info for the cell.
   template <typename T>
-  void Mt_inv_post(std::span<T> data, int block_size,
-                   std::uint32_t cell_info) const;
+  void Mt_inv_post_apply(std::span<T> data, int block_size,
+                         std::uint32_t cell_info) const;
 
   /// Return the interpolation points, i.e. the coordinates on the
   /// reference element where a function need to be evaluated in order
@@ -1097,7 +1102,7 @@ public:
   /// can be computed as follows:
   ///
   /// \code{.pseudo}
-  /// matrix = element.M()[d][e]
+  /// matrix = element.Pi()[d][e]
   /// pts = element.x()[d][e]
   /// nderivs = element
   /// values = f.eval_derivs(nderivs, pts)
@@ -1112,11 +1117,11 @@ public:
   /// For example, for a degree 1 Raviart-Thomas (RT) element on a triangle, the
   /// DOF functionals are integrals over the edges of the dot product of the
   /// function with the normal to the edge. In this case, `x()` would contain
-  /// quadrature points for each edge, and `M()` would by a 1 by 2 by `npoints`
+  /// quadrature points for each edge, and `Pi()` would by a 1 by 2 by `npoints`
   /// by 1 array for each edge. For each point, the `[0, :, point, 0]` slice of
   /// this would be the quadrature weight multiplied by the normal. For all
-  /// entities that are not edges, the entries in `x()` and `M()` for a degree 1
-  /// RT element would have size 0.
+  /// entities that are not edges, the entries in `x()` and `Pi()` for a degree
+  /// 1 RT element would have size 0.
   ///
   /// These matrices are only stored for custom elements. This function will
   /// throw an exception if called on a non-custom element.
@@ -1347,9 +1352,6 @@ private:
   using array4_t
       = std::vector<std::pair<std::vector<F>, std::array<std::size_t, 4>>>;
   std::array<array4_t, 4> _M;
-  // std::array<
-  //     std::vector<std::pair<std::vector<F>, std::array<std::size_t,
-  //     4>>>, 4> _M;
 };
 
 /// Create a custom finite element
@@ -1597,8 +1599,8 @@ void FiniteElement<F>::transform_data(
 //-----------------------------------------------------------------------------
 template <std::floating_point F>
 template <typename T>
-void FiniteElement<F>::M(std::span<T> data, int block_size,
-                         std::uint32_t cell_info) const
+void FiniteElement<F>::M_apply(std::span<T> data, int block_size,
+                               std::uint32_t cell_info) const
 {
   if (_dof_transformations_are_identity)
     return;
@@ -1616,8 +1618,8 @@ void FiniteElement<F>::M(std::span<T> data, int block_size,
 //-----------------------------------------------------------------------------
 template <std::floating_point F>
 template <typename T>
-void FiniteElement<F>::Mt(std::span<T> data, int block_size,
-                          std::uint32_t cell_info) const
+void FiniteElement<F>::Mt_apply(std::span<T> data, int block_size,
+                                std::uint32_t cell_info) const
 {
   if (_dof_transformations_are_identity)
     return;
@@ -1635,8 +1637,8 @@ void FiniteElement<F>::Mt(std::span<T> data, int block_size,
 //-----------------------------------------------------------------------------
 template <std::floating_point F>
 template <typename T>
-void FiniteElement<F>::Mt_inv(std::span<T> data, int block_size,
-                              std::uint32_t cell_info) const
+void FiniteElement<F>::Mt_inv_apply(std::span<T> data, int block_size,
+                                    std::uint32_t cell_info) const
 {
   if (_dof_transformations_are_identity)
     return;
@@ -1654,8 +1656,8 @@ void FiniteElement<F>::Mt_inv(std::span<T> data, int block_size,
 //-----------------------------------------------------------------------------
 template <std::floating_point F>
 template <typename T>
-void FiniteElement<F>::Minv(std::span<T> data, int block_size,
-                            std::uint32_t cell_info) const
+void FiniteElement<F>::Minv_apply(std::span<T> data, int block_size,
+                                  std::uint32_t cell_info) const
 {
   if (_dof_transformations_are_identity)
     return;
@@ -1673,8 +1675,8 @@ void FiniteElement<F>::Minv(std::span<T> data, int block_size,
 //-----------------------------------------------------------------------------
 template <std::floating_point F>
 template <typename T>
-void FiniteElement<F>::Mt_post(std::span<T> data, int block_size,
-                               std::uint32_t cell_info) const
+void FiniteElement<F>::Mt_post_apply(std::span<T> data, int block_size,
+                                     std::uint32_t cell_info) const
 {
   if (_dof_transformations_are_identity)
     return;
@@ -1698,8 +1700,8 @@ void FiniteElement<F>::Mt_post(std::span<T> data, int block_size,
 //-----------------------------------------------------------------------------
 template <std::floating_point F>
 template <typename T>
-void FiniteElement<F>::Minv_post(std::span<T> data, int block_size,
-                                 std::uint32_t cell_info) const
+void FiniteElement<F>::Minv_post_apply(std::span<T> data, int block_size,
+                                       std::uint32_t cell_info) const
 {
   if (_dof_transformations_are_identity)
     return;
@@ -1723,8 +1725,8 @@ void FiniteElement<F>::Minv_post(std::span<T> data, int block_size,
 //-----------------------------------------------------------------------------
 template <std::floating_point F>
 template <typename T>
-void FiniteElement<F>::M_post(std::span<T> data, int block_size,
-                              std::uint32_t cell_info) const
+void FiniteElement<F>::M_post_apply(std::span<T> data, int block_size,
+                                    std::uint32_t cell_info) const
 {
   if (_dof_transformations_are_identity)
     return;
@@ -1748,8 +1750,8 @@ void FiniteElement<F>::M_post(std::span<T> data, int block_size,
 //-----------------------------------------------------------------------------
 template <std::floating_point F>
 template <typename T>
-void FiniteElement<F>::Mt_inv_post(std::span<T> data, int block_size,
-                                   std::uint32_t cell_info) const
+void FiniteElement<F>::Mt_inv_post_apply(std::span<T> data, int block_size,
+                                         std::uint32_t cell_info) const
 {
   if (_dof_transformations_are_identity)
     return;

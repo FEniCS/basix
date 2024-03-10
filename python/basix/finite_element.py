@@ -194,7 +194,7 @@ class FiniteElement:
             block_size: The number of data points per DOF
             cell_info: The permutation info for the cell
         """
-        self._e.M(data, block_size, cell_info)
+        self._e.M_apply(data, block_size, cell_info)
 
     def post_apply_transpose_dof_transformation(self, data, block_size, cell_info) -> None:
         """Post-apply DOF transformations to transposed data in-place.
@@ -208,7 +208,7 @@ class FiniteElement:
             block_size: The number of data points per DOF.
             cell_info: The permutation info for the cell.
         """
-        self._e.Mt_post(data, block_size, cell_info)
+        self._e.Mt_post_apply(data, block_size, cell_info)
 
     def pre_apply_inverse_transpose_dof_transformation(self, data, block_size, cell_info) -> None:
         """Pre-apply inverse transpose DOF transformations to some data.
@@ -222,7 +222,7 @@ class FiniteElement:
             block_size: The number of data points per DOF.
             cell_info: The permutation info for the cell.
         """
-        self._e.Mt_inv(data, block_size, cell_info)
+        self._e.Mt_inv_apply(data, block_size, cell_info)
 
     def base_transformations(self) -> npt.NDArray[np.floating]:
         r"""Get the base transformations.

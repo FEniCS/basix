@@ -847,9 +847,6 @@ public:
   ///
   /// The operator \f$M\f$ is orthogonal in many cases, but not all.
   ///
-  /// @note This function is designed to be called at runtime, so its
-  /// performance is critical.
-  ///
   /// @param[in,out] data The data
   /// @param block_size Nnumber of data points per DOF
   /// @param cell_info Permutation info for the cell
@@ -861,7 +858,7 @@ public:
   /// ordering and orientation.
   ///
   /// This function applies the transpose of the operator appplied by
-  /// ::M.
+  /// FiniteElement::M.
   ///
   /// Given an array \f$d\f$ of degrees-of-freedom for physical element
   /// ordering and orientation, this function computes
@@ -872,14 +869,9 @@ public:
   /// degrees-of-freedom for the reference element ordering and
   /// orientation. The transformation is peformed in-place.
   ///
-  /// The operator \f$M\f$ is orthogonal in many cases, but not all.
-  ///
-  /// @note This function is designed to be called at runtime, so its
-  /// performance is critical.
-  ///
-  /// @param[in,out] data The data
-  /// @param block_size Number of data points per DOF
-  /// @param cell_info Permutation info for the cell
+  /// @param[in,out] data Data to transform.
+  /// @param block_size Number of data points per DOF,
+  /// @param cell_info Permutation info for the cell,
   template <typename T>
   void Mt(std::span<T> data, int block_size, std::uint32_t cell_info) const;
 
@@ -887,30 +879,33 @@ public:
   /// ordering and orientation to the physical element ordering and
   /// orientation.
   ///
-  /// This function applies the inverse of the operator applied by ::Mt.
+  /// This function applies the inverse of the operator applied by
+  /// FiniteElement::Mt.
   ///
   /// @note This function is designed to be called at runtime, so its
   /// performance is critical.
   ///
-  /// @param[in,out] data The data
-  /// @param block_size The number of data points per DOF
-  /// @param cell_info The permutation info for the cell
+  /// @param[in,out] data Data to transform.
+  /// @param block_size Number of data points per DOF.
+  /// @param cell_info Permutation info for the cell.
   template <typename T>
   void Mt_inv(std::span<T> data, int block_size, std::uint32_t cell_info) const;
 
-  /// @brief Transform basis functions from the locally consistent physical
-  /// element ordering and orientation to the reference element
+  /// @brief Transform basis functions from the locally consistent
+  /// physical element ordering and orientation to the reference element
   /// ordering and orientation.
   ///
-  /// This function applies the inverse of the operator applied by ::M.
+  /// This function applies the inverse of the operator applied by
+  /// FiniteElement::M.
   ///
-  /// @param[in,out] data The data
-  /// @param block_size The number of data points per DOF
-  /// @param cell_info The permutation info for the cell
+  /// @param[in,out] data Data to transform.
+  /// @param block_size Number of data points per DOF.
+  /// @param cell_info Permutation info for the cell.
   template <typename T>
   void Minv(std::span<T> data, int block_size, std::uint32_t cell_info) const;
 
-  /// @brief Post(right)-apply the operator applied by ::Mt.
+  /// @brief Post(right)-apply the operator applied by
+  /// FiniteElement::Mt.
   ///
   /// Computes
   /// \f[
@@ -918,9 +913,9 @@ public:
   /// \f]
   /// in-place.
   ///
-  /// @param[in,out] data The data
-  /// @param block_size Number of data points per DOF
-  /// @param cell_info Permutation info for the cell
+  /// @param[in,out] data Data to transform.
+  /// @param block_size Number of data points per DOF.
+  /// @param cell_info Permutation info for the cell.
   template <typename T>
   void Mt_post(std::span<T> data, int block_size,
                std::uint32_t cell_info) const;
@@ -933,13 +928,13 @@ public:
   /// \f]
   /// in-place.
   ///
-  /// @param[in,out] data The data
-  /// @param block_size Number of data points per DOF
-  /// @param cell_info Permutation info for the cell
+  /// @param[in,out] data Data to transform.
+  /// @param block_size Number of data points per DOF.
+  /// @param cell_info Permutation info for the cell.
   template <typename T>
   void M_post(std::span<T> data, int block_size, std::uint32_t cell_info) const;
 
-  /// @brief Post(right)-apply the operator applied by ::Minv.
+  /// @brief Post(right)-apply the operator applied by  FiniteElement::Minv.
   ///
   /// Computes
   /// \f[
@@ -947,26 +942,24 @@ public:
   /// \f]
   /// in-place.
   ///
-  /// @note This function is designed to be called at runtime, so its
-  /// performance is critical.
-  ///
-  /// @param[in,out] data The data
-  /// @param block_size The number of data points per DOF
-  /// @param cell_info The permutation info for the cell
+  /// @param[in,out] data Data to transform.
+  /// @param block_size Number of data points per DOF.
+  /// @param cell_info Permutation info for the cell.
   template <typename T>
   void Minv_post(std::span<T> data, int block_size,
                  std::uint32_t cell_info) const;
 
-  /// @brief Post(right)-apply the operator applied by ::Mt_inv.
+  /// @brief Post(right)-apply the operator applied by
+  /// FiniteElement::Mt_inv.
   ///
   /// Computes
   /// \f[
   /// \tilde{\phi}^{T} = \phi^{T} M^{-T}
   /// \f]
   ///
-  /// @param[in,out] data The data
-  /// @param block_size Number of data points per DOF
-  /// @param cell_info Permutation info for the cell
+  /// @param[in,out] data Data to transform.
+  /// @param block_size Number of data points per DOF.
+  /// @param cell_info Permutation info for the cell.
   template <typename T>
   void Mt_inv_post(std::span<T> data, int block_size,
                    std::uint32_t cell_info) const;
@@ -980,7 +973,7 @@ public:
     return _points;
   }
 
-  /// @brief Return a matrix of weights interpolation,
+  /// @brief Return a matrix of weights interpolation.
   ///
   /// To interpolate a function in this finite element, the functions
   /// should be evaluated at each point given by

@@ -275,7 +275,7 @@ void declare_float(nb::module_& m, std::string type)
             const std::array<std::vector<std::pair<std::vector<T>,
                                                    std::array<std::size_t, 4>>>,
                              4>& _M
-                = self.M();
+                = self.Pi();
             std::vector<std::vector<nb::ndarray<const T, nb::numpy>>> M(4);
             for (int i = 0; i < 4; ++i)
             {

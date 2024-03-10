@@ -1138,7 +1138,7 @@ public:
   /// entity index, dof, vs, point_index, derivative)
   const std::array<
       std::vector<std::pair<std::vector<F>, std::array<std::size_t, 4>>>, 4>&
-  M() const
+  Pi() const
   {
     return _M;
   }

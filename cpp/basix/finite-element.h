@@ -800,7 +800,7 @@ public:
   /// globally consistent physical element ordering to the reference
   /// element degree-of-freedom ordering.
   ///
-  /// This function is the inverse of ::permute.
+  /// This function is the inverse of FiniteElement::permute.
   ///
   /// Given an array \f$d\f$ that holds an integer associated with each
   /// degree-of-freedom and follwoing the globally consistent physical
@@ -811,9 +811,6 @@ public:
   /// where \f$P\f$ is a permutation matrix and \f$\tilde{d}\f$ hold the
   /// integers in \f$d\f$ but permuted to follow the reference element
   /// degree-of-freedom ordering. The permutation is computed in-place.
-  ///
-  /// @note This function is designed to be called at runtime, so its
-  /// performance is critical.
   ///
   /// @param[in,out] d Indices associated with each reference element
   /// degree-of-freedom [in]. Indices associated with each physical
@@ -845,7 +842,7 @@ public:
   /// for the globally consistent physical element ordering and
   /// orientation. The transformation is peformed in-place.
   ///
-  /// The operator \f$M\f$ is orthogonal in many cases, but not all.
+  /// The operator \f$M\f$ is orthogonal for many elements but not all.
   ///
   /// @param[in,out] data The data
   /// @param block_size Nnumber of data points per DOF
@@ -881,9 +878,6 @@ public:
   ///
   /// This function applies the inverse of the operator applied by
   /// FiniteElement::Mt.
-  ///
-  /// @note This function is designed to be called at runtime, so its
-  /// performance is critical.
   ///
   /// @param[in,out] data Data to transform.
   /// @param block_size Number of data points per DOF.

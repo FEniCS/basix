@@ -760,14 +760,29 @@ public:
     return _entity_transformations;
   }
 
-  /// Permute the dof numbering on a cell
+  /// @brief Permute indices associated with degree-of-freedoms in the
+  /// reference element ordering to the globally consistent physical
+  /// element degree-of-freedom ordering.
+  ///
+  /// Given an array \f$\tilde{d}\f$ that holds an integer associated
+  /// with each degree-of-freedom and follwoing the reference element
+  /// degree-of-freedom ordering, this function computes
+  /// \f[
+  ///  d = P \tilde{d},
+  /// \f]
+  /// where \f$P\f$ is a permutation matrix and \f$d\f$ hold the integers in
+  /// \f$\tilde{d}\f$ but permuted to follow the globally consistent physical
+  /// element degree-of-freedom ordering. The permutation is computed
+  /// in-place.
   ///
   /// @note This function is designed to be called at runtime, so its
   /// performance is critical.
   ///
-  /// @param[in,out] dofs The dof numbering for the cell
-  /// @param cell_info The permutation info for the cell
-  void permute_dofs(std::span<std::int32_t> dofs, std::uint32_t cell_info) const
+  /// @param[in,out] d Indices associated with each reference element
+  /// degree-of-freedom [in]. Indices associated with each physical
+  /// element degree-of-freedom [out].
+  /// @param cell_info Permutation info for the cell
+  void permute(std::span<std::int32_t> d, std::uint32_t cell_info) const
   {
     if (!_dof_transformations_are_permutations)
     {
@@ -778,18 +793,33 @@ public:
     if (_dof_transformations_are_identity)
       return;
 
-    permute_data<std::int32_t, false>(dofs, 1, cell_info, _eperm);
+    permute_data<std::int32_t, false>(d, 1, cell_info, _eperm);
   }
 
-  /// Unpermute the dof numbering on a cell
+  /// @brief Permute indices associated with degree-of-freedoms in the
+  /// globally consistent physical element ordering to the reference
+  /// element degree-of-freedom ordering.
+  ///
+  /// This function is the inverse of ::permute_dofs.
+  ///
+  /// Given an array \f$d\f$ that holds an integer associated with each
+  /// degree-of-freedom and follwoing the globally consistent physical
+  /// element degree-of-freedom ordering, this function computes
+  /// \f[
+  ///  \tilde{d} = P^{T} d,
+  /// \f]
+  /// where\f$P\f$ is a permutation matrix and \f$\tilde{d}\f$ hold the
+  /// integers in \f$d\f$ but permuted to follow the reference element
+  /// degree-of-freedom ordering. The permutation is computed in-place.
   ///
   /// @note This function is designed to be called at runtime, so its
   /// performance is critical.
   ///
-  /// @param[in,out] dofs The dof numbering for the cell
-  /// @param cell_info The permutation info for the cell
-  void unpermute_dofs(std::span<std::int32_t> dofs,
-                      std::uint32_t cell_info) const
+  /// @param[in,out] d Indices associated with each reference element
+  /// degree-of-freedom [in]. Indices associated with each physical
+  /// element degree-of-freedom [out].
+  /// @param cell_info Permutation info for the cell
+  void permute_inv(std::span<std::int32_t> d, std::uint32_t cell_info) const
   {
     if (!_dof_transformations_are_permutations)
     {
@@ -799,7 +829,7 @@ public:
     if (_dof_transformations_are_identity)
       return;
 
-    permute_data<std::int32_t, true>(dofs, 1, cell_info, _eperm_rev);
+    permute_data<std::int32_t, true>(d, 1, cell_info, _eperm_rev);
   }
 
   /// Multiply data by DOF transformation matrix from the left

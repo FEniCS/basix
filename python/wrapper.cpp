@@ -137,12 +137,12 @@ void declare_float(nb::module_& m, std::string type)
               std::uint32_t cell_info) {
              self.M(std::span(data.data(), data.size()), block_size, cell_info);
            })
-      .def("Mt",
+      .def("Mt_post",
            [](const FiniteElement<T>& self,
               nb::ndarray<T, nb::ndim<1>, nb::c_contig> data, int block_size,
               std::uint32_t cell_info) {
-             self.Mt(std::span(data.data(), data.size()), block_size,
-                     cell_info);
+             self.Mt_post(std::span(data.data(), data.size()), block_size,
+                          cell_info);
            })
       .def("Mt_inv",
            [](const FiniteElement<T>& self,
@@ -269,7 +269,7 @@ void declare_float(nb::module_& m, std::string type)
           },
           nb::rv_policy::reference_internal)
       .def_prop_ro(
-          "M",
+          "Pi",
           [](const FiniteElement<T>& self)
           {
             const std::array<std::vector<std::pair<std::vector<T>,

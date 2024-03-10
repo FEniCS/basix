@@ -800,7 +800,7 @@ public:
   /// globally consistent physical element ordering to the reference
   /// element degree-of-freedom ordering.
   ///
-  /// This function is the inverse of ::permute_dofs.
+  /// This function is the inverse of ::permute.
   ///
   /// Given an array \f$d\f$ that holds an integer associated with each
   /// degree-of-freedom and follwoing the globally consistent physical
@@ -1132,7 +1132,8 @@ public:
   /// RT element would have size 0.
   ///
   /// These matrices are only stored for custom elements. This function will
-  /// throw an exception if called on a non-custom element
+  /// throw an exception if called on a non-custom element.
+  ///
   /// @return The interpolation matrices. The indices of this data are (tdim,
   /// entity index, dof, vs, point_index, derivative)
   const std::array<

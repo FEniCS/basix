@@ -332,7 +332,7 @@ class _ElementBase(_AbstractFiniteElement):
         raise NotImplementedError()
 
     @property
-    def _M(self) -> list[list[_npt.NDArray[np.float64]]]:
+    def _Pi(self) -> list[list[_npt.NDArray[np.float64]]]:
         """The matrices used to define interpolation."""
         raise NotImplementedError()
 
@@ -595,9 +595,9 @@ class _BasixElement(_ElementBase):
         return self._element.x
 
     @property
-    def _M(self) -> list[list[_npt.NDArray[np.float64]]]:
+    def _Pi(self) -> list[list[_npt.NDArray[np.float64]]]:
         """The matrices used to define interpolation."""
-        return self._element.M
+        return self._element.Pi
 
     @property
     def has_tensor_product_factorisation(self) -> bool:
@@ -1426,10 +1426,10 @@ class _BlockedElement(_ElementBase):
         return self._sub_element._x
 
     @property
-    def _M(self) -> list[list[_npt.NDArray[np.float64]]]:
+    def _Pi(self) -> list[list[_npt.NDArray[np.float64]]]:
         """Matrices used to define interpolation."""
         M = []
-        for M_list in self._sub_element._M:
+        for M_list in self._sub_element._Pi:
             M_row = []
             for mat in M_list:
                 new_mat = np.zeros(
@@ -1918,7 +1918,7 @@ def _compute_signature(element: _basix.finite_element.FiniteElement) -> str:
             data += "_"
     data += "__"
 
-    for entity in element.M:
+    for entity in element.Pi:
         for matrices in entity:
             data += ",".join([f"{i}" for mat in matrices for row in mat for i in row])
             data += "_"
@@ -2059,7 +2059,7 @@ def enriched_element(
     for pts_lists in zip(*[e._x for e in elements]):
         x.append([np.concatenate(pts) for pts in zip(*pts_lists)])
     M = []
-    for M_lists in zip(*[e._M for e in elements]):
+    for M_lists in zip(*[e._Pi for e in elements]):
         M_row = []
         for M_parts in zip(*M_lists):
             ndofs = sum(mat.shape[0] for mat in M_parts)

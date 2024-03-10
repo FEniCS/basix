@@ -902,10 +902,7 @@ public:
   /// element ordering and orientation to the reference element
   /// ordering and orientation.
   ///
-  /// The function applied the inverse of the operator applied by ::M.
-  ///
-  /// @note This function is designed to be called at runtime, so its
-  /// performance is critical.
+  /// This function applies the inverse of the operator applied by ::M.
   ///
   /// @param[in,out] data The data
   /// @param block_size The number of data points per DOF
@@ -913,32 +910,42 @@ public:
   template <typename T>
   void Minv(std::span<T> data, int block_size, std::uint32_t cell_info) const;
 
-  /// Multiply data by transpose DOF transformation matrix from the right
+  /// @brief Post(right)-apply the operator applied by ::Mt.
   ///
-  /// @note This function is designed to be called at runtime, so its
-  /// performance is critical.
+  /// Computes
+  /// \f[
+  /// \phi^{T} = \tilde{\phi}^{T} M^{T}
+  /// \f]
+  /// in-place.
   ///
   /// @param[in,out] data The data
-  /// @param block_size The number of data points per DOF
-  /// @param cell_info The permutation info for the cell
+  /// @param block_size Number of data points per DOF
+  /// @param cell_info Permutation info for the cell
   template <typename T>
-  void post_apply_transpose_dof_transformation(std::span<T> data,
-                                               int block_size,
-                                               std::uint32_t cell_info) const;
+  void Mt_post(std::span<T> data, int block_size,
+               std::uint32_t cell_info) const;
 
-  /// Multiply data by DOF transformation matrix from the right
+  /// @brief Post(right)-apply the operator applied by ::M.
   ///
-  /// @note This function is designed to be called at runtime, so its
-  /// performance is critical.
+  /// Computes
+  /// \f[
+  /// \tilde{d}^{T} = d^{T} M
+  /// \f]
+  /// in-place.
   ///
   /// @param[in,out] data The data
-  /// @param block_size The number of data points per DOF
-  /// @param cell_info The permutation info for the cell
+  /// @param block_size Number of data points per DOF
+  /// @param cell_info Permutation info for the cell
   template <typename T>
-  void post_apply_dof_transformation(std::span<T> data, int block_size,
-                                     std::uint32_t cell_info) const;
+  void M_post(std::span<T> data, int block_size, std::uint32_t cell_info) const;
 
-  /// Multiply data by inverse DOF transformation matrix from the right
+  /// @brief Post(right)-apply the operator applied by ::Minv.
+  ///
+  /// Computes
+  /// \f[
+  /// d^{T} = \tilde{d}^{T} M^{-1}
+  /// \f]
+  /// in-place.
   ///
   /// @note This function is designed to be called at runtime, so its
   /// performance is critical.
@@ -947,21 +954,22 @@ public:
   /// @param block_size The number of data points per DOF
   /// @param cell_info The permutation info for the cell
   template <typename T>
-  void post_apply_inverse_dof_transformation(std::span<T> data, int block_size,
-                                             std::uint32_t cell_info) const;
+  void Minv_post(std::span<T> data, int block_size,
+                 std::uint32_t cell_info) const;
 
-  /// Multiply data by inverse transpose DOF transformation matrix from the
-  /// right
+  /// @brief Post(right)-apply the operator applied by ::Mt_inv.
   ///
-  /// @note This function is designed to be called at runtime, so its
-  /// performance is critical.
+  /// Computes
+  /// \f[
+  /// \tilde{\phi}^{T} = \phi^{T} M^{-T}
+  /// \f]
   ///
   /// @param[in,out] data The data
-  /// @param block_size The number of data points per DOF
-  /// @param cell_info The permutation info for the cell
+  /// @param block_size Number of data points per DOF
+  /// @param cell_info Permutation info for the cell
   template <typename T>
-  void post_apply_inverse_transpose_dof_transformation(
-      std::span<T> data, int block_size, std::uint32_t cell_info) const;
+  void Mt_inv_post(std::span<T> data, int block_size,
+                   std::uint32_t cell_info) const;
 
   /// Return the interpolation points, i.e. the coordinates on the
   /// reference element where a function need to be evaluated in order
@@ -1677,8 +1685,8 @@ void FiniteElement<F>::Minv(std::span<T> data, int block_size,
 //-----------------------------------------------------------------------------
 template <std::floating_point F>
 template <typename T>
-void FiniteElement<F>::post_apply_transpose_dof_transformation(
-    std::span<T> data, int block_size, std::uint32_t cell_info) const
+void FiniteElement<F>::Mt_post(std::span<T> data, int block_size,
+                               std::uint32_t cell_info) const
 {
   if (_dof_transformations_are_identity)
     return;
@@ -1702,8 +1710,8 @@ void FiniteElement<F>::post_apply_transpose_dof_transformation(
 //-----------------------------------------------------------------------------
 template <std::floating_point F>
 template <typename T>
-void FiniteElement<F>::post_apply_inverse_dof_transformation(
-    std::span<T> data, int block_size, std::uint32_t cell_info) const
+void FiniteElement<F>::Minv_post(std::span<T> data, int block_size,
+                                 std::uint32_t cell_info) const
 {
   if (_dof_transformations_are_identity)
     return;
@@ -1727,8 +1735,8 @@ void FiniteElement<F>::post_apply_inverse_dof_transformation(
 //-----------------------------------------------------------------------------
 template <std::floating_point F>
 template <typename T>
-void FiniteElement<F>::post_apply_dof_transformation(
-    std::span<T> data, int block_size, std::uint32_t cell_info) const
+void FiniteElement<F>::M_post(std::span<T> data, int block_size,
+                              std::uint32_t cell_info) const
 {
   if (_dof_transformations_are_identity)
     return;
@@ -1752,8 +1760,8 @@ void FiniteElement<F>::post_apply_dof_transformation(
 //-----------------------------------------------------------------------------
 template <std::floating_point F>
 template <typename T>
-void FiniteElement<F>::post_apply_inverse_transpose_dof_transformation(
-    std::span<T> data, int block_size, std::uint32_t cell_info) const
+void FiniteElement<F>::Mt_inv_post(std::span<T> data, int block_size,
+                                   std::uint32_t cell_info) const
 {
   if (_dof_transformations_are_identity)
     return;

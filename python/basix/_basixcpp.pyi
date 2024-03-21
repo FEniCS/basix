@@ -9,7 +9,8 @@ cell_facet_outward_normals: nanobind.nb_func
 cell_facet_reference_volumes: nanobind.nb_func
 cell_volume: nanobind.nb_func
 compute_interpolation_operator: nanobind.nb_func
-create_custom_element: nanobind.nb_func
+create_custom_element_float32: nanobind.nb_func
+create_custom_element_float64: nanobind.nb_func
 create_element: nanobind.nb_func
 create_lattice: nanobind.nb_func
 create_tp_element: nanobind.nb_func

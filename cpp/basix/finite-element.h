@@ -1697,7 +1697,7 @@ void FiniteElement<F>::Mt_post_apply(std::span<T> data, int block_size,
   else
   {
     transform_data<T, false>(data, block_size, cell_info, _etrans,
-                             precompute::post_apply_tranpose_matrix<F, T>);
+                             precompute::apply_tranpose_matrix_right<F, T>);
   }
 }
 //-----------------------------------------------------------------------------
@@ -1722,7 +1722,7 @@ void FiniteElement<F>::Minv_post_apply(std::span<T> data, int block_size,
   else
   {
     transform_data<T, false>(data, block_size, cell_info, _etrans_invT,
-                             precompute::post_apply_tranpose_matrix<F, T>);
+                             precompute::apply_tranpose_matrix_right<F, T>);
   }
 }
 //-----------------------------------------------------------------------------
@@ -1747,7 +1747,7 @@ void FiniteElement<F>::M_post_apply(std::span<T> data, int block_size,
   else
   {
     transform_data<T, true>(data, block_size, cell_info, _etransT,
-                            precompute::post_apply_tranpose_matrix<F, T>);
+                            precompute::apply_tranpose_matrix_right<F, T>);
   }
 }
 //-----------------------------------------------------------------------------
@@ -1772,7 +1772,7 @@ void FiniteElement<F>::Mt_inv_post_apply(std::span<T> data, int block_size,
   else
   {
     transform_data<T, true>(data, block_size, cell_info, _etrans_inv,
-                            precompute::post_apply_tranpose_matrix<F, T>);
+                            precompute::apply_tranpose_matrix_right<F, T>);
   }
 }
 //-----------------------------------------------------------------------------

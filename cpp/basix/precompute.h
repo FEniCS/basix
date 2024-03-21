@@ -286,25 +286,26 @@ void apply_matrix(
 
 /// @brief Apply a (precomputed) matrix to some transposed data.
 ///
+/// Computes \f$v = u M^{F}\f$.
+///
 /// @note This function is designed to be called at runtime, so its
 /// performance is critical.
 ///
 /// See `apply_matrix()`.
 template <typename T, typename E>
-void post_apply_tranpose_matrix(
+void apply_tranpose_matrix_right(
     std::span<const std::size_t> v_size_t,
     MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<
         const T, MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 2>>
         M,
-    std::span<E> data, std::size_t offset = 0, std::size_t block_size = 1)
+    std::span<E> data, std::size_t offset = 0, std::size_t n = 1)
 {
   using U = typename impl::scalar_value_type_t<E>;
 
   const std::size_t dim = v_size_t.size();
-  const std::size_t data_size
-      = (data.size() + (dim < block_size ? block_size - dim : 0)) / block_size;
-  post_apply_transpose_permutation(v_size_t, data, offset, block_size);
-  for (std::size_t b = 0; b < block_size; ++b)
+  const std::size_t data_size = (data.size() + (dim < n ? n - dim : 0)) / n;
+  post_apply_transpose_permutation(v_size_t, data, offset, n);
+  for (std::size_t b = 0; b < n; ++b)
   {
     for (std::size_t i = 0; i < dim; ++i)
     {

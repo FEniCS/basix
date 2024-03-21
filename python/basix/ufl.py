@@ -2036,6 +2036,7 @@ def enriched_element(
         An enriched finite element.
 
     """
+    # TODO: move this code to a function in C++
     ct = elements[0].cell_type
     ptype = elements[0].polyset_type
     vshape = elements[0].reference_value_shape

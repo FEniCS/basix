@@ -145,8 +145,6 @@ template <typename E>
 void apply_permutation(std::span<const std::size_t> perm, std::span<E> data,
                        std::size_t offset = 0, std::size_t n = 1)
 {
-  std::cout << "(A) Basix block_size: " << block_size << ", " << perm.size()
-            << std::endl;
   for (std::size_t i = 0; i < perm.size(); ++i)
     for (std::size_t b = 0; b < n; ++b)
       std::swap(data[n * (offset + i) + b], data[n * (offset + perm[i]) + b]);

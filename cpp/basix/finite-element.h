@@ -1493,8 +1493,8 @@ void FiniteElement<F>::permute_data(
         // Reverse an edge
         if (cell_info >> (face_start + e) & 1)
         {
-          precompute::pre_apply_permutation_mapped(trans, data, _edofs[1][e],
-                                                   block_size);
+          precompute::apply_permutation_mapped(trans, data, _edofs[1][e],
+                                               block_size);
         }
       }
     }
@@ -1509,22 +1509,22 @@ void FiniteElement<F>::permute_data(
         // Reflect a face (pre rotate)
         if (!post and cell_info >> (3 * f) & 1)
         {
-          precompute::pre_apply_permutation_mapped(trans[1], data, _edofs[2][f],
-                                                   block_size);
+          precompute::apply_permutation_mapped(trans[1], data, _edofs[2][f],
+                                               block_size);
         }
 
         // Rotate a face
         for (std::uint32_t r = 0; r < (cell_info >> (3 * f + 1) & 3); ++r)
         {
-          precompute::pre_apply_permutation_mapped(trans[0], data, _edofs[2][f],
-                                                   block_size);
+          precompute::apply_permutation_mapped(trans[0], data, _edofs[2][f],
+                                               block_size);
         }
 
         // Reflect a face (post rotate)
         if (post and cell_info >> (3 * f) & 1)
         {
-          precompute::pre_apply_permutation_mapped(trans[1], data, _edofs[2][f],
-                                                   block_size);
+          precompute::apply_permutation_mapped(trans[1], data, _edofs[2][f],
+                                               block_size);
         }
       }
     }

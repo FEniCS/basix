@@ -181,9 +181,9 @@ std::pair<std::vector<T>, std::array<std::size_t, 2>> compute_dual_matrix(
   return {std::move(C), shape};
 }
 //-----------------------------------------------------------------------------
-std::size_t combine_hashes(std::size_t a, std::size_t b)
+void combine_hashes(std::size_t& a, std::size_t b)
 {
-  return a ^ (b + 0x9e3779b9 + (a << 6) + (a >> 2));
+  a ^= b + 0x9e3779b9 + (a << 6) + (a >> 2);
 }
 //-----------------------------------------------------------------------------
 } // namespace
@@ -1220,6 +1220,9 @@ std::size_t FiniteElement<F>::hash() const
     std::size_t coeff_hash = 0;
     for (auto i : _coeffs.first)
     {
+      // This takes five decimal places of each matrix entry. We should revisit
+      // this
+      combine_hashes(coeff_hash, int(i * 100000));
     }
     std::size_t vs_hash = 0;
     for (std::size_t i = 0; i < value_shape().size(); ++i)

@@ -1967,6 +1967,7 @@ def element(
     if dtype is None:
         try:
             from dolfinx import default_real_type
+
             dtype = default_real_type
         except ImportError:
             dtype = np.float64
@@ -2158,6 +2159,7 @@ def custom_element(
     if dtype is None:
         try:
             from dolfinx import default_real_type
+
             dtype = default_real_type
         except ImportError:
             dtype = np.float64

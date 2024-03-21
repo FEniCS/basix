@@ -770,10 +770,10 @@ public:
   /// \f[
   ///  d = P \tilde{d},
   /// \f]
-  /// where \f$P\f$ is a permutation matrix and \f$d\f$ hold the integers in
-  /// \f$\tilde{d}\f$ but permuted to follow the globally consistent physical
-  /// element degree-of-freedom ordering. The permutation is computed
-  /// in-place.
+  /// where \f$P\f$ is a permutation matrix and \f$d\f$ holds the
+  /// integers in \f$\tilde{d}\f$ but permuted to follow the globally
+  /// consistent physical element degree-of-freedom ordering. The
+  /// permutation is computed in-place.
   ///
   /// @note This function is designed to be called at runtime, so its
   /// performance is critical.
@@ -796,24 +796,11 @@ public:
     permute_data<std::int32_t, false>(d, 1, cell_info, _eperm);
   }
 
-  /// @brief Permute indices associated with degree-of-freedoms in the
-  /// globally consistent physical element ordering to the reference
-  /// element degree-of-freedom ordering.
-  ///
-  /// This function is the inverse of FiniteElement::permute.
-  ///
-  /// Given an array \f$d\f$ that holds an integer associated with each
-  /// degree-of-freedom and follwoing the globally consistent physical
-  /// element degree-of-freedom ordering, this function computes
-  /// \f[
-  ///  \tilde{d} = P^{T} d,
-  /// \f]
-  /// where \f$P\f$ is a permutation matrix and \f$\tilde{d}\f$ hold the
-  /// integers in \f$d\f$ but permuted to follow the reference element
-  /// degree-of-freedom ordering. The permutation is computed in-place.
-  ///
-  /// @param[in,out] d Indices associated with each reference element
-  /// degree-of-freedom [in]. Indices associated with each physical
+  /// @brief Peform the inverse of the operation applied by
+  /// FiniteElement::permute.
+  //
+  /// @param[in,out] d Indices associated with each physical element
+  /// degree-of-freedom [in]. Indices associated with each reference
   /// element degree-of-freedom [out].
   /// @param cell_info Permutation info for the cell
   void permute_inv(std::span<std::int32_t> d, std::uint32_t cell_info) const
@@ -836,155 +823,153 @@ public:
   /// Consider that the value of a finite element function \f$f_{h}\f$
   /// at a point is given by
   /// \f[
-  ///  f_{h} = \phi^{T} c
+  ///  f_{h} = \phi^{T} c,
   /// \f]
   /// where \f$f_{h}\f$ has shape \f$r \times 1\f$, \f$\phi\f$ has shape
-  /// \f$d \times r\f$ and holds the finite element basis functionsm,
+  /// \f$d \times r\f$ and holds the finite element basis functions,
   /// and \f$c\f$ has shape \f$d \times 1\f$ and holds the
-  /// degrees-of-freedom, where the basis functions and
+  /// degrees-of-freedom. The basis functions and
   /// degree-of-freedom are with respect to the physical element
   /// orientation. If the degrees-of-freedom on the physical element
   /// orientation are given by
   /// \f[
-  ///  c = M^{T} \tilde{c}
+  /// \phi = M \tilde{\phi},
   /// \f]
-  /// where \f$M\f$ is a \f$d \times d\f$ matrix. It follows that
+  /// where \f$M\f$ is a \f$d \times d\f$ matrix, it follows from
+  /// \f$f_{h} = \phi^{T} c = \tilde{\phi}^{T} M^{T} c\f$ that
   /// \f[
-  ///  \tilde{\phi} = M \phi.
+  ///  \tilde{c} = M^{T} c.
   /// \f]
   ///
-  /// Given a \f$d \times n\f$ matrix \f$\tilde{\Phi}\f$, where the
-  /// columns of \f$\Phi\f$ hold basis functions with respect to the
-  /// reference cell orientation, this function computes:
-  /// \f[
-  ///  \Phi = M \tilde{\Phi},
-  /// \f]
-  /// where \f$\Phi\f$ holds the basis functions with respect to the
-  /// physical element orientation. The transformation is peformed
-  /// in-place.
+  /// This function applies \f$M\f$ to data. The transformation is
+  /// peformed in-place. The operator \f$M\f$ is orthogonal for many
+  /// elements, but not all.
   ///
-  /// The operator \f$M\f$ is orthogonal for many elements but not all.
-  ///
-  /// @param[in,out] data Data to transform. It has shape `(ndofs, n)`
-  /// and uses row-major storage.
-  /// @param n Number of columns of `data`, which is the data points per
-  /// DOF.
+  /// @param[in,out] data Data to transform. The shape is `(m, n)`,
+  /// where `m` is the number of dgerees-of-freedom and the storage is
+  /// row-major.
+  /// @param[in] n Number of columns in `data`.
   /// @param cell_info Permutation info for the cell
   template <typename T>
   void M_apply(std::span<T> data, int n, std::uint32_t cell_info) const;
 
-  /// @brief Transform degrees-of-freedom from the globally consistent
-  /// physical element ordering and orientation to the reference element
-  /// ordering and orientation.
-  ///
-  /// This function applies the transpose of the operator appplied by
+  /// @brief Apply the transpose of the operator appplied by
   /// FiniteElement::M_apply.
   ///
-  /// Given an array \f$d\f$ of degrees-of-freedom for physical element
-  /// ordering and orientation, this function computes
+  /// The transformation
   /// \f[
-  ///  \tilde{d} = M^{T} d,
+  ///  v = M^{T} u.
   /// \f]
-  /// where \f$M\f$ is a matrix and \f$\tilde{d}\f$ holds the
-  /// degrees-of-freedom for the reference element ordering and
-  /// orientation. The transformation is peformed in-place.
+  /// is peformed in-place.
   ///
-  /// @param[in,out] data Data to transform.
-  /// @param block_size Number of data points per DOF,
-  /// @param cell_info Permutation info for the cell,
+  /// @param[in,out] data Data to transform. The shape is `(m, n)`,
+  /// where `m` is the number of dgerees-of-freedom an d the storage is
+  /// row-major.
+  /// @param[in] n Number of columns in `data`.
+  /// @param[in] cell_info Permutation info for the cell,
   template <typename T>
-  void Mt_apply(std::span<T> data, int block_size,
-                std::uint32_t cell_info) const;
+  void Mt_apply(std::span<T> data, int n, std::uint32_t cell_info) const;
 
-  /// @brief Transform degrees-of-freedom from the reference element
-  /// ordering and orientation to the physical element ordering and
-  /// orientation.
-  ///
-  /// This function applies the inverse of the operator applied by
-  /// FiniteElement::Mt_apply.
-  ///
-  /// @param[in,out] data Data to transform.
-  /// @param block_size Number of data points per DOF.
-  /// @param cell_info Permutation info for the cell.
-  template <typename T>
-  void Mt_inv_apply(std::span<T> data, int block_size,
-                    std::uint32_t cell_info) const;
-
-  /// @brief Transform basis functions from the locally consistent
-  /// physical element ordering and orientation to the reference element
-  /// ordering and orientation.
-  ///
-  /// This function applies the inverse of the operator applied by
+  /// @brief Apply the inverse transpose of the operator appplied by
   /// FiniteElement::M_apply.
   ///
-  /// @param[in,out] data Data to transform.
-  /// @param block_size Number of data points per DOF.
-  /// @param cell_info Permutation info for the cell.
+  /// The transformation
+  /// \f[
+  ///  v = M^{-T} u.
+  /// \f]
+  /// is peformed in-place.
+  ///
+  /// @param[in,out] data Data to transform. The shape is `(m, n)`,
+  /// where `m` is the number of dgerees-of-freedom and the storage is
+  /// row-major.
+  /// @param[in] n Number of columns in `data`.
+  /// @param[in] cell_info Permutation info for the cell.
   template <typename T>
-  void Minv_apply(std::span<T> data, int block_size,
-                  std::uint32_t cell_info) const;
+  void Mt_inv_apply(std::span<T> data, int n, std::uint32_t cell_info) const;
+
+  /// @brief Apply the inverse of the operator appplied by
+  /// FiniteElement::M_apply.
+  ///
+  /// The transformation
+  /// \f[
+  ///  v = M^{-1} u.
+  /// \f]
+  /// is peformed in-place.
+  ///
+  /// @param[in,out] data Data to transform. The shape is `(m, n)`,
+  /// where `m` is the number of dgerees-of-freedom and the storage is
+  /// row-major.
+  /// @param[in] n Number of columns in `data`.
+  /// @param[in] cell_info Permutation info for the cell.
+  template <typename T>
+  void Minv_apply(std::span<T> data, int n, std::uint32_t cell_info) const;
 
   /// @brief Post(right)-apply the operator applied by
   /// FiniteElement::Mt_apply.
   ///
   /// Computes
   /// \f[
-  /// \phi^{T} = \tilde{\phi}^{T} M^{T}
+  /// v^{T} = u^{T} M^{T}
   /// \f]
   /// in-place.
   ///
-  /// @param[in,out] data Data to transform.
-  /// @param block_size Number of data points per DOF.
-  /// @param cell_info Permutation info for the cell.
+  /// @param[in,out] data Data to transform. The shape is `(m, n)`,
+  /// where `m` is the number of dgerees-of-freedom and the storage is
+  /// row-major.
+  /// @param[in] n Number of columns in `data`.
+  /// @param[in] cell_info Permutation info for the cell.
   template <typename T>
-  void Mt_post_apply(std::span<T> data, int block_size,
-                     std::uint32_t cell_info) const;
+  void Mt_post_apply(std::span<T> data, int n, std::uint32_t cell_info) const;
 
   /// @brief Post(right)-apply the operator applied by
   /// FiniteElement::M_apply.
   ///
   /// Computes
   /// \f[
-  /// \tilde{d}^{T} = d^{T} M
+  /// v^{T} = u^{T} M
   /// \f]
   /// in-place.
   ///
-  /// @param[in,out] data Data to transform.
-  /// @param block_size Number of data points per DOF.
-  /// @param cell_info Permutation info for the cell.
+  /// @param[in,out] data Data to transform. The shape is `(m, n)`,
+  /// where `m` is the number of dgerees-of-freedom and the storage is
+  /// row-major.
+  /// @param[in] n Number of columns in `data`.
+  /// @param[in] cell_info Permutation info for the cell.
   template <typename T>
-  void M_post_apply(std::span<T> data, int block_size,
-                    std::uint32_t cell_info) const;
+  void M_post_apply(std::span<T> data, int n, std::uint32_t cell_info) const;
 
   /// @brief Post(right)-apply the operator applied by
   /// FiniteElement::Minv_apply.
   ///
   /// Computes
   /// \f[
-  /// d^{T} = \tilde{d}^{T} M^{-1}
+  /// v^{T} = u^{T} M^{-1}
   /// \f]
   /// in-place.
   ///
-  /// @param[in,out] data Data to transform.
-  /// @param block_size Number of data points per DOF.
+  /// @param[in,out] data Data to transform. The shape is `(m, n)`,
+  /// where `m` is the number of dgerees-of-freedom and the storage is
+  /// row-major.
+  /// @param[in] n Number of columns in `data`.
   /// @param cell_info Permutation info for the cell.
   template <typename T>
-  void Minv_post_apply(std::span<T> data, int block_size,
-                       std::uint32_t cell_info) const;
+  void Minv_post_apply(std::span<T> data, int n, std::uint32_t cell_info) const;
 
   /// @brief Post(right)-apply the operator applied by
   /// FiniteElement::Mt_inv_apply.
   ///
   /// Computes
   /// \f[
-  /// \tilde{\phi}^{T} = \phi^{T} M^{-T}
+  /// v^{T} = u^{T} M^{-T}
   /// \f]
   ///
-  /// @param[in,out] data Data to transform.
-  /// @param block_size Number of data points per DOF.
+  /// @param[in,out] data Data to transform. The shape is `(m, n)`,
+  /// where `m` is the number of dgerees-of-freedom and the storage is
+  /// row-major.
+  /// @param[in] n Number of columns in `data`.
   /// @param cell_info Permutation info for the cell.
   template <typename T>
-  void Mt_inv_post_apply(std::span<T> data, int block_size,
+  void Mt_inv_post_apply(std::span<T> data, int n,
                          std::uint32_t cell_info) const;
 
   /// Return the interpolation points, i.e. the coordinates on the
@@ -1628,19 +1613,13 @@ template <typename T>
 void FiniteElement<F>::M_apply(std::span<T> data, int n,
                                std::uint32_t cell_info) const
 {
-  std::cout << "X1M_apply: " << n << std::endl;
-
   if (_dof_transformations_are_identity)
     return;
 
   if (_dof_transformations_are_permutations)
-  {
-    std::cout << "X1M_apply: " << n << std::endl;
     permute_data<T, false>(data, n, cell_info, _eperm);
-  }
   else
   {
-    std::cout << "X2M_apply: " << n << std::endl;
     transform_data<T, false>(data, n, cell_info, _etrans,
                              precompute::pre_apply_matrix<F, T>);
   }

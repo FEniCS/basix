@@ -131,28 +131,25 @@ void prepare_permutation(std::span<std::size_t> perm);
 /// Therefore the result of applying this permutation is `[b, e, a, f, c, d]`
 /// (which is what we get if we apply the permutation directly).
 ///
-/// @note This function is designed to be called at runtime, so its performance
-/// is critical.
+/// @note This function is designed to be called at runtime, so its
+/// performance is critical.
 ///
 /// @param[in] perm A permutation in precomputed form (as returned by
 /// `prepare_permutation()`)
-/// @param[in,out] data The data to apply the permutation to
+/// @param[in,out] data The data to apply the permutation to. It has
+/// shape `(m, n)` (uses row-major storage), where the permutation
+/// matrix has shape `(m, m)`.
 /// @param[in] offset The position in the data to start applying the permutation
-/// @param[in] block_size The block size of the data
+/// @param[in] n The block size of the data
 template <typename E>
 void pre_apply_permutation(std::span<const std::size_t> perm, std::span<E> data,
-                           std::size_t offset = 0, std::size_t block_size = 1)
+                           std::size_t offset = 0, std::size_t n = 1)
 {
   std::cout << "(A) Basix block_size: " << block_size << ", " << perm.size()
             << std::endl;
   for (std::size_t i = 0; i < perm.size(); ++i)
-  {
-    for (std::size_t b = 0; b < block_size; ++b)
-    {
-      std::swap(data[block_size * (offset + i) + b],
-                data[block_size * (offset + perm[i]) + b]);
-    }
-  }
+    for (std::size_t b = 0; b < n; ++b)
+      std::swap(data[n * (offset + i) + b], data[n * (offset + perm[i]) + b]);
 }
 
 /// Permutation of mapped data

@@ -332,8 +332,9 @@ void declare_float(nb::module_& m, std::string type)
                    });
 
   // Create FiniteElement
+  std::string custom_name = "create_custom_element_" + type;
   m.def(
-      "create_custom_element",
+      custom_name.c_str(),
       [](cell::type cell_type, const std::vector<std::size_t>& value_shape,
          nb::ndarray<const T, nb::ndim<2>, nb::c_contig> wcoeffs,
          std::vector<

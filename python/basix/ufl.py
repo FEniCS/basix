@@ -1942,7 +1942,7 @@ def element(
     discontinuous: bool = False,
     shape: _typing.Optional[tuple[int, ...]] = None,
     symmetry: _typing.Optional[bool] = None,
-    dtype: _npt.DTypeLike = np.float64,
+    dtype: _typing.Optional[_npt.DTypeLike] = None,
 ) -> _ElementBase:
     """Create a UFL compatible element using Basix.
 
@@ -1964,6 +1964,14 @@ def element(
         A finite element.
 
     """
+    if dtype is None:
+        try:
+            from dolfinx import default_scalar_type
+            dtype = default_scalar_type
+        except ImportError:
+            dtype = np.float64
+
+
     # Conversion of string arguments to types
     if isinstance(cell, str):
         cell = _basix.cell.string_to_type(cell)

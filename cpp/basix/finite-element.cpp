@@ -18,7 +18,6 @@
 #include "math.h"
 #include "polyset.h"
 #include <basix/version.h>
-#include <boost/functional/hash.hpp>
 #include <cmath>
 #include <concepts>
 #include <limits>
@@ -180,6 +179,11 @@ std::pair<std::vector<T>, std::array<std::size_t, 2>> compute_dual_matrix(
   std::vector<T> C(shape[0] * shape[1]);
   math::dot(B, Df, mdspan_t<T, 2>(C.data(), shape));
   return {std::move(C), shape};
+}
+//-----------------------------------------------------------------------------
+std::size_t combine_hashes(std::size_t a, std::size_t b)
+{
+  return a ^ (b + 0x9e3779b9 + (a << 6) + (a >> 2));
 }
 //-----------------------------------------------------------------------------
 } // namespace
@@ -1197,20 +1201,19 @@ std::size_t FiniteElement<F>::hash() const
   {
     if (dof_ordering()[i] != static_cast<int>(i))
     {
-      boost::hash_combine(dof_ordering_hash,
-                          std::hash<int>{}(dof_ordering()[i] - i));
+      combine_hashes(dof_ordering_hash,
+                     std::hash<int>{}(dof_ordering()[i] - i));
     }
   }
 
   std::size_t h = std::hash<int>{}(static_cast<int>(family()));
-  boost::hash_combine(h, dof_ordering_hash);
-  boost::hash_combine(h, dof_ordering_hash);
-  boost::hash_combine(h, std::hash<int>{}(static_cast<int>(cell_type())));
-  boost::hash_combine(h,
-                      std::hash<int>{}(static_cast<int>(lagrange_variant())));
-  boost::hash_combine(h, std::hash<int>{}(static_cast<int>(dpc_variant())));
-  boost::hash_combine(h, std::hash<int>{}(static_cast<int>(sobolev_space())));
-  boost::hash_combine(h, std::hash<int>{}(static_cast<int>(map_type())));
+  combine_hashes(h, dof_ordering_hash);
+  combine_hashes(h, dof_ordering_hash);
+  combine_hashes(h, std::hash<int>{}(static_cast<int>(cell_type())));
+  combine_hashes(h, std::hash<int>{}(static_cast<int>(lagrange_variant())));
+  combine_hashes(h, std::hash<int>{}(static_cast<int>(dpc_variant())));
+  combine_hashes(h, std::hash<int>{}(static_cast<int>(sobolev_space())));
+  combine_hashes(h, std::hash<int>{}(static_cast<int>(map_type())));
 
   if (family() == element::family::custom)
   {
@@ -1221,17 +1224,17 @@ std::size_t FiniteElement<F>::hash() const
     std::size_t vs_hash = 0;
     for (std::size_t i = 0; i < value_shape().size(); ++i)
     {
-      boost::hash_combine(vs_hash, std::hash<int>{}(value_shape()[i]));
+      combine_hashes(vs_hash, std::hash<int>{}(value_shape()[i]));
     }
-    boost::hash_combine(h, coeff_hash);
-    boost::hash_combine(h, std::hash<int>{}(embedded_superdegree()));
-    boost::hash_combine(h, std::hash<int>{}(embedded_subdegree()));
-    boost::hash_combine(h, std::hash<int>{}(static_cast<int>(polyset_type())));
-    boost::hash_combine(h, vs_hash);
+    combine_hashes(h, coeff_hash);
+    combine_hashes(h, std::hash<int>{}(embedded_superdegree()));
+    combine_hashes(h, std::hash<int>{}(embedded_subdegree()));
+    combine_hashes(h, std::hash<int>{}(static_cast<int>(polyset_type())));
+    combine_hashes(h, vs_hash);
   }
   else
   {
-    boost::hash_combine(h, std::hash<int>{}(degree()));
+    combine_hashes(h, std::hash<int>{}(degree()));
   }
   return h;
 }

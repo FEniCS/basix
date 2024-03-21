@@ -201,7 +201,7 @@ void post_apply_transpose_permutation(std::span<const std::size_t> perm,
 /// decomposition of @f$A^t@f$ is computed in-place
 ///
 /// For an example of how the permutation in this form is applied, see
-/// `pre_apply_matrix()`.
+/// `apply_matrix()`.
 ///
 /// @param[in,out] A The matrix's data
 /// @return The three parts of a precomputed representation of the matrix.
@@ -249,7 +249,7 @@ prepare_matrix(std::pair<std::vector<T>, std::array<std::size_t, 2>>& A)
 /// permutation
 /// @param[in] block_size The block size of the data
 template <typename T, typename E>
-void pre_apply_matrix(
+void apply_matrix(
     std::span<const std::size_t> v_size_t,
     MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<
         const T, MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 2>>
@@ -289,7 +289,7 @@ void pre_apply_matrix(
 /// @note This function is designed to be called at runtime, so its
 /// performance is critical.
 ///
-/// See `pre_apply_matrix()`.
+/// See `apply_matrix()`.
 template <typename T, typename E>
 void post_apply_tranpose_matrix(
     std::span<const std::size_t> v_size_t,

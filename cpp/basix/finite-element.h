@@ -1621,7 +1621,7 @@ void FiniteElement<F>::M_apply(std::span<T> data, int n,
   else
   {
     transform_data<T, false>(data, n, cell_info, _etrans,
-                             precompute::pre_apply_matrix<F, T>);
+                             precompute::apply_matrix<F, T>);
   }
 }
 //-----------------------------------------------------------------------------
@@ -1638,7 +1638,7 @@ void FiniteElement<F>::Mt_apply(std::span<T> data, int block_size,
   else
   {
     transform_data<T, true>(data, block_size, cell_info, _etransT,
-                            precompute::pre_apply_matrix<F, T>);
+                            precompute::apply_matrix<F, T>);
   }
 }
 //-----------------------------------------------------------------------------
@@ -1655,7 +1655,7 @@ void FiniteElement<F>::Mt_inv_apply(std::span<T> data, int block_size,
   else
   {
     transform_data<T, false>(data, block_size, cell_info, _etrans_invT,
-                             precompute::pre_apply_matrix<F, T>);
+                             precompute::apply_matrix<F, T>);
   }
 }
 //-----------------------------------------------------------------------------
@@ -1672,7 +1672,7 @@ void FiniteElement<F>::Minv_apply(std::span<T> data, int block_size,
   else
   {
     transform_data<T, true>(data, block_size, cell_info, _etrans_inv,
-                            precompute::pre_apply_matrix<F, T>);
+                            precompute::apply_matrix<F, T>);
   }
 }
 //-----------------------------------------------------------------------------

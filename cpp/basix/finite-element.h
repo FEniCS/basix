@@ -349,7 +349,7 @@ public:
   bool operator==(const FiniteElement& e) const;
 
   /// Get a unique hash of this element
-  int hash() const;
+  std::size_t hash() const;
 
   /// Array shape for tabulate basis values and derivatives at set of
   /// points.

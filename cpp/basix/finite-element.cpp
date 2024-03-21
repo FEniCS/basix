@@ -18,11 +18,11 @@
 #include "math.h"
 #include "polyset.h"
 #include <basix/version.h>
+#include <boost/functional/hash.hpp>
 #include <cmath>
 #include <concepts>
 #include <limits>
 #include <numeric>
-
 #define str_macro(X) #X
 #define str(X) str_macro(X)
 
@@ -1190,49 +1190,50 @@ bool FiniteElement<F>::operator==(const FiniteElement& e) const
 }
 //-----------------------------------------------------------------------------
 template <std::floating_point F>
-int FiniteElement<F>::hash() const
+std::size_t FiniteElement<F>::hash() const
 {
-  int dof_ordering_hash = 0;
+  std::size_t dof_ordering_hash = 0;
   for (std::size_t i = 0; i < dof_ordering().size(); ++i)
   {
-    dof_ordering_hash *= 53;
-    dof_ordering_hash += (dof_ordering()[i] - i);
-    dof_ordering_hash %= 1024;
+    if (dof_ordering()[i] != static_cast<int>(i))
+    {
+      boost::hash_combine(dof_ordering_hash,
+                          std::hash<int>{}(dof_ordering()[i] - i));
+    }
   }
+
+  std::size_t h = std::hash<int>{}(static_cast<int>(family()));
+  boost::hash_combine(h, dof_ordering_hash);
+  boost::hash_combine(h, dof_ordering_hash);
+  boost::hash_combine(h, std::hash<int>{}(static_cast<int>(cell_type())));
+  boost::hash_combine(h,
+                      std::hash<int>{}(static_cast<int>(lagrange_variant())));
+  boost::hash_combine(h, std::hash<int>{}(static_cast<int>(dpc_variant())));
+  boost::hash_combine(h, std::hash<int>{}(static_cast<int>(sobolev_space())));
+  boost::hash_combine(h, std::hash<int>{}(static_cast<int>(map_type())));
+
   if (family() == element::family::custom)
   {
-    int coeff_hash = 0;
+    std::size_t coeff_hash = 0;
     for (auto i : _coeffs.first)
     {
-      coeff_hash *= 53;
-      coeff_hash += int(i * 10000);
-      coeff_hash %= 1024;
     }
-    std::vector<int> primes = {2, 3, 5, 7, 11};
-    int vs_hash = 0;
+    std::size_t vs_hash = 0;
     for (std::size_t i = 0; i < value_shape().size(); ++i)
     {
-      vs_hash += pow(primes[i], value_shape()[i]);
+      boost::hash_combine(vs_hash, std::hash<int>{}(value_shape()[i]));
     }
-    return pow(2, static_cast<int>(family())) * pow(3, dof_ordering_hash % 16)
-           * pow(5, coeff_hash % 16) * pow(7, static_cast<int>(cell_type()))
-           * pow(11, embedded_superdegree()) * pow(13, embedded_subdegree())
-           * pow(17, static_cast<int>(lagrange_variant()))
-           * pow(19, static_cast<int>(dpc_variant()))
-           * pow(23, static_cast<int>(sobolev_space()))
-           * pow(29, static_cast<int>(map_type()))
-           * pow(31, static_cast<int>(polyset_type()))
-           * pow(37, static_cast<int>(vs_hash));
+    boost::hash_combine(h, coeff_hash);
+    boost::hash_combine(h, std::hash<int>{}(embedded_superdegree()));
+    boost::hash_combine(h, std::hash<int>{}(embedded_subdegree()));
+    boost::hash_combine(h, std::hash<int>{}(static_cast<int>(polyset_type())));
+    boost::hash_combine(h, vs_hash);
   }
   else
   {
-    return pow(2, static_cast<int>(family())) * pow(3, dof_ordering_hash % 16)
-           * pow(5, static_cast<int>(cell_type())) * pow(7, degree())
-           * pow(11, static_cast<int>(lagrange_variant()))
-           * pow(13, static_cast<int>(dpc_variant()))
-           * pow(17, static_cast<int>(sobolev_space()))
-           * pow(19, static_cast<int>(map_type()));
+    boost::hash_combine(h, std::hash<int>{}(degree()));
   }
+  return h;
 }
 //-----------------------------------------------------------------------------
 template <std::floating_point F>

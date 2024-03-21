@@ -184,7 +184,7 @@ def test_hash():
     e0 = basix.create_element(basix.ElementFamily.P, basix.CellType.interval, 1)
     e1 = basix.create_element(basix.ElementFamily.P, basix.CellType.interval, 1)
     e2 = basix.create_element(
-        basix.ElementFamily.P, basix.CellType.interval, 1, dof_ordering=list(range(2))
+        basix.ElementFamily.P, basix.CellType.interval, 1, dof_ordering=[0, 1]
     )
     e3 = basix.create_element(basix.ElementFamily.P, basix.CellType.interval, 2)
     e4 = basix.create_element(basix.ElementFamily.P, basix.CellType.triangle, 1)

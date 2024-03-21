@@ -2150,6 +2150,7 @@ def custom_element(
         embedded_superdegree: The highest degree of a polynomial in this
             element's polyset.
         polyset_type: Polyset type for the element.
+        dtype: Floating point data type.
 
     Returns:
         A custom finite element.

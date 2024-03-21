@@ -658,6 +658,7 @@ def create_custom_element(
         embedded_superdegree: Degree of a polynomial in this
             element's polyset.
         poly_type: Type of polyset to use for this element.
+        dtype: Element scalar type.
 
     Returns:
         A custom finite element.

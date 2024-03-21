@@ -170,19 +170,20 @@ void apply_permutation_mapped(std::span<const std::size_t> perm,
 
 /// Apply a (precomputed) permutation to some transposed data.
 ///
+/// Applies \f$v = u P^{T}\f$
+///
 /// @note This function is designed to be called at runtime, so its
 /// performance is critical.
 ///
 /// see `apply_permutation()`.
 template <typename E>
-void post_apply_transpose_permutation(std::span<const std::size_t> perm,
-                                      std::span<E> data, std::size_t offset = 0,
-                                      std::size_t block_size = 1)
+void apply_inv_permutation_right(std::span<const std::size_t> perm,
+                                 std::span<E> data, std::size_t offset = 0,
+                                 std::size_t n = 1)
 {
   const std::size_t dim = perm.size();
-  const std::size_t data_size
-      = (data.size() + (dim < block_size ? block_size - dim : 0)) / block_size;
-  for (std::size_t b = 0; b < block_size; ++b)
+  const std::size_t data_size = (data.size() + (dim < n ? n - dim : 0)) / n;
+  for (std::size_t b = 0; b < n; ++b)
   {
     for (std::size_t i = 0; i < dim; ++i)
     {
@@ -304,7 +305,7 @@ void apply_tranpose_matrix_right(
 
   const std::size_t dim = v_size_t.size();
   const std::size_t data_size = (data.size() + (dim < n ? n - dim : 0)) / n;
-  post_apply_transpose_permutation(v_size_t, data, offset, n);
+  apply_inv_permutation_right(v_size_t, data, offset, n);
   for (std::size_t b = 0; b < n; ++b)
   {
     for (std::size_t i = 0; i < dim; ++i)

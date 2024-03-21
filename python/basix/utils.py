@@ -1,3 +1,8 @@
+# Copyright (C) 2023-2024 Matthew Scroggs and Garth N. Wells
+#
+# This file is part of Basix (https://www.fenicsproject.org)
+#
+# SPDX-License-Identifier:    MIT
 """Utility funcitons."""
 
 import typing
@@ -15,25 +20,29 @@ class Enum(_Enum):
         """Less than."""
         if self.__class__ != other.__class__:
             return NotImplemented
-        return self.value < other.value
+        else:
+            return self.value < other.value
 
     def __le__(self, other) -> bool:
         """Less than or equal."""
         if self.__class__ != other.__class__:
             return NotImplemented
-        return self.value <= other.value
+        else:
+            return self.value <= other.value
 
     def __gt__(self, other) -> bool:
         """Greater than."""
         if self.__class__ != other.__class__:
             return NotImplemented
-        return self.value > other.value
+        else:
+            return self.value > other.value
 
     def __ge__(self, other) -> bool:
         """Greater than or equal."""
         if self.__class__ != other.__class__:
             return NotImplemented
-        return self.value >= other.value
+        else:
+            return self.value >= other.value
 
     def __int__(self) -> int:
         """Convert to int."""
@@ -44,12 +53,12 @@ def index(p: int, q: typing.Optional[int] = None, r: typing.Optional[int] = None
     """Compute the indexing in a 1D, 2D or 3D simplex.
 
     Args:
-        p: Index in x
-        q: Index in y
-        r: Index in z
+        p: Index in x.
+        q: Index in y.
+        r: Index in z.
 
     Returns:
-        The index in a flattened 1D array
+        Index in a flattened 1D array.
     """
     if q is None:
         assert r is None

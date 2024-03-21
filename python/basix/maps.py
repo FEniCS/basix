@@ -1,3 +1,8 @@
+# Copyright (C) 2023-2024 Matthew Scroggs and Garth N. Wells
+#
+# This file is part of Basix (https://www.fenicsproject.org)
+#
+# SPDX-License-Identifier:    MIT
 """Maps."""
 
 from basix._basixcpp import MapType as _MT
@@ -8,6 +13,7 @@ __all__ = ["string_to_type"]
 
 class MapType(Enum):
     """Map type."""
+
     identity = _MT.identity
     L2Piola = _MT.L2Piola
     covariantPiola = _MT.covariantPiola

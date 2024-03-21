@@ -1,3 +1,8 @@
+# Copyright (C) 2023-2024 Matthew Scroggs and Garth N. Wells
+#
+# This file is part of Basix (https://www.fenicsproject.org)
+#
+# SPDX-License-Identifier:    MIT
 """Interpolation."""
 
 import numpy.typing as npt
@@ -7,7 +12,8 @@ from basix.finite_element import FiniteElement
 
 
 def compute_interpolation_operator(
-    e0: FiniteElement, e1: FiniteElement,
+    e0: FiniteElement,
+    e1: FiniteElement,
 ) -> npt.NDArray:
     """Compute a matrix that represents the interpolation between two elements.
 

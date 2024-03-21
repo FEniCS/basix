@@ -4,10 +4,9 @@
 
 import random
 
+import basix
 import numpy as np
 import pytest
-
-import basix
 
 from .utils import parametrize_over_elements
 
@@ -18,7 +17,11 @@ def test_if_permutations(cell_type, element_type, degree, element_args):
     for t in e.base_transformations():
         for row in t:
             a = np.argmax(row)
-            if not np.isclose(row[a], 1) or not np.allclose(row[:a], 0) or not np.allclose(row[a + 1:], 0):
+            if (
+                not np.isclose(row[a], 1)
+                or not np.allclose(row[:a], 0)
+                or not np.allclose(row[a + 1 :], 0)
+            ):
                 assert not e.dof_transformations_are_permutations
                 return
     assert e.dof_transformations_are_permutations
@@ -75,9 +78,7 @@ def test_triangle_transformation_degrees(element_type, degree, element_args):
     assert len(bt) == 3
     identity = np.identity(e.dim)
     for i, degree in enumerate([2, 2, 2]):
-        assert np.allclose(
-            np.linalg.matrix_power(bt[i], degree),
-            identity)
+        assert np.allclose(np.linalg.matrix_power(bt[i], degree), identity)
 
 
 @parametrize_over_elements(5, basix.CellType.tetrahedron)
@@ -87,9 +88,7 @@ def test_tetrahedron_transformation_degrees(element_type, degree, element_args):
     assert len(bt) == 14
     identity = np.identity(e.dim)
     for i, degree in enumerate([2, 2, 2, 2, 2, 2, 3, 2, 3, 2, 3, 2, 3, 2]):
-        assert np.allclose(
-            np.linalg.matrix_power(bt[i], degree),
-            identity)
+        assert np.allclose(np.linalg.matrix_power(bt[i], degree), identity)
 
 
 @parametrize_over_elements(5, basix.CellType.quadrilateral)
@@ -99,9 +98,7 @@ def test_quadrilateral_transformation_degrees(element_type, degree, element_args
     assert len(bt) == 4
     identity = np.identity(e.dim)
     for i, degree in enumerate([2, 2, 2, 2]):
-        assert np.allclose(
-            np.linalg.matrix_power(bt[i], degree),
-            identity)
+        assert np.allclose(np.linalg.matrix_power(bt[i], degree), identity)
 
 
 @parametrize_over_elements(5, basix.CellType.hexahedron)
@@ -110,12 +107,11 @@ def test_hexahedron_transformation_degrees(element_type, degree, element_args):
     bt = e.base_transformations()
     assert len(bt) == 24
     identity = np.identity(e.dim)
-    for i, degree in enumerate([2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
-                                4, 2, 4, 2, 4, 2, 4, 2, 4, 2, 4, 2]):
+    for i, degree in enumerate(
+        [2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 4, 2, 4, 2, 4, 2, 4, 2, 4, 2, 4, 2]
+    ):
         # TODO: remove the atol here once non-equispaced variants are implemented
-        assert np.allclose(
-            np.linalg.matrix_power(bt[i], degree),
-            identity, atol=1e-6)
+        assert np.allclose(np.linalg.matrix_power(bt[i], degree), identity, atol=1e-6)
 
 
 @parametrize_over_elements(5, basix.CellType.prism)
@@ -124,8 +120,7 @@ def test_prism_transformation_degrees(element_type, degree, element_args):
     bt = e.base_transformations()
     assert len(bt) == 19
     identity = np.identity(e.dim)
-    for i, degree in enumerate([2, 2, 2, 2, 2, 2, 2, 2, 2,
-                                3, 2, 4, 2, 4, 2, 4, 2, 3, 2]):
+    for i, degree in enumerate([2, 2, 2, 2, 2, 2, 2, 2, 2, 3, 2, 4, 2, 4, 2, 4, 2, 3, 2]):
         assert np.allclose(np.linalg.matrix_power(bt[i], degree), identity)
 
 
@@ -135,8 +130,7 @@ def test_pyramid_transformation_degrees(element_type, degree, element_args):
     bt = e.base_transformations()
     assert len(bt) == 18
     identity = np.identity(e.dim)
-    for i, degree in enumerate([2, 2, 2, 2, 2, 2, 2, 2,
-                                4, 2, 3, 2, 3, 2, 3, 2, 3, 2]):
+    for i, degree in enumerate([2, 2, 2, 2, 2, 2, 2, 2, 4, 2, 3, 2, 3, 2, 3, 2, 3, 2]):
         assert np.allclose(np.linalg.matrix_power(bt[i], degree), identity)
 
 
@@ -165,8 +159,9 @@ def test_transformation_of_tabulated_data_triangle(element_type, degree, element
             for d in range(e.value_size):
                 i_slice = i[:, d]
                 j_slice = j[:, d]
-                assert np.allclose((bt[0].dot(i_slice))[start: start + ndofs],
-                                   j_slice[start: start + ndofs])
+                assert np.allclose(
+                    (bt[0].dot(i_slice))[start : start + ndofs], j_slice[start : start + ndofs]
+                )
 
 
 @parametrize_over_elements(5, basix.CellType.quadrilateral)
@@ -194,8 +189,9 @@ def test_transformation_of_tabulated_data_quadrilateral(element_type, degree, el
             for d in range(e.value_size):
                 i_slice = i[:, d]
                 j_slice = j[:, d]
-                assert np.allclose((bt[0].dot(i_slice))[start: start + ndofs],
-                                   j_slice[start: start + ndofs])
+                assert np.allclose(
+                    (bt[0].dot(i_slice))[start : start + ndofs], j_slice[start : start + ndofs]
+                )
 
 
 @parametrize_over_elements(5, basix.CellType.tetrahedron)
@@ -204,8 +200,14 @@ def test_transformation_of_tabulated_data_tetrahedron(element_type, degree, elem
     bt = e.base_transformations()
 
     N = 4
-    points = np.array([[i / N, j / N, k / N]
-                       for i in range(N + 1) for j in range(N + 1 - i) for k in range(N + 1 - i - j)])
+    points = np.array(
+        [
+            [i / N, j / N, k / N]
+            for i in range(N + 1)
+            for j in range(N + 1 - i)
+            for k in range(N + 1 - i - j)
+        ]
+    )
     values = e.tabulate(0, points)[0]
 
     start = sum(e.num_entity_dofs[0])
@@ -224,8 +226,9 @@ def test_transformation_of_tabulated_data_tetrahedron(element_type, degree, elem
             for d in range(e.value_size):
                 i_slice = i[:, d]
                 j_slice = j[:, d]
-                assert np.allclose((bt[0].dot(i_slice))[start: start + ndofs],
-                                   j_slice[start: start + ndofs])
+                assert np.allclose(
+                    (bt[0].dot(i_slice))[start : start + ndofs], j_slice[start : start + ndofs]
+                )
 
     start = sum(e.num_entity_dofs[0]) + sum(e.num_entity_dofs[1])
     ndofs = e.num_entity_dofs[2][0]
@@ -244,8 +247,9 @@ def test_transformation_of_tabulated_data_tetrahedron(element_type, degree, elem
             for d in range(e.value_size):
                 i_slice = i[:, d]
                 j_slice = j[:, d]
-                assert np.allclose(bt[6].dot(i_slice)[start: start + ndofs],
-                                   j_slice[start: start + ndofs])
+                assert np.allclose(
+                    bt[6].dot(i_slice)[start : start + ndofs], j_slice[start : start + ndofs]
+                )
 
     if ndofs != 0:
         # Check that the 7th transformation undoes the effect of reflecting face 0
@@ -260,22 +264,26 @@ def test_transformation_of_tabulated_data_tetrahedron(element_type, degree, elem
             for d in range(e.value_size):
                 i_slice = i[:, d]
                 j_slice = j[:, d]
-                assert np.allclose((bt[7].dot(i_slice))[start: start + ndofs],
-                                   j_slice[start: start + ndofs])
+                assert np.allclose(
+                    (bt[7].dot(i_slice))[start : start + ndofs], j_slice[start : start + ndofs]
+                )
 
 
 @parametrize_over_elements(3, basix.CellType.hexahedron)
 def test_transformation_of_tabulated_data_hexahedron(element_type, degree, element_args):
     if degree > 4 and element_type in [basix.ElementFamily.RT, basix.ElementFamily.N1E]:
-        pytest.xfail("High degree Hdiv and Hcurl spaces on hexes based on "
-                     "Lagrange spaces equally spaced points are unstable.")
+        pytest.xfail(
+            "High degree Hdiv and Hcurl spaces on hexes based on "
+            "Lagrange spaces equally spaced points are unstable."
+        )
 
     e = basix.create_element(element_type, basix.CellType.hexahedron, degree, *element_args)
     bt = e.base_transformations()
 
     N = 4
-    points = np.array([[i / N, j / N, k / N]
-                       for i in range(N + 1) for j in range(N + 1) for k in range(N + 1)])
+    points = np.array(
+        [[i / N, j / N, k / N] for i in range(N + 1) for j in range(N + 1) for k in range(N + 1)]
+    )
     values = e.tabulate(0, points)[0]
 
     start = sum(e.num_entity_dofs[0])
@@ -293,8 +301,9 @@ def test_transformation_of_tabulated_data_hexahedron(element_type, degree, eleme
             for d in range(e.value_size):
                 i_slice = i[:, d]
                 j_slice = j[:, d]
-                assert np.allclose((bt[0].dot(i_slice))[start: start + ndofs],
-                                   j_slice[start: start + ndofs])
+                assert np.allclose(
+                    (bt[0].dot(i_slice))[start : start + ndofs], j_slice[start : start + ndofs]
+                )
 
     start = sum(e.num_entity_dofs[0]) + sum(e.num_entity_dofs[1])
     ndofs = e.num_entity_dofs[2][0]
@@ -312,8 +321,9 @@ def test_transformation_of_tabulated_data_hexahedron(element_type, degree, eleme
             for d in range(e.value_size):
                 i_slice = i[:, d]
                 j_slice = j[:, d]
-                assert np.allclose(bt[12].dot(i_slice)[start: start + ndofs],
-                                   j_slice[start: start + ndofs])
+                assert np.allclose(
+                    bt[12].dot(i_slice)[start : start + ndofs], j_slice[start : start + ndofs]
+                )
 
     if ndofs != 0:
         # Check that the 13th transformation undoes the effect of
@@ -330,8 +340,9 @@ def test_transformation_of_tabulated_data_hexahedron(element_type, degree, eleme
             for d in range(e.value_size):
                 i_slice = i[:, d]
                 j_slice = j[:, d]
-                assert np.allclose((bt[13].dot(i_slice))[start: start + ndofs],
-                                   j_slice[start: start + ndofs])
+                assert np.allclose(
+                    (bt[13].dot(i_slice))[start : start + ndofs], j_slice[start : start + ndofs]
+                )
 
 
 @parametrize_over_elements(3, basix.CellType.prism)
@@ -340,8 +351,14 @@ def test_transformation_of_tabulated_data_prism(element_type, degree, element_ar
     bt = e.base_transformations()
 
     N = 4
-    points = np.array([[i / N, j / N, k / N]
-                       for i in range(N + 1) for j in range(N + 1 - i) for k in range(N + 1)])
+    points = np.array(
+        [
+            [i / N, j / N, k / N]
+            for i in range(N + 1)
+            for j in range(N + 1 - i)
+            for k in range(N + 1)
+        ]
+    )
     values = e.tabulate(0, points)[0]
 
     start = sum(e.num_entity_dofs[0])
@@ -360,8 +377,9 @@ def test_transformation_of_tabulated_data_prism(element_type, degree, element_ar
             for d in range(e.value_size):
                 i_slice = i[:, d]
                 j_slice = j[:, d]
-                assert np.allclose((bt[0].dot(i_slice))[start: start + ndofs],
-                                   j_slice[start: start + ndofs])
+                assert np.allclose(
+                    (bt[0].dot(i_slice))[start : start + ndofs], j_slice[start : start + ndofs]
+                )
 
     start = sum(e.num_entity_dofs[0]) + sum(e.num_entity_dofs[1])
     ndofs = e.num_entity_dofs[2][0]
@@ -380,8 +398,9 @@ def test_transformation_of_tabulated_data_prism(element_type, degree, element_ar
             for d in range(e.value_size):
                 i_slice = i[:, d]
                 j_slice = j[:, d]
-                assert np.allclose(bt[10].dot(i_slice)[start: start + ndofs],
-                                   j_slice[start: start + ndofs])
+                assert np.allclose(
+                    bt[10].dot(i_slice)[start : start + ndofs], j_slice[start : start + ndofs]
+                )
 
     if ndofs != 0:
         # Check that the 11th transformation undoes the effect of
@@ -397,8 +416,9 @@ def test_transformation_of_tabulated_data_prism(element_type, degree, element_ar
             for d in range(e.value_size):
                 i_slice = i[:, d]
                 j_slice = j[:, d]
-                assert np.allclose((bt[11].dot(i_slice))[start: start + ndofs],
-                                   j_slice[start: start + ndofs])
+                assert np.allclose(
+                    (bt[11].dot(i_slice))[start : start + ndofs], j_slice[start : start + ndofs]
+                )
 
 
 @parametrize_over_elements(3, basix.CellType.pyramid)
@@ -407,8 +427,14 @@ def test_transformation_of_tabulated_data_pyramid(element_type, degree, element_
     bt = e.base_transformations()
 
     N = 4
-    points = np.array([[i / N, j / N, k / N]
-                       for i in range(N + 1) for j in range(N + 1 - i) for k in range(N + 1)])
+    points = np.array(
+        [
+            [i / N, j / N, k / N]
+            for i in range(N + 1)
+            for j in range(N + 1 - i)
+            for k in range(N + 1)
+        ]
+    )
     values = e.tabulate(0, points)[0]
 
     start = sum(e.num_entity_dofs[0])
@@ -427,8 +453,9 @@ def test_transformation_of_tabulated_data_pyramid(element_type, degree, element_
             for d in range(e.value_size):
                 i_slice = i[:, d]
                 j_slice = j[:, d]
-                assert np.allclose((bt[0].dot(i_slice))[start: start + ndofs],
-                                   j_slice[start: start + ndofs])
+                assert np.allclose(
+                    (bt[0].dot(i_slice))[start : start + ndofs], j_slice[start : start + ndofs]
+                )
 
     start = sum(e.num_entity_dofs[0]) + sum(e.num_entity_dofs[1])
     ndofs = e.num_entity_dofs[2][0]
@@ -446,8 +473,9 @@ def test_transformation_of_tabulated_data_pyramid(element_type, degree, element_
             for d in range(e.value_size):
                 i_slice = i[:, d]
                 j_slice = j[:, d]
-                assert np.allclose(bt[8].dot(i_slice)[start: start + ndofs],
-                                   j_slice[start: start + ndofs])
+                assert np.allclose(
+                    bt[8].dot(i_slice)[start : start + ndofs], j_slice[start : start + ndofs]
+                )
 
     if ndofs != 0:
         # Check that the 9th transformation undoes the effect of
@@ -463,5 +491,6 @@ def test_transformation_of_tabulated_data_pyramid(element_type, degree, element_
             for d in range(e.value_size):
                 i_slice = i[:, d]
                 j_slice = j[:, d]
-                assert np.allclose((bt[9].dot(i_slice))[start: start + ndofs],
-                                   j_slice[start: start + ndofs])
+                assert np.allclose(
+                    (bt[9].dot(i_slice))[start : start + ndofs], j_slice[start : start + ndofs]
+                )

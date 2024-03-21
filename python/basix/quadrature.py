@@ -1,5 +1,9 @@
+# Copyright (C) 2023-2024 Matthew Scroggs and Garth N. Wells
+#
+# This file is part of Basix (https://www.fenicsproject.org)
+#
+# SPDX-License-Identifier:    MIT
 """Functions to manipulate quadrature types."""
-
 
 import numpy as np
 import numpy.typing as _npt
@@ -15,6 +19,7 @@ __all__ = ["string_to_type", "make_quadrature"]
 
 class QuadratureType(Enum):
     """Quadrature type."""
+
     Default = _QT.Default
     gauss_jacobi = _QT.gauss_jacobi
     gll = _QT.gll
@@ -29,16 +34,14 @@ def string_to_type(rule: str) -> QuadratureType:
 
     Returns:
         The quadrature type.
-
     """
     if rule == "default":
         return QuadratureType.Default
-
-    if rule in ["Gauss-Lobatto-Legendre", "GLL"]:
+    elif rule in ["Gauss-Lobatto-Legendre", "GLL"]:
         return QuadratureType.gll
-    if rule in ["Gauss-Legendre", "GL", "Gauss-Jacobi"]:
+    elif rule in ["Gauss-Legendre", "GL", "Gauss-Jacobi"]:
         return QuadratureType.gauss_jacobi
-    if rule == "Xiao-Gimbutas":
+    elif rule == "Xiao-Gimbutas":
         return QuadratureType.xiao_gimbutas
 
     if not hasattr(QuadratureType, rule):
@@ -47,13 +50,15 @@ def string_to_type(rule: str) -> QuadratureType:
 
 
 def make_quadrature(
-    cell: CellType, degree: int, rule: QuadratureType = QuadratureType.Default,
-    polyset_type: PolysetType = PolysetType.standard
+    cell: CellType,
+    degree: int,
+    rule: QuadratureType = QuadratureType.Default,
+    polyset_type: PolysetType = PolysetType.standard,
 ) -> tuple[_npt.NDArray[np.float64], _npt.NDArray[np.float64]]:
     """Create a quadrature rule.
 
     Args:
-        cell: Cell type
+        cell: Cell type.
         degree: Maximum polynomial degree that will be integrated
             exactly.
         rule: Quadrature rule.
@@ -61,7 +66,6 @@ def make_quadrature(
             exactly.
 
     Returns:
-        The quadrature points and weights.
-
+        Quadrature points and weights.
     """
     return _mq(rule.value, cell.value, polyset_type.value, degree)

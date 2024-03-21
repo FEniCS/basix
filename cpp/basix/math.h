@@ -367,26 +367,28 @@ void orthogonalise(
 {
   for (std::size_t i = start; i < wcoeffs.extent(0); ++i)
   {
-    for (std::size_t j = start; j < i; ++j)
-    {
-      T a = 0;
-      for (std::size_t k = 0; k < wcoeffs.extent(1); ++k)
-        a += wcoeffs(i, k) * wcoeffs(j, k);
-      for (std::size_t k = 0; k < wcoeffs.extent(1); ++k)
-        wcoeffs(i, k) -= a * wcoeffs(j, k);
-    }
-
     T norm = 0;
     for (std::size_t k = 0; k < wcoeffs.extent(1); ++k)
       norm += wcoeffs(i, k) * wcoeffs(i, k);
-    if (std::abs(norm) < 4 * std::numeric_limits<T>::epsilon())
+
+    norm = std::sqrt(norm);
+    if (norm < 2 * std::numeric_limits<T>::epsilon())
     {
       throw std::runtime_error(
           "Cannot orthogonalise the rows of a matrix with incomplete row rank");
     }
 
     for (std::size_t k = 0; k < wcoeffs.extent(1); ++k)
-      wcoeffs(i, k) /= std::sqrt(norm);
+      wcoeffs(i, k) /= norm;
+
+    for (std::size_t j = i + 1; j < wcoeffs.extent(0); ++j)
+    {
+      T a = 0;
+      for (std::size_t k = 0; k < wcoeffs.extent(1); ++k)
+        a += wcoeffs(i, k) * wcoeffs(j, k);
+      for (std::size_t k = 0; k < wcoeffs.extent(1); ++k)
+        wcoeffs(j, k) -= a * wcoeffs(i, k);
+    }
   }
 }
 //-----------------------------------------------------------------------------

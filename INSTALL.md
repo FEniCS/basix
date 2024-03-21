@@ -33,10 +33,9 @@ running in the directory `python/`:
 pip install .
 ```
 
-For an editable build and to avoid pip downloading the build
-dependencies:
+For a debug and editable build for development:
 ```console
-pip install --no-build-isolation -e .
+pip -v install --check-build-dependencies --config-settings=build-dir="build" --config-settings=cmake.build-type="Debug"  --config-settings=install.strip=false --no-build-isolation -e .
 ```
 When using the `--no-build-isolation` option all build and runtime
 dependencies must already be installed.

@@ -1,3 +1,8 @@
+# Copyright (C) 2023-2024 Matthew Scroggs and Garth N. Wells
+#
+# This file is part of Basix (https://www.fenicsproject.org)
+#
+# SPDX-License-Identifier:    MIT
 """Functions to manipulate lattice types."""
 
 import numpy.typing as npt
@@ -13,6 +18,7 @@ __all__ = ["string_to_type", "string_to_simplex_method"]
 
 class LatticeType(Enum):
     """Lattice type."""
+
     equispaced = _LT.equispaced
     gll = _LT.gll
     chebyshev = _LT.chebyshev
@@ -21,6 +27,7 @@ class LatticeType(Enum):
 
 class LatticeSimplexMethod(Enum):
     """Lattice simplex method."""
+
     none = _LSM.none
     warp = _LSM.warp
     isaac = _LSM.isaac
@@ -34,8 +41,7 @@ def string_to_type(lattice: str) -> LatticeType:
         lattice: Lattice type as a string.
 
     Returns:
-        The lattice type.
-
+        Lattice type.
     """
     if not hasattr(LatticeType, lattice):
         raise ValueError(f"Unknown lattice: {lattice}")
@@ -46,11 +52,10 @@ def string_to_simplex_method(method: str) -> LatticeSimplexMethod:
     """Convert a string to a Basix LatticeSimplexMethod enum.
 
     Args:
-        method: The simplex method as a string.
+        method: Simplex method as a string.
 
     Returns:
-        The simplex method.
-
+        Simplex method.
     """
     if not hasattr(LatticeSimplexMethod, method):
         raise ValueError(f"Unknown simplex method: {method}")
@@ -58,17 +63,21 @@ def string_to_simplex_method(method: str) -> LatticeSimplexMethod:
 
 
 def create_lattice(
-    celltype: CellType, n: int, ltype: LatticeType, exterior: bool,
-    method: LatticeSimplexMethod = LatticeSimplexMethod.none
+    celltype: CellType,
+    n: int,
+    ltype: LatticeType,
+    exterior: bool,
+    method: LatticeSimplexMethod = LatticeSimplexMethod.none,
 ) -> npt.NDArray:
     """Create a lattice of points on a reference cell.
 
     Args:
-        celltype: The cell type
-        n: The size in each direction. There will be n+1 points along each edge of the cell
-        ltype: The lattice type
-        exterior: If True, the points on the edges will be included
-        method: The simplex method used to generate points on simplices
+        celltype: Cell type.
+        n: The size in each direction. There will be ``n+1`` points
+            along each edge of the cell.
+        ltype: Lattice type.
+        exterior: If ``True``, the points on the edges will be included.
+        method: The simplex method used to generate points on simplices.
 
     Returns:
         Lattice points

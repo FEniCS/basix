@@ -49,9 +49,8 @@ FiniteElement<T> element::create_bdm(cell::type celltype, int degree,
     assert(_x.size() == _M.size());
     for (std::size_t i = 0; i < _x.size(); ++i)
     {
-      x[tdim - 1].emplace_back(_x[i], xshape[0], xshape[1]);
-      M[tdim - 1].emplace_back(_M[i], Mshape[0], Mshape[1], Mshape[2],
-                               Mshape[3]);
+      x[tdim - 1].emplace_back(std::array{xshape[0], xshape[1]}, _x[i]);
+      M[tdim - 1].emplace_back(Mshape, _M[i]);
     }
   }
 
@@ -65,8 +64,8 @@ FiniteElement<T> element::create_bdm(cell::type celltype, int degree,
     assert(_x.size() == _M.size());
     for (std::size_t i = 0; i < _x.size(); ++i)
     {
-      x[tdim].emplace_back(_x[i], xshape[0], xshape[1]);
-      M[tdim].emplace_back(_M[i], Mshape[0], Mshape[1], Mshape[2], Mshape[3]);
+      x[tdim].emplace_back(std::array{xshape[0], xshape[1]}, _x[i]);
+      M[tdim].emplace_back(Mshape, _M[i]);
     }
   }
   else

@@ -2,16 +2,15 @@
 # FEniCS Project
 # SPDX-License-Identifier: MIT
 
+import basix
 import numpy as np
 import sympy
-
-import basix
 
 
 def P_interval(n, x):
     r = []
     for i in range(n + 1):
-        p = x ** i
+        p = x**i
         for j in r:
             p -= (p * j).integrate((x, 0, 1)) * j
         p /= sympy.sqrt((p * p).integrate((x, 0, 1)))
@@ -29,7 +28,8 @@ def test_symbolic_interval():
     cell = basix.CellType.interval
     pts0 = basix.create_lattice(cell, 10, basix.LatticeType.equispaced, True)
     wtab = basix.polynomials.tabulate_polynomial_set(
-        cell, basix.PolysetType.standard, n, nderiv, pts0)
+        cell, basix.PolysetType.standard, n, nderiv, pts0
+    )
 
     for k in range(nderiv + 1):
         wsym = np.zeros_like(wtab[k])
@@ -50,15 +50,15 @@ def test_symbolic_quad():
     y = sympy.Symbol("y")
     w = [wx * wy for wx in P_interval(n, x) for wy in P_interval(n, y)]
 
-    m = (n + 1)**2
+    m = (n + 1) ** 2
     cell = basix.CellType.quadrilateral
     pts0 = basix.create_lattice(cell, 2, basix.LatticeType.equispaced, True)
     wtab = basix.polynomials.tabulate_polynomial_set(
-        cell, basix.PolysetType.standard, n, nderiv, pts0)
+        cell, basix.PolysetType.standard, n, nderiv, pts0
+    )
 
     for kx in range(nderiv):
         for ky in range(0, nderiv - kx):
-
             wsym = np.zeros_like(wtab[0])
             for i in range(m):
                 wd = sympy.diff(w[i], x, kx, y, ky)

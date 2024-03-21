@@ -108,9 +108,9 @@ FiniteElement<T> basix::element::create_rtc(cell::type celltype, int degree,
     assert(_x.size() == _M.size());
     for (std::size_t i = 0; i < _x.size(); ++i)
     {
-      x[tdim - 1].emplace_back(_x[i], xshape[0], xshape[1]);
-      M[tdim - 1].emplace_back(_M[i], Mshape[0], Mshape[1], Mshape[2],
-                               Mshape[3]);
+      x[tdim - 1].emplace_back(std::array{xshape[0], xshape[1]}, _x[i]);
+      M[tdim - 1].emplace_back(
+          std::array{Mshape[0], Mshape[1], Mshape[2], Mshape[3]}, _M[i]);
     }
   }
 
@@ -123,8 +123,9 @@ FiniteElement<T> basix::element::create_rtc(cell::type celltype, int degree,
     assert(_x.size() == _M.size());
     for (std::size_t i = 0; i < _x.size(); ++i)
     {
-      x[tdim].emplace_back(_x[i], xshape[0], xshape[1]);
-      M[tdim].emplace_back(_M[i], Mshape[0], Mshape[1], Mshape[2], Mshape[3]);
+      x[tdim].emplace_back(std::array{xshape[0], xshape[1]}, _x[i]);
+      M[tdim].emplace_back(
+          std::array{Mshape[0], Mshape[1], Mshape[2], Mshape[3]}, _M[i]);
     }
   }
   else
@@ -250,8 +251,9 @@ FiniteElement<T> basix::element::create_nce(cell::type celltype, int degree,
     assert(_x.size() == _M.size());
     for (std::size_t i = 0; i < _x.size(); ++i)
     {
-      x[1].emplace_back(_x[i], xshape[0], xshape[1]);
-      M[1].emplace_back(_M[i], Mshape[0], Mshape[1], Mshape[2], Mshape[3]);
+      x[1].emplace_back(std::array{xshape[0], xshape[1]}, _x[i]);
+      M[1].emplace_back(std::array{Mshape[0], Mshape[1], Mshape[2], Mshape[3]},
+                        _M[i]);
     }
   }
 
@@ -266,8 +268,9 @@ FiniteElement<T> basix::element::create_nce(cell::type celltype, int degree,
     assert(_x.size() == _M.size());
     for (std::size_t i = 0; i < _x.size(); ++i)
     {
-      x[2].emplace_back(_x[i], xshape[0], xshape[1]);
-      M[2].emplace_back(_M[i], Mshape[0], Mshape[1], Mshape[2], Mshape[3]);
+      x[2].emplace_back(std::array{xshape[0], xshape[1]}, _x[i]);
+      M[2].emplace_back(std::array{Mshape[0], Mshape[1], Mshape[2], Mshape[3]},
+                        _M[i]);
     }
   }
   else
@@ -288,8 +291,9 @@ FiniteElement<T> basix::element::create_nce(cell::type celltype, int degree,
       assert(_x.size() == _M.size());
       for (std::size_t i = 0; i < _x.size(); ++i)
       {
-        x[3].emplace_back(_x[i], xshape[0], xshape[1]);
-        M[3].emplace_back(_M[i], Mshape[0], Mshape[1], Mshape[2], Mshape[3]);
+        x[3].emplace_back(std::array{xshape[0], xshape[1]}, _x[i]);
+        M[3].emplace_back(
+            std::array{Mshape[0], Mshape[1], Mshape[2], Mshape[3]}, _M[i]);
       }
     }
     else

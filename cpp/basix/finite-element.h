@@ -904,8 +904,8 @@ public:
   template <typename T>
   void Minv_apply(std::span<T> data, int n, std::uint32_t cell_info) const;
 
-  /// @brief Post(right)-apply the operator applied by
-  /// FiniteElement::Mt_apply.
+  /// @brief Post(right)-apply the transpose of the operator applied by
+  /// FiniteElement::M_apply.
   ///
   /// Computes
   /// \f[
@@ -938,8 +938,8 @@ public:
   template <typename T>
   void M_post_apply(std::span<T> data, int n, std::uint32_t cell_info) const;
 
-  /// @brief Post(right)-apply the operator applied by
-  /// FiniteElement::Minv_apply.
+  /// @brief Post(right)-apply the inverse of the operator applied by
+  /// FiniteElement::M_apply.
   ///
   /// Computes
   /// \f[
@@ -955,8 +955,8 @@ public:
   template <typename T>
   void Minv_post_apply(std::span<T> data, int n, std::uint32_t cell_info) const;
 
-  /// @brief Post(right)-apply the operator applied by
-  /// FiniteElement::Mt_inv_apply.
+  /// @brief Post(right)-apply the tranpose inverse of the operator
+  /// applied by FiniteElement::M_apply.
   ///
   /// Computes
   /// \f[

@@ -1966,11 +1966,10 @@ def element(
     """
     if dtype is None:
         try:
-            from dolfinx import default_scalar_type
-            dtype = default_scalar_type
+            from dolfinx import default_real_type
+            dtype = default_real_type
         except ImportError:
             dtype = np.float64
-
 
     # Conversion of string arguments to types
     if isinstance(cell, str):
@@ -2113,9 +2112,9 @@ def enriched_element(
 def custom_element(
     cell_type: _basix.CellType,
     reference_value_shape: _typing.Union[list[int], tuple[int, ...]],
-    wcoeffs: _npt.NDArray[np.float64],
-    x: list[list[_npt.NDArray[np.float64]]],
-    M: list[list[_npt.NDArray[np.float64]]],
+    wcoeffs: _npt.NDArray[np.floating],
+    x: list[list[_npt.NDArray[np.floating]]],
+    M: list[list[_npt.NDArray[np.floating]]],
     interpolation_nderivs: int,
     map_type: _basix.MapType,
     sobolev_space: _basix.SobolevSpace,
@@ -2123,6 +2122,7 @@ def custom_element(
     embedded_subdegree: int,
     embedded_superdegree: int,
     polyset_type: _basix.PolysetType = _basix.PolysetType.standard,
+    dtype: _typing.Optional[_npt.DTypeLike] = None,
 ) -> _ElementBase:
     """Create a UFL compatible custom Basix element.
 
@@ -2154,6 +2154,12 @@ def custom_element(
     Returns:
         A custom finite element.
     """
+    if dtype is None:
+        try:
+            from dolfinx import default_real_type
+            dtype = default_real_type
+        except ImportError:
+            dtype = np.float64
     e = _basix.create_custom_element(
         cell_type,
         tuple(reference_value_shape),
@@ -2167,6 +2173,7 @@ def custom_element(
         embedded_subdegree,
         embedded_superdegree,
         polyset_type,
+        dtype=dtype,
     )
     return _BasixElement(e)
 
@@ -2188,8 +2195,8 @@ def quadrature_element(
     value_shape: tuple[int, ...] = (),
     scheme: _typing.Optional[str] = None,
     degree: _typing.Optional[int] = None,
-    points: _typing.Optional[_npt.NDArray[np.float64]] = None,
-    weights: _typing.Optional[_npt.NDArray[np.float64]] = None,
+    points: _typing.Optional[_npt.NDArray[np.floating]] = None,
+    weights: _typing.Optional[_npt.NDArray[np.floating]] = None,
     pullback: _AbstractPullback = _ufl.identity_pullback,
 ) -> _ElementBase:
     """Create a quadrature element.

@@ -665,9 +665,9 @@ def create_custom_element(
         A custom finite element.
     """
     if wcoeffs.dtype != dtype:
-        wcoeffs = np.dtype(dtype).type(wcoeffs)
-        x = [[np.dtype(dtype).type(j) for j in i] for i in x]
-        M = [[np.dtype(dtype).type(j) for j in i] for i in M]
+        wcoeffs = np.dtype(dtype).type(wcoeffs)  # type: ignore
+        x = [[np.dtype(dtype).type(j) for j in i] for i in x]  # type: ignore
+        M = [[np.dtype(dtype).type(j) for j in i] for i in M]  # type: ignore
     if np.issubdtype(dtype, np.float32):
         return FiniteElement(
             _create_custom_element_float32(

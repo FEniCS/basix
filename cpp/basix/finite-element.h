@@ -348,6 +348,9 @@ public:
   /// @return True if elements are the same
   bool operator==(const FiniteElement& e) const;
 
+  /// Get a unique hash of this element
+  std::size_t hash() const;
+
   /// Array shape for tabulate basis values and derivatives at set of
   /// points.
   ///

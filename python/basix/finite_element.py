@@ -143,6 +143,10 @@ class FiniteElement:
         except TypeError:
             return False
 
+    def __hash__(self) -> int:
+        """Hash."""
+        return hash(self._e)
+
     def push_forward(self, U, J, detJ, K) -> npt.NDArray[np.floating]:
         """Map function values from the reference to a physical cell.
 

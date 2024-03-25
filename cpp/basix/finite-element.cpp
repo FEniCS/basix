@@ -22,7 +22,6 @@
 #include <concepts>
 #include <limits>
 #include <numeric>
-
 #define str_macro(X) #X
 #define str(X) str_macro(X)
 
@@ -180,6 +179,11 @@ std::pair<std::vector<T>, std::array<std::size_t, 2>> compute_dual_matrix(
   std::vector<T> C(shape[0] * shape[1]);
   math::dot(B, Df, mdspan_t<T, 2>(C.data(), shape));
   return {std::move(C), shape};
+}
+//-----------------------------------------------------------------------------
+void combine_hashes(std::size_t& a, std::size_t b)
+{
+  a ^= b + 0x9e3779b9 + (a << 6) + (a >> 2);
 }
 //-----------------------------------------------------------------------------
 } // namespace
@@ -1175,7 +1179,8 @@ bool FiniteElement<F>::operator==(const FiniteElement& e) const
            and embedded_superdegree() == e.embedded_superdegree()
            and embedded_subdegree() == e.embedded_subdegree() and coeff_equal
            and entity_dofs() == e.entity_dofs()
-           and dof_ordering() == e.dof_ordering();
+           and dof_ordering() == e.dof_ordering()
+           and polyset_type() == e.polyset_type();
   }
   else
   {
@@ -1186,6 +1191,55 @@ bool FiniteElement<F>::operator==(const FiniteElement& e) const
            and sobolev_space() == e.sobolev_space()
            and dof_ordering() == e.dof_ordering();
   }
+}
+//-----------------------------------------------------------------------------
+template <std::floating_point F>
+std::size_t FiniteElement<F>::hash() const
+{
+  std::size_t dof_ordering_hash = 0;
+  for (std::size_t i = 0; i < dof_ordering().size(); ++i)
+  {
+    if (dof_ordering()[i] != static_cast<int>(i))
+    {
+      combine_hashes(dof_ordering_hash,
+                     std::hash<int>{}(dof_ordering()[i] - i));
+    }
+  }
+
+  std::size_t h = std::hash<int>{}(static_cast<int>(family()));
+  combine_hashes(h, dof_ordering_hash);
+  combine_hashes(h, dof_ordering_hash);
+  combine_hashes(h, std::hash<int>{}(static_cast<int>(cell_type())));
+  combine_hashes(h, std::hash<int>{}(static_cast<int>(lagrange_variant())));
+  combine_hashes(h, std::hash<int>{}(static_cast<int>(dpc_variant())));
+  combine_hashes(h, std::hash<int>{}(static_cast<int>(sobolev_space())));
+  combine_hashes(h, std::hash<int>{}(static_cast<int>(map_type())));
+
+  if (family() == element::family::custom)
+  {
+    std::size_t coeff_hash = 0;
+    for (auto i : _coeffs.first)
+    {
+      // This takes five decimal places of each matrix entry. We should revisit
+      // this
+      combine_hashes(coeff_hash, int(i * 100000));
+    }
+    std::size_t vs_hash = 0;
+    for (std::size_t i = 0; i < value_shape().size(); ++i)
+    {
+      combine_hashes(vs_hash, std::hash<int>{}(value_shape()[i]));
+    }
+    combine_hashes(h, coeff_hash);
+    combine_hashes(h, std::hash<int>{}(embedded_superdegree()));
+    combine_hashes(h, std::hash<int>{}(embedded_subdegree()));
+    combine_hashes(h, std::hash<int>{}(static_cast<int>(polyset_type())));
+    combine_hashes(h, vs_hash);
+  }
+  else
+  {
+    combine_hashes(h, std::hash<int>{}(degree()));
+  }
+  return h;
 }
 //-----------------------------------------------------------------------------
 template <std::floating_point F>

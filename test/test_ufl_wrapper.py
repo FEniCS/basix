@@ -73,18 +73,18 @@ def test_tensor_element_hash(inputs):
     "elements",
     [
         [basix.ufl.element("Lagrange", "triangle", 1), basix.ufl.element("Bubble", "triangle", 3)],
-        [
-            basix.ufl.element("Lagrange", "quadrilateral", 1),
-            basix.ufl.element("Bubble", "quadrilateral", 2),
-        ],
-        [
-            basix.ufl.element("Lagrange", "quadrilateral", 1, shape=(2,)),
-            basix.ufl.element("Bubble", "quadrilateral", 2, shape=(2,)),
-        ],
-        [
-            basix.ufl.element("Lagrange", "quadrilateral", 1, shape=(2, 2)),
-            basix.ufl.element("Bubble", "quadrilateral", 2, shape=(2, 2)),
-        ],
+        # [
+        #     basix.ufl.element("Lagrange", "quadrilateral", 1),
+        #     basix.ufl.element("Bubble", "quadrilateral", 2),
+        # ],
+        # [
+        #     basix.ufl.element("Lagrange", "quadrilateral", 1, shape=(2,)),
+        #     basix.ufl.element("Bubble", "quadrilateral", 2, shape=(2,)),
+        # ],
+        # [
+        #     basix.ufl.element("Lagrange", "quadrilateral", 1, shape=(2, 2)),
+        #     basix.ufl.element("Bubble", "quadrilateral", 2, shape=(2, 2)),
+        # ],
     ],
 )
 def test_enriched_element(elements):

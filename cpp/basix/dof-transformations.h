@@ -20,7 +20,6 @@
 /// be used to rotate and reflect DOF points in Lagrange spaces.
 namespace basix::doftransforms
 {
-
 /// @brief Compute the entity DOF transformations for an element.
 ///
 /// @param[in] cell_type The cell type

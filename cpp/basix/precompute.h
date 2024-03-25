@@ -156,8 +156,6 @@ void apply_permutation_mapped(std::span<const std::size_t> perm,
                               std::span<E> data, std::span<const int> emap,
                               std::size_t block_size = 1)
 {
-  std::cout << "Basix block_size: " << block_size << ", " << perm.size()
-            << std::endl;
   for (std::size_t i = 0; i < perm.size(); ++i)
   {
     for (std::size_t b = 0; b < block_size; ++b)

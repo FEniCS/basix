@@ -536,12 +536,12 @@ class FiniteElement:
         return self._e.wcoeffs
 
     @property
-    def Pi(self) -> list[list[npt.NDArray[np.floating]]]:
+    def M(self) -> list[list[npt.NDArray[np.floating]]]:
         """Interpolation matrices for each sub-entity.
 
         See C++ documentation for details.
         """
-        return self._e.Pi
+        return self._e.M
 
     @property
     def x(self) -> list[list[npt.NDArray[np.floating]]]:

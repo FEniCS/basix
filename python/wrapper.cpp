@@ -270,7 +270,7 @@ void declare_float(nb::module_& m, std::string type)
           },
           nb::rv_policy::reference_internal)
       .def_prop_ro(
-          "Pi",
+          "M",
           [](const FiniteElement<T>& self)
           {
             const std::array<std::vector<std::pair<std::vector<T>,

@@ -59,6 +59,7 @@ jobs:
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
+          name: ${{ matrix.os }}-wheel-artifact
           path: ./wheelhouse/*.whl
 
   build_sdist:
@@ -80,6 +81,7 @@ jobs:
 
       - uses: actions/upload-artifact@v4
         with:
+          name: src-artifact
           path: dist/*
 
   upload_pypi:
@@ -89,8 +91,9 @@ jobs:
     steps:
       - uses: actions/download-artifact@v4
         with:
-          name: artifact
-          path: dist
+          pattern: *-artifact
+          path: dist/
+          merge-multiple: true
 
       - uses: pypa/gh-action-pypi-publish@release/v1
         if: ${{ github.event.inputs.pypi_publish == 'true' }}

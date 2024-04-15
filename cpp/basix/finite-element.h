@@ -1144,7 +1144,7 @@ public:
       std::vector<std::pair<std::vector<F>, std::array<std::size_t, 4>>>, 4>&
   Pi() const
   {
-    return _M;
+    return _Pi;
   }
 
   /// Get the matrix of coefficients.
@@ -1363,7 +1363,7 @@ private:
   // Interpolation matrices for each entity
   using array4_t
       = std::vector<std::pair<std::vector<F>, std::array<std::size_t, 4>>>;
-  std::array<array4_t, 4> _M;
+  std::array<array4_t, 4> _Pi;
 };
 
 /// Create a custom finite element

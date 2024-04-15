@@ -221,7 +221,7 @@ int main(int argc, char* argv[])
     //      - edge 5 is not permuted (0)
 
     int cell_info = 0b000010;
-    nedelec.M(data, num_points, cell_info);
+    nedelec.Pi(data, num_points, cell_info);
 
     // std::cout << std::endl
     //           << "Tabulated data is equal: "

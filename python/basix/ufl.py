@@ -595,9 +595,9 @@ class _BasixElement(_ElementBase):
         return self._element.x
 
     @property
-    def _M(self) -> list[list[_npt.NDArray[np.float64]]]:
+    def _Pi(self) -> list[list[_npt.NDArray[np.float64]]]:
         """The matrices used to define interpolation."""
-        return self._element.M
+        return self._element.Pi
 
     @property
     def has_tensor_product_factorisation(self) -> bool:
@@ -1918,7 +1918,7 @@ def _compute_signature(element: _basix.finite_element.FiniteElement) -> str:
             data += "_"
     data += "__"
 
-    for entity in element.M:
+    for entity in element.Pi:
         for matrices in entity:
             data += ",".join([f"{i}" for mat in matrices for row in mat for i in row])
             data += "_"

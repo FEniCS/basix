@@ -7,7 +7,9 @@
 
 import numpy.typing as npt
 
-from basix._basixcpp import compute_interpolation_operator as _compute_interpolation_operator
+from basix._basixcpp import (
+    compute_interpolation_operator as _compute_interpolation_operator,
+)
 from basix.finite_element import FiniteElement
 
 

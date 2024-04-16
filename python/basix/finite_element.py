@@ -15,8 +15,12 @@ from basix._basixcpp import ElementFamily as _EF
 from basix._basixcpp import FiniteElement_float32 as _FiniteElement_float32
 from basix._basixcpp import FiniteElement_float64 as _FiniteElement_float64
 from basix._basixcpp import LagrangeVariant as _LV
-from basix._basixcpp import create_custom_element_float32 as _create_custom_element_float32
-from basix._basixcpp import create_custom_element_float64 as _create_custom_element_float64
+from basix._basixcpp import (
+    create_custom_element_float32 as _create_custom_element_float32,
+)
+from basix._basixcpp import (
+    create_custom_element_float64 as _create_custom_element_float64,
+)
 from basix._basixcpp import create_element as _create_element
 from basix._basixcpp import create_tp_element as _create_tp_element
 from basix._basixcpp import tp_dof_ordering as _tp_dof_ordering
@@ -202,7 +206,9 @@ class FiniteElement:
         """
         self._e.pre_apply_dof_transformation(data, block_size, cell_info)
 
-    def post_apply_transpose_dof_transformation(self, data, block_size, cell_info) -> None:
+    def post_apply_transpose_dof_transformation(
+        self, data, block_size, cell_info
+    ) -> None:
         """Post-apply DOF transformations to some transposed data in-place.
 
         Note:
@@ -216,7 +222,9 @@ class FiniteElement:
         """
         self._e.post_apply_transpose_dof_transformation(data, block_size, cell_info)
 
-    def pre_apply_inverse_transpose_dof_transformation(self, data, block_size, cell_info) -> None:
+    def pre_apply_inverse_transpose_dof_transformation(
+        self, data, block_size, cell_info
+    ) -> None:
         """Pre-apply inverse transpose DOF transformations to some data.
 
         Note:
@@ -228,7 +236,9 @@ class FiniteElement:
             block_size: The number of data points per DOF.
             cell_info: The permutation info for the cell.
         """
-        self._e.pre_apply_inverse_transpose_dof_transformation(data, block_size, cell_info)
+        self._e.pre_apply_inverse_transpose_dof_transformation(
+            data, block_size, cell_info
+        )
 
     def base_transformations(self) -> npt.NDArray[np.floating]:
         r"""Get the base transformations.
@@ -605,6 +615,7 @@ def create_element(
     """
     if dtype is None:
         from basix import default_scalar_type
+
         dtype = default_scalar_type
 
     e = _create_element(

@@ -81,7 +81,9 @@ def reshape_coefficients(
             return index(i[0])
 
     elif cell_type == CellType.triangle:
-        indices = [(i, j) for i in range(input_degree + 1) for j in range(input_degree + 1 - i)]
+        indices = [
+            (i, j) for i in range(input_degree + 1) for j in range(input_degree + 1 - i)
+        ]
 
         def idx(d, i):
             return index(i[1], i[0])
@@ -98,7 +100,9 @@ def reshape_coefficients(
             return index(i[2], i[1], i[0])
 
     elif cell_type == CellType.quadrilateral:
-        indices = [(i, j) for i in range(input_degree + 1) for j in range(input_degree + 1)]
+        indices = [
+            (i, j) for i in range(input_degree + 1) for j in range(input_degree + 1)
+        ]
 
         def idx(d, i):
             return (d + 1) * i[0] + i[1]
@@ -124,7 +128,10 @@ def reshape_coefficients(
 
         def idx(d, i):
             rv = d - i[2] + 1
-            r0 = i[2] * (d + 1) * (d - i[2] + 2) + (2 * i[2] - 1) * (i[2] - 1) * i[2] // 6
+            r0 = (
+                i[2] * (d + 1) * (d - i[2] + 2)
+                + (2 * i[2] - 1) * (i[2] - 1) * i[2] // 6
+            )
             return r0 + i[0] * rv + i[1]
 
     elif cell_type == CellType.prism:
@@ -182,7 +189,9 @@ def tabulate_polynomials(
     return _tabulate_polynomials(ptype.value, celltype.value, degree, pts)
 
 
-def restriction(ptype: PolysetType, cell: CellType, restriction_cell: CellType) -> PolysetType:
+def restriction(
+    ptype: PolysetType, cell: CellType, restriction_cell: CellType
+) -> PolysetType:
     """Get the polyset type that represents the restrictions of a type on a subentity.
 
     Args:
@@ -193,7 +202,9 @@ def restriction(ptype: PolysetType, cell: CellType, restriction_cell: CellType) 
     Returns:
         The restricted polyset type
     """
-    return getattr(PolysetType, _restriction(ptype.value, cell.value, restriction_cell.value).name)
+    return getattr(
+        PolysetType, _restriction(ptype.value, cell.value, restriction_cell.value).name
+    )
 
 
 def superset(cell: CellType, type1: PolysetType, type2: PolysetType) -> PolysetType:

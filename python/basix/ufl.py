@@ -1964,14 +1964,6 @@ def element(
         A finite element.
 
     """
-    if dtype is None:
-        try:
-            from dolfinx import default_real_type
-
-            dtype = default_real_type
-        except ImportError:
-            dtype = np.float64
-
     # Conversion of string arguments to types
     if isinstance(cell, str):
         cell = _basix.cell.string_to_type(cell)
@@ -2156,13 +2148,6 @@ def custom_element(
     Returns:
         A custom finite element.
     """
-    if dtype is None:
-        try:
-            from dolfinx import default_real_type
-
-            dtype = default_real_type
-        except ImportError:
-            dtype = np.float64
     e = _basix.create_custom_element(
         cell_type,
         tuple(reference_value_shape),

@@ -673,6 +673,11 @@ def create_custom_element(
     Returns:
         A custom finite element.
     """
+    if dtype is None:
+        from basix import default_scalar_type
+
+        dtype = default_scalar_type
+
     if wcoeffs.dtype != dtype:
         wcoeffs = np.dtype(dtype).type(wcoeffs)  # type: ignore
         x = [[np.dtype(dtype).type(j) for j in i] for i in x]  # type: ignore

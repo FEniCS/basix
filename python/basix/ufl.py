@@ -358,6 +358,11 @@ class _ElementBase(_AbstractFiniteElement):
         """Underlying Basix element."""
         raise NotImplementedError()
 
+    @property
+    def is_mixed(self):
+        """Is this a mixed element?"""
+        return False
+
 
 class _BasixElement(_ElementBase):
     """A wrapper allowing Basix elements to be used directly with UFL.
@@ -869,6 +874,11 @@ class _MixedElement(_ElementBase):
     def __hash__(self) -> int:
         """Return a hash."""
         return super().__hash__()
+
+    @property
+    def is_mixed(self):
+        """Is this a mixed element?"""
+        return True
 
     @property
     def degree(self) -> int:

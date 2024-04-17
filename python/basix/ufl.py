@@ -359,6 +359,11 @@ class _ElementBase(_AbstractFiniteElement):
         raise NotImplementedError()
 
     @property
+    def is_quadrature(self) -> bool:
+        """Is this a quadrature element?"""
+        return True
+
+    @property
     def is_mixed(self):
         """Is this a mixed element?"""
         return False
@@ -1213,6 +1218,11 @@ class _BlockedElement(_ElementBase):
         """Return a hash."""
         return super().__hash__()
 
+    @property
+    def is_quadrature(self) -> bool:
+        """Is this a quadrature element?"""
+        return self._sub_element.is_quadrature
+
     def tabulate(self, nderivs: int, points: _npt.NDArray[np.float64]) -> _npt.NDArray[np.float64]:
         """Tabulate the basis functions of the element.
 
@@ -1573,6 +1583,11 @@ class _QuadratureElement(_ElementBase):
     ) -> tuple[_npt.NDArray[np.float64], _npt.NDArray[np.float64]]:
         """Return custom quadrature rule or raise a ValueError."""
         return self._points, self._weights
+
+    @property
+    def is_quadrature(self) -> bool:
+        """Is this a quadrature element?"""
+        return True
 
     @property
     def ufcx_element_type(self) -> str:

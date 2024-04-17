@@ -683,41 +683,28 @@ def create_custom_element(
         x = [[np.dtype(dtype).type(j) for j in i] for i in x]  # type: ignore
         M = [[np.dtype(dtype).type(j) for j in i] for i in M]  # type: ignore
     if np.issubdtype(dtype, np.float32):
-        return FiniteElement(
-            _create_custom_element_float32(
-                cell_type.value,
-                value_shape,
-                wcoeffs,
-                x,
-                M,
-                interpolation_nderivs,
-                map_type.value,
-                sobolev_space.value,
-                discontinuous,
-                embedded_subdegree,
-                embedded_superdegree,
-                poly_type.value,
-            )
-        )
+        _create_custom_element = _create_custom_element_float32
     elif np.issubdtype(dtype, np.float64):
-        return FiniteElement(
-            _create_custom_element_float64(
-                cell_type.value,
-                value_shape,
-                wcoeffs,
-                x,
-                M,
-                interpolation_nderivs,
-                map_type.value,
-                sobolev_space.value,
-                discontinuous,
-                embedded_subdegree,
-                embedded_superdegree,
-                poly_type.value,
-            )
-        )
+        _create_custom_element = _create_custom_element_float64
     else:
         raise NotImplementedError(f"Type {dtype} not supported.")
+
+    return FiniteElement(
+        _create_custom_element(
+            cell_type.value,
+            value_shape,
+            wcoeffs,
+            x,
+            M,
+            interpolation_nderivs,
+            map_type.value,
+            sobolev_space.value,
+            discontinuous,
+            embedded_subdegree,
+            embedded_superdegree,
+            poly_type.value,
+        )
+    )
 
 
 def create_tp_element(

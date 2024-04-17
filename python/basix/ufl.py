@@ -361,7 +361,7 @@ class _ElementBase(_AbstractFiniteElement):
     @property
     def is_quadrature(self) -> bool:
         """Is this a quadrature element?"""
-        return True
+        return False
 
     @property
     def is_mixed(self):

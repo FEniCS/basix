@@ -1626,7 +1626,7 @@ void FiniteElement<F>::T_apply(std::span<T> data, int n,
   else
   {
     transform_data<T, false>(data, n, cell_info, _etrans,
-                             precompute::pre_apply_matrix<F, T>);
+                             precompute::apply_matrix<F, T>);
   }
 }
 //-----------------------------------------------------------------------------
@@ -1642,7 +1642,7 @@ void FiniteElement<F>::Tt_apply(std::span<T> data, int n,
   else
   {
     transform_data<T, true>(data, n, cell_info, _etransT,
-                            precompute::pre_apply_matrix<F, T>);
+                            precompute::apply_matrix<F, T>);
   }
 }
 //-----------------------------------------------------------------------------
@@ -1658,7 +1658,7 @@ void FiniteElement<F>::Tt_inv_apply(std::span<T> data, int n,
   else
   {
     transform_data<T, false>(data, n, cell_info, _etrans_invT,
-                             precompute::pre_apply_matrix<F, T>);
+                             precompute::apply_matrix<F, T>);
   }
 }
 //-----------------------------------------------------------------------------
@@ -1674,7 +1674,7 @@ void FiniteElement<F>::Tinv_apply(std::span<T> data, int n,
   else
   {
     transform_data<T, true>(data, n, cell_info, _etrans_inv,
-                            precompute::pre_apply_matrix<F, T>);
+                            precompute::apply_matrix<F, T>);
   }
 }
 //-----------------------------------------------------------------------------
@@ -1698,7 +1698,7 @@ void FiniteElement<F>::Tt_post_apply(std::span<T> data, int n,
   else
   {
     transform_data<T, false>(data, n, cell_info, _etrans,
-                             precompute::post_apply_tranpose_matrix<F, T>);
+                             precompute::apply_tranpose_matrix_right<F, T>);
   }
 }
 //-----------------------------------------------------------------------------
@@ -1722,7 +1722,7 @@ void FiniteElement<F>::Tinv_post_apply(std::span<T> data, int n,
   else
   {
     transform_data<T, false>(data, n, cell_info, _etrans_invT,
-                             precompute::post_apply_tranpose_matrix<F, T>);
+                             precompute::apply_tranpose_matrix_right<F, T>);
   }
 }
 //-----------------------------------------------------------------------------
@@ -1746,7 +1746,7 @@ void FiniteElement<F>::T_post_apply(std::span<T> data, int n,
   else
   {
     transform_data<T, true>(data, n, cell_info, _etransT,
-                            precompute::post_apply_tranpose_matrix<F, T>);
+                            precompute::apply_tranpose_matrix_right<F, T>);
   }
 }
 //-----------------------------------------------------------------------------
@@ -1770,7 +1770,7 @@ void FiniteElement<F>::Tt_inv_post_apply(std::span<T> data, int n,
   else
   {
     transform_data<T, true>(data, n, cell_info, _etrans_inv,
-                            precompute::post_apply_tranpose_matrix<F, T>);
+                            precompute::apply_tranpose_matrix_right<F, T>);
   }
 }
 //-----------------------------------------------------------------------------

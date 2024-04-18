@@ -194,7 +194,7 @@ void apply_inv_permutation_right(std::span<const std::size_t> perm,
 /// decomposition of @f$A^t@f$ is computed in-place
 ///
 /// For an example of how the permutation in this form is applied, see
-/// `pre_apply_matrix()`.
+/// `apply_matrix()`.
 ///
 /// @param[in,out] A The matrix's data
 /// @return The three parts of a precomputed representation of the matrix.
@@ -242,7 +242,7 @@ prepare_matrix(std::pair<std::vector<T>, std::array<std::size_t, 2>>& A)
 /// permutation
 /// @param[in] block_size The block size of the data
 template <typename T, typename E>
-void pre_apply_matrix(
+void apply_matrix(
     std::span<const std::size_t> v_size_t,
     MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<
         const T, MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 2>>
@@ -279,25 +279,26 @@ void pre_apply_matrix(
 
 /// @brief Apply a (precomputed) matrix to some transposed data.
 ///
+/// Computes \f$v = u M^{T}\f$.
+///
 /// @note This function is designed to be called at runtime, so its
 /// performance is critical.
 ///
-/// See `pre_apply_matrix()`.
+/// See `apply_matrix()`.
 template <typename T, typename E>
-void post_apply_tranpose_matrix(
+void apply_tranpose_matrix_right(
     std::span<const std::size_t> v_size_t,
     MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<
         const T, MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 2>>
         M,
-    std::span<E> data, std::size_t offset = 0, std::size_t block_size = 1)
+    std::span<E> data, std::size_t offset = 0, std::size_t n = 1)
 {
   using U = typename impl::scalar_value_type_t<E>;
 
   const std::size_t dim = v_size_t.size();
-  const std::size_t data_size
-      = (data.size() + (dim < block_size ? block_size - dim : 0)) / block_size;
-  apply_inv_permutation_right(v_size_t, data, offset, block_size);
-  for (std::size_t b = 0; b < block_size; ++b)
+  const std::size_t data_size = (data.size() + (dim < n ? n - dim : 0)) / n;
+  apply_inv_permutation_right(v_size_t, data, offset, n);
+  for (std::size_t b = 0; b < n; ++b)
   {
     for (std::size_t i = 0; i < dim; ++i)
     {

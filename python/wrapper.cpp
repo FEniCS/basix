@@ -234,7 +234,7 @@ void declare_float(nb::module_& m, std::string type)
           {
             auto& [x, shape] = self.points();
             return nb::ndarray<const T, nb::ndim<2>, nb::numpy>(
-                x.data(), shape.size(), shape.data());
+                x.data(), shape.size(), shape.data(), nb::handle());
           },
           nb::rv_policy::reference_internal)
       .def_prop_ro(
@@ -243,7 +243,7 @@ void declare_float(nb::module_& m, std::string type)
           {
             auto& [P, shape] = self.interpolation_matrix();
             return nb::ndarray<const T, nb::ndim<2>, nb::numpy>(
-                P.data(), shape.size(), shape.data());
+                P.data(), shape.size(), shape.data(), nb::handle());
           },
           nb::rv_policy::reference_internal)
       .def_prop_ro(
@@ -252,7 +252,7 @@ void declare_float(nb::module_& m, std::string type)
           {
             auto& [D, shape] = self.dual_matrix();
             return nb::ndarray<const T, nb::ndim<2>, nb::numpy>(
-                D.data(), shape.size(), shape.data());
+                D.data(), shape.size(), shape.data(), nb::handle());
           },
           nb::rv_policy::reference_internal)
       .def_prop_ro(
@@ -261,7 +261,7 @@ void declare_float(nb::module_& m, std::string type)
           {
             auto& [P, shape] = self.coefficient_matrix();
             return nb::ndarray<const T, nb::ndim<2>, nb::numpy>(
-                P.data(), shape.size(), shape.data());
+                P.data(), shape.size(), shape.data(), nb::handle());
           },
           nb::rv_policy::reference_internal, "Coefficient matrix.")
       .def_prop_ro(
@@ -270,7 +270,7 @@ void declare_float(nb::module_& m, std::string type)
           {
             auto& [w, shape] = self.wcoeffs();
             return nb::ndarray<const T, nb::ndim<2>, nb::numpy>(
-                w.data(), shape.size(), shape.data());
+                w.data(), shape.size(), shape.data(), nb::handle());
           },
           nb::rv_policy::reference_internal)
       .def_prop_ro(
@@ -288,7 +288,7 @@ void declare_float(nb::module_& m, std::string type)
               {
                 auto& mat = _M[i][j];
                 M[i].emplace_back(mat.first.data(), mat.second.size(),
-                                  mat.second.data());
+                                  mat.second.data(), nb::handle());
               }
             }
             return M;
@@ -309,7 +309,7 @@ void declare_float(nb::module_& m, std::string type)
               {
                 auto& vec = _x[i][j];
                 x[i].emplace_back(vec.first.data(), vec.second.size(),
-                                  vec.second.data());
+                                  vec.second.data(), nb::handle());
               }
             }
             return x;

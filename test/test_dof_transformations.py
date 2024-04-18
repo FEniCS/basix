@@ -59,7 +59,7 @@ def test_post_apply(cell_type, element_type, degree, element_args):
 
         # This is the transpose of the data used above
         data2 = np.array([size * j + i for i in range(size) for j in range(size)], dtype=np.float32)
-        e.post_apply_transpose_dof_transformation(data2, size, cell_info)
+        e.Tt_post_apply(data2, size, cell_info)
         data2 = data2.reshape((size, size))
 
         assert np.allclose(data1.transpose(), data2)

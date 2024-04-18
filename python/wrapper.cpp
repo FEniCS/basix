@@ -136,14 +136,14 @@ void declare_float(nb::module_& m, std::string type)
                          nb::ndarray<T, nb::ndim<1>, nb::c_contig> data, int n,
                          std::uint32_t cell_info)
            { self.T_apply(std::span(data.data(), data.size()), n, cell_info); })
-      .def("post_apply_transpose_dof_transformation",
+      .def("Tt_post_apply",
            [](const FiniteElement<T>& self,
               nb::ndarray<T, nb::ndim<1>, nb::c_contig> data, int n,
               std::uint32_t cell_info) {
              self.Tt_post_apply(std::span(data.data(), data.size()), n,
                                 cell_info);
            })
-      .def("pre_apply_inverse_transpose_dof_transformation",
+      .def("Tt_inv_apply",
            [](const FiniteElement<T>& self,
               nb::ndarray<T, nb::ndim<1>, nb::c_contig> data, int n,
               std::uint32_t cell_info) {

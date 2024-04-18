@@ -28,16 +28,14 @@ jobs:
         with:
           python-version: '3.12'
       - uses: actions/checkout@v4
-          # - name: Install dependencies
-      #   run: |
-      #     sudo apt-get update
-      #     sudo apt-get install -y doxygen graphviz libopenblas-dev liblapack-dev ninja-build
+      - name: Install linting dependencies
+        run: pip install mypy ruff
       - name: Ruff check
         run: |
           pip install ruff
           ruff check .
           ruff format --check .
-      - name: Run mypy checks
+      - name: Mypy check
         run: mypy python/basix
 
   build:

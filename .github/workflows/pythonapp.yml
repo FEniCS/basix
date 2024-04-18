@@ -34,6 +34,7 @@ jobs:
       #     sudo apt-get install -y doxygen graphviz libopenblas-dev liblapack-dev ninja-build
       - name: Ruff check
         run: |
+          pip install ruff
           ruff check .
           ruff format --check .
       - name: Run mypy checks

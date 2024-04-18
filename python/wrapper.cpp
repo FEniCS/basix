@@ -132,10 +132,9 @@ void declare_float(nb::module_& m, std::string type)
                                       K.shape(2)));
              return as_nbarrayp(std::move(U));
            })
-      .def("pre_apply_dof_transformation",
-           [](const FiniteElement<T>& self,
-              nb::ndarray<T, nb::ndim<1>, nb::c_contig> data, int n,
-              std::uint32_t cell_info)
+      .def("T_apply", [](const FiniteElement<T>& self,
+                         nb::ndarray<T, nb::ndim<1>, nb::c_contig> data, int n,
+                         std::uint32_t cell_info)
            { self.T_apply(std::span(data.data(), data.size()), n, cell_info); })
       .def("post_apply_transpose_dof_transformation",
            [](const FiniteElement<T>& self,

@@ -134,27 +134,22 @@ void declare_float(nb::module_& m, std::string type)
            })
       .def("pre_apply_dof_transformation",
            [](const FiniteElement<T>& self,
-              nb::ndarray<T, nb::ndim<1>, nb::c_contig> data, int block_size,
+              nb::ndarray<T, nb::ndim<1>, nb::c_contig> data, int n,
               std::uint32_t cell_info)
-           {
-             self.pre_apply_dof_transformation(
-                 std::span(data.data(), data.size()), block_size, cell_info);
-           })
+           { self.T_apply(std::span(data.data(), data.size()), n, cell_info); })
       .def("post_apply_transpose_dof_transformation",
            [](const FiniteElement<T>& self,
-              nb::ndarray<T, nb::ndim<1>, nb::c_contig> data, int block_size,
-              std::uint32_t cell_info)
-           {
-             self.post_apply_transpose_dof_transformation(
-                 std::span(data.data(), data.size()), block_size, cell_info);
+              nb::ndarray<T, nb::ndim<1>, nb::c_contig> data, int n,
+              std::uint32_t cell_info) {
+             self.Tt_post_apply(std::span(data.data(), data.size()), n,
+                                cell_info);
            })
       .def("pre_apply_inverse_transpose_dof_transformation",
            [](const FiniteElement<T>& self,
-              nb::ndarray<T, nb::ndim<1>, nb::c_contig> data, int block_size,
-              std::uint32_t cell_info)
-           {
-             self.pre_apply_inverse_transpose_dof_transformation(
-                 std::span(data.data(), data.size()), block_size, cell_info);
+              nb::ndarray<T, nb::ndim<1>, nb::c_contig> data, int n,
+              std::uint32_t cell_info) {
+             self.Tt_inv_apply(std::span(data.data(), data.size()), n,
+                               cell_info);
            })
       .def("base_transformations", [](const FiniteElement<T>& self)
            { return as_nbarrayp(self.base_transformations()); })
@@ -413,18 +408,15 @@ NB_MODULE(_basixcpp, m)
   m.attr("__version__") = basix::version();
 
   m.def("topology", &cell::topology);
-  m.def(
-      "geometry",
-      [](cell::type celltype)
-      { return as_nbarrayp(cell::geometry<double>(celltype)); });
+  m.def("geometry", [](cell::type celltype)
+        { return as_nbarrayp(cell::geometry<double>(celltype)); });
   m.def("sub_entity_connectivity", &cell::sub_entity_connectivity);
-  m.def(
-      "sub_entity_geometry",
-      [](cell::type celltype, int dim, int index)
-      {
-        return as_nbarrayp(
-            cell::sub_entity_geometry<double>(celltype, dim, index));
-      });
+  m.def("sub_entity_geometry",
+        [](cell::type celltype, int dim, int index)
+        {
+          return as_nbarrayp(
+              cell::sub_entity_geometry<double>(celltype, dim, index));
+        });
 
   m.def("sobolev_space_intersection", &sobolev::space_intersection);
 
@@ -449,23 +441,21 @@ NB_MODULE(_basixcpp, m)
       .def_prop_ro("name",
                    [](nb::object obj) { return nb::getattr(obj, "__name__"); });
 
-  m.def(
-      "tabulate_polynomials",
-      [](polynomials::type polytype, cell::type celltype, int d,
-         nb::ndarray<const double, nb::ndim<2>, nb::c_contig> x)
-      {
-        mdspan_t<const double, 2> _x(x.data(), x.shape(0), x.shape(1));
-        return as_nbarrayp(polynomials::tabulate(polytype, celltype, d, _x));
-      });
+  m.def("tabulate_polynomials",
+        [](polynomials::type polytype, cell::type celltype, int d,
+           nb::ndarray<const double, nb::ndim<2>, nb::c_contig> x)
+        {
+          mdspan_t<const double, 2> _x(x.data(), x.shape(0), x.shape(1));
+          return as_nbarrayp(polynomials::tabulate(polytype, celltype, d, _x));
+        });
   m.def("polynomials_dim", &polynomials::dim);
-  m.def(
-      "create_lattice",
-      [](cell::type celltype, int n, lattice::type type, bool exterior,
-         lattice::simplex_method method)
-      {
-        return as_nbarrayp(
-            lattice::create<double>(celltype, n, type, exterior, method));
-      });
+  m.def("create_lattice",
+        [](cell::type celltype, int n, lattice::type type, bool exterior,
+           lattice::simplex_method method)
+        {
+          return as_nbarrayp(
+              lattice::create<double>(celltype, n, type, exterior, method));
+        });
 
   nb::enum_<maps::type>(m, "MapType")
       .value("identity", maps::type::identity)
@@ -510,34 +500,28 @@ NB_MODULE(_basixcpp, m)
       .def_prop_ro("name",
                    [](nb::object obj) { return nb::getattr(obj, "__name__"); });
 
-  m.def(
-      "cell_volume",
-      [](cell::type cell_type) -> double
-      { return cell::volume<double>(cell_type); });
-  m.def(
-      "cell_facet_normals",
-      [](cell::type cell_type)
-      { return as_nbarrayp(cell::facet_normals<double>(cell_type)); });
-  m.def(
-      "cell_facet_reference_volumes",
-      [](cell::type cell_type)
-      { return as_nbarray(cell::facet_reference_volumes<double>(cell_type)); });
-  m.def(
-      "cell_facet_outward_normals",
-      [](cell::type cell_type)
-      { return as_nbarrayp(cell::facet_outward_normals<double>(cell_type)); });
-  m.def(
-      "cell_facet_orientations",
-      [](cell::type cell_type)
-      {
-        std::vector<bool> c = cell::facet_orientations(cell_type);
-        std::vector<std::uint8_t> c8(c.begin(), c.end());
-        return c8;
-      });
-  m.def(
-      "cell_facet_jacobians",
-      [](cell::type cell_type)
-      { return as_nbarrayp(cell::facet_jacobians<double>(cell_type)); });
+  m.def("cell_volume",
+        [](cell::type cell_type) -> double
+        { return cell::volume<double>(cell_type); });
+  m.def("cell_facet_normals", [](cell::type cell_type)
+        { return as_nbarrayp(cell::facet_normals<double>(cell_type)); });
+  m.def("cell_facet_reference_volumes",
+        [](cell::type cell_type) {
+          return as_nbarray(cell::facet_reference_volumes<double>(cell_type));
+        });
+  m.def("cell_facet_outward_normals",
+        [](cell::type cell_type) {
+          return as_nbarrayp(cell::facet_outward_normals<double>(cell_type));
+        });
+  m.def("cell_facet_orientations",
+        [](cell::type cell_type)
+        {
+          std::vector<bool> c = cell::facet_orientations(cell_type);
+          std::vector<std::uint8_t> c8(c.begin(), c.end());
+          return c8;
+        });
+  m.def("cell_facet_jacobians", [](cell::type cell_type)
+        { return as_nbarrayp(cell::facet_jacobians<double>(cell_type)); });
 
   nb::enum_<element::family>(m, "ElementFamily")
       .value("custom", element::family::custom)
@@ -588,86 +572,85 @@ NB_MODULE(_basixcpp, m)
       .def_prop_ro("name",
                    [](nb::object obj) { return nb::getattr(obj, "__name__"); });
 
-  m.def(
-      "create_element",
-      [](element::family family_name, cell::type cell, int degree,
-         element::lagrange_variant lagrange_variant, element::dpc_variant dpc_variant,
-         bool discontinuous, const std::vector<int>& dof_ordering, char dtype)
-          -> std::variant<FiniteElement<float>, FiniteElement<double>>
-      {
-        if (dtype == 'd')
+  m.def("create_element",
+        [](element::family family_name, cell::type cell, int degree,
+           element::lagrange_variant lagrange_variant,
+           element::dpc_variant dpc_variant, bool discontinuous,
+           const std::vector<int>& dof_ordering, char dtype)
+            -> std::variant<FiniteElement<float>, FiniteElement<double>>
         {
-          return basix::create_element<double>(family_name, cell, degree,
-                                               lagrange_variant, dpc_variant,
-                                               discontinuous, dof_ordering);
-        }
-        else if (dtype == 'f')
-        {
-          return basix::create_element<float>(family_name, cell, degree,
-                                              lagrange_variant, dpc_variant, discontinuous,
-                                              dof_ordering);
-        }
-        else
-          throw std::runtime_error("Unsupported finite element dtype.");
-      });
-
-  m.def(
-      "create_tp_element",
-      [](element::family family_name, cell::type cell, int degree,
-         element::lagrange_variant lagrange_variant, element::dpc_variant dpc_variant,
-         bool discontinuous, char dtype)
-          -> std::variant<FiniteElement<float>, FiniteElement<double>>
-      {
-        if (dtype == 'd')
-        {
-          return basix::create_tp_element<double>(family_name, cell,
-                                                  degree, lagrange_variant, dpc_variant,
-                                                  discontinuous);
-        }
-        else if (dtype == 'f')
-        {
-          return basix::create_tp_element<float>(family_name, cell, degree,
-                                                 lagrange_variant, dpc_variant,
-                                                 discontinuous);
-        }
-        else
-          throw std::runtime_error("Unsupported finite element dtype.");
-      });
-
-  m.def(
-      "tp_factors",
-      [](element::family family_name, cell::type cell, int degree,
-         element::lagrange_variant lagrange_variant, element::dpc_variant dpc_variant,
-         bool discontinuous, std::vector<int> dof_ordering, char dtype)
-          -> std::variant<std::vector<std::vector<FiniteElement<float>>>, std::vector<std::vector<FiniteElement<double>>>>
-      {
-        if (dtype == 'd')
-        {
-          return basix::tp_factors<double>(family_name, cell,
-                                                  degree, lagrange_variant, dpc_variant,
-                                                  discontinuous, dof_ordering);
-        }
-        else if (dtype == 'f')
-        {
-          return basix::tp_factors<float>(family_name, cell, degree,
+          if (dtype == 'd')
+          {
+            return basix::create_element<double>(family_name, cell, degree,
                                                  lagrange_variant, dpc_variant,
                                                  discontinuous, dof_ordering);
-        }
-        else
-          throw std::runtime_error("Unsupported finite element dtype.");
-      });
+          }
+          else if (dtype == 'f')
+          {
+            return basix::create_element<float>(family_name, cell, degree,
+                                                lagrange_variant, dpc_variant,
+                                                discontinuous, dof_ordering);
+          }
+          else
+            throw std::runtime_error("Unsupported finite element dtype.");
+        });
 
-  m.def(
-      "tp_dof_ordering",
-      [](element::family family_name, cell::type cell, int degree,
-         element::lagrange_variant lagrange_variant, element::dpc_variant dpc_variant,
-         bool discontinuous)
-          -> std::vector<int>
-      {
-          return basix::tp_dof_ordering(family_name, cell,
-                                        degree, lagrange_variant, dpc_variant,
+  m.def("create_tp_element",
+        [](element::family family_name, cell::type cell, int degree,
+           element::lagrange_variant lagrange_variant,
+           element::dpc_variant dpc_variant, bool discontinuous, char dtype)
+            -> std::variant<FiniteElement<float>, FiniteElement<double>>
+        {
+          if (dtype == 'd')
+          {
+            return basix::create_tp_element<double>(family_name, cell, degree,
+                                                    lagrange_variant,
+                                                    dpc_variant, discontinuous);
+          }
+          else if (dtype == 'f')
+          {
+            return basix::create_tp_element<float>(family_name, cell, degree,
+                                                   lagrange_variant,
+                                                   dpc_variant, discontinuous);
+          }
+          else
+            throw std::runtime_error("Unsupported finite element dtype.");
+        });
+
+  m.def("tp_factors",
+        [](element::family family_name, cell::type cell, int degree,
+           element::lagrange_variant lagrange_variant,
+           element::dpc_variant dpc_variant, bool discontinuous,
+           std::vector<int> dof_ordering, char dtype)
+            -> std::variant<std::vector<std::vector<FiniteElement<float>>>,
+                            std::vector<std::vector<FiniteElement<double>>>>
+        {
+          if (dtype == 'd')
+          {
+            return basix::tp_factors<double>(family_name, cell, degree,
+                                             lagrange_variant, dpc_variant,
+                                             discontinuous, dof_ordering);
+          }
+          else if (dtype == 'f')
+          {
+            return basix::tp_factors<float>(family_name, cell, degree,
+                                            lagrange_variant, dpc_variant,
+                                            discontinuous, dof_ordering);
+          }
+          else
+            throw std::runtime_error("Unsupported finite element dtype.");
+        });
+
+  m.def("tp_dof_ordering",
+        [](element::family family_name, cell::type cell, int degree,
+           element::lagrange_variant lagrange_variant,
+           element::dpc_variant dpc_variant,
+           bool discontinuous) -> std::vector<int>
+        {
+          return basix::tp_dof_ordering(family_name, cell, degree,
+                                        lagrange_variant, dpc_variant,
                                         discontinuous);
-      });
+        });
 
   nb::enum_<polyset::type>(m, "PolysetType")
       .value("standard", polyset::type::standard)
@@ -675,15 +658,13 @@ NB_MODULE(_basixcpp, m)
       .def_prop_ro("name",
                    [](nb::object obj) { return nb::getattr(obj, "__name__"); });
 
-  m.def(
-      "superset",
-      [](cell::type cell, polyset::type type1, polyset::type type2)
-      { return polyset::superset(cell, type1, type2); });
+  m.def("superset",
+        [](cell::type cell, polyset::type type1, polyset::type type2)
+        { return polyset::superset(cell, type1, type2); });
 
-  m.def(
-      "restriction",
-      [](polyset::type ptype, cell::type cell, cell::type restriction_cell)
-      { return polyset::restriction(ptype, cell, restriction_cell); });
+  m.def("restriction",
+        [](polyset::type ptype, cell::type cell, cell::type restriction_cell)
+        { return polyset::restriction(ptype, cell, restriction_cell); });
 
   m.def(
       "make_quadrature",

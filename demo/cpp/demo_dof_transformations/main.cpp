@@ -24,6 +24,7 @@
 #include <basix/lattice.h>
 #include <iomanip>
 #include <iostream>
+#include <span>
 
 using T = double;
 
@@ -221,7 +222,7 @@ int main(int argc, char* argv[])
     //      - edge 5 is not permuted (0)
 
     int cell_info = 0b000010;
-    nedelec.pre_apply_dof_transformation(data, num_points, cell_info);
+    nedelec.T_apply(data, num_points, cell_info);
 
     // std::cout << std::endl
     //           << "Tabulated data is equal: "

@@ -925,29 +925,39 @@ public:
   template <typename T>
   void Tt_post_apply(std::span<T> data, int n, std::uint32_t cell_info) const;
 
-  /// Multiply data by DOF transformation matrix from the right
+  /// @brief Post(right)-apply the operator applied by
+  /// FiniteElement::T_apply.
   ///
-  /// @note This function is designed to be called at runtime, so its
-  /// performance is critical.
+  /// Computes
+  /// \f[
+  /// v^{T} = u^{T} M
+  /// \f]
+  /// in-place.
   ///
-  /// @param[in,out] data The data
-  /// @param block_size The number of data points per DOF
-  /// @param cell_info The permutation info for the cell
+  /// @param[in,out] data Data to transform. The shape is `(m, n)`,
+  /// where `m` is the number of dgerees-of-freedom and the storage is
+  /// row-major.
+  /// @param[in] n Number of columns in `data`.
+  /// @param[in] cell_info Permutation info for the cell.
   template <typename T>
-  void post_apply_dof_transformation(std::span<T> data, int block_size,
-                                     std::uint32_t cell_info) const;
+  void T_post_apply(std::span<T> data, int n, std::uint32_t cell_info) const;
 
-  /// Multiply data by inverse DOF transformation matrix from the right
+  /// @brief Post(right)-apply the inverse of the operator applied by
+  /// FiniteElement::M_apply.
   ///
-  /// @note This function is designed to be called at runtime, so its
-  /// performance is critical.
+  /// Computes
+  /// \f[
+  /// v^{T} = u^{T} M^{-1}
+  /// \f]
+  /// in-place.
   ///
-  /// @param[in,out] data The data
-  /// @param block_size The number of data points per DOF
-  /// @param cell_info The permutation info for the cell
+  /// @param[in,out] data Data to transform. The shape is `(m, n)`,
+  /// where `m` is the number of dgerees-of-freedom and the storage is
+  /// row-major.
+  /// @param[in] n Number of columns in `data`.
+  /// @param cell_info Permutation info for the cell.
   template <typename T>
-  void post_apply_inverse_dof_transformation(std::span<T> data, int block_size,
-                                             std::uint32_t cell_info) const;
+  void Tinv_post_apply(std::span<T> data, int n, std::uint32_t cell_info) const;
 
   /// Multiply data by inverse transpose DOF transformation matrix from the
   /// right
@@ -1689,17 +1699,16 @@ void FiniteElement<F>::Tt_post_apply(std::span<T> data, int n,
 //-----------------------------------------------------------------------------
 template <std::floating_point F>
 template <typename T>
-void FiniteElement<F>::post_apply_inverse_dof_transformation(
-    std::span<T> data, int block_size, std::uint32_t cell_info) const
+void FiniteElement<F>::Tinv_post_apply(std::span<T> data, int n,
+                                       std::uint32_t cell_info) const
 {
   if (_dof_transformations_are_identity)
     return;
-
-  if (_dof_transformations_are_permutations)
+  else if (_dof_transformations_are_permutations)
   {
-    assert(data.size() % block_size == 0);
-    const int step = data.size() / block_size;
-    for (int i = 0; i < block_size; ++i)
+    assert(data.size() % n == 0);
+    const int step = data.size() / n;
+    for (int i = 0; i < n; ++i)
     {
       std::span<T> dblock(data.data() + i * step, step);
       permute_data<T, false>(dblock, 1, cell_info, _eperm);
@@ -1707,24 +1716,23 @@ void FiniteElement<F>::post_apply_inverse_dof_transformation(
   }
   else
   {
-    transform_data<T, false>(data, block_size, cell_info, _etrans_invT,
+    transform_data<T, false>(data, n, cell_info, _etrans_invT,
                              precompute::post_apply_tranpose_matrix<F, T>);
   }
 }
 //-----------------------------------------------------------------------------
 template <std::floating_point F>
 template <typename T>
-void FiniteElement<F>::post_apply_dof_transformation(
-    std::span<T> data, int block_size, std::uint32_t cell_info) const
+void FiniteElement<F>::T_post_apply(std::span<T> data, int n,
+                                    std::uint32_t cell_info) const
 {
   if (_dof_transformations_are_identity)
     return;
-
-  if (_dof_transformations_are_permutations)
+  else if (_dof_transformations_are_permutations)
   {
-    assert(data.size() % block_size == 0);
-    const int step = data.size() / block_size;
-    for (int i = 0; i < block_size; ++i)
+    assert(data.size() % n == 0);
+    const int step = data.size() / n;
+    for (int i = 0; i < n; ++i)
     {
       std::span<T> dblock(data.data() + i * step, step);
       permute_data<T, true>(dblock, 1, cell_info, _eperm_rev);
@@ -1732,7 +1740,7 @@ void FiniteElement<F>::post_apply_dof_transformation(
   }
   else
   {
-    transform_data<T, true>(data, block_size, cell_info, _etransT,
+    transform_data<T, true>(data, n, cell_info, _etransT,
                             precompute::post_apply_tranpose_matrix<F, T>);
   }
 }

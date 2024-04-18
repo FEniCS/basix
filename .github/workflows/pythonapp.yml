@@ -19,6 +19,26 @@ on:
   workflow_dispatch:
 
 jobs:
+  lint:
+    name: Lint code
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/checkout@v4
+          # - name: Install dependencies
+      #   run: |
+      #     sudo apt-get update
+      #     sudo apt-get install -y doxygen graphviz libopenblas-dev liblapack-dev ninja-build
+      - name: Ruff check
+        run: |
+          ruff check .
+          ruff format --check .
+      - name: Run mypy checks
+        run: mypy python/basix
+
   build:
     name: Build and test
     runs-on: ${{ matrix.os }}
@@ -40,10 +60,6 @@ jobs:
         run: pip -v install git+https://github.com/FEniCS/ufl.git
       - name: Install Basix
         run: pip -v install .[ci]
-      - name: Ruff check
-        run: |
-          ruff check .
-          ruff format --check .
       - name: Run mypy checks
         run: mypy python/basix
       - name: Run units tests

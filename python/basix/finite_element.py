@@ -215,7 +215,7 @@ class FiniteElement:
         """
         self._e.Tt_post_apply(data, block_size, cell_info)
 
-    def pre_apply_inverse_transpose_dof_transformation(self, data, block_size, cell_info) -> None:
+    def Tt_inv_apply(self, data, block_size, cell_info) -> None:
         """Pre-apply inverse transpose DOF transformations to some data.
 
         Note:
@@ -227,7 +227,7 @@ class FiniteElement:
             block_size: The number of data points per DOF.
             cell_info: The permutation info for the cell.
         """
-        self._e.pre_apply_inverse_transpose_dof_transformation(data, block_size, cell_info)
+        self._e.Tt_inv_apply(data, block_size, cell_info)
 
     def base_transformations(self) -> npt.NDArray[np.floating]:
         r"""Get the base transformations.

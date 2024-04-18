@@ -81,15 +81,15 @@ using scalar_value_type_t = typename scalar_value_type<T>::value_type;
 /// Hence, the output of this function in this case is `[1, 4, 4, 5, 4, 5]`.
 ///
 /// For an example of how the permutation in this form is applied, see
-/// `pre_apply_permutation()`.
+/// `apply_permutation()`.
 ///
 /// @param[in,out] perm A permutation
 void prepare_permutation(std::span<std::size_t> perm);
 
-/// Apply a (precomputed) permutation
+/// Apply a (precomputed) permutation \f$v = P u\f$.
 ///
-/// This uses the representation returned by `prepare_permutation()` to apply a
-/// permutation without needing any temporary memory.
+/// This uses the representation returned by `prepare_permutation()` to
+/// apply a permutation without needing any temporary memory.
 ///
 /// In pseudo code, this function does the following:
 ///
@@ -129,59 +129,53 @@ void prepare_permutation(std::span<std::size_t> perm);
 /// Therefore the result of applying this permutation is `[b, e, a, f, c, d]`
 /// (which is what we get if we apply the permutation directly).
 ///
-/// @note This function is designed to be called at runtime, so its performance
-/// is critical.
+/// @note This function is designed to be called at runtime, so its
+/// performance is critical.
 ///
 /// @param[in] perm A permutation in precomputed form (as returned by
-/// `prepare_permutation()`)
-/// @param[in,out] data The data to apply the permutation to
-/// @param[in] offset The position in the data to start applying the permutation
-/// @param[in] block_size The block size of the data
+/// `prepare_permutation()`).
+/// @param[in,out] data The data to apply the permutation to. It has
+/// shape `(m, n)` (uses row-major storage), where the permutation
+/// matrix has shape `(m, m)`.
+/// @param[in] offset The position in the data to start applying the
+/// permutation.
+/// @param[in] n The block size of the data.
 template <typename E>
-void pre_apply_permutation(std::span<const std::size_t> perm, std::span<E> data,
-                           std::size_t offset = 0, std::size_t block_size = 1)
+void apply_permutation(std::span<const std::size_t> perm, std::span<E> data,
+                       std::size_t offset = 0, std::size_t n = 1)
 {
   for (std::size_t i = 0; i < perm.size(); ++i)
-  {
-    for (std::size_t b = 0; b < block_size; ++b)
-    {
-      std::swap(data[block_size * (offset + i) + b],
-                data[block_size * (offset + perm[i]) + b]);
-    }
-  }
+    for (std::size_t b = 0; b < n; ++b)
+      std::swap(data[n * (offset + i) + b], data[n * (offset + perm[i]) + b]);
 }
 
 /// Permutation of mapped data
 template <typename E>
-void pre_apply_permutation_mapped(std::span<const std::size_t> perm,
-                                  std::span<E> data, std::span<const int> emap,
-                                  std::size_t block_size = 1)
+void apply_permutation_mapped(std::span<const std::size_t> perm,
+                              std::span<E> data, std::span<const int> emap,
+                              std::size_t n = 1)
 {
   for (std::size_t i = 0; i < perm.size(); ++i)
-  {
-    for (std::size_t b = 0; b < block_size; ++b)
-    {
-      std::swap(data[block_size * emap[i] + b],
-                data[block_size * emap[perm[i]] + b]);
-    }
-  }
+    for (std::size_t b = 0; b < n; ++b)
+      std::swap(data[n * emap[i] + b], data[n * emap[perm[i]] + b]);
 }
 
-/// Apply a (precomputed) permutation to some transposed data
+/// Apply a (precomputed) permutation to some transposed data.
 ///
-/// @note This function is designed to be called at runtime, so its performance
-/// is critical.
+/// Applies \f$v = u P^{T}\f$
 ///
-/// see `pre_apply_permutation()`.
+/// @note This function is designed to be called at runtime, so its
+/// performance is critical.
+///
+/// See `apply_permutation()`.
 template <typename E>
-void post_apply_transpose_permutation(std::span<const std::size_t> perm,
-                                      std::span<E> data, std::size_t offset = 0,
-                                      std::size_t block_size = 1)
+void apply_inv_permutation_right(std::span<const std::size_t> perm,
+                                 std::span<E> data, std::size_t offset = 0,
+                                 std::size_t n = 1)
 {
   const std::size_t dim = perm.size();
-  const std::size_t data_size
-      = (data.size() + (dim < block_size ? block_size - dim : 0)) / block_size;
-  for (std::size_t b = 0; b < block_size; ++b)
+  const std::size_t data_size = (data.size() + (dim < n ? n - dim : 0)) / n;
+  for (std::size_t b = 0; b < n; ++b)
   {
     for (std::size_t i = 0; i < dim; ++i)
     {
@@ -223,7 +217,7 @@ prepare_matrix(std::pair<std::vector<T>, std::array<std::size_t, 2>>& A)
 ///
 /// \code{.pseudo}
 /// INPUT perm, mat, data
-/// pre_apply_permutation(perm, data)
+/// apply_permutation(perm, data)
 /// FOR i IN RANGE(dim):
 ///     FOR j IN RANGE(i+1, dim):
 ///         data[i] += mat[i, j] * data[j]
@@ -258,7 +252,7 @@ void pre_apply_matrix(
   using U = typename impl::scalar_value_type_t<E>;
 
   const std::size_t dim = v_size_t.size();
-  pre_apply_permutation(v_size_t, data, offset, block_size);
+  apply_permutation(v_size_t, data, offset, block_size);
   for (std::size_t b = 0; b < block_size; ++b)
   {
     for (std::size_t i = 0; i < dim; ++i)
@@ -302,7 +296,7 @@ void post_apply_tranpose_matrix(
   const std::size_t dim = v_size_t.size();
   const std::size_t data_size
       = (data.size() + (dim < block_size ? block_size - dim : 0)) / block_size;
-  post_apply_transpose_permutation(v_size_t, data, offset, block_size);
+  apply_inv_permutation_right(v_size_t, data, offset, block_size);
   for (std::size_t b = 0; b < block_size; ++b)
   {
     for (std::size_t i = 0; i < dim; ++i)

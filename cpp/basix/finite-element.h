@@ -862,7 +862,7 @@ public:
   ///
   /// The transformation
   /// \f[
-  ///  v = M^{T} u.
+  ///  v = T^{T} u.
   /// \f]
   /// is peformed in-place.
   ///
@@ -879,7 +879,7 @@ public:
   ///
   /// The transformation
   /// \f[
-  ///  v = M^{-T} u.
+  ///  v = T^{-T} u.
   /// \f]
   /// is peformed in-place.
   ///
@@ -896,7 +896,7 @@ public:
   ///
   /// The transformation
   /// \f[
-  ///  v = M^{-1} u.
+  ///  v = T^{-1} u.
   /// \f]
   /// is peformed in-place.
   ///
@@ -913,7 +913,7 @@ public:
   ///
   /// Computes
   /// \f[
-  /// v^{T} = u^{T} M^{T}
+  /// v^{T} = u^{T} T^{T}
   /// \f]
   /// in-place.
   ///
@@ -930,7 +930,7 @@ public:
   ///
   /// Computes
   /// \f[
-  /// v^{T} = u^{T} M
+  /// v^{T} = u^{T} T
   /// \f]
   /// in-place.
   ///
@@ -943,11 +943,11 @@ public:
   void T_post_apply(std::span<T> data, int n, std::uint32_t cell_info) const;
 
   /// @brief Post(right)-apply the inverse of the operator applied by
-  /// FiniteElement::M_apply.
+  /// FiniteElement::T_apply.
   ///
   /// Computes
   /// \f[
-  /// v^{T} = u^{T} M^{-1}
+  /// v^{T} = u^{T} T^{-1}
   /// \f]
   /// in-place.
   ///
@@ -959,18 +959,22 @@ public:
   template <typename T>
   void Tinv_post_apply(std::span<T> data, int n, std::uint32_t cell_info) const;
 
-  /// Multiply data by inverse transpose DOF transformation matrix from the
-  /// right
+  /// @brief Post(right)-apply the tranpose inverse of the operator
+  /// applied by FiniteElement::T_apply.
   ///
-  /// @note This function is designed to be called at runtime, so its
-  /// performance is critical.
+  /// Computes
+  /// \f[
+  /// v^{T} = u^{T} T^{-T}
+  /// \f]
   ///
-  /// @param[in,out] data The data
-  /// @param block_size The number of data points per DOF
-  /// @param cell_info The permutation info for the cell
+  /// @param[in,out] data Data to transform. The shape is `(m, n)`,
+  /// where `m` is the number of dgerees-of-freedom and the storage is
+  /// row-major.
+  /// @param[in] n Number of columns in `data`.
+  /// @param cell_info Permutation info for the cell.
   template <typename T>
-  void post_apply_inverse_transpose_dof_transformation(
-      std::span<T> data, int block_size, std::uint32_t cell_info) const;
+  void Tt_inv_post_apply(std::span<T> data, int n,
+                         std::uint32_t cell_info) const;
 
   /// Return the interpolation points, i.e. the coordinates on the
   /// reference element where a function need to be evaluated in order
@@ -981,7 +985,7 @@ public:
     return _points;
   }
 
-  /// @brief Return a matrix of weights interpolation,
+  /// @brief Return a matrix of weights interpolation.
   ///
   /// To interpolate a function in this finite element, the functions
   /// should be evaluated at each point given by
@@ -1081,7 +1085,9 @@ public:
   ///  - [-b/(a*sqrt(2)), 1/a, 0, -d/(c*sqrt(2)), 0, 1/c]
   ///
   /// These coefficients are only stored for custom elements. This
-  /// function will throw an exception if called on a non-custom element
+  /// function will throw an exception if called on a non-custom
+  /// element.
+  ///
   /// @return Coefficient matrix. Shape is (dim(finite element polyset),
   /// dim(Lagrange polynomials))
   const std::pair<std::vector<F>, std::array<std::size_t, 2>>& wcoeffs() const
@@ -1360,9 +1366,6 @@ private:
   using array4_t
       = std::vector<std::pair<std::vector<F>, std::array<std::size_t, 4>>>;
   std::array<array4_t, 4> _M;
-  // std::array<
-  //     std::vector<std::pair<std::vector<F>, std::array<std::size_t,
-  //     4>>>, 4> _M;
 };
 
 /// Create a custom finite element
@@ -1494,8 +1497,10 @@ void FiniteElement<F>::permute_data(
       {
         // Reverse an edge
         if (cell_info >> (face_start + e) & 1)
-          precompute::pre_apply_permutation_mapped(trans, data, _edofs[1][e],
-                                                   block_size);
+        {
+          precompute::apply_permutation_mapped(trans, data, _edofs[1][e],
+                                               block_size);
+        }
       }
     }
 
@@ -1509,22 +1514,22 @@ void FiniteElement<F>::permute_data(
         // Reflect a face (pre rotate)
         if (!post and cell_info >> (3 * f) & 1)
         {
-          precompute::pre_apply_permutation_mapped(trans[1], data, _edofs[2][f],
-                                                   block_size);
+          precompute::apply_permutation_mapped(trans[1], data, _edofs[2][f],
+                                               block_size);
         }
 
         // Rotate a face
         for (std::uint32_t r = 0; r < (cell_info >> (3 * f + 1) & 3); ++r)
         {
-          precompute::pre_apply_permutation_mapped(trans[0], data, _edofs[2][f],
-                                                   block_size);
+          precompute::apply_permutation_mapped(trans[0], data, _edofs[2][f],
+                                               block_size);
         }
 
         // Reflect a face (post rotate)
         if (post and cell_info >> (3 * f) & 1)
         {
-          precompute::pre_apply_permutation_mapped(trans[1], data, _edofs[2][f],
-                                                   block_size);
+          precompute::apply_permutation_mapped(trans[1], data, _edofs[2][f],
+                                               block_size);
         }
       }
     }
@@ -1747,17 +1752,16 @@ void FiniteElement<F>::T_post_apply(std::span<T> data, int n,
 //-----------------------------------------------------------------------------
 template <std::floating_point F>
 template <typename T>
-void FiniteElement<F>::post_apply_inverse_transpose_dof_transformation(
-    std::span<T> data, int block_size, std::uint32_t cell_info) const
+void FiniteElement<F>::Tt_inv_post_apply(std::span<T> data, int n,
+                                         std::uint32_t cell_info) const
 {
   if (_dof_transformations_are_identity)
     return;
-
-  if (_dof_transformations_are_permutations)
+  else if (_dof_transformations_are_permutations)
   {
-    assert(data.size() % block_size == 0);
-    const int step = data.size() / block_size;
-    for (int i = 0; i < block_size; ++i)
+    assert(data.size() % n == 0);
+    const int step = data.size() / n;
+    for (int i = 0; i < n; ++i)
     {
       std::span<T> dblock(data.data() + i * step, step);
       permute_data<T, true>(dblock, 1, cell_info, _eperm_rev);
@@ -1765,7 +1769,7 @@ void FiniteElement<F>::post_apply_inverse_transpose_dof_transformation(
   }
   else
   {
-    transform_data<T, true>(data, block_size, cell_info, _etrans_inv,
+    transform_data<T, true>(data, n, cell_info, _etrans_inv,
                             precompute::post_apply_tranpose_matrix<F, T>);
   }
 }

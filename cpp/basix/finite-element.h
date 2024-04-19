@@ -763,7 +763,7 @@ public:
     return _entity_transformations;
   }
 
-  /// @brief Permute indices associated with degree-of-freedoms in the
+  /// @brief Permute indices associated with degree-of-freedoms on the
   /// reference element ordering to the globally consistent physical
   /// element degree-of-freedom ordering.
   ///
@@ -782,8 +782,8 @@ public:
   /// performance is critical.
   ///
   /// @param[in,out] d Indices associated with each reference element
-  /// degree-of-freedom [in]. Indices associated with each physical
-  /// element degree-of-freedom [out].
+  /// degree-of-freedom (in). Indices associated with each physical
+  /// element degree-of-freedom (out).
   /// @param cell_info Permutation info for the cell
   void permute(std::span<std::int32_t> d, std::uint32_t cell_info) const
   {
@@ -801,7 +801,18 @@ public:
 
   /// @brief Peform the inverse of the operation applied by
   /// FiniteElement::permute.
-  //
+  ///
+  /// Given an array \f$d\f$ that holds an integer associated with each
+  /// degree-of-freedom and following the globally consistent physical
+  /// element degree-of-freedom ordering, this function computes
+  /// \f[
+  ///  \tilde{d} = P^{T} d,
+  /// \f]
+  /// where \f$P^{T}\f$ is a permutation matrix and \f$\tilde{d}\f$
+  /// holds the integers in \f$d\f$ but permuted to follow the reference
+  /// element degree-of-freedom ordering. The permutation is computed
+  /// in-place.
+  ///
   /// @param[in,out] d Indices associated with each physical element
   /// degree-of-freedom [in]. Indices associated with each reference
   /// element degree-of-freedom [out].
@@ -862,7 +873,7 @@ public:
   ///
   /// The transformation
   /// \f[
-  ///  v = T^{T} u.
+  ///  v = T^{T} u
   /// \f]
   /// is peformed in-place.
   ///
@@ -879,7 +890,7 @@ public:
   ///
   /// The transformation
   /// \f[
-  ///  v = T^{-T} u.
+  ///  v = T^{-T} u
   /// \f]
   /// is peformed in-place.
   ///
@@ -896,7 +907,7 @@ public:
   ///
   /// The transformation
   /// \f[
-  ///  v = T^{-1} u.
+  ///  v = T^{-1} u
   /// \f]
   /// is peformed in-place.
   ///
@@ -966,6 +977,7 @@ public:
   /// \f[
   /// v^{T} = u^{T} T^{-T}
   /// \f]
+  /// in-place.
   ///
   /// @param[in,out] data Data to transform. The shape is `(m, n)`,
   /// where `m` is the number of dgerees-of-freedom and the storage is
@@ -976,9 +988,11 @@ public:
   void Tt_inv_post_apply(std::span<T> data, int n,
                          std::uint32_t cell_info) const;
 
-  /// Return the interpolation points, i.e. the coordinates on the
-  /// reference element where a function need to be evaluated in order
-  /// to interpolate it in the finite element space.
+  /// @brief Return the interpolation points.
+  ///
+  /// The interpolation points are the coordinates on the reference
+  /// element where a function need to be evaluated in order to
+  /// interpolate it in the finite element space.
   /// @return Array of coordinate with shape `(num_points, tdim)`
   const std::pair<std::vector<F>, std::array<std::size_t, 2>>& points() const
   {
@@ -1095,10 +1109,10 @@ public:
     return _wcoeffs;
   }
 
-  /// Get the interpolation points for each subentity.
+  /// @brief Get the interpolation points for each subentity.
   ///
-  /// The indices of this data are (tdim, entity index, point index,
-  /// dim).
+  /// The indices of this data are `(tdim, entity index, point index,
+  /// dim)`.
   const std::array<
       std::vector<std::pair<std::vector<F>, std::array<std::size_t, 2>>>, 4>&
   x() const
@@ -1106,7 +1120,7 @@ public:
     return _x;
   }
 
-  /// Get the interpolation matrices for each subentity.
+  /// @brief Get the interpolation matrices for each subentity.
   ///
   /// The shape of this data is (tdim, entity index, dof, value size,
   /// point_index, derivative).
@@ -1149,7 +1163,7 @@ public:
     return _M;
   }
 
-  /// Get the matrix of coefficients.
+  /// @brief Get the matrix of coefficients.
   ///
   /// @return The coefficient matrix. Shape is `(ndofs, ndofs)`.
   const std::pair<std::vector<F>, std::array<std::size_t, 2>>&
@@ -1158,8 +1172,9 @@ public:
     return _coeffs;
   }
 
-  /// Indicates whether or not this element can be represented as a
+  /// @brief Indicates whether or not this element can be represented as a
   /// product of elements defined on lower-dimensional reference cells.
+  ///
   /// If the product exists, this element's basis functions can be
   /// computed as a tensor product of the basis elements of the elements
   /// in the product.
@@ -1172,16 +1187,17 @@ public:
     return _tensor_factors.size() > 0;
   }
 
-  /// Get the tensor product representation of this element, or throw an
-  /// error if no such factorisation exists.
+  /// @brief Get the tensor product representation of this element.
   ///
-  /// The tensor product representation will be a vector of vectors of finite
-  /// elements. Each tuple contains a vector of finite elements, and a vector of
-  /// integers. The vector of finite elements gives the elements on an
-  /// interval that appear in the tensor product representation. The
-  /// vector of integers gives the permutation between the numbering of
-  /// the tensor product DOFs and the number of the DOFs of this Basix
-  /// element.
+  /// @throws std::runtime_error Thrown if no such factorisation exists.
+  ///
+  /// The tensor product representation will be a vector of vectors of
+  /// finite elements. Each tuple contains a vector of finite elements,
+  /// and a vector of integers. The vector of finite elements gives the
+  /// elements on an interval that appear in the tensor product
+  /// representation. The vector of integers gives the permutation
+  /// between the numbering of the tensor product DOFs and the number of
+  /// the DOFs of this Basix element.
   /// @return The tensor product representation
   std::vector<std::vector<FiniteElement<F>>>
   get_tensor_product_representation() const
@@ -1191,23 +1207,25 @@ public:
     return _tensor_factors;
   }
 
-  /// Indicates whether or not the interpolation matrix for this element
-  /// is an identity matrix
+  /// @brief Indicates whether or not the interpolation matrix for this
+  /// element is an identity matrix.
+  /// @return True if the interpolation matrix is the identity and false
+  /// otherwise.
   bool interpolation_is_identity() const { return _interpolation_is_identity; }
 
-  /// The number of derivatives needed when interpolating
+  /// @brief The number of derivatives needed when interpolating
   int interpolation_nderivs() const { return _interpolation_nderivs; }
 
-  /// Get dof layout
+  /// @brief Get dof layout
   const std::vector<int>& dof_ordering() const { return _dof_ordering; }
 
 private:
-  // Data permutation
-  // @param data Data to be permuted
-  // @param block_size
-  // @param cell_info Cell bitmap selecting required permutations
-  // @param eperm Permutation to use
-  // @param post Whether reflect is pre- or post- rotation.
+  /// Data permutation
+  /// @param data Data to be permuted
+  /// @param block_size
+  /// @param cell_info Cell bitmap selecting required permutations
+  /// @param eperm Permutation to use
+  /// @param post Whether reflect is pre- or post- rotation.
   template <typename T, bool post>
   void permute_data(
       std::span<T> data, int block_size, std::uint32_t cell_info,

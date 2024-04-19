@@ -805,6 +805,26 @@ public:
     permute_data<std::int32_t, true>(dofs, 1, cell_info, _eperm_rev);
   }
 
+  /// Permute the dof numbering on the closure of a subentity of a cell
+  ///
+  /// @note This function is designed to be called at runtime, so its
+  /// performance is critical.
+  ///
+  /// @param[in,out] dofs The dof numbering for the closure of the subentity
+  /// @param cell_info The permutation info for the subentity
+  /// @param tdim The topological dimension of the subentity
+  void permute_closure_dofs(std::span<std::int32_t> dofs,
+                            std::uint32_t cell_info, int tdim) const
+  {
+    if (!_dof_transformations_are_permutations)
+    {
+      throw std::runtime_error(
+          "The DOF transformations for this element are not permutations");
+    }
+
+    if (_dof_transformations_are_identity)
+      return;
+  }
   /// Multiply data by DOF transformation matrix from the left
   ///
   /// @note This function is designed to be called at runtime, so its

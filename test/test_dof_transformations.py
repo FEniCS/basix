@@ -54,12 +54,12 @@ def test_post_apply(cell_type, element_type, degree, element_args):
         cell_info = random.randrange(2**30)
 
         data1 = np.array(list(range(size**2)), dtype=np.float32)
-        e.pre_apply_dof_transformation(data1, size, cell_info)
+        e.T_apply(data1, size, cell_info)
         data1 = data1.reshape((size, size))
 
         # This is the transpose of the data used above
         data2 = np.array([size * j + i for i in range(size) for j in range(size)], dtype=np.float32)
-        e.post_apply_transpose_dof_transformation(data2, size, cell_info)
+        e.Tt_post_apply(data2, size, cell_info)
         data2 = data2.reshape((size, size))
 
         assert np.allclose(data1.transpose(), data2)
@@ -494,3 +494,24 @@ def test_transformation_of_tabulated_data_pyramid(element_type, degree, element_
                 assert np.allclose(
                     (bt[9].dot(i_slice))[start : start + ndofs], j_slice[start : start + ndofs]
                 )
+
+@pytest.mark.parametrize(
+    "family, cell_Type, degree, args, cell_info, entity_dim, entity_n, result", [
+        (basix.ElementFamily.P, basix.CellType.tetrahedron, 1, (), 0, 2, 0, [0, 1, 2]),
+        (basix.ElementFamily.P, basix.CellType.tetrahedron, 1, (), 1, 2, 0, [1, 2, 0]),
+        (basix.ElementFamily.P, basix.CellType.tetrahedron, 1, (), 2, 2, 0, [2, 0, 1]),
+        (basix.ElementFamily.P, basix.CellType.tetrahedron, 1, (), 4, 2, 0, [0, 2, 1]),
+        (basix.ElementFamily.P, basix.CellType.tetrahedron, 1, (), 5, 2, 0, [1, 0, 2]),
+        (basix.ElementFamily.P, basix.CellType.tetrahedron, 1, (), 6, 2, 0, [2, 1, 0]),
+    ]
+)
+def test_permute_subentity_closure(
+    family, cell_Type, degree, args, cell_info, entity_dim, entity_n, result
+):
+    e = basix.create_element(family, cell_Type, degree, *args)
+
+    data = np.array(list(range(len(result))))
+    data = e._e.permute_subentity_closure(data, cell_info, entity_dim, entity_n)
+
+    for i, j in zip(data, result):
+        assert i == j

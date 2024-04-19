@@ -1,4 +1,4 @@
-// Copyright (c) 2020 Chris Richardson
+// Copyright (c) 2020-2024 Chris Richardson, Matthew Scroggs and Garth . Wells
 // FEniCS Project
 // SPDX-License-Identifier:    MIT
 
@@ -22,6 +22,8 @@
 #include <tuple>
 #include <utility>
 #include <vector>
+
+#include <iostream>
 
 /// Basix: FEniCS runtime basis evaluation library
 namespace basix
@@ -195,9 +197,9 @@ public:
   /// This function takes the matrices @f$B@f$ (`wcoeffs`) and @f$D@f$ (`M`) as
   /// inputs and will internally compute @f$C@f$.
   ///
-  /// The matrix @f$BD^{T}@f$ can be obtained from an element by using the
-  /// function `dual_matrix()`. The matrix @f$C@f$ can be obtained from an
-  /// element by using the function `coefficient_matrix()`.
+  /// The matrix @f$BD^{T}@f$ can be obtained from an element by using
+  /// dual_matrix(). The matrix @f$C@f$ can be obtained from an element
+  /// by using coefficient_matrix().
   ///
   /// Example: Order 1 Lagrange elements on a triangle
   /// ------------------------------------------------
@@ -342,7 +344,7 @@ public:
   /// Move assignment operator
   FiniteElement& operator=(FiniteElement&& element) = default;
 
-  /// Check if two elements are the same
+  /// @brief Check if two elements are the same
   /// @note This operator compares the element properties, e.g. family,
   /// degree, etc, and not computed numerical data
   /// @return True if elements are the same
@@ -351,15 +353,15 @@ public:
   /// Get a unique hash of this element
   std::size_t hash() const;
 
-  /// Array shape for tabulate basis values and derivatives at set of
-  /// points.
+  /// @brief Array shape for tabulate basis values and derivatives at
+  /// set of points.
   ///
   /// @param[in] nd The order of derivatives, up to and including, to
   /// compute. Use 0 for the basis functions only.
   /// @param[in] num_points Number of points that basis will be computed
-  /// at
+  /// at.
   /// @return The shape of the array to will filled when passed to
-  /// `FiniteElement::tabulate`
+  /// tabulate().
   std::array<std::size_t, 4> tabulate_shape(std::size_t nd,
                                             std::size_t num_points) const
   {
@@ -376,9 +378,9 @@ public:
 
   /// @brief Compute basis values and derivatives at set of points.
   ///
-  /// @note The version of `FiniteElement::tabulate` with the basis data
-  /// as an out argument should be preferred for repeated call where
-  /// performance is critical
+  /// @note The version of tabulate() with the basis data as an out
+  /// argument should be preferred for repeated call where performance
+  /// is critical.
   ///
   /// @param[in] nd The order of derivatives, up to and including, to
   /// compute. Use 0 for the basis functions only.
@@ -400,9 +402,9 @@ public:
 
   /// @brief Compute basis values and derivatives at set of points.
   ///
-  /// @note The version of `FiniteElement::tabulate` with the basis data
-  /// as an out argument should be preferred for repeated call where
-  /// performance is critical
+  /// @note The version of tabulate() with the basis data as an out
+  /// argument should be preferred for repeated call where performance
+  /// is critical
   ///
   /// @param[in] nd The order of derivatives, up to and including, to
   /// compute. Use 0 for the basis functions only.
@@ -415,7 +417,7 @@ public:
   /// - The first index is the derivative, with higher derivatives are
   /// stored in triangular (2D) or tetrahedral (3D) ordering, ie for
   /// the (x,y) derivatives in 2D: (0,0), (1,0), (0,1), (2,0), (1,1),
-  /// (0,2), (3,0)... The function basix::indexing::idx can be used to find the
+  /// (0,2), (3,0)... The function indexing::idx can be used to find the
   /// appropriate derivative.
   /// - The second index is the point index
   /// - The third index is the basis function index
@@ -435,13 +437,13 @@ public:
   /// @param[in] x The points at which to compute the basis functions.
   /// The shape of x is (number of points, geometric dimension).
   /// @param [out] basis Memory location to fill. It must be allocated
-  /// with shape (num_derivatives, num_points, num basis functions,
-  /// value_size). The function `FiniteElement::tabulate_shape` can be
-  /// used to get the required shape.
+  /// with shape `(num_derivatives, num_points, num basis functions,
+  /// value_size)`. The function tabulate_shape() can be used to get the
+  /// required shape.
   /// - The first index is the derivative, with higher derivatives are
   /// stored in triangular (2D) or tetrahedral (3D) ordering, ie for
   /// the (x,y) derivatives in 2D: (0,0), (1,0), (0,1), (2,0), (1,1),
-  /// (0,2), (3,0)... The function basix::indexing::idx can be used to
+  /// (0,2), (3,0)... The function indexing::idx can be used to
   /// find the appropriate derivative.
   /// - The second index is the point index
   /// - The third index is the basis function index
@@ -461,19 +463,19 @@ public:
   /// @param[in] nd The order of derivatives, up to and including, to
   /// compute. Use 0 for the basis functions only.
   /// @param[in] x The points at which to compute the basis functions
-  /// (row-major storage). The shape of x is (number of points,
-  /// geometric dimension).
+  /// (row-major storage). The shape of `x` is `(number of points,
+  /// geometric dimension)`.
   /// @param[in] xshape The shape `(number of points, geometric
   /// dimension)` of `x`.
   /// @param [out] basis Memory location to fill. It must be allocated
-  /// with shape (num_derivatives, num_points, num basis functions,
-  /// value_size). The function `FiniteElement::tabulate_shape` can be
-  /// used to get the required shape.
+  /// with shape `(num_derivatives, num_points, num basis functions,
+  /// value_size)`. The function tabulate_shape() can be used to get the
+  /// required shape.
   /// - The first index is the derivative, with higher derivatives are
-  /// stored in triangular (2D) or tetrahedral (3D) ordering, ie for
-  /// the (x,y) derivatives in 2D: (0,0), (1,0), (0,1), (2,0), (1,1),
-  /// (0,2), (3,0)... The function basix::indexing::idx can be used to
-  /// find the appropriate derivative.
+  /// stored in triangular (2D) or tetrahedral (3D) ordering, ie for the
+  /// (x,y) derivatives in 2D: (0,0), (1,0), (0,1), (2,0), (1,1), (0,2),
+  /// (3,0)... The function indexing::idx can be used to find the
+  /// appropriate derivative.
   /// - The second index is the point index
   /// - The third index is the basis function index
   /// - The fourth index is the basis function component. Its has size
@@ -481,99 +483,103 @@ public:
   void tabulate(int nd, std::span<const F> x, std::array<std::size_t, 2> xshape,
                 std::span<F> basis) const;
 
-  /// Get the element cell type
+  /// @brief Get the element cell type.
   /// @return The cell type
   cell::type cell_type() const { return _cell_type; }
 
-  /// Get the element polyset type
+  /// @brief Get the element polyset type.
   /// @return The polyset
   polyset::type polyset_type() const { return _poly_type; }
 
-  /// Get the element polynomial degree
+  /// @brief Get the element polynomial degree.
   /// @return Polynomial degree
   int degree() const { return _degree; }
 
-  /// Lowest degree `n` such that the highest degree polynomial in this
+  /// @brief Lowest degree `n` such that the highest degree polynomial in this
   /// element is contained in a Lagrange (or vector Lagrange) element of
   /// degree `n`.
   /// @return Polynomial degree
   int embedded_superdegree() const { return _embedded_superdegree; }
 
-  /// Highest degree `n` such that a Lagrange (or vector Lagrange)
+  /// @brief Highest degree `n` such that a Lagrange (or vector Lagrange)
   /// element of degree n is a subspace of this element.
   /// @return Polynomial degree
   int embedded_subdegree() const { return _embedded_subdegree; }
 
-  /// The element value tensor shape, e.g. returning {} for scalars, {3}
-  /// for vectors in 3D, {2, 2} for a rank-2 tensor in 2D.
+  /// @brief Element value tensor shape.
+  ///
+  /// For example, returns `{}` for scalars, `{3}` for vectors in 3D,
+  /// `{2, 2}` for a rank-2 tensor in 2D.
   /// @return Value shape
   const std::vector<std::size_t>& value_shape() const { return _value_shape; }
 
-  /// Dimension of the finite element space (number of
-  /// degrees-of-freedom for the element)
+  /// @brief Dimension of the finite element space.
+  ///
+  /// The dimension is the number of degrees-of-freedom for the element.
   /// @return Number of degrees of freedom
   int dim() const { return _coeffs.second[0]; }
 
-  /// Get the finite element family
+  /// @brief The finite element family.
   /// @return The family
   element::family family() const { return _family; }
 
-  /// Get the Lagrange variant of the element.
-  /// @return The Lagrange variant
+  /// @brief Lagrange variant of the element.
+  /// @return The Lagrange variant.
   element::lagrange_variant lagrange_variant() const
   {
     return _lagrange_variant;
   }
 
-  /// Get the DPC variant of the element.
-  /// @return The DPC variant
+  /// @brief DPC variant of the element.
+  /// @return The DPC variant.
   element::dpc_variant dpc_variant() const { return _dpc_variant; }
 
-  /// Get the map type for this element
-  /// @return The map type
+  /// @brief Map type for the element.
+  /// @return The map type.
   maps::type map_type() const { return _map_type; }
 
-  /// Get the underlying Sobolev space for this element
-  /// @return The Sobolev space
+  /// @brief Underlying Sobolev space for this element.
+  /// @return The Sobolev space.
   sobolev::space sobolev_space() const { return _sobolev_space; }
 
-  /// Indicates whether this element is the discontinuous variant
+  /// @brief Indicates whether this element is the discontinuous
+  /// variant.
   /// @return True if this element is a discontinuous version of the
-  /// element
+  /// element.
   bool discontinuous() const { return _discontinuous; }
 
-  /// Indicates whether the dof transformations are all permutations
-  /// @return True or False
+  /// @brief Indicates if the degree-of-freedom transformations are all
+  /// permutations.
   bool dof_transformations_are_permutations() const
   {
     return _dof_transformations_are_permutations;
   }
 
-  /// Indicates whether the dof transformations are all the identity
-  /// @return True or False
+  /// @brief Indicates is the dof transformations are all the identity.
   bool dof_transformations_are_identity() const
   {
     return _dof_transformations_are_identity;
   }
 
-  /// Map function values from the reference to a physical cell. This
-  /// function can perform the mapping for multiple points, grouped by
-  /// points that share a common Jacobian.
+  /// @brief Map function values from the reference to a physical cell.
+  ///
+  /// This function can perform the mapping for multiple points, grouped
+  /// by points that share a common Jacobian.
   /// @param[in] U The function values on the reference. The indices are
-  /// [Jacobian index, point index, components].
+  /// `[Jacobian index, point index, components]`.
   /// @param[in] J The Jacobian of the mapping. The indices are
-  /// [Jacobian index, J_i, J_j].
+  /// `[Jacobian index, J_i, J_j]`.
   /// @param[in] detJ The determinant of the Jacobian of the mapping. It
   /// has length `J.shape(0)`
   /// @param[in] K The inverse of the Jacobian of the mapping. The
-  /// indices are [Jacobian index, K_i, K_j].
+  /// indices are `[Jacobian index, K_i, K_j]`.
   /// @return The function values on the cell. The indices are [Jacobian
   /// index, point index, components].
   std::pair<std::vector<F>, std::array<std::size_t, 3>>
   push_forward(impl::mdspan_t<const F, 3> U, impl::mdspan_t<const F, 3> J,
                std::span<const F> detJ, impl::mdspan_t<const F, 3> K) const;
 
-  /// Map function values from a physical cell to the reference
+  /// @brief Map function values from a physical cell to the reference.
   /// @param[in] u The function values on the cell
   /// @param[in] J The Jacobian of the mapping
   /// @param[in] detJ The determinant of the Jacobian of the mapping
@@ -584,8 +590,8 @@ public:
   pull_back(impl::mdspan_t<const F, 3> u, impl::mdspan_t<const F, 3> J,
             std::span<const F> detJ, impl::mdspan_t<const F, 3> K) const;
 
-  /// Return a function that performs the appropriate
-  /// push-forward/pull-back for the element type
+  /// @brief Return a function that performs the appropriate
+  /// push-forward/pull-back for the element type.
   ///
   /// @tparam O The type that hold the (computed) mapped data (ndim==2)
   /// @tparam P The type that hold the data to be mapped (ndim==2)
@@ -646,10 +652,11 @@ public:
     }
   }
 
-  /// Get the dofs on each topological entity: (vertices,
-  /// edges, faces, cell) in that order. For example, Lagrange degree 2
-  /// on a triangle has vertices: [[0], [1], [2]], edges: [[3], [4], [5]],
-  /// cell: [[]]
+  /// @brief Get the dofs on each topological entity: (vertices, edges,
+  /// faces, cell) in that order.
+  ///
+  /// For example, Lagrange degree 2 on a triangle has vertices: [[0],
+  /// [1], [2]], edges: [[3], [4], [5]], cell: [[]]
   /// @return Dofs associated with an entity of a given topological
   /// dimension. The shape is (tdim + 1, num_entities, num_dofs).
   const std::vector<std::vector<std::vector<int>>>& entity_dofs() const
@@ -657,13 +664,15 @@ public:
     return _edofs;
   }
 
-  /// Get the dofs on the closure of each topological entity: (vertices,
-  /// edges, faces, cell) in that order. For example, Lagrange degree 2
-  /// on a triangle has vertices: [[0], [1], [2]], edges: [[1, 2, 3], [0, 2, 4],
-  /// [0, 1, 5]], cell: [[0, 1, 2, 3, 4, 5]]
+  /// @brief Get the dofs on the closure of each topological entity:
+  /// (vertices, edges, faces, cell) in that order.
+  ///
+  /// For example, Lagrange degree 2 on a triangle has vertices: [[0],
+  /// [1], [2]], edges: [[1, 2, 3], [0, 2, 4], [0, 1, 5]], cell: [[0, 1,
+  /// 2, 3, 4, 5]]
   /// @return Dofs associated with the closure of an entity of a given
-  /// topological dimension. The shape is (tdim + 1, num_entities,
-  /// num_dofs).
+  /// topological dimension. The shape is `(tdim + 1, num_entities,
+  /// num_dofs)`.
   const std::vector<std::vector<std::vector<int>>>& entity_closure_dofs() const
   {
     return _e_closure_dofs;
@@ -743,8 +752,8 @@ public:
   /// ~~~~~~~~~~~~~~~~
   /// For these DOFs, the subblocks of the base transformation matrices are:
   /// ~~~~~~~~~~~~~~~~
-  ///   rotation: [[-1, 1],
-  ///              [ 1, 0]]
+  ///   rotation:   [[-1, 1],
+  ///                [ 1, 0]]
   ///   reflection: [[0, 1],
   ///                [1, 0]]
   /// ~~~~~~~~~~~~~~~~
@@ -753,7 +762,7 @@ public:
   std::pair<std::vector<F>, std::array<std::size_t, 3>>
   base_transformations() const;
 
-  /// Return the entity dof transformation matrices
+  /// @brief Return the entity dof transformation matrices
   /// @return The entity transformations for the sub-entities of this
   /// element. The shape for each cell is (ntransformations, ndofs,
   /// ndofs)
@@ -763,14 +772,29 @@ public:
     return _entity_transformations;
   }
 
-  /// Permute the dof numbering on a cell
+  /// @brief Permute indices associated with degree-of-freedoms on the
+  /// reference element ordering to the globally consistent physical
+  /// element degree-of-freedom ordering.
+  ///
+  /// Given an array \f$\tilde{d}\f$ that holds an integer associated
+  /// with each degree-of-freedom and following the reference element
+  /// degree-of-freedom ordering, this function computes
+  /// \f[
+  ///  d = P \tilde{d},
+  /// \f]
+  /// where \f$P\f$ is a permutation matrix and \f$d\f$ holds the
+  /// integers in \f$\tilde{d}\f$ but permuted to follow the globally
+  /// consistent physical element degree-of-freedom ordering. The
+  /// permutation is computed in-place.
   ///
   /// @note This function is designed to be called at runtime, so its
   /// performance is critical.
   ///
-  /// @param[in,out] dofs The dof numbering for the cell
-  /// @param cell_info The permutation info for the cell
-  void permute_dofs(std::span<std::int32_t> dofs, std::uint32_t cell_info) const
+  /// @param[in,out] d Indices associated with each reference element
+  /// degree-of-freedom (in). Indices associated with each physical
+  /// element degree-of-freedom (out).
+  /// @param cell_info Permutation info for the cell
+  void permute(std::span<std::int32_t> d, std::uint32_t cell_info) const
   {
     if (!_dof_transformations_are_permutations)
     {
@@ -780,41 +804,28 @@ public:
 
     if (_dof_transformations_are_identity)
       return;
-
-    permute_data<std::int32_t, false>(dofs, 1, cell_info, _eperm);
+    else
+      permute_data<std::int32_t, false>(d, 1, cell_info, _eperm);
   }
 
-  /// Unpermute the dof numbering on a cell
+  /// @brief Peform the inverse of the operation applied by permute().
   ///
-  /// @note This function is designed to be called at runtime, so its
-  /// performance is critical.
+  /// Given an array \f$d\f$ that holds an integer associated with each
+  /// degree-of-freedom and following the globally consistent physical
+  /// element degree-of-freedom ordering, this function computes
+  /// \f[
+  ///  \tilde{d} = P^{T} d,
+  /// \f]
+  /// where \f$P^{T}\f$ is a permutation matrix and \f$\tilde{d}\f$
+  /// holds the integers in \f$d\f$ but permuted to follow the reference
+  /// element degree-of-freedom ordering. The permutation is computed
+  /// in-place.
   ///
-  /// @param[in,out] dofs The dof numbering for the cell
-  /// @param cell_info The permutation info for the cell
-  void unpermute_dofs(std::span<std::int32_t> dofs,
-                      std::uint32_t cell_info) const
-  {
-    if (!_dof_transformations_are_permutations)
-    {
-      throw std::runtime_error(
-          "The DOF transformations for this element are not permutations");
-    }
-    if (_dof_transformations_are_identity)
-      return;
-
-    permute_data<std::int32_t, true>(dofs, 1, cell_info, _eperm_rev);
-  }
-
-  /// Permute the dof numbering on the closure of a subentity of a cell
-  ///
-  /// @note This function is designed to be called at runtime, so its
-  /// performance is critical.
-  ///
-  /// @param[in,out] dofs The dof numbering for the closure of the subentity
-  /// @param cell_info The permutation info for the subentity
-  /// @param tdim The topological dimension of the subentity
-  void permute_closure_dofs(std::span<std::int32_t> dofs,
-                            std::uint32_t cell_info, int tdim) const
+  /// @param[in,out] d Indices associated with each physical element
+  /// degree-of-freedom [in]. Indices associated with each reference
+  /// element degree-of-freedom [out].
+  /// @param cell_info Permutation info for the cell
+  void permute_inv(std::span<std::int32_t> d, std::uint32_t cell_info) const
   {
     if (!_dof_transformations_are_permutations)
     {
@@ -824,126 +835,227 @@ public:
 
     if (_dof_transformations_are_identity)
       return;
+    else
+      permute_data<std::int32_t, true>(d, 1, cell_info, _eperm_rev);
   }
-  /// Multiply data by DOF transformation matrix from the left
+
+  /// @brief Permute indices associated with degree-of-freedoms on the
+  /// closure of a sub-entity of the reference element
+  ///
+  /// This function performs a similar permutation to permute() but
+  /// additionally permutes the positions of vertices and edges
   ///
   /// @note This function is designed to be called at runtime, so its
   /// performance is critical.
   ///
-  /// @param[in,out] data The data
-  /// @param block_size The number of data points per DOF
-  /// @param cell_info The permutation info for the cell
-  template <typename T>
-  void pre_apply_dof_transformation(std::span<T> data, int block_size,
-                                    std::uint32_t cell_info) const;
+  /// @param[in,out] d Indices associated with each reference element
+  /// degree-of-freedom (in). Indices associated with each physical
+  /// element degree-of-freedom (out).
+  /// @param cell_info Permutation info for the cell
+  /// @param entity_dim The dimension of the sub-entity
+  /// @param entity_n The number of the sub-entity
+  void permute_subentity_closure(std::span<std::int32_t> d,
+                                 std::uint32_t cell_info, int entity_dim, int entity_n) const
+  {
+    if (!_dof_transformations_are_permutations)
+    {
+      throw std::runtime_error(
+          "The DOF transformations for this element are not permutations");
+    }
 
-  /// Multiply data by transpose DOF transformation matrix from the left
-  ///
-  /// @note This function is designed to be called at runtime, so its
-  /// performance is critical.
-  ///
-  /// @param[in,out] data The data
-  /// @param block_size The number of data points per DOF
-  /// @param cell_info The permutation info for the cell
-  template <typename T>
-  void pre_apply_transpose_dof_transformation(std::span<T> data, int block_size,
-                                              std::uint32_t cell_info) const;
+    auto dofs = entity_closure_dofs()[entity_dim][entity_n];
+    std::cout << "dofs = { ";
+    for (auto i: dofs) std::cout << i << " ";
+    std::cout << "}\n";
 
-  /// Multiply data by inverse transpose DOF transformation matrix from the left
-  ///
-  /// @note This function is designed to be called at runtime, so its
-  /// performance is critical.
-  ///
-  /// @param[in,out] data The data
-  /// @param block_size The number of data points per DOF
-  /// @param cell_info The permutation info for the cell
-  template <typename T>
-  void pre_apply_inverse_transpose_dof_transformation(
-      std::span<T> data, int block_size, std::uint32_t cell_info) const;
+    for (int dim = 0; dim <= entity_dim; ++dim)
+    {
+    }
 
-  /// Multiply data by inverse DOF transformation matrix from the left
-  ///
-  /// @note This function is designed to be called at runtime, so its
-  /// performance is critical.
-  ///
-  /// @param[in,out] data The data
-  /// @param block_size The number of data points per DOF
-  /// @param cell_info The permutation info for the cell
-  template <typename T>
-  void pre_apply_inverse_dof_transformation(std::span<T> data, int block_size,
-                                            std::uint32_t cell_info) const;
+    d[0] = 13;
+    d[1] = 13;
+    std::cout << cell_info << entity_dim << entity_n << "\n";
 
-  /// Multiply data by transpose DOF transformation matrix from the right
-  ///
-  /// @note This function is designed to be called at runtime, so its
-  /// performance is critical.
-  ///
-  /// @param[in,out] data The data
-  /// @param block_size The number of data points per DOF
-  /// @param cell_info The permutation info for the cell
-  template <typename T>
-  void post_apply_transpose_dof_transformation(std::span<T> data,
-                                               int block_size,
-                                               std::uint32_t cell_info) const;
+    if (_dof_transformations_are_identity)
+      return;
+  }
 
-  /// Multiply data by DOF transformation matrix from the right
+  /// @brief Transform basis functions from the reference element
+  /// ordering and orientation to the globally consistent physical
+  /// element ordering and orientation.
   ///
-  /// @note This function is designed to be called at runtime, so its
-  /// performance is critical.
+  /// Consider that the value of a finite element function \f$f_{h}\f$
+  /// at a point is given by
+  /// \f[
+  ///  f_{h} = \phi^{T} c,
+  /// \f]
+  /// where \f$f_{h}\f$ has shape \f$r \times 1\f$, \f$\phi\f$ has shape
+  /// \f$d \times r\f$ and holds the finite element basis functions,
+  /// and \f$c\f$ has shape \f$d \times 1\f$ and holds the
+  /// degrees-of-freedom. The basis functions and
+  /// degree-of-freedom are with respect to the physical element
+  /// orientation. If the degrees-of-freedom on the physical element
+  /// orientation are given by
+  /// \f[
+  /// \phi = T \tilde{\phi},
+  /// \f]
+  /// where \f$T\f$ is a \f$d \times d\f$ matrix, it follows from
+  /// \f$f_{h} = \phi^{T} c = \tilde{\phi}^{T} T^{T} c\f$ that
+  /// \f[
+  ///  \tilde{c} = T^{T} c.
+  /// \f]
   ///
-  /// @param[in,out] data The data
-  /// @param block_size The number of data points per DOF
-  /// @param cell_info The permutation info for the cell
+  /// This function applies \f$T\f$ to data. The transformation is
+  /// peformed in-place. The operator \f$T\f$ is orthogonal for many
+  /// elements, but not all.
+  ///
+  /// @param[in,out] data Data to transform. The shape is `(m, n)`,
+  /// where `m` is the number of dgerees-of-freedom and the storage is
+  /// row-major.
+  /// @param[in] n Number of columns in `data`.
+  /// @param cell_info Permutation info for the cell
   template <typename T>
-  void post_apply_dof_transformation(std::span<T> data, int block_size,
-                                     std::uint32_t cell_info) const;
+  void T_apply(std::span<T> data, int n, std::uint32_t cell_info) const;
 
-  /// Multiply data by inverse DOF transformation matrix from the right
+  /// @brief Apply the transpose of the operator appplied by T_apply().
   ///
-  /// @note This function is designed to be called at runtime, so its
-  /// performance is critical.
+  /// The transformation
+  /// \f[
+  ///  v = T^{T} u
+  /// \f]
+  /// is peformed in-place.
   ///
-  /// @param[in,out] data The data
-  /// @param block_size The number of data points per DOF
-  /// @param cell_info The permutation info for the cell
+  /// @param[in,out] data Data to transform. The shape is `(m, n)`,
+  /// where `m` is the number of dgerees-of-freedom an d the storage is
+  /// row-major.
+  /// @param[in] n Number of columns in `data`.
+  /// @param[in] cell_info Permutation info for the cell,
   template <typename T>
-  void post_apply_inverse_dof_transformation(std::span<T> data, int block_size,
-                                             std::uint32_t cell_info) const;
+  void Tt_apply(std::span<T> data, int n, std::uint32_t cell_info) const;
 
-  /// Multiply data by inverse transpose DOF transformation matrix from the
-  /// right
+  /// @brief Apply the inverse transpose of the operator appplied by
+  /// T_apply().
   ///
-  /// @note This function is designed to be called at runtime, so its
-  /// performance is critical.
+  /// The transformation
+  /// \f[
+  ///  v = T^{-T} u
+  /// \f]
+  /// is peformed in-place.
   ///
-  /// @param[in,out] data The data
-  /// @param block_size The number of data points per DOF
-  /// @param cell_info The permutation info for the cell
+  /// @param[in,out] data Data to transform. The shape is `(m, n)`,
+  /// where `m` is the number of dgerees-of-freedom and the storage is
+  /// row-major.
+  /// @param[in] n Number of columns in `data`.
+  /// @param[in] cell_info Permutation info for the cell.
   template <typename T>
-  void post_apply_inverse_transpose_dof_transformation(
-      std::span<T> data, int block_size, std::uint32_t cell_info) const;
+  void Tt_inv_apply(std::span<T> data, int n, std::uint32_t cell_info) const;
 
-  /// Return the interpolation points, i.e. the coordinates on the
-  /// reference element where a function need to be evaluated in order
-  /// to interpolate it in the finite element space.
+  /// @brief Apply the inverse of the operator appplied by T_apply().
+  ///
+  /// The transformation
+  /// \f[
+  ///  v = T^{-1} u
+  /// \f]
+  /// is peformed in-place.
+  ///
+  /// @param[in,out] data Data to transform. The shape is `(m, n)`,
+  /// where `m` is the number of dgerees-of-freedom and the storage is
+  /// row-major.
+  /// @param[in] n Number of columns in `data`.
+  /// @param[in] cell_info Permutation info for the cell.
+  template <typename T>
+  void Tinv_apply(std::span<T> data, int n, std::uint32_t cell_info) const;
+
+  /// @brief Post(right)-apply the transpose of the operator applied by
+  /// T_apply().
+  ///
+  /// Computes
+  /// \f[
+  /// v^{T} = u^{T} T^{T}
+  /// \f]
+  /// in-place.
+  ///
+  /// @param[in,out] data Data to transform. The shape is `(m, n)`,
+  /// where `m` is the number of dgerees-of-freedom and the storage is
+  /// row-major.
+  /// @param[in] n Number of columns in `data`.
+  /// @param[in] cell_info Permutation info for the cell.
+  template <typename T>
+  void Tt_post_apply(std::span<T> data, int n, std::uint32_t cell_info) const;
+
+  /// @brief Post(right)-apply the operator applied by T_apply().
+  ///
+  /// Computes
+  /// \f[
+  /// v^{T} = u^{T} T
+  /// \f]
+  /// in-place.
+  ///
+  /// @param[in,out] data Data to transform. The shape is `(m, n)`,
+  /// where `m` is the number of dgerees-of-freedom and the storage is
+  /// row-major.
+  /// @param[in] n Number of columns in `data`.
+  /// @param[in] cell_info Permutation info for the cell.
+  template <typename T>
+  void T_post_apply(std::span<T> data, int n, std::uint32_t cell_info) const;
+
+  /// @brief Post(right)-apply the inverse of the operator applied by
+  /// T_apply().
+  ///
+  /// Computes
+  /// \f[
+  /// v^{T} = u^{T} T^{-1}
+  /// \f]
+  /// in-place.
+  ///
+  /// @param[in,out] data Data to transform. The shape is `(m, n)`,
+  /// where `m` is the number of dgerees-of-freedom and the storage is
+  /// row-major.
+  /// @param[in] n Number of columns in `data`.
+  /// @param cell_info Permutation info for the cell.
+  template <typename T>
+  void Tinv_post_apply(std::span<T> data, int n, std::uint32_t cell_info) const;
+
+  /// @brief Post(right)-apply the tranpose inverse of the operator
+  /// applied by T_apply().
+  ///
+  /// Computes
+  /// \f[
+  /// v^{T} = u^{T} T^{-T}
+  /// \f]
+  /// in-place.
+  ///
+  /// @param[in,out] data Data to transform. The shape is `(m, n)`,
+  /// where `m` is the number of dgerees-of-freedom and the storage is
+  /// row-major.
+  /// @param[in] n Number of columns in `data`.
+  /// @param cell_info Permutation info for the cell.
+  template <typename T>
+  void Tt_inv_post_apply(std::span<T> data, int n,
+                         std::uint32_t cell_info) const;
+
+  /// @brief Return the interpolation points.
+  ///
+  /// The interpolation points are the coordinates on the reference
+  /// element where a function need to be evaluated in order to
+  /// interpolate it in the finite element space.
   /// @return Array of coordinate with shape `(num_points, tdim)`
   const std::pair<std::vector<F>, std::array<std::size_t, 2>>& points() const
   {
     return _points;
   }
 
-  /// @brief Return a matrix of weights interpolation,
+  /// @brief Return a matrix of weights interpolation.
   ///
   /// To interpolate a function in this finite element, the functions
-  /// should be evaluated at each point given by
-  /// FiniteElement::points(). These function values should then be
-  /// multiplied by the weight matrix to give the coefficients of the
-  /// interpolated function.
+  /// should be evaluated at each point given by points(). These
+  /// function values should then be multiplied by the weight matrix to
+  /// give the coefficients of the interpolated function.
   ///
   /// The shape of the returned matrix will be `(dim, num_points *
   /// value_size)`, where `dim` is the number of DOFs in the finite
   /// element, `num_points` is the number of points returned by
-  /// `points()`, and `value_size` is the value size of the finite
+  /// points(), and `value_size` is the value size of the finite
   /// element.
   ///
   /// For example, to interpolate into a Lagrange space, the following
@@ -982,27 +1094,27 @@ public:
   ///     coefficients[::block_size] = i_m * values
   /// \endcode
   ///
-  /// @return The interpolation matrix. Shape is (ndofs, number of
-  /// interpolation points)
+  /// @return The interpolation matrix. Shape is `(ndofs, number of
+  /// interpolation points)`.
   const std::pair<std::vector<F>, std::array<std::size_t, 2>>&
   interpolation_matrix() const
   {
     return _matM;
   }
 
-  /// Get the dual matrix.
+  /// @brief Get the dual matrix.
   ///
   /// This is the matrix @f$BD^{T}@f$, as described in the documentation
-  /// of the `FiniteElement()` constructor.
-  /// @return The dual matrix. Shape is (ndofs, ndofs)
+  /// of the FiniteElement() constructor.
+  /// @return The dual matrix. Shape is `(ndofs, ndofs)` = `(dim(), dim())`.
   const std::pair<std::vector<F>, std::array<std::size_t, 2>>&
   dual_matrix() const
   {
     return _dual_matrix;
   }
 
-  /// Get the coefficients that define the polynomial set in terms of the
-  /// orthonormal polynomials.
+  /// @brief Get the coefficients that define the polynomial set in
+  /// terms of the orthonormal polynomials.
   ///
   /// The polynomials spanned by each finite element in Basix are
   /// represented as a linear combination of the orthonormal polynomials
@@ -1032,18 +1144,20 @@ public:
   ///  - [-b/(a*sqrt(2)), 1/a, 0, -d/(c*sqrt(2)), 0, 1/c]
   ///
   /// These coefficients are only stored for custom elements. This
-  /// function will throw an exception if called on a non-custom element
-  /// @return Coefficient matrix. Shape is (dim(finite element polyset),
-  /// dim(Lagrange polynomials))
+  /// function will throw an exception if called on a non-custom
+  /// element.
+  ///
+  /// @return Coefficient matrix. Shape is `(dim(finite element polyset),
+  /// dim(Lagrange polynomials))`.
   const std::pair<std::vector<F>, std::array<std::size_t, 2>>& wcoeffs() const
   {
     return _wcoeffs;
   }
 
-  /// Get the interpolation points for each subentity.
+  /// @brief Get the interpolation points for each subentity.
   ///
-  /// The indices of this data are (tdim, entity index, point index,
-  /// dim).
+  /// The indices of this data are `(tdim, entity index, point index,
+  /// dim)`.
   const std::array<
       std::vector<std::pair<std::vector<F>, std::array<std::size_t, 2>>>, 4>&
   x() const
@@ -1051,10 +1165,10 @@ public:
     return _x;
   }
 
-  /// Get the interpolation matrices for each subentity.
+  /// @brief Get the interpolation matrices for each subentity.
   ///
-  /// The shape of this data is (tdim, entity index, dof, value size,
-  /// point_index, derivative).
+  /// The shape of this data is `(tdim, entity index, dof, value size,
+  /// point_index, derivative)`.
   ///
   /// These matrices define how to evaluate the DOF functionals
   /// associated with each sub-entity of the cell. Given a function f,
@@ -1077,7 +1191,7 @@ public:
   /// For example, for a degree 1 Raviart-Thomas (RT) element on a triangle, the
   /// DOF functionals are integrals over the edges of the dot product of the
   /// function with the normal to the edge. In this case, `x()` would contain
-  /// quadrature points for each edge, and `M()` would by a 1 by 2 by `npoints`
+  /// quadrature points for each edge, and `M()` would be a 1 by 2 by `npoints`
   /// by 1 array for each edge. For each point, the `[0, :, point, 0]` slice of
   /// this would be the quadrature weight multiplied by the normal. For all
   /// entities that are not edges, the entries in `x()` and `M()` for a degree 1
@@ -1085,8 +1199,8 @@ public:
   ///
   /// These matrices are only stored for custom elements. This function will
   /// throw an exception if called on a non-custom element
-  /// @return The interpolation matrices. The indices of this data are (tdim,
-  /// entity index, dof, vs, point_index, derivative)
+  /// @return The interpolation matrices. The indices of this data are `(tdim,
+  /// entity index, dof, vs, point_index, derivative)`.
   const std::array<
       std::vector<std::pair<std::vector<F>, std::array<std::size_t, 4>>>, 4>&
   M() const
@@ -1094,7 +1208,7 @@ public:
     return _M;
   }
 
-  /// Get the matrix of coefficients.
+  /// @brief Get the matrix of coefficients.
   ///
   /// @return The coefficient matrix. Shape is `(ndofs, ndofs)`.
   const std::pair<std::vector<F>, std::array<std::size_t, 2>>&
@@ -1103,30 +1217,32 @@ public:
     return _coeffs;
   }
 
-  /// Indicates whether or not this element can be represented as a
+  /// @brief Indicates whether or not this element can be represented as a
   /// product of elements defined on lower-dimensional reference cells.
+  ///
   /// If the product exists, this element's basis functions can be
   /// computed as a tensor product of the basis elements of the elements
   /// in the product.
   ///
   /// If such a factorisation exists,
-  /// `get_tensor_product_representation()` can be used to get these
+  /// get_tensor_product_representation() can be used to get these
   /// elements.
   bool has_tensor_product_factorisation() const
   {
-    return _tensor_factors.size() > 0;
+    return !_tensor_factors.empty();
   }
 
-  /// Get the tensor product representation of this element, or throw an
-  /// error if no such factorisation exists.
+  /// @brief Get the tensor product representation of this element.
   ///
-  /// The tensor product representation will be a vector of vectors of finite
-  /// elements. Each tuple contains a vector of finite elements, and a vector of
-  /// integers. The vector of finite elements gives the elements on an
-  /// interval that appear in the tensor product representation. The
-  /// vector of integers gives the permutation between the numbering of
-  /// the tensor product DOFs and the number of the DOFs of this Basix
-  /// element.
+  /// @throws std::runtime_error Thrown if no such factorisation exists.
+  ///
+  /// The tensor product representation will be a vector of vectors of
+  /// finite elements. Each tuple contains a vector of finite elements,
+  /// and a vector of integers. The vector of finite elements gives the
+  /// elements on an interval that appear in the tensor product
+  /// representation. The vector of integers gives the permutation
+  /// between the numbering of the tensor product DOFs and the number of
+  /// the DOFs of this Basix element.
   /// @return The tensor product representation
   std::vector<std::vector<FiniteElement<F>>>
   get_tensor_product_representation() const
@@ -1136,23 +1252,25 @@ public:
     return _tensor_factors;
   }
 
-  /// Indicates whether or not the interpolation matrix for this element
-  /// is an identity matrix
+  /// @brief Indicates whether or not the interpolation matrix for this
+  /// element is an identity matrix.
+  /// @return True if the interpolation matrix is the identity and false
+  /// otherwise.
   bool interpolation_is_identity() const { return _interpolation_is_identity; }
 
-  /// The number of derivatives needed when interpolating
+  /// @brief The number of derivatives needed when interpolating
   int interpolation_nderivs() const { return _interpolation_nderivs; }
 
-  /// Get dof layout
+  /// @brief Get dof layout
   const std::vector<int>& dof_ordering() const { return _dof_ordering; }
 
 private:
-  // Data permutation
-  // @param data Data to be permuted
-  // @param block_size
-  // @param cell_info Cell bitmap selecting required permutations
-  // @param eperm Permutation to use
-  // @param post Whether reflect is pre- or post- rotation.
+  /// Data permutation
+  /// @param data Data to be permuted
+  /// @param block_size
+  /// @param cell_info Cell bitmap selecting required permutations
+  /// @param eperm Permutation to use
+  /// @param post Whether reflect is pre- or post- rotation.
   template <typename T, bool post>
   void permute_data(
       std::span<T> data, int block_size, std::uint32_t cell_info,
@@ -1311,9 +1429,6 @@ private:
   using array4_t
       = std::vector<std::pair<std::vector<F>, std::array<std::size_t, 4>>>;
   std::array<array4_t, 4> _M;
-  // std::array<
-  //     std::vector<std::pair<std::vector<F>, std::array<std::size_t,
-  //     4>>>, 4> _M;
 };
 
 /// Create a custom finite element
@@ -1445,8 +1560,10 @@ void FiniteElement<F>::permute_data(
       {
         // Reverse an edge
         if (cell_info >> (face_start + e) & 1)
-          precompute::pre_apply_permutation_mapped(trans, data, _edofs[1][e],
-                                                   block_size);
+        {
+          precompute::apply_permutation_mapped(trans, data, _edofs[1][e],
+                                               block_size);
+        }
       }
     }
 
@@ -1460,22 +1577,22 @@ void FiniteElement<F>::permute_data(
         // Reflect a face (pre rotate)
         if (!post and cell_info >> (3 * f) & 1)
         {
-          precompute::pre_apply_permutation_mapped(trans[1], data, _edofs[2][f],
-                                                   block_size);
+          precompute::apply_permutation_mapped(trans[1], data, _edofs[2][f],
+                                               block_size);
         }
 
         // Rotate a face
         for (std::uint32_t r = 0; r < (cell_info >> (3 * f + 1) & 3); ++r)
         {
-          precompute::pre_apply_permutation_mapped(trans[0], data, _edofs[2][f],
-                                                   block_size);
+          precompute::apply_permutation_mapped(trans[0], data, _edofs[2][f],
+                                               block_size);
         }
 
         // Reflect a face (post rotate)
         if (post and cell_info >> (3 * f) & 1)
         {
-          precompute::pre_apply_permutation_mapped(trans[1], data, _edofs[2][f],
-                                                   block_size);
+          precompute::apply_permutation_mapped(trans[1], data, _edofs[2][f],
+                                               block_size);
         }
       }
     }
@@ -1561,93 +1678,81 @@ void FiniteElement<F>::transform_data(
 //-----------------------------------------------------------------------------
 template <std::floating_point F>
 template <typename T>
-void FiniteElement<F>::pre_apply_dof_transformation(
-    std::span<T> data, int block_size, std::uint32_t cell_info) const
+void FiniteElement<F>::T_apply(std::span<T> data, int n,
+                               std::uint32_t cell_info) const
 {
   if (_dof_transformations_are_identity)
     return;
 
   if (_dof_transformations_are_permutations)
-  {
-    permute_data<T, false>(data, block_size, cell_info, _eperm);
-  }
+    permute_data<T, false>(data, n, cell_info, _eperm);
   else
   {
-    transform_data<T, false>(data, block_size, cell_info, _etrans,
-                             precompute::pre_apply_matrix<F, T>);
+    transform_data<T, false>(data, n, cell_info, _etrans,
+                             precompute::apply_matrix<F, T>);
   }
 }
 //-----------------------------------------------------------------------------
 template <std::floating_point F>
 template <typename T>
-void FiniteElement<F>::pre_apply_transpose_dof_transformation(
-    std::span<T> data, int block_size, std::uint32_t cell_info) const
+void FiniteElement<F>::Tt_apply(std::span<T> data, int n,
+                                std::uint32_t cell_info) const
 {
   if (_dof_transformations_are_identity)
     return;
-
-  if (_dof_transformations_are_permutations)
-  {
-    permute_data<T, true>(data, block_size, cell_info, _eperm_rev);
-  }
+  else if (_dof_transformations_are_permutations)
+    permute_data<T, true>(data, n, cell_info, _eperm_rev);
   else
   {
-    transform_data<T, true>(data, block_size, cell_info, _etransT,
-                            precompute::pre_apply_matrix<F, T>);
+    transform_data<T, true>(data, n, cell_info, _etransT,
+                            precompute::apply_matrix<F, T>);
   }
 }
 //-----------------------------------------------------------------------------
 template <std::floating_point F>
 template <typename T>
-void FiniteElement<F>::pre_apply_inverse_transpose_dof_transformation(
-    std::span<T> data, int block_size, std::uint32_t cell_info) const
+void FiniteElement<F>::Tt_inv_apply(std::span<T> data, int n,
+                                    std::uint32_t cell_info) const
 {
   if (_dof_transformations_are_identity)
     return;
-
-  if (_dof_transformations_are_permutations)
-  {
-    permute_data<T, false>(data, block_size, cell_info, _eperm);
-  }
+  else if (_dof_transformations_are_permutations)
+    permute_data<T, false>(data, n, cell_info, _eperm);
   else
   {
-    transform_data<T, false>(data, block_size, cell_info, _etrans_invT,
-                             precompute::pre_apply_matrix<F, T>);
+    transform_data<T, false>(data, n, cell_info, _etrans_invT,
+                             precompute::apply_matrix<F, T>);
   }
 }
 //-----------------------------------------------------------------------------
 template <std::floating_point F>
 template <typename T>
-void FiniteElement<F>::pre_apply_inverse_dof_transformation(
-    std::span<T> data, int block_size, std::uint32_t cell_info) const
+void FiniteElement<F>::Tinv_apply(std::span<T> data, int n,
+                                  std::uint32_t cell_info) const
 {
   if (_dof_transformations_are_identity)
     return;
-
-  if (_dof_transformations_are_permutations)
-  {
-    permute_data<T, true>(data, block_size, cell_info, _eperm_rev);
-  }
+  else if (_dof_transformations_are_permutations)
+    permute_data<T, true>(data, n, cell_info, _eperm_rev);
   else
   {
-    transform_data<T, true>(data, block_size, cell_info, _etrans_inv,
-                            precompute::pre_apply_matrix<F, T>);
+    transform_data<T, true>(data, n, cell_info, _etrans_inv,
+                            precompute::apply_matrix<F, T>);
   }
 }
 //-----------------------------------------------------------------------------
 template <std::floating_point F>
 template <typename T>
-void FiniteElement<F>::post_apply_transpose_dof_transformation(
-    std::span<T> data, int block_size, std::uint32_t cell_info) const
+void FiniteElement<F>::Tt_post_apply(std::span<T> data, int n,
+                                     std::uint32_t cell_info) const
 {
   if (_dof_transformations_are_identity)
     return;
-
-  if (_dof_transformations_are_permutations)
+  else if (_dof_transformations_are_permutations)
   {
-    assert(data.size() % block_size == 0);
-    const int step = data.size() / block_size;
-    for (int i = 0; i < block_size; ++i)
+    assert(data.size() % n == 0);
+    const int step = data.size() / n;
+    for (int i = 0; i < n; ++i)
     {
       std::span<T> dblock(data.data() + i * step, step);
       permute_data<T, false>(dblock, 1, cell_info, _eperm);
@@ -1655,24 +1760,23 @@ void FiniteElement<F>::post_apply_transpose_dof_transformation(
   }
   else
   {
-    transform_data<T, false>(data, block_size, cell_info, _etrans,
-                             precompute::post_apply_tranpose_matrix<F, T>);
+    transform_data<T, false>(data, n, cell_info, _etrans,
+                             precompute::apply_tranpose_matrix_right<F, T>);
   }
 }
 //-----------------------------------------------------------------------------
 template <std::floating_point F>
 template <typename T>
-void FiniteElement<F>::post_apply_inverse_dof_transformation(
-    std::span<T> data, int block_size, std::uint32_t cell_info) const
+void FiniteElement<F>::Tinv_post_apply(std::span<T> data, int n,
+                                       std::uint32_t cell_info) const
 {
   if (_dof_transformations_are_identity)
     return;
-
-  if (_dof_transformations_are_permutations)
+  else if (_dof_transformations_are_permutations)
   {
-    assert(data.size() % block_size == 0);
-    const int step = data.size() / block_size;
-    for (int i = 0; i < block_size; ++i)
+    assert(data.size() % n == 0);
+    const int step = data.size() / n;
+    for (int i = 0; i < n; ++i)
     {
       std::span<T> dblock(data.data() + i * step, step);
       permute_data<T, false>(dblock, 1, cell_info, _eperm);
@@ -1680,24 +1784,23 @@ void FiniteElement<F>::post_apply_inverse_dof_transformation(
   }
   else
   {
-    transform_data<T, false>(data, block_size, cell_info, _etrans_invT,
-                             precompute::post_apply_tranpose_matrix<F, T>);
+    transform_data<T, false>(data, n, cell_info, _etrans_invT,
+                             precompute::apply_tranpose_matrix_right<F, T>);
   }
 }
 //-----------------------------------------------------------------------------
 template <std::floating_point F>
 template <typename T>
-void FiniteElement<F>::post_apply_dof_transformation(
-    std::span<T> data, int block_size, std::uint32_t cell_info) const
+void FiniteElement<F>::T_post_apply(std::span<T> data, int n,
+                                    std::uint32_t cell_info) const
 {
   if (_dof_transformations_are_identity)
     return;
-
-  if (_dof_transformations_are_permutations)
+  else if (_dof_transformations_are_permutations)
   {
-    assert(data.size() % block_size == 0);
-    const int step = data.size() / block_size;
-    for (int i = 0; i < block_size; ++i)
+    assert(data.size() % n == 0);
+    const int step = data.size() / n;
+    for (int i = 0; i < n; ++i)
     {
       std::span<T> dblock(data.data() + i * step, step);
       permute_data<T, true>(dblock, 1, cell_info, _eperm_rev);
@@ -1705,24 +1808,23 @@ void FiniteElement<F>::post_apply_dof_transformation(
   }
   else
   {
-    transform_data<T, true>(data, block_size, cell_info, _etransT,
-                            precompute::post_apply_tranpose_matrix<F, T>);
+    transform_data<T, true>(data, n, cell_info, _etransT,
+                            precompute::apply_tranpose_matrix_right<F, T>);
   }
 }
 //-----------------------------------------------------------------------------
 template <std::floating_point F>
 template <typename T>
-void FiniteElement<F>::post_apply_inverse_transpose_dof_transformation(
-    std::span<T> data, int block_size, std::uint32_t cell_info) const
+void FiniteElement<F>::Tt_inv_post_apply(std::span<T> data, int n,
+                                         std::uint32_t cell_info) const
 {
   if (_dof_transformations_are_identity)
     return;
-
-  if (_dof_transformations_are_permutations)
+  else if (_dof_transformations_are_permutations)
   {
-    assert(data.size() % block_size == 0);
-    const int step = data.size() / block_size;
-    for (int i = 0; i < block_size; ++i)
+    assert(data.size() % n == 0);
+    const int step = data.size() / n;
+    for (int i = 0; i < n; ++i)
     {
       std::span<T> dblock(data.data() + i * step, step);
       permute_data<T, true>(dblock, 1, cell_info, _eperm_rev);
@@ -1730,8 +1832,8 @@ void FiniteElement<F>::post_apply_inverse_transpose_dof_transformation(
   }
   else
   {
-    transform_data<T, true>(data, block_size, cell_info, _etrans_inv,
-                            precompute::post_apply_tranpose_matrix<F, T>);
+    transform_data<T, true>(data, n, cell_info, _etrans_inv,
+                            precompute::apply_tranpose_matrix_right<F, T>);
   }
 }
 //-----------------------------------------------------------------------------

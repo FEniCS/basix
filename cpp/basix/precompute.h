@@ -83,14 +83,14 @@ using scalar_value_type_t = typename scalar_value_type<T>::value_type;
 /// 5]`.
 ///
 /// For an example of how the permutation in this form is applied, see
-/// `apply_permutation()`.
+/// apply_permutation().
 ///
 /// @param[in,out] perm A permutation
 void prepare_permutation(std::span<std::size_t> perm);
 
 /// Apply a (precomputed) permutation \f$v = P u\f$.
 ///
-/// This uses the representation returned by `prepare_permutation()` to
+/// This uses the representation returned by prepare_permutation() to
 /// apply a permutation without needing any temporary memory.
 ///
 /// In pseudo code, this function does the following:
@@ -107,7 +107,7 @@ void prepare_permutation(std::span<std::size_t> perm);
 /// Example
 /// -------
 /// As an example, consider the permutation `P = [1, 4, 0, 5, 2, 3]`. In
-/// the documentation of `prepare_permutation()`, we saw that the
+/// the documentation of prepare_permutation(), we saw that the
 /// precomputed representation of this permutation is `P2 = [1, 4, 4, 5,
 /// 4, 5]`. In this example, we look at how this representation can be
 /// used to apply this permutation to the array `A = [a, b, c, d, e,
@@ -136,7 +136,7 @@ void prepare_permutation(std::span<std::size_t> perm);
 /// performance is critical.
 ///
 /// @param[in] perm A permutation in precomputed form (as returned by
-/// `prepare_permutation()`).
+/// prepare_permutation()).
 /// @param[in,out] data The data to apply the permutation to. It has
 /// shape `(m, n)` (uses row-major storage), where the permutation
 /// matrix has shape `(m, m)`.
@@ -152,7 +152,7 @@ void apply_permutation(std::span<const std::size_t> perm, std::span<E> data,
       std::swap(data[n * (offset + i) + b], data[n * (offset + perm[i]) + b]);
 }
 
-/// Permutation of mapped data
+/// @brief Permutation of mapped data
 template <typename E>
 void apply_permutation_mapped(std::span<const std::size_t> perm,
                               std::span<E> data, std::span<const int> emap,
@@ -170,7 +170,7 @@ void apply_permutation_mapped(std::span<const std::size_t> perm,
 /// @note This function is designed to be called at runtime, so its
 /// performance is critical.
 ///
-/// See `apply_permutation()`.
+/// See apply_permutation().
 template <typename E>
 void apply_inv_permutation_right(std::span<const std::size_t> perm,
                                  std::span<E> data, std::size_t offset = 0,
@@ -193,16 +193,16 @@ void apply_inv_permutation_right(std::span<const std::size_t> perm,
 /// This computes the LU decomposition of the transpose of the matrix
 ///
 /// This function returns the permutation @f$P@f$P in the representation
-/// @f$PA^t=LU@f$ (precomputed as in `prepare_permutation()`). The LU
+/// @f$PA^t=LU@f$ (precomputed as in prepare_permutation()). The LU
 /// decomposition of @f$A^t@f$ is computed in-place
 ///
 /// For an example of how the permutation in this form is applied, see
-/// `apply_matrix()`.
+/// apply_matrix().
 ///
 /// @param[in,out] A The matrix's data
 /// @return The three parts of a precomputed representation of the matrix.
 /// These are (as described above):
-/// - A permutation (precomputed as in `prepare_permutation()`);
+/// - A permutation (precomputed as in prepare_permutation());
 /// - the vector @f$D@f$;
 template <std::floating_point T>
 std::vector<std::size_t>
@@ -213,10 +213,9 @@ prepare_matrix(std::pair<std::vector<T>, std::array<std::size_t, 2>>& A)
 
 /// @brief Apply a (precomputed) matrix.
 ///
-/// This uses the representation returned by `prepare_matrix()` to apply a
-/// matrix without needing any temporary memory.
-///
-/// In pseudo code, this function does the following:
+/// This uses the representation returned by prepare_matrix() to apply a
+/// matrix without needing any temporary memory. In pseudo code, this
+/// function does the following:
 ///
 /// \code{.pseudo}
 /// INPUT perm, mat, data
@@ -237,9 +236,8 @@ prepare_matrix(std::pair<std::vector<T>, std::array<std::size_t, 2>>& A)
 /// @note This function is designed to be called at runtime, so its
 /// performance is critical.
 ///
-/// @param[in] v_size_t A permutation, as computed by
-/// precompute::prepare_matrix
-/// @param[in] M The vector created by precompute::prepare_matrix
+/// @param[in] v_size_t A permutation, as computed by prepare_matrix().
+/// @param[in] M The vector created by prepare_matrix().
 /// @param[in,out] data The data to apply the permutation to
 /// @param[in] offset The position in the data to start applying the
 /// permutation
@@ -285,7 +283,7 @@ void apply_matrix(
 /// @note This function is designed to be called at runtime, so its
 /// performance is critical.
 ///
-/// See `apply_matrix()`.
+/// See apply_matrix().
 template <typename T, typename E>
 void apply_tranpose_matrix_right(
     std::span<const std::size_t> v_size_t,

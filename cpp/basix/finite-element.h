@@ -195,9 +195,9 @@ public:
   /// This function takes the matrices @f$B@f$ (`wcoeffs`) and @f$D@f$ (`M`) as
   /// inputs and will internally compute @f$C@f$.
   ///
-  /// The matrix @f$BD^{T}@f$ can be obtained from an element by using the
-  /// function `dual_matrix()`. The matrix @f$C@f$ can be obtained from an
-  /// element by using the function `coefficient_matrix()`.
+  /// The matrix @f$BD^{T}@f$ can be obtained from an element by using
+  /// dual_matrix(). The matrix @f$C@f$ can be obtained from an element
+  /// by using coefficient_matrix().
   ///
   /// Example: Order 1 Lagrange elements on a triangle
   /// ------------------------------------------------
@@ -342,7 +342,7 @@ public:
   /// Move assignment operator
   FiniteElement& operator=(FiniteElement&& element) = default;
 
-  /// Check if two elements are the same
+  /// @brief Check if two elements are the same
   /// @note This operator compares the element properties, e.g. family,
   /// degree, etc, and not computed numerical data
   /// @return True if elements are the same
@@ -351,8 +351,8 @@ public:
   /// Get a unique hash of this element
   std::size_t hash() const;
 
-  /// Array shape for tabulate basis values and derivatives at set of
-  /// points.
+  /// @brief Array shape for tabulate basis values and derivatives at
+  /// set of points.
   ///
   /// @param[in] nd The order of derivatives, up to and including, to
   /// compute. Use 0 for the basis functions only.
@@ -481,84 +481,88 @@ public:
   void tabulate(int nd, std::span<const F> x, std::array<std::size_t, 2> xshape,
                 std::span<F> basis) const;
 
-  /// Get the element cell type
+  /// @brief Get the element cell type.
   /// @return The cell type
   cell::type cell_type() const { return _cell_type; }
 
-  /// Get the element polyset type
+  /// @brief Get the element polyset type.
   /// @return The polyset
   polyset::type polyset_type() const { return _poly_type; }
 
-  /// Get the element polynomial degree
+  /// @brief Get the element polynomial degree.
   /// @return Polynomial degree
   int degree() const { return _degree; }
 
-  /// Lowest degree `n` such that the highest degree polynomial in this
+  /// @brief Lowest degree `n` such that the highest degree polynomial in this
   /// element is contained in a Lagrange (or vector Lagrange) element of
   /// degree `n`.
   /// @return Polynomial degree
   int embedded_superdegree() const { return _embedded_superdegree; }
 
-  /// Highest degree `n` such that a Lagrange (or vector Lagrange)
+  /// @brief Highest degree `n` such that a Lagrange (or vector Lagrange)
   /// element of degree n is a subspace of this element.
   /// @return Polynomial degree
   int embedded_subdegree() const { return _embedded_subdegree; }
 
-  /// The element value tensor shape, e.g. returning {} for scalars, {3}
-  /// for vectors in 3D, {2, 2} for a rank-2 tensor in 2D.
+  /// @brief Element value tensor shape.
+  ///
+  /// For example, returns `{}` for scalars, `{3}` for vectors in 3D,
+  /// `{2, 2}` for a rank-2 tensor in 2D.
   /// @return Value shape
   const std::vector<std::size_t>& value_shape() const { return _value_shape; }
 
-  /// Dimension of the finite element space (number of
-  /// degrees-of-freedom for the element)
+  /// @brief Dimension of the finite element space.
+  ///
+  /// This is the number of degrees-of-freedom for the element.
   /// @return Number of degrees of freedom
   int dim() const { return _coeffs.second[0]; }
 
-  /// Get the finite element family
+  /// @brief The finite element family.
   /// @return The family
   element::family family() const { return _family; }
 
-  /// Get the Lagrange variant of the element.
-  /// @return The Lagrange variant
+  /// @brief Lagrange variant of the element.
+  /// @return The Lagrange variant.
   element::lagrange_variant lagrange_variant() const
   {
     return _lagrange_variant;
   }
 
-  /// Get the DPC variant of the element.
-  /// @return The DPC variant
+  /// @brief DPC variant of the element.
+  /// @return The DPC variant.
   element::dpc_variant dpc_variant() const { return _dpc_variant; }
 
-  /// Get the map type for this element
-  /// @return The map type
+  /// @brief Map type for the element.
+  /// @return The map type.
   maps::type map_type() const { return _map_type; }
 
-  /// Get the underlying Sobolev space for this element
-  /// @return The Sobolev space
+  /// @brief Ynderlying Sobolev space for this element.
+  /// @return The Sobolev space.
   sobolev::space sobolev_space() const { return _sobolev_space; }
 
-  /// Indicates whether this element is the discontinuous variant
+  /// @brief Indicates whether this element is the discontinuous
+  /// variant.
   /// @return True if this element is a discontinuous version of the
-  /// element
+  /// element.
   bool discontinuous() const { return _discontinuous; }
 
-  /// Indicates whether the dof transformations are all permutations
-  /// @return True or False
+  /// @brief Indicates if the degree-of-freedom transformations are all
+  /// permutations.
   bool dof_transformations_are_permutations() const
   {
     return _dof_transformations_are_permutations;
   }
 
-  /// Indicates whether the dof transformations are all the identity
-  /// @return True or False
+  /// @brief Indicates is the dof transformations are all the identity.
   bool dof_transformations_are_identity() const
   {
     return _dof_transformations_are_identity;
   }
 
-  /// Map function values from the reference to a physical cell. This
-  /// function can perform the mapping for multiple points, grouped by
-  /// points that share a common Jacobian.
+  /// @brief Map function values from the reference to a physical cell.
+  ///
+  /// This function can perform the mapping for multiple points, grouped
+  /// by points that share a common Jacobian.
   /// @param[in] U The function values on the reference. The indices are
   /// [Jacobian index, point index, components].
   /// @param[in] J The Jacobian of the mapping. The indices are
@@ -573,7 +577,7 @@ public:
   push_forward(impl::mdspan_t<const F, 3> U, impl::mdspan_t<const F, 3> J,
                std::span<const F> detJ, impl::mdspan_t<const F, 3> K) const;
 
-  /// Map function values from a physical cell to the reference
+  /// @brief Map function values from a physical cell to the reference.
   /// @param[in] u The function values on the cell
   /// @param[in] J The Jacobian of the mapping
   /// @param[in] detJ The determinant of the Jacobian of the mapping
@@ -584,8 +588,8 @@ public:
   pull_back(impl::mdspan_t<const F, 3> u, impl::mdspan_t<const F, 3> J,
             std::span<const F> detJ, impl::mdspan_t<const F, 3> K) const;
 
-  /// Return a function that performs the appropriate
-  /// push-forward/pull-back for the element type
+  /// @brief Return a function that performs the appropriate
+  /// push-forward/pull-back for the element type.
   ///
   /// @tparam O The type that hold the (computed) mapped data (ndim==2)
   /// @tparam P The type that hold the data to be mapped (ndim==2)
@@ -646,10 +650,11 @@ public:
     }
   }
 
-  /// Get the dofs on each topological entity: (vertices,
-  /// edges, faces, cell) in that order. For example, Lagrange degree 2
-  /// on a triangle has vertices: [[0], [1], [2]], edges: [[3], [4], [5]],
-  /// cell: [[]]
+  /// @brief Get the dofs on each topological entity: (vertices, edges,
+  /// faces, cell) in that order.
+  ///
+  /// For example, Lagrange degree 2 on a triangle has vertices: [[0],
+  /// [1], [2]], edges: [[3], [4], [5]], cell: [[]]
   /// @return Dofs associated with an entity of a given topological
   /// dimension. The shape is (tdim + 1, num_entities, num_dofs).
   const std::vector<std::vector<std::vector<int>>>& entity_dofs() const
@@ -657,13 +662,15 @@ public:
     return _edofs;
   }
 
-  /// Get the dofs on the closure of each topological entity: (vertices,
-  /// edges, faces, cell) in that order. For example, Lagrange degree 2
-  /// on a triangle has vertices: [[0], [1], [2]], edges: [[1, 2, 3], [0, 2, 4],
-  /// [0, 1, 5]], cell: [[0, 1, 2, 3, 4, 5]]
+  /// @brief Get the dofs on the closure of each topological entity:
+  /// (vertices, edges, faces, cell) in that order.
+  ///
+  /// For example, Lagrange degree 2 on a triangle has vertices: [[0],
+  /// [1], [2]], edges: [[1, 2, 3], [0, 2, 4], [0, 1, 5]], cell: [[0, 1,
+  /// 2, 3, 4, 5]]
   /// @return Dofs associated with the closure of an entity of a given
-  /// topological dimension. The shape is (tdim + 1, num_entities,
-  /// num_dofs).
+  /// topological dimension. The shape is `(tdim + 1, num_entities,
+  /// num_dofs)`.
   const std::vector<std::vector<std::vector<int>>>& entity_closure_dofs() const
   {
     return _e_closure_dofs;
@@ -753,7 +760,7 @@ public:
   std::pair<std::vector<F>, std::array<std::size_t, 3>>
   base_transformations() const;
 
-  /// Return the entity dof transformation matrices
+  /// @brief Return the entity dof transformation matrices
   /// @return The entity transformations for the sub-entities of this
   /// element. The shape for each cell is (ntransformations, ndofs,
   /// ndofs)
@@ -1010,7 +1017,7 @@ public:
   /// The shape of the returned matrix will be `(dim, num_points *
   /// value_size)`, where `dim` is the number of DOFs in the finite
   /// element, `num_points` is the number of points returned by
-  /// `points()`, and `value_size` is the value size of the finite
+  /// points(), and `value_size` is the value size of the finite
   /// element.
   ///
   /// For example, to interpolate into a Lagrange space, the following
@@ -1049,27 +1056,27 @@ public:
   ///     coefficients[::block_size] = i_m * values
   /// \endcode
   ///
-  /// @return The interpolation matrix. Shape is (ndofs, number of
-  /// interpolation points)
+  /// @return The interpolation matrix. Shape is `(ndofs, number of
+  /// interpolation points)`.
   const std::pair<std::vector<F>, std::array<std::size_t, 2>>&
   interpolation_matrix() const
   {
     return _matM;
   }
 
-  /// Get the dual matrix.
+  /// @brief Get the dual matrix.
   ///
   /// This is the matrix @f$BD^{T}@f$, as described in the documentation
-  /// of the `FiniteElement()` constructor.
-  /// @return The dual matrix. Shape is (ndofs, ndofs)
+  /// of the FiniteElement() constructor.
+  /// @return The dual matrix. Shape is `(ndofs, ndofs)`.
   const std::pair<std::vector<F>, std::array<std::size_t, 2>>&
   dual_matrix() const
   {
     return _dual_matrix;
   }
 
-  /// Get the coefficients that define the polynomial set in terms of the
-  /// orthonormal polynomials.
+  /// @brief Get the coefficients that define the polynomial set in
+  /// terms of the orthonormal polynomials.
   ///
   /// The polynomials spanned by each finite element in Basix are
   /// represented as a linear combination of the orthonormal polynomials
@@ -1102,8 +1109,8 @@ public:
   /// function will throw an exception if called on a non-custom
   /// element.
   ///
-  /// @return Coefficient matrix. Shape is (dim(finite element polyset),
-  /// dim(Lagrange polynomials))
+  /// @return Coefficient matrix. Shape is `(dim(finite element polyset),
+  /// dim(Lagrange polynomials))`.
   const std::pair<std::vector<F>, std::array<std::size_t, 2>>& wcoeffs() const
   {
     return _wcoeffs;
@@ -1146,7 +1153,7 @@ public:
   /// For example, for a degree 1 Raviart-Thomas (RT) element on a triangle, the
   /// DOF functionals are integrals over the edges of the dot product of the
   /// function with the normal to the edge. In this case, `x()` would contain
-  /// quadrature points for each edge, and `M()` would by a 1 by 2 by `npoints`
+  /// quadrature points for each edge, and `M()` would be a 1 by 2 by `npoints`
   /// by 1 array for each edge. For each point, the `[0, :, point, 0]` slice of
   /// this would be the quadrature weight multiplied by the normal. For all
   /// entities that are not edges, the entries in `x()` and `M()` for a degree 1
@@ -1154,8 +1161,8 @@ public:
   ///
   /// These matrices are only stored for custom elements. This function will
   /// throw an exception if called on a non-custom element
-  /// @return The interpolation matrices. The indices of this data are (tdim,
-  /// entity index, dof, vs, point_index, derivative)
+  /// @return The interpolation matrices. The indices of this data are `(tdim,
+  /// entity index, dof, vs, point_index, derivative)`.
   const std::array<
       std::vector<std::pair<std::vector<F>, std::array<std::size_t, 4>>>, 4>&
   M() const
@@ -1180,11 +1187,11 @@ public:
   /// in the product.
   ///
   /// If such a factorisation exists,
-  /// `get_tensor_product_representation()` can be used to get these
+  /// get_tensor_product_representation() can be used to get these
   /// elements.
   bool has_tensor_product_factorisation() const
   {
-    return _tensor_factors.size() > 0;
+    return !_tensor_factors.empty();
   }
 
   /// @brief Get the tensor product representation of this element.

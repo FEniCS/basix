@@ -1,4 +1,4 @@
-// Copyright (c) 2020 Chris Richardson
+// Copyright (c) 2020-2024 Chris Richardson, Matthew Scroggs and Garth . Wells
 // FEniCS Project
 // SPDX-License-Identifier:    MIT
 
@@ -513,7 +513,7 @@ public:
 
   /// @brief Dimension of the finite element space.
   ///
-  /// This is the number of degrees-of-freedom for the element.
+  /// The dimension is the number of degrees-of-freedom for the element.
   /// @return Number of degrees of freedom
   int dim() const { return _coeffs.second[0]; }
 
@@ -1063,7 +1063,7 @@ public:
   ///
   /// This is the matrix @f$BD^{T}@f$, as described in the documentation
   /// of the FiniteElement() constructor.
-  /// @return The dual matrix. Shape is `(ndofs, ndofs)`.
+  /// @return The dual matrix. Shape is `(ndofs, ndofs)` = `(dim(), dim())`.
   const std::pair<std::vector<F>, std::array<std::size_t, 2>>&
   dual_matrix() const
   {

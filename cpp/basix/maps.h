@@ -44,7 +44,7 @@ enum class type
   doubleContravariantPiola = 5,
 };
 
-/// L2 Piola map
+/// @brief L2 Piola map
 template <typename O, typename P, typename Q, typename R>
 void l2_piola(O&& r, const P& U, const Q& /*J*/, double detJ, const R& /*K*/)
 {
@@ -55,7 +55,7 @@ void l2_piola(O&& r, const P& U, const Q& /*J*/, double detJ, const R& /*K*/)
       r(i, j) = U(i, j) / detJ;
 }
 
-/// Covariant Piola map
+/// @brief  Covariant Piola map
 template <typename O, typename P, typename Q, typename R>
 void covariant_piola(O&& r, const P& U, const Q& /*J*/, double /*detJ*/,
                      const R& K)
@@ -75,7 +75,7 @@ void covariant_piola(O&& r, const P& U, const Q& /*J*/, double /*detJ*/,
   }
 }
 
-/// Contravariant Piola map
+/// @brief Contravariant Piola map
 template <typename O, typename P, typename Q, typename R>
 void contravariant_piola(O&& r, const P& U, const Q& J, double detJ,
                          const R& /*K*/)
@@ -97,7 +97,7 @@ void contravariant_piola(O&& r, const P& U, const Q& J, double detJ,
                  [detJ](auto ri) { return ri / static_cast<Z>(detJ); });
 }
 
-/// Double covariant Piola map
+/// @brief Double covariant Piola map
 template <typename O, typename P, typename Q, typename R>
 void double_covariant_piola(O&& r, const P& U, const Q& J, double /*detJ*/,
                             const R& K)
@@ -129,7 +129,7 @@ void double_covariant_piola(O&& r, const P& U, const Q& J, double /*detJ*/,
   }
 }
 
-/// Double contravariant Piola map
+/// @brief Double contravariant Piola map
 template <typename O, typename P, typename Q, typename R>
 void double_contravariant_piola(O&& r, const P& U, const Q& J, double detJ,
                                 const R& /*K*/)

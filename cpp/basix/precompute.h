@@ -280,7 +280,7 @@ void apply_matrix(
 
 /// @brief Apply a (precomputed) matrix to some transposed data.
 ///
-/// Computes \f$v = u M^{T}\f$.
+/// Computes \f$v^{T} = M u^{T}\f$ (or equivalently \f$v = u M^{T}\f$).
 ///
 /// @note This function is designed to be called at runtime, so its
 /// performance is critical.

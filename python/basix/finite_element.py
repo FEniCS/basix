@@ -186,8 +186,8 @@ class FiniteElement:
         """
         return self._e.pull_back(u, J, detJ, K)
 
-    def pre_apply_dof_transformation(self, data, block_size, cell_info) -> None:
-        """Pre-apply DOF transformations to some data in-place.
+    def T_apply(self, data, block_size, cell_info) -> None:
+        """Apply DOF transformations to some data in-place.
 
         Note:
             This function is designed to be called at runtime, so its
@@ -199,9 +199,9 @@ class FiniteElement:
             cell_info: The permutation info for the cell
 
         """
-        self._e.pre_apply_dof_transformation(data, block_size, cell_info)
+        self._e.T_apply(data, block_size, cell_info)
 
-    def post_apply_transpose_dof_transformation(self, data, block_size, cell_info) -> None:
+    def Tt_post_apply(self, data, block_size, cell_info) -> None:
         """Post-apply DOF transformations to some transposed data in-place.
 
         Note:
@@ -213,9 +213,9 @@ class FiniteElement:
             block_size: The number of data points per DOF.
             cell_info: The permutation info for the cell.
         """
-        self._e.post_apply_transpose_dof_transformation(data, block_size, cell_info)
+        self._e.Tt_post_apply(data, block_size, cell_info)
 
-    def pre_apply_inverse_transpose_dof_transformation(self, data, block_size, cell_info) -> None:
+    def Tt_inv_apply(self, data, block_size, cell_info) -> None:
         """Pre-apply inverse transpose DOF transformations to some data.
 
         Note:
@@ -227,7 +227,7 @@ class FiniteElement:
             block_size: The number of data points per DOF.
             cell_info: The permutation info for the cell.
         """
-        self._e.pre_apply_inverse_transpose_dof_transformation(data, block_size, cell_info)
+        self._e.Tt_inv_apply(data, block_size, cell_info)
 
     def base_transformations(self) -> npt.NDArray[np.floating]:
         r"""Get the base transformations.

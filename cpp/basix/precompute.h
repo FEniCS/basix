@@ -38,9 +38,8 @@ using scalar_value_type_t = typename scalar_value_type<T>::value_type;
 
 /// @brief Prepare a permutation.
 ///
-/// This computes a representation of the permutation that allows the
+/// Computes  representation of the permutation that allows the
 /// permutation to be applied without any temporary memory assignment.
-///
 /// In pseudo code, this function does the following:
 ///
 /// \code{.pseudo}
@@ -91,9 +90,8 @@ void prepare_permutation(std::span<std::size_t> perm);
 /// @brief Apply a (precomputed) permutation \f$v = P u\f$.
 ///
 /// This uses the representation returned by prepare_permutation() to
-/// apply a permutation without needing any temporary memory.
-///
-/// In pseudo code, this function does the following:
+/// apply a permutation without needing any temporary memory. In pseudo
+/// code, this function does the following:
 ///
 /// \code{.pseudo}
 /// FOR index, entry IN perm:
@@ -189,7 +187,7 @@ void apply_inv_permutation_right(std::span<const std::size_t> perm,
 
 /// @brief Prepare a square matrix.
 ///
-/// This computes the LU decomposition of the transpose of the matrix.
+/// Computes the LU decomposition of the transpose of the matrix.
 ///
 /// This function returns the permutation @f$P@f$P in the representation
 /// @f$PA^t=LU@f$ (precomputed as in prepare_permutation()). The LU
@@ -199,8 +197,8 @@ void apply_inv_permutation_right(std::span<const std::size_t> perm,
 /// apply_matrix().
 ///
 /// @param[in,out] A The matrix data.
-/// @return The three parts of a precomputed representation of the matrix.
-/// These are (as described above):
+/// @return The three parts of a precomputed representation of the
+/// matrix. These are (as described above):
 /// - A permutation (precomputed as in prepare_permutation());
 /// - the vector @f$D@f$;
 template <std::floating_point T>

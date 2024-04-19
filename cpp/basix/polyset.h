@@ -11,7 +11,7 @@
 #include <utility>
 #include <vector>
 
-/// @brief Polynomial expansion sets
+/// @brief Polynomial expansion sets.
 ///
 /// In Basix, the bases of the polynomial sets spanned by finite
 /// elements are represented by a set of coefficients of orthonormal
@@ -131,7 +131,7 @@
 namespace basix::polyset
 {
 
-/// Cell type
+/// @brief Cell type
 enum class type
 {
   standard = 0,
@@ -214,16 +214,16 @@ tabulate(cell::type celltype, polyset::type ptype, int d, int n,
 /// index.
 ///
 /// - The second index is the point, with index `i` corresponding to the
-/// point in row `i` of @p x.
+/// point in row `i` of `x`.
 ///
 /// - The third index is the basis function index.
 /// @todo Does the order for the third index need to be documented?
 /// @param[in] celltype Cell type
 /// @param[in] ptype The polynomial type
 /// @param[in] d Polynomial degree
-/// @param[in] n Maximum derivative order. Use n = 0 for the basis only.
+/// @param[in] n Maximum derivative order. Use `n=0` for the basis only.
 /// @param[in] x Points at which to evaluate the basis. The shape is
-/// (number of points, geometric dimension).
+/// `(number of points, geometric dimension)`.
 template <std::floating_point T>
 void tabulate(
     MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<
@@ -235,36 +235,35 @@ void tabulate(
         x);
 
 /// @brief Dimension of a polynomial space
-/// @param[in] cell The cell type
-/// @param[in] ptype The polynomial type
-/// @param[in] d The polynomial degree
+/// @param[in] cell Cell type
+/// @param[in] ptype Polynomial type
+/// @param[in] d Polynomial degree
 /// @return The number of terms in the basis spanning a space of
-/// polynomial degree @p d
+/// polynomial degree `d`.
 int dim(cell::type cell, polyset::type ptype, int d);
 
 /// @brief Number of derivatives that the orthonormal basis will have on
 /// the given cell.
-/// @param[in] cell The cell type
-/// @param[in] d The highest derivative order
-/// @return The number of derivatives
-/// polynomial degree @p d
+/// @param[in] cell Cell type
+/// @param[in] d Highest derivative order
+/// @return Number of derivatives
 int nderivs(cell::type cell, int d);
 
-/// @brief Get the polyset types that is a superset of two types on the given
-/// cell
-/// @param[in] cell The cell type
-/// @param[in] type1 The first polyset type
-/// @param[in] type2 The second polyset type
-/// @return The superset type
+/// @brief Get the polyset types that is a superset of two types on the
+/// given cell.
+/// @param[in] cell Cell type
+/// @param[in] type1 First polyset type
+/// @param[in] type2 Decond polyset type
+/// @return Superset type
 polyset::type superset(cell::type cell, polyset::type type1,
                        polyset::type type2);
 
-/// @brief Get the polyset type that represents the restrictions of a type on a
-/// subentity
-/// @param[in] ptype The polyset type
-/// @param[in] cell The cell type
-/// @param[in] restriction_cell The cell type of the subentity
-/// @return The restricted polyset type
+/// @brief Get the polyset type that represents the restrictions of a
+/// type on a subentity.
+/// @param[in] ptype Polyset type
+/// @param[in] cell Cell type
+/// @param[in] restriction_cell Cell type of the subentity
+/// @return Restricted polyset type
 polyset::type restriction(polyset::type ptype, cell::type cell,
                           cell::type restriction_cell);
 

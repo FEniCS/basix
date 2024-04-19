@@ -9,6 +9,7 @@
 #include <array>
 #include <cmath>
 #include <concepts>
+#include <span>
 #include <vector>
 
 using namespace basix;
@@ -25,30 +26,25 @@ using mdarray_t
 
 namespace
 {
-
 //----------------------------------------------------------------------------
+
+/// Generate the recursion coefficients alpha_k, beta_k
+///
+/// P_{k+1}(x) = (x-alpha_k)*P_{k}(x) - beta_k P_{k-1}(x)
+///
+/// for the Jacobi polynomials which are orthogonal on [-1,1]
+/// with respect to the weight w(x)=[(1-x)^a]*[(1+x)^b]
+///
+/// Adapted from the MATLAB code by Dirk Laurie and Walter Gautschi
+/// http://www.cs.purdue.edu/archives/2002/wxg/codes/r_jacobi.m
+///
+/// @param[in] N polynomial order
+/// @param[in] a weight parameter
+/// @param[in] b weight parameter
+/// @returns (0) alpha and (1) beta recursion coefficients
 template <std::floating_point T>
 std::array<std::vector<T>, 2> rec_jacobi(int N, T a, T b)
 {
-  // Generate the recursion coefficients alpha_k, beta_k
-
-  // P_{k+1}(x) = (x-alpha_k)*P_{k}(x) - beta_k P_{k-1}(x)
-
-  // for the Jacobi polynomials which are orthogonal on [-1,1]
-  // with respect to the weight w(x)=[(1-x)^a]*[(1+x)^b]
-
-  // Inputs:
-  // N - polynomial order
-  // a - weight parameter
-  // b - weight parameter
-
-  // Outputs:
-  // alpha - recursion coefficients
-  // beta - recursion coefficients
-
-  // Adapted from the MATLAB code by Dirk Laurie and Walter Gautschi
-  // http://www.cs.purdue.edu/archives/2002/wxg/codes/r_jacobi.m
-
   const T nu = (b - a) / (a + b + 2.0);
   const T mu = std::pow(2.0, (a + b + 1)) * std::tgamma(a + 1.0)
                * std::tgamma(b + 1.0) / std::tgamma(a + b + 2.0);
@@ -79,15 +75,16 @@ std::array<std::vector<T>, 2> rec_jacobi(int N, T a, T b)
 //----------------------------------------------------------------------------
 
 /// @todo Add detail on alpha and beta
-/// Compute Gauss points and weights on the domain [-1, 1] using the
-/// Golub-Welsch algorithm
-/// (https://en.wikipedia.org/wiki/Gaussian_quadrature#The_Golub-Welsch_algorithm).
+/// @brief Compute Gauss points and weights on the domain [-1, 1] using
+/// the Golub-Welsch algorithm
+///
+/// https://en.wikipedia.org/wiki/Gaussian_quadrature#The_Golub-Welsch_algorithm
 /// @param[in] alpha
 /// @param[in] beta
 /// @return (0) coordinates and (1) weights
 template <std::floating_point T>
-std::array<std::vector<T>, 2> gauss(const std::vector<T>& alpha,
-                                    const std::vector<T>& beta)
+std::array<std::vector<T>, 2> gauss(std::span<const T> alpha,
+                                    std::span<const T> beta)
 {
   std::vector<T> Abuffer(alpha.size() * alpha.size(), 0);
   mdspan_t<T, 2> A(Abuffer.data(), alpha.size(), alpha.size());
@@ -109,27 +106,22 @@ std::array<std::vector<T>, 2> gauss(const std::vector<T>& alpha,
   return {std::move(evals), std::move(w)};
 }
 //----------------------------------------------------------------------------
+
+/// @brief Compute the Lobatto nodes and weights with the preassigned
+/// nodes xl1, xl2
+///
+/// Based on the section 7 of the paper "Some modified matrix eigenvalue
+/// problems", https://doi.org/10.1137/1015032.
+///
+/// @param[in] alpha recursion coefficients
+/// @param[in] beta recursion coefficients
+/// @param[in] xl1 assigned node location
+/// @param[in] xl2 assigned node location
+/// @returns (0) quadrature positions and (1) quadrature weights.
 template <std::floating_point T>
-std::array<std::vector<T>, 2> lobatto(const std::vector<T>& alpha,
-                                      const std::vector<T>& beta, T xl1, T xl2)
+std::array<std::vector<T>, 2> lobatto(std::span<const T> alpha,
+                                      std::span<const T> beta, T xl1, T xl2)
 {
-  // Compute the Lobatto nodes and weights with the preassigned
-  // nodes xl1, xl2
-  //
-  // Inputs:
-  //   alpha - recursion coefficients
-  //   beta - recursion coefficients
-  //   xl1 - assigned node location
-  //   xl2 - assigned node location
-
-  // Outputs:
-  // x - quadrature nodes
-  // w - quadrature weights
-
-  // Based on the section 7 of the paper
-  // "Some modified matrix eigenvalue problems"
-  // by Gene Golub, SIAM Review Vol 15, No. 2, April 1973, pp.318--334
-
   assert(alpha.size() == beta.size());
 
   // Solve tridiagonal system using Thomas algorithm
@@ -143,12 +135,12 @@ std::array<std::vector<T>, 2> lobatto(const std::vector<T>& alpha,
   g1 = 1.0 / (alpha[n - 1] - xl1 - std::sqrt(beta[n - 2]) * g1);
   g2 = 1.0 / (alpha[n - 1] - xl2 - std::sqrt(beta[n - 2]) * g2);
 
-  std::vector<T> alpha_l = alpha;
+  std::vector<T> alpha_l(alpha.begin(), alpha.end());
   alpha_l[n - 1] = (g1 * xl2 - g2 * xl1) / (g1 - g2);
-  std::vector<T> beta_l = beta;
+  std::vector<T> beta_l(beta.begin(), beta.end());
   beta_l[n - 1] = (xl2 - xl1) / (g1 - g2);
 
-  return gauss(alpha_l, beta_l);
+  return gauss(std::span<const T>(alpha_l), std::span<const T>(beta_l));
 }
 //-----------------------------------------------------------------------------
 
@@ -168,7 +160,6 @@ mdarray_t<T, 2> compute_jacobi_deriv(T a, std::size_t n, std::size_t nderiv,
   std::vector<std::size_t> shape = {x.size()};
   mdarray_t<T, 3> J(nderiv + 1, n + 1, x.size());
   mdarray_t<T, 2> Jd(n + 1, x.size());
-
   for (std::size_t i = 0; i < nderiv + 1; ++i)
   {
     if (i == 0)
@@ -207,7 +198,6 @@ mdarray_t<T, 2> compute_jacobi_deriv(T a, std::size_t n, std::size_t nderiv,
       const T a2 = (2 * j + a - 1) * (a * a) / a1;
       const T a3 = (2 * j + a - 1) * (2 * j + a) / (2 * j * (j + a));
       const T a4 = 2 * (j + a - 1) * (j - 1) * (2 * j + a) / a1;
-
       for (std::size_t k = 0; k < Jd.extent(1); ++k)
         Jd(j, k) = Jd(j - 1, k) * (x[k] * a3 + a2) - Jd(j - 2, k) * a4;
       if (i > 0)
@@ -229,14 +219,14 @@ mdarray_t<T, 2> compute_jacobi_deriv(T a, std::size_t n, std::size_t nderiv,
 
   return result;
 }
-//-----------------------------------------------------------------------------
+//----------------------------------------------------------------------------
+
+/// Computes the m roots of \f$P_{m}^{a,0}\f$ on [-1,1] by Newton's
+/// method. The initial guesses are the Chebyshev points.  Algorithm
+/// implemented from the pseudocode given by Karniadakis and Sherwin.
 template <std::floating_point T>
 std::vector<T> compute_gauss_jacobi_points(T a, int m)
 {
-  /// Computes the m roots of \f$P_{m}^{a,0}\f$ on [-1,1] by Newton's
-  /// method. The initial guesses are the Chebyshev points.  Algorithm
-  /// implemented from the pseudocode given by Karniadakis and Sherwin.
-
   constexpr T eps = 1.0e-8;
   constexpr int max_iter = 100;
   std::vector<T> x(m);
@@ -451,10 +441,12 @@ std::array<std::vector<T>, 2> compute_gll_rule(int m)
   }
 
   // Calculate the recursion coefficients
-  auto [alpha, beta] = rec_jacobi<T>(m, 0.0, 0.0);
+  // auto [alpha, beta] = rec_jacobi<T>(m, 0.0, 0.0);
+  std::array<std::vector<T>, 2> coeffs = rec_jacobi<T>(m, 0.0, 0.0);
 
   // Compute Lobatto nodes and weights
-  auto [xs_ref, ws_ref] = lobatto<T>(alpha, beta, -1.0, 1.0);
+  auto [xs_ref, ws_ref] = lobatto<T>(std::span<const T>(coeffs[0]),
+                                     std::span<const T>(coeffs[1]), -1.0, 1.0);
 
   // Reorder to match 1d dof ordering
   std::rotate(xs_ref.rbegin(), xs_ref.rbegin() + 1, xs_ref.rend() - 1);
@@ -4966,8 +4958,7 @@ std::vector<T> quadrature::get_gl_points(int m)
 template <std::floating_point T>
 std::vector<T> quadrature::get_gll_points(int m)
 {
-  auto [pts, wts] = make_gll_line<T>(m);
-  return pts;
+  return make_gll_line<T>(m)[0];
 }
 //-----------------------------------------------------------------------------
 template std::array<std::vector<float>, 2>

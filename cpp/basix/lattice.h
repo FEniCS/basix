@@ -13,10 +13,9 @@
 /// @brief Lattices of points
 namespace basix::lattice
 {
-
 /// @brief The type of point spacing to be used in a lattice.
 ///
-/// @note type::chebyshev_plus_endpoints and type::gl_plus_endpoints are
+/// @note type::chebyshev_plus_endpoints() and type::gl_plus_endpoints() are
 /// only intended for internal use only.
 enum class type
 {
@@ -60,14 +59,15 @@ enum class simplex_method
 /// Gauss-Lobatto-Legendre quadrature points. These are the same as
 /// type::equispaced when `n < 3`.
 ///
-/// @param celltype The cell type
+/// @param celltype The cell type.
 /// @param n Size in each direction. There are `n + 1` points along each
-/// edge of the cell
-/// @param type A lattice type
-/// @param exterior If set, includes outer boundaries
-/// @param simplex_method The method used to generate points on simplices
+/// edge of the cell.
+/// @param type A lattice type.
+/// @param exterior If set, includes outer boundaries.
+/// @param simplex_method The method used to generate points on
+/// simplices.
 /// @return Set of points. Shape is `(npoints, tdim)` and storage is
-/// row-major
+/// row-major.
 template <std::floating_point T>
 std::pair<std::vector<T>, std::array<std::size_t, 2>>
 create(cell::type celltype, int n, lattice::type type, bool exterior,

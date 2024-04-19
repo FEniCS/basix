@@ -14,13 +14,12 @@
 #include <utility>
 #include <vector>
 
-/// Functions to transform DOFs in high degree Lagrange spaces.
 ///
+/// @brief Functions to transform DOFs in high degree Lagrange spaces.
 /// The functions in this namespace calculate the permutations that can
 /// be used to rotate and reflect DOF points in Lagrange spaces.
 namespace basix::doftransforms
 {
-
 /// @brief Compute the entity DOF transformations for an element.
 ///
 /// @param[in] cell_type The cell type

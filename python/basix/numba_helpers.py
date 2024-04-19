@@ -383,7 +383,7 @@ def Tt_apply_right_triangle(
 
 
 @_numba.jit(nopython=True)
-def Tt__rightapply_right_quadrilateral(
+def Tt_apply_right_quadrilateral(
     entity_transformations: dict[str, npt.NDArray[np.float64]],
     entity_dofs: dict[str, npt.NDArray[np.int32]],
     data: npt.NDArray,
@@ -428,7 +428,7 @@ def Tt_apply_right_tetrahedron(
         subentities of the cell.
 
     """
-    Tt__rightapply_right(
+    Tt_apply_right(
         3,
         6,
         4,

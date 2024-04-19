@@ -53,31 +53,31 @@ using scalar_value_type_t = typename scalar_value_type<T>::value_type;
 ///
 /// Example
 /// -------
-/// As an example, consider the permutation `P = [1, 4, 0, 5, 2, 3]`.
+/// Consider the permutation `P = [1, 4, 0, 5, 2, 3]`.
 ///
-/// First, we look at the 0th entry. `P[0]` is 1. This is greater than
-/// 0, so the 0th entry of the output is 1.
+/// -# First, we look at the 0th entry. `P[0]` is 1. This is greater
+/// than 0, so the 0th entry of the output is 1.
 ///
-/// Next, we look at the 1st entry. `P[1]` is 4. This is greater than 1,
-/// so the 1st entry of the output is 4.
+/// -# Next, we look at the 1st entry. `P[1]` is 4. This is greater than
+/// 1, so the 1st entry of the output is 4.
 ///
-/// Next, we look at the 2nd entry. `P[2]` is 0. This is less than 2, so
-/// we look at `P[0]. `P[0]` is 1. This is less than 2, so we look at
+/// -# Next, we look at the 2nd entry. `P[2]` is 0. This is less than 2,
+/// so we look at `P[0]. `P[0]` is 1. This is less than 2, so we look at
 /// `P[1]`. `P[1]` is 4. This is greater than 2, so the 2nd entry of the
 /// output is 4.
 ///
-/// Next, we look at the 3rd entry. `P[3]` is 5. This is greater than 3,
+/// -# Next, we look at the 3rd entry. `P[3]` is 5. This is greater than 3,
 /// so the 3rd entry of the output is 5.
 ///
-/// Next, we look at the 4th entry. `P[4]` is 2. This is less than 4, so
+/// -# Next, we look at the 4th entry. `P[4]` is 2. This is less than 4, so
 /// we look at `P[2]`. `P[2]` is 0. This is less than 4, so we look at
 /// `P[0]`. `P[0]` is 1. This is less than 4, so we look at `P[1]`.
 /// `P[1]` is 4. This is greater than (or equal to) 4, so the 4th entry
 /// of the output is 4.
 ///
-/// Next, we look at the 5th entry. `P[5]` is 3. This is less than 5, so
-/// we look at `P[3]`. `P[3]` is 5. This is greater than (or equal to)
-/// 5, so the 5th entry of the output is 5.
+/// -# Next, we look at the 5th entry. `P[5]` is 3. This is less than 5,
+/// so we look at `P[3]`. `P[3]` is 5. This is greater than (or equal
+/// to) 5, so the 5th entry of the output is 5.
 ///
 /// Hence, the output of this function in this case is `[1, 4, 4, 5, 4,
 /// 5]`.
@@ -88,7 +88,7 @@ using scalar_value_type_t = typename scalar_value_type<T>::value_type;
 /// @param[in,out] perm A permutation
 void prepare_permutation(std::span<std::size_t> perm);
 
-/// Apply a (precomputed) permutation \f$v = P u\f$.
+/// @brief Apply a (precomputed) permutation \f$v = P u\f$.
 ///
 /// This uses the representation returned by prepare_permutation() to
 /// apply a permutation without needing any temporary memory.
@@ -106,28 +106,27 @@ void prepare_permutation(std::span<std::size_t> perm);
 ///
 /// Example
 /// -------
-/// As an example, consider the permutation `P = [1, 4, 0, 5, 2, 3]`. In
-/// the documentation of prepare_permutation(), we saw that the
-/// precomputed representation of this permutation is `P2 = [1, 4, 4, 5,
-/// 4, 5]`. In this example, we look at how this representation can be
-/// used to apply this permutation to the array `A = [a, b, c, d, e,
-/// f]`.
+/// Consider the permutation `P = [1, 4, 0, 5, 2, 3]`. In the
+/// documentation of prepare_permutation(), we saw that the precomputed
+/// representation of this permutation is `P2 = [1, 4, 4, 5, 4, 5]`. In
+/// this example, we look at how this representation can be used to
+/// apply this permutation to the array `A = [a, b, c, d, e, f]`.
 ///
-/// `P2[0]` is 1, so we swap `A[0]` and `A[1]`. After this, `A = [b, a,
-/// c, d, e, f]`.
+/// - `P2[0]` is 1, so we swap `A[0]` and `A[1]`. After this, `A = [b,
+/// a, c, d, e, f]`.
 ///
-/// `P2[1]` is 4, so we swap `A[1]` and `A[4]`. After this, `A = [b, e,
-/// c, d, a, f]`.
+/// - `P2[1]` is 4, so we swap `A[1]` and `A[4]`. After this, `A = [b,
+/// e, c, d, a, f]`.
 ///
-/// `P2[2]` is 4, so we swap `A[2]` and `A[4]`. After this, `A = [b, e,
+/// - `P2[2]` is 4, so we swap `A[2]` and `A[4]`. After this, `A = [b, e,
 /// a, d, c, f]`.
 ///
-/// `P2[3]` is 5, so we swap `A[3]` and `A[5]`. After this, `A = [b, e,
-/// a, f, c, d]`.
+/// - `P2[3]` is 5, so we swap `A[3]` and `A[5]`. After this, `A = [b,
+/// e, a, f, c, d]`.
 ///
-/// `P2[4]` is 4, so we swap `A[4]` and `A[4]`. This changes nothing.
+/// - `P2[4]` is 4, so we swap `A[4]` and `A[4]`. This changes nothing.
 ///
-/// `P2[5]` is 5, so we swap `A[5]` and `A[5]`. This changes nothing.
+/// - `P2[5]` is 5, so we swap `A[5]` and `A[5]`. This changes nothing.
 ///
 /// Therefore the result of applying this permutation is `[b, e, a, f,
 /// c, d]` (which is what we get if we apply the permutation directly).
@@ -152,7 +151,7 @@ void apply_permutation(std::span<const std::size_t> perm, std::span<E> data,
       std::swap(data[n * (offset + i) + b], data[n * (offset + perm[i]) + b]);
 }
 
-/// @brief Permutation of mapped data
+/// @brief Permutation of mapped data.
 template <typename E>
 void apply_permutation_mapped(std::span<const std::size_t> perm,
                               std::span<E> data, std::span<const int> emap,
@@ -163,9 +162,9 @@ void apply_permutation_mapped(std::span<const std::size_t> perm,
       std::swap(data[n * emap[i] + b], data[n * emap[perm[i]] + b]);
 }
 
-/// Apply a (precomputed) permutation to some transposed data.
+/// @brief Apply a (precomputed) permutation to some transposed data.
 ///
-/// Applies \f$v = u P^{T}\f$
+/// Applies \f$v = u P^{T}\f$.
 ///
 /// @note This function is designed to be called at runtime, so its
 /// performance is critical.
@@ -188,9 +187,9 @@ void apply_inv_permutation_right(std::span<const std::size_t> perm,
   }
 }
 
-/// Prepare a square matrix
+/// @brief Prepare a square matrix.
 ///
-/// This computes the LU decomposition of the transpose of the matrix
+/// This computes the LU decomposition of the transpose of the matrix.
 ///
 /// This function returns the permutation @f$P@f$P in the representation
 /// @f$PA^t=LU@f$ (precomputed as in prepare_permutation()). The LU
@@ -199,7 +198,7 @@ void apply_inv_permutation_right(std::span<const std::size_t> perm,
 /// For an example of how the permutation in this form is applied, see
 /// apply_matrix().
 ///
-/// @param[in,out] A The matrix's data
+/// @param[in,out] A The matrix data.
 /// @return The three parts of a precomputed representation of the matrix.
 /// These are (as described above):
 /// - A permutation (precomputed as in prepare_permutation());

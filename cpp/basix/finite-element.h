@@ -357,9 +357,9 @@ public:
   /// @param[in] nd The order of derivatives, up to and including, to
   /// compute. Use 0 for the basis functions only.
   /// @param[in] num_points Number of points that basis will be computed
-  /// at
+  /// at.
   /// @return The shape of the array to will filled when passed to
-  /// `FiniteElement::tabulate`
+  /// tabulate().
   std::array<std::size_t, 4> tabulate_shape(std::size_t nd,
                                             std::size_t num_points) const
   {
@@ -376,9 +376,9 @@ public:
 
   /// @brief Compute basis values and derivatives at set of points.
   ///
-  /// @note The version of `FiniteElement::tabulate` with the basis data
-  /// as an out argument should be preferred for repeated call where
-  /// performance is critical
+  /// @note The version of tabulate() with the basis data as an out
+  /// argument should be preferred for repeated call where performance
+  /// is critical.
   ///
   /// @param[in] nd The order of derivatives, up to and including, to
   /// compute. Use 0 for the basis functions only.
@@ -400,9 +400,9 @@ public:
 
   /// @brief Compute basis values and derivatives at set of points.
   ///
-  /// @note The version of `FiniteElement::tabulate` with the basis data
-  /// as an out argument should be preferred for repeated call where
-  /// performance is critical
+  /// @note The version of tabulate() with the basis data as an out
+  /// argument should be preferred for repeated call where performance
+  /// is critical
   ///
   /// @param[in] nd The order of derivatives, up to and including, to
   /// compute. Use 0 for the basis functions only.
@@ -415,7 +415,7 @@ public:
   /// - The first index is the derivative, with higher derivatives are
   /// stored in triangular (2D) or tetrahedral (3D) ordering, ie for
   /// the (x,y) derivatives in 2D: (0,0), (1,0), (0,1), (2,0), (1,1),
-  /// (0,2), (3,0)... The function basix::indexing::idx can be used to find the
+  /// (0,2), (3,0)... The function indexing::idx can be used to find the
   /// appropriate derivative.
   /// - The second index is the point index
   /// - The third index is the basis function index
@@ -435,13 +435,13 @@ public:
   /// @param[in] x The points at which to compute the basis functions.
   /// The shape of x is (number of points, geometric dimension).
   /// @param [out] basis Memory location to fill. It must be allocated
-  /// with shape (num_derivatives, num_points, num basis functions,
-  /// value_size). The function `FiniteElement::tabulate_shape` can be
-  /// used to get the required shape.
+  /// with shape `(num_derivatives, num_points, num basis functions,
+  /// value_size)`. The function tabulate_shape() can be used to get the
+  /// required shape.
   /// - The first index is the derivative, with higher derivatives are
   /// stored in triangular (2D) or tetrahedral (3D) ordering, ie for
   /// the (x,y) derivatives in 2D: (0,0), (1,0), (0,1), (2,0), (1,1),
-  /// (0,2), (3,0)... The function basix::indexing::idx can be used to
+  /// (0,2), (3,0)... The function indexing::idx can be used to
   /// find the appropriate derivative.
   /// - The second index is the point index
   /// - The third index is the basis function index
@@ -461,19 +461,19 @@ public:
   /// @param[in] nd The order of derivatives, up to and including, to
   /// compute. Use 0 for the basis functions only.
   /// @param[in] x The points at which to compute the basis functions
-  /// (row-major storage). The shape of x is (number of points,
-  /// geometric dimension).
+  /// (row-major storage). The shape of `x` is `(number of points,
+  /// geometric dimension)`.
   /// @param[in] xshape The shape `(number of points, geometric
   /// dimension)` of `x`.
   /// @param [out] basis Memory location to fill. It must be allocated
-  /// with shape (num_derivatives, num_points, num basis functions,
-  /// value_size). The function `FiniteElement::tabulate_shape` can be
-  /// used to get the required shape.
+  /// with shape `(num_derivatives, num_points, num basis functions,
+  /// value_size)`. The function tabulate_shape() can be used to get the
+  /// required shape.
   /// - The first index is the derivative, with higher derivatives are
-  /// stored in triangular (2D) or tetrahedral (3D) ordering, ie for
-  /// the (x,y) derivatives in 2D: (0,0), (1,0), (0,1), (2,0), (1,1),
-  /// (0,2), (3,0)... The function basix::indexing::idx can be used to
-  /// find the appropriate derivative.
+  /// stored in triangular (2D) or tetrahedral (3D) ordering, ie for the
+  /// (x,y) derivatives in 2D: (0,0), (1,0), (0,1), (2,0), (1,1), (0,2),
+  /// (3,0)... The function indexing::idx can be used to find the
+  /// appropriate derivative.
   /// - The second index is the point index
   /// - The third index is the basis function index
   /// - The fourth index is the basis function component. Its has size
@@ -536,7 +536,7 @@ public:
   /// @return The map type.
   maps::type map_type() const { return _map_type; }
 
-  /// @brief Ynderlying Sobolev space for this element.
+  /// @brief Underlying Sobolev space for this element.
   /// @return The Sobolev space.
   sobolev::space sobolev_space() const { return _sobolev_space; }
 
@@ -564,13 +564,13 @@ public:
   /// This function can perform the mapping for multiple points, grouped
   /// by points that share a common Jacobian.
   /// @param[in] U The function values on the reference. The indices are
-  /// [Jacobian index, point index, components].
+  /// `[Jacobian index, point index, components]`.
   /// @param[in] J The Jacobian of the mapping. The indices are
-  /// [Jacobian index, J_i, J_j].
+  /// `[Jacobian index, J_i, J_j]`.
   /// @param[in] detJ The determinant of the Jacobian of the mapping. It
   /// has length `J.shape(0)`
   /// @param[in] K The inverse of the Jacobian of the mapping. The
-  /// indices are [Jacobian index, K_i, K_j].
+  /// indices are `[Jacobian index, K_i, K_j]`.
   /// @return The function values on the cell. The indices are [Jacobian
   /// index, point index, components].
   std::pair<std::vector<F>, std::array<std::size_t, 3>>
@@ -750,8 +750,8 @@ public:
   /// ~~~~~~~~~~~~~~~~
   /// For these DOFs, the subblocks of the base transformation matrices are:
   /// ~~~~~~~~~~~~~~~~
-  ///   rotation: [[-1, 1],
-  ///              [ 1, 0]]
+  ///   rotation:   [[-1, 1],
+  ///                [ 1, 0]]
   ///   reflection: [[0, 1],
   ///                [1, 0]]
   /// ~~~~~~~~~~~~~~~~
@@ -806,8 +806,7 @@ public:
       permute_data<std::int32_t, false>(d, 1, cell_info, _eperm);
   }
 
-  /// @brief Peform the inverse of the operation applied by
-  /// FiniteElement::permute.
+  /// @brief Peform the inverse of the operation applied by permute().
   ///
   /// Given an array \f$d\f$ that holds an integer associated with each
   /// degree-of-freedom and following the globally consistent physical
@@ -875,8 +874,7 @@ public:
   template <typename T>
   void T_apply(std::span<T> data, int n, std::uint32_t cell_info) const;
 
-  /// @brief Apply the transpose of the operator appplied by
-  /// FiniteElement::T_apply.
+  /// @brief Apply the transpose of the operator appplied by T_apply().
   ///
   /// The transformation
   /// \f[
@@ -893,7 +891,7 @@ public:
   void Tt_apply(std::span<T> data, int n, std::uint32_t cell_info) const;
 
   /// @brief Apply the inverse transpose of the operator appplied by
-  /// FiniteElement::T_apply.
+  /// T_apply().
   ///
   /// The transformation
   /// \f[
@@ -909,8 +907,7 @@ public:
   template <typename T>
   void Tt_inv_apply(std::span<T> data, int n, std::uint32_t cell_info) const;
 
-  /// @brief Apply the inverse of the operator appplied by
-  /// FiniteElement::T_apply.
+  /// @brief Apply the inverse of the operator appplied by T_apply().
   ///
   /// The transformation
   /// \f[
@@ -927,7 +924,7 @@ public:
   void Tinv_apply(std::span<T> data, int n, std::uint32_t cell_info) const;
 
   /// @brief Post(right)-apply the transpose of the operator applied by
-  /// FiniteElement::T_apply.
+  /// T_apply().
   ///
   /// Computes
   /// \f[
@@ -943,8 +940,7 @@ public:
   template <typename T>
   void Tt_post_apply(std::span<T> data, int n, std::uint32_t cell_info) const;
 
-  /// @brief Post(right)-apply the operator applied by
-  /// FiniteElement::T_apply.
+  /// @brief Post(right)-apply the operator applied by T_apply().
   ///
   /// Computes
   /// \f[
@@ -961,7 +957,7 @@ public:
   void T_post_apply(std::span<T> data, int n, std::uint32_t cell_info) const;
 
   /// @brief Post(right)-apply the inverse of the operator applied by
-  /// FiniteElement::T_apply.
+  /// T_apply().
   ///
   /// Computes
   /// \f[
@@ -978,7 +974,7 @@ public:
   void Tinv_post_apply(std::span<T> data, int n, std::uint32_t cell_info) const;
 
   /// @brief Post(right)-apply the tranpose inverse of the operator
-  /// applied by FiniteElement::T_apply.
+  /// applied by T_apply().
   ///
   /// Computes
   /// \f[
@@ -1009,10 +1005,9 @@ public:
   /// @brief Return a matrix of weights interpolation.
   ///
   /// To interpolate a function in this finite element, the functions
-  /// should be evaluated at each point given by
-  /// FiniteElement::points(). These function values should then be
-  /// multiplied by the weight matrix to give the coefficients of the
-  /// interpolated function.
+  /// should be evaluated at each point given by points(). These
+  /// function values should then be multiplied by the weight matrix to
+  /// give the coefficients of the interpolated function.
   ///
   /// The shape of the returned matrix will be `(dim, num_points *
   /// value_size)`, where `dim` is the number of DOFs in the finite
@@ -1129,8 +1124,8 @@ public:
 
   /// @brief Get the interpolation matrices for each subentity.
   ///
-  /// The shape of this data is (tdim, entity index, dof, value size,
-  /// point_index, derivative).
+  /// The shape of this data is `(tdim, entity index, dof, value size,
+  /// point_index, derivative)`.
   ///
   /// These matrices define how to evaluate the DOF functionals
   /// associated with each sub-entity of the cell. Given a function f,

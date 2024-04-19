@@ -863,21 +863,118 @@ public:
           "The DOF transformations for this element are not permutations");
     }
 
-    auto dofs = entity_closure_dofs()[entity_dim][entity_n];
-    std::cout << "dofs = { ";
-    for (auto i: dofs) std::cout << i << " ";
-    std::cout << "}\n";
+    // This is for a triangle
 
+    int dof_n = 0;
+    const auto ed = entity_dofs();
+    const auto conn
+        = cell::sub_entity_connectivity(_cell_type)[entity_dim][entity_n];
+    std::vector<std::vector<std::vector<int>>> dofs;
+    dofs.resize(entity_dim + 1);
     for (int dim = 0; dim <= entity_dim; ++dim)
     {
+      dofs[dim].resize(conn[dim].size());
+      for (std::size_t i = 0; i < conn[dim].size(); ++i)
+      {
+        const int e = conn[dim][i];
+        for (int j : ed[dim][e])
+        {
+          std::ignore = j;
+          dofs[dim][i].push_back(dof_n++);
+        }
+      }
+      std::cout << "<" << dim << " " << dof_n << ">\n";
     }
 
-    d[0] = 13;
-    d[1] = 13;
-    std::cout << cell_info << entity_dim << entity_n << "\n";
+    std::vector<std::size_t> rot;
+    // Vertices
+    for (int i : dofs[0][1])
+      rot.push_back(i);
+    for (int i : dofs[0][2])
+      rot.push_back(i);
+    for (int i : dofs[0][0])
+      rot.push_back(i);
+    // Edges
+    for (int i : dofs[1][1])
+      rot.push_back(i);
+    for (int i : dofs[1][2])
+      rot.push_back(i);
+    for (int i : dofs[1][0])
+      rot.push_back(i);
+    // Face
+    for (int i : dofs[2][0])
+      rot.push_back(i);
 
-    if (_dof_transformations_are_identity)
-      return;
+    std::vector<std::size_t> ref;
+    for (int i : dofs[0][0])
+      ref.push_back(i);
+    for (int i : dofs[0][2])
+      ref.push_back(i);
+    for (int i : dofs[0][1])
+      ref.push_back(i);
+    // Edges
+    for (int i : dofs[1][0])
+      ref.push_back(i);
+    for (int i : dofs[1][2])
+      ref.push_back(i);
+    for (int i : dofs[1][1])
+      ref.push_back(i);
+    // Face
+    for (int i : dofs[2][0])
+      ref.push_back(i);
+
+    if (!_dof_transformations_are_identity)
+    {
+      auto& trans1 = _eperm.at(cell::type::interval)[0];
+      auto& trans2 = _eperm.at(cell::type::triangle);
+
+      precompute::apply_permutation(trans1, std::span(rot), dofs[1][1][0]);
+      precompute::apply_permutation(trans1, std::span(rot), dofs[1][0][0]);
+      precompute::apply_permutation(trans2[0], std::span(rot), dofs[2][0][0]);
+
+      precompute::apply_permutation(trans1, std::span(ref), dofs[1][0][0]);
+      precompute::apply_permutation(trans2[1], std::span(ref), dofs[2][0][0]);
+    }
+
+    precompute::prepare_permutation(rot);
+    precompute::prepare_permutation(ref);
+    // if (_dof_transformations_are_identity)
+    //   return;
+
+    if (entity_dim == 1)
+    {
+      throw std::runtime_error("TODO");
+      // auto& trans = eperm.at(cell::type::interval)[0];
+      // for (std::size_t e = 0; e < _edofs[1].size(); ++e)
+      //{
+      //  Reverse an edge
+      // if (cell_info >> (face_start + e) & 1)
+      //{
+      //   precompute::apply_permutation_mapped(trans, data, _edofs[1][e],
+      //                                        block_size);
+      // }
+      //}
+    }
+    else if (entity_dim == 2)
+    {
+      // Rotate a face
+      for (std::uint32_t r = 0; r < (cell_info >> 1 & 3); ++r)
+      {
+        std::cout << r << "\n";
+        precompute::apply_permutation(rot, d);
+      }
+
+      // Reflect a face (post rotate)
+      if (cell_info & 1)
+      {
+        precompute::apply_permutation(ref, d);
+      }
+    }
+    else if (entity_dim != 0)
+    {
+      throw std::runtime_error(
+          "Invalid dimension for permute_subentity_closure");
+    }
   }
 
   /// @brief Transform basis functions from the reference element

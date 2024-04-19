@@ -101,12 +101,10 @@ void declare_float(nb::module_& m, std::string type)
       .def("permute_subentity_closure",
            [](const FiniteElement<T>& self,
               nb::ndarray<std::int32_t, nb::ndim<1>, nb::c_contig> d,
-              std::uint32_t cell_info,
-              int entity_dim,
-              int entity_n)
+              std::uint32_t cell_info, cell::type entity_type)
            {
              std::span<std::int32_t> _d(d.data(), d.shape(0));
-             self.permute_subentity_closure(_d, cell_info, entity_dim, entity_n);
+             self.permute_subentity_closure(_d, cell_info, entity_type);
              return as_nbarray(std::move(_d));
            })
       .def("push_forward",

@@ -1133,6 +1133,226 @@ FiniteElement<F>::FiniteElement(
     }
   }
 
+  // If DOF transformations are permutations, compute the subentity closure
+  // permutations
+  if (_dof_transformations_are_permutations)
+  {
+    if (_cell_tdim > 1)
+    {
+      // interval
+      int dof_n = 0;
+      const auto conn = cell::sub_entity_connectivity(_cell_type)[1][0];
+      std::vector<std::vector<std::vector<int>>> dofs;
+      dofs.resize(2);
+      for (int dim = 0; dim <= 1; ++dim)
+      {
+        dofs[dim].resize(conn[dim].size());
+        for (std::size_t i = 0; i < conn[dim].size(); ++i)
+        {
+          const int e = conn[dim][i];
+          for (int j : _edofs[dim][e])
+          {
+            std::ignore = j;
+            dofs[dim][i].push_back(dof_n++);
+          }
+        }
+      }
+
+      std::vector<std::size_t> ref;
+      for (int i : dofs[0][1])
+        ref.push_back(i);
+      for (int i : dofs[0][0])
+        ref.push_back(i);
+      // Edges
+      for (int i : dofs[1][0])
+        ref.push_back(i);
+
+      if (!_dof_transformations_are_identity)
+      {
+        auto& trans1 = _eperm.at(cell::type::interval)[0];
+        precompute::apply_permutation(trans1, std::span(ref), dofs[1][0][0]);
+      }
+
+      precompute::prepare_permutation(ref);
+
+      auto& secp = _subentity_closure_perm.try_emplace(cell::type::interval)
+                       .first->second;
+      secp.push_back(ref);
+    }
+    if (_cell_type == cell::type::tetrahedron || cell_type == cell::type::prism
+        || cell_type == cell::type::pyramid)
+    {
+      // triangle
+      const int face_n = cell_type == cell::type::pyramid ? 1 : 0;
+
+      int dof_n = 0;
+      const auto conn = cell::sub_entity_connectivity(_cell_type)[2][face_n];
+      std::vector<std::vector<std::vector<int>>> dofs;
+      dofs.resize(3);
+      for (int dim = 0; dim <= 2; ++dim)
+      {
+        dofs[dim].resize(conn[dim].size());
+        for (std::size_t i = 0; i < conn[dim].size(); ++i)
+        {
+          const int e = conn[dim][i];
+          for (int j : _edofs[dim][e])
+          {
+            std::ignore = j;
+            dofs[dim][i].push_back(dof_n++);
+          }
+        }
+      }
+
+      std::vector<std::size_t> rot;
+      // Vertices
+      for (int i : dofs[0][1])
+        rot.push_back(i);
+      for (int i : dofs[0][2])
+        rot.push_back(i);
+      for (int i : dofs[0][0])
+        rot.push_back(i);
+      // Edges
+      for (int i : dofs[1][1])
+        rot.push_back(i);
+      for (int i : dofs[1][2])
+        rot.push_back(i);
+      for (int i : dofs[1][0])
+        rot.push_back(i);
+      // Face
+      for (int i : dofs[2][0])
+        rot.push_back(i);
+
+      std::vector<std::size_t> ref;
+      for (int i : dofs[0][0])
+        ref.push_back(i);
+      for (int i : dofs[0][2])
+        ref.push_back(i);
+      for (int i : dofs[0][1])
+        ref.push_back(i);
+      // Edges
+      for (int i : dofs[1][0])
+        ref.push_back(i);
+      for (int i : dofs[1][2])
+        ref.push_back(i);
+      for (int i : dofs[1][1])
+        ref.push_back(i);
+      // Face
+      for (int i : dofs[2][0])
+        ref.push_back(i);
+
+      if (!_dof_transformations_are_identity)
+      {
+        auto& trans1 = _eperm.at(cell::type::interval)[0];
+        auto& trans2 = _eperm.at(cell::type::triangle);
+
+        precompute::apply_permutation(trans1, std::span(rot), dofs[1][1][0]);
+        precompute::apply_permutation(trans1, std::span(rot), dofs[1][0][0]);
+        precompute::apply_permutation(trans2[0], std::span(rot), dofs[2][0][0]);
+
+        precompute::apply_permutation(trans1, std::span(ref), dofs[1][0][0]);
+        precompute::apply_permutation(trans2[1], std::span(ref), dofs[2][0][0]);
+      }
+
+      precompute::prepare_permutation(rot);
+      precompute::prepare_permutation(ref);
+
+      auto& secp = _subentity_closure_perm.try_emplace(cell::type::triangle)
+                       .first->second;
+      secp.push_back(rot);
+      secp.push_back(ref);
+    }
+    if (_cell_type == cell::type::hexahedron || cell_type == cell::type::prism
+        || cell_type == cell::type::pyramid)
+    {
+      // quadrilateral
+      const int face_n = cell_type == cell::type::prism ? 1 : 0;
+
+      int dof_n = 0;
+      const auto conn = cell::sub_entity_connectivity(_cell_type)[2][face_n];
+      std::vector<std::vector<std::vector<int>>> dofs;
+      dofs.resize(3);
+      for (int dim = 0; dim <= 2; ++dim)
+      {
+        dofs[dim].resize(conn[dim].size());
+        for (std::size_t i = 0; i < conn[dim].size(); ++i)
+        {
+          const int e = conn[dim][i];
+          for (int j : _edofs[dim][e])
+          {
+            std::ignore = j;
+            dofs[dim][i].push_back(dof_n++);
+          }
+        }
+      }
+
+      std::vector<std::size_t> rot;
+      // Vertices
+      for (int i : dofs[0][1])
+        rot.push_back(i);
+      for (int i : dofs[0][3])
+        rot.push_back(i);
+      for (int i : dofs[0][0])
+        rot.push_back(i);
+      for (int i : dofs[0][2])
+        rot.push_back(i);
+      // Edges
+      for (int i : dofs[1][2])
+        rot.push_back(i);
+      for (int i : dofs[1][0])
+        rot.push_back(i);
+      for (int i : dofs[1][3])
+        rot.push_back(i);
+      for (int i : dofs[1][1])
+        rot.push_back(i);
+      // Face
+      for (int i : dofs[2][0])
+        rot.push_back(i);
+
+      std::vector<std::size_t> ref;
+      for (int i : dofs[0][0])
+        ref.push_back(i);
+      for (int i : dofs[0][2])
+        ref.push_back(i);
+      for (int i : dofs[0][1])
+        ref.push_back(i);
+      for (int i : dofs[0][3])
+        ref.push_back(i);
+      // Edges
+      for (int i : dofs[1][1])
+        ref.push_back(i);
+      for (int i : dofs[1][0])
+        ref.push_back(i);
+      for (int i : dofs[1][3])
+        ref.push_back(i);
+      for (int i : dofs[1][2])
+        ref.push_back(i);
+      // Face
+      for (int i : dofs[2][0])
+        ref.push_back(i);
+
+      if (!_dof_transformations_are_identity)
+      {
+        auto& trans1 = _eperm.at(cell::type::interval)[0];
+        auto& trans2 = _eperm.at(cell::type::quadrilateral);
+
+        precompute::apply_permutation(trans1, std::span(rot), dofs[1][1][0]);
+        precompute::apply_permutation(trans1, std::span(rot), dofs[1][2][0]);
+        precompute::apply_permutation(trans2[0], std::span(rot), dofs[2][0][0]);
+
+        precompute::apply_permutation(trans2[1], std::span(ref), dofs[2][0][0]);
+      }
+
+      precompute::prepare_permutation(rot);
+      precompute::prepare_permutation(ref);
+
+      auto& secp
+          = _subentity_closure_perm.try_emplace(cell::type::quadrilateral)
+                .first->second;
+      secp.push_back(rot);
+      secp.push_back(ref);
+    }
+  }
+
   // Check if interpolation matrix is the identity
   mdspan_t<const F, 2> matM(_matM.first.data(), _matM.second);
   _interpolation_is_identity = matM.extent(0) == matM.extent(1);

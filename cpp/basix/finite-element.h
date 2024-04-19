@@ -23,8 +23,6 @@
 #include <utility>
 #include <vector>
 
-#include <iostream>
-
 /// Basix: FEniCS runtime basis evaluation library
 namespace basix
 {
@@ -852,10 +850,10 @@ public:
   /// degree-of-freedom (in). Indices associated with each physical
   /// element degree-of-freedom (out).
   /// @param cell_info Permutation info for the cell
-  /// @param entity_dim The dimension of the sub-entity
-  /// @param entity_n The number of the sub-entity
+  /// @param entity_type The cell type of the sub-entity
   void permute_subentity_closure(std::span<std::int32_t> d,
-                                 std::uint32_t cell_info, int entity_dim, int entity_n) const
+                                 std::uint32_t cell_info,
+                                 cell::type entity_type) const
   {
     if (!_dof_transformations_are_permutations)
     {
@@ -863,114 +861,34 @@ public:
           "The DOF transformations for this element are not permutations");
     }
 
-    // This is for a triangle
+    const int entity_dim = cell::topological_dimension(entity_type);
 
-    int dof_n = 0;
-    const auto ed = entity_dofs();
-    const auto conn
-        = cell::sub_entity_connectivity(_cell_type)[entity_dim][entity_n];
-    std::vector<std::vector<std::vector<int>>> dofs;
-    dofs.resize(entity_dim + 1);
-    for (int dim = 0; dim <= entity_dim; ++dim)
-    {
-      dofs[dim].resize(conn[dim].size());
-      for (std::size_t i = 0; i < conn[dim].size(); ++i)
-      {
-        const int e = conn[dim][i];
-        for (int j : ed[dim][e])
-        {
-          std::ignore = j;
-          dofs[dim][i].push_back(dof_n++);
-        }
-      }
-      std::cout << "<" << dim << " " << dof_n << ">\n";
-    }
+    if (entity_dim == 0)
+      return;
 
-    std::vector<std::size_t> rot;
-    // Vertices
-    for (int i : dofs[0][1])
-      rot.push_back(i);
-    for (int i : dofs[0][2])
-      rot.push_back(i);
-    for (int i : dofs[0][0])
-      rot.push_back(i);
-    // Edges
-    for (int i : dofs[1][1])
-      rot.push_back(i);
-    for (int i : dofs[1][2])
-      rot.push_back(i);
-    for (int i : dofs[1][0])
-      rot.push_back(i);
-    // Face
-    for (int i : dofs[2][0])
-      rot.push_back(i);
-
-    std::vector<std::size_t> ref;
-    for (int i : dofs[0][0])
-      ref.push_back(i);
-    for (int i : dofs[0][2])
-      ref.push_back(i);
-    for (int i : dofs[0][1])
-      ref.push_back(i);
-    // Edges
-    for (int i : dofs[1][0])
-      ref.push_back(i);
-    for (int i : dofs[1][2])
-      ref.push_back(i);
-    for (int i : dofs[1][1])
-      ref.push_back(i);
-    // Face
-    for (int i : dofs[2][0])
-      ref.push_back(i);
-
-    if (!_dof_transformations_are_identity)
-    {
-      auto& trans1 = _eperm.at(cell::type::interval)[0];
-      auto& trans2 = _eperm.at(cell::type::triangle);
-
-      precompute::apply_permutation(trans1, std::span(rot), dofs[1][1][0]);
-      precompute::apply_permutation(trans1, std::span(rot), dofs[1][0][0]);
-      precompute::apply_permutation(trans2[0], std::span(rot), dofs[2][0][0]);
-
-      precompute::apply_permutation(trans1, std::span(ref), dofs[1][0][0]);
-      precompute::apply_permutation(trans2[1], std::span(ref), dofs[2][0][0]);
-    }
-
-    precompute::prepare_permutation(rot);
-    precompute::prepare_permutation(ref);
-    // if (_dof_transformations_are_identity)
-    //   return;
-
+    auto& perm = _subentity_closure_perm.at(entity_type);
     if (entity_dim == 1)
     {
-      throw std::runtime_error("TODO");
-      // auto& trans = eperm.at(cell::type::interval)[0];
-      // for (std::size_t e = 0; e < _edofs[1].size(); ++e)
-      //{
-      //  Reverse an edge
-      // if (cell_info >> (face_start + e) & 1)
-      //{
-      //   precompute::apply_permutation_mapped(trans, data, _edofs[1][e],
-      //                                        block_size);
-      // }
-      //}
+      if (cell_info & 1)
+      {
+        precompute::apply_permutation(perm[0], d);
+      }
     }
     else if (entity_dim == 2)
     {
       // Rotate a face
       for (std::uint32_t r = 0; r < (cell_info >> 1 & 3); ++r)
       {
-        std::cout << r << "\n";
-        precompute::apply_permutation(rot, d);
+        precompute::apply_permutation(perm[0], d);
       }
 
       // Reflect a face (post rotate)
       if (cell_info & 1)
       {
-        precompute::apply_permutation(ref, d);
+        precompute::apply_permutation(perm[1], d);
       }
     }
-    else if (entity_dim != 0)
+    else
     {
       throw std::runtime_error(
           "Invalid dimension for permute_subentity_closure");
@@ -1492,6 +1410,11 @@ private:
 
   // The inverse transpose entity transformations in precomputed form
   std::map<cell::type, trans_data_t> _etrans_invT;
+
+  // The subentity closure permutations (factorised). This will only be set if
+  // _dof_transformations_are_permutations is True
+  std::map<cell::type, std::vector<std::vector<std::size_t>>>
+      _subentity_closure_perm;
 
   // Indicates whether or not this is the discontinuous version of the
   // element

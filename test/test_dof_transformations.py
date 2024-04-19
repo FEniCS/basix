@@ -497,15 +497,14 @@ def test_transformation_of_tabulated_data_pyramid(element_type, degree, element_
 
 
 @pytest.mark.parametrize(
-    "family, cell_Type, degree, args, entity_dim, entity_n, results",
+    "family, cell_type, degree, args, subentity, results",
     [
         (
             basix.ElementFamily.P,
             basix.CellType.tetrahedron,
             1,
             (),
-            2,
-            0,
+            basix.CellType.triangle,
             {
                 0: [0, 1, 2],
                 2: [1, 2, 0],
@@ -520,8 +519,7 @@ def test_transformation_of_tabulated_data_pyramid(element_type, degree, element_
             basix.CellType.tetrahedron,
             2,
             (),
-            2,
-            0,
+            basix.CellType.triangle,
             {
                 0: [0, 1, 2, 3, 4, 5],
                 2: [1, 2, 0, 4, 5, 3],
@@ -536,8 +534,7 @@ def test_transformation_of_tabulated_data_pyramid(element_type, degree, element_
             basix.CellType.tetrahedron,
             3,
             (basix.LagrangeVariant.equispaced,),
-            2,
-            0,
+            basix.CellType.triangle,
             {
                 0: [0, 1, 2, 3, 4, 5, 6, 7, 8],
                 2: [1, 2, 0, 6, 5, 8, 7, 3, 4],
@@ -547,17 +544,46 @@ def test_transformation_of_tabulated_data_pyramid(element_type, degree, element_
                 5: [2, 1, 0, 8, 7, 6, 5, 4, 3],
             },
         ),
+        (
+            basix.ElementFamily.P,
+            basix.CellType.tetrahedron,
+            1,
+            (basix.LagrangeVariant.equispaced,),
+            basix.CellType.interval,
+            {
+                0: [0, 1],
+                1: [1, 0],
+            },
+        ),
+        (
+            basix.ElementFamily.P,
+            basix.CellType.tetrahedron,
+            2,
+            (basix.LagrangeVariant.equispaced,),
+            basix.CellType.interval,
+            {
+                0: [0, 1, 2],
+                1: [1, 0, 2],
+            },
+        ),
+        (
+            basix.ElementFamily.P,
+            basix.CellType.tetrahedron,
+            3,
+            (basix.LagrangeVariant.equispaced,),
+            basix.CellType.interval,
+            {
+                0: [0, 1, 2, 3],
+                1: [1, 0, 3, 2],
+            },
+        ),
     ],
 )
-def test_permute_subentity_closure(family, cell_Type, degree, args, entity_dim, entity_n, results):
-    e = basix.create_element(family, cell_Type, degree, *args)
+def test_permute_subentity_closure(family, cell_type, degree, args, subentity, results):
+    e = basix.create_element(family, cell_type, degree, *args)
 
     for cell_info, result in results.items():
         data = np.array(list(range(len(result))))
-        data = e._e.permute_subentity_closure(data, cell_info, entity_dim, entity_n)
+        data = list(e._e.permute_subentity_closure(data, cell_info, subentity.value))
 
-        print(cell_info)
-        print(data)
-        print(result)
-        for i, j in zip(data, result):
-            assert i == j
+        assert result == data

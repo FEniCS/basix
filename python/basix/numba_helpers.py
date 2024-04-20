@@ -304,7 +304,7 @@ def Tt_apply_right(
     cell_info: int,
     face_types: list[str],
 ):
-    """Post-apply dof transformations to some transposed data.
+    """Right(post)-apply dof transformations to some transposed data.
 
     Args:
         tdim: The topological dimension of the cell.
@@ -340,7 +340,7 @@ def Tt_apply_right_interval(
     data: npt.NDArray,
     cell_info: int,
 ):
-    """Post-apply dof transformations to some transposed data on an interval.
+    """Right(post)-apply dof transformations to some transposed data on an interval.
 
     Args:
         entity_transformations: The DOF transformations for each entity.
@@ -360,7 +360,7 @@ def Tt_apply_right_triangle(
     data: npt.NDArray,
     cell_info: int,
 ):
-    """Post-apply dof transformations to some transposed data on a triangle.
+    """Right(post)-apply dof transformations to some transposed data on a triangle.
 
     Args:
         entity_transformations: The DOF transformations for each entity.
@@ -389,7 +389,7 @@ def Tt_apply_right_quadrilateral(
     data: npt.NDArray,
     cell_info: int,
 ):
-    """Post-apply dof transformations to some transposed data on an quadrilateral.
+    """Right(post)-apply dof transformations to some transposed data on an quadrilateral.
 
     Args:
         entity_transformations: The DOF transformations for each entity.
@@ -418,7 +418,7 @@ def Tt_apply_right_tetrahedron(
     data: npt.NDArray,
     cell_info: int,
 ):
-    """Post-apply dof transformations to some transposed data on a tetrahedron.
+    """Right(post)-apply dof transformations to some transposed data on a tetrahedron.
 
     Args:
         entity_transformations: The DOF transformations for each entity.
@@ -447,7 +447,7 @@ def Tt_apply_right_hexahedron(
     data: npt.NDArray,
     cell_info: int,
 ):
-    """Post-apply dof transformations to some transposed data on a hexahedron.
+    """Right(post)-apply dof transformations to some transposed data on a hexahedron.
 
     Args:
         entity_transformations: The DOF transformations for each entity.
@@ -476,7 +476,7 @@ def Tt_apply_right_prism(
     data: npt.NDArray,
     cell_info: int,
 ):
-    """Post-apply dof transformations to some transposed data on an prism.
+    """Right(post)-apply dof transformations to some transposed data on an prism.
 
     Args:
         entity_transformations: The DOF transformations for each entity.
@@ -505,7 +505,7 @@ def Tt_apply_right_pyramid(
     data: npt.NDArray,
     cell_info: int,
 ):
-    """Post-apply dof transformations to some transposed data on an prism.
+    """Right(post)-apply dof transformations to some transposed data on an prism.
 
     Args:
         entity_transformations: The DOF transformations for each entity.

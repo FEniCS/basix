@@ -853,14 +853,10 @@ public:
   /// degree-of-freedom are with respect to the physical element
   /// orientation. If the degrees-of-freedom on the physical element
   /// orientation are given by
-  /// \f[
-  /// \phi = T \tilde{\phi},
-  /// \f]
+  ///   \f[ \phi = T \tilde{\phi}, \f]
   /// where \f$T\f$ is a \f$d \times d\f$ matrix, it follows from
   /// \f$f_{h} = \phi^{T} c = \tilde{\phi}^{T} T^{T} c\f$ that
-  /// \f[
-  ///  \tilde{c} = T^{T} c.
-  /// \f]
+  ///   \f[ \tilde{c} = T^{T} c. \f]
   ///
   /// This function applies \f$T\f$ to data. The transformation is
   /// performed in-place. The operator \f$T\f$ is orthogonal for many

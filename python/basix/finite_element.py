@@ -201,7 +201,7 @@ class FiniteElement:
         """
         self._e.T_apply(data, block_size, cell_info)
 
-    def Tt_post_apply(self, data, block_size, cell_info) -> None:
+    def Tt_apply_right(self, data, block_size, cell_info) -> None:
         """Post-apply DOF transformations to some transposed data in-place.
 
         Note:
@@ -213,7 +213,7 @@ class FiniteElement:
             block_size: The number of data points per DOF.
             cell_info: The permutation info for the cell.
         """
-        self._e.Tt_post_apply(data, block_size, cell_info)
+        self._e.Tt_apply_right(data, block_size, cell_info)
 
     def Tt_inv_apply(self, data, block_size, cell_info) -> None:
         """Pre-apply inverse transpose DOF transformations to some data.

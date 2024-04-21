@@ -24,6 +24,7 @@
 #include <basix/lattice.h>
 #include <iomanip>
 #include <iostream>
+#include <span>
 
 using T = double;
 
@@ -80,8 +81,6 @@ int main(int argc, char* argv[])
     // For this element, we know that the base transformations will be
     // permutation matrices.
     auto [trans, tshape] = lagrange.base_transformations();
-    // std::cout << std::endl << "Base transformations:" << std::endl;
-    // std::cout << xt::adapt(trans, tshape) << std::endl;
 
     // The matrices returned by `base_transformations` are quite large, and
     // are equal to the identity matrix except for a small block of the
@@ -93,14 +92,6 @@ int main(int argc, char* argv[])
     // matrix describing the effect of permuting that entity on the DOFs
     // on that entity.
     auto entity_transformation = lagrange.entity_transformations();
-
-    // std::cout << std::endl << "Entity transformations:" << std::endl;
-    // for (auto const& [cell, transformation] : entity_transformation)
-    // {
-    //   std::cout << " -" << type_to_name.at(cell) << ":" << std::endl
-    //             << xt::adapt(transformation.first, transformation.second)
-    //             << std::endl;
-    // }
 
     // For this element, we see that this method returns one matrix for
     // an interval: this matrix reverses the order of the four DOFs
@@ -181,17 +172,10 @@ int main(int argc, char* argv[])
     // .. math::
     //    \left(\begin{array}{cc}-1&-1\\1&0\end{array}\right).
 
-    // This is not a permutation, so this must be applied when assembling
-    // a form and cannot be applied to the DOF numbering in the DOF map.
+    // This is not a permutation, so this must be applied when
+    // assembling a form and cannot be applied to the DOF numbering in
+    // the DOF map.
     const auto entity__transformation = nedelec.entity_transformations();
-
-    // std::cout << std::endl << "Entity transformations:" << std::endl;
-    // for (auto& [cell, transformation] : entity__transformation)
-    // {
-    //   std::cout << " -" << type_to_name.at(cell) << ":" << std::endl
-    //             << xt::adapt(transformation.first, transformation.second)
-    //             << std::endl;
-    // }
 
     // To demonstrate how these transformations can be used, we create a
     // lattice of points where we will tabulate the element.
@@ -203,16 +187,16 @@ int main(int argc, char* argv[])
         points(pdata.data(), shape);
     int num_points = points.extent(0);
 
-    // If (for example) the direction of edge 2 in the physical cell does
-    // not match its direction on the reference, then we need to adjust the
-    // tabulated data.
+    // If (for example) the direction of edge 2 in the physical cell
+    // does not match its direction on the reference, then we need to
+    // adjust the tabulated data.
 
     const auto [original_data, orig_shape] = nedelec.tabulate(0, points);
     auto [mod_data, mod_shape] = nedelec.tabulate(0, points);
     std::span<T> data(mod_data.data(), mod_data.size());
 
-    // If the direction of edge 2 in the physical cell is reflected, it has
-    // cell permutation info `....000010` so (from right to left):
+    // If the direction of edge 2 in the physical cell is reflected, it
+    // has cell permutation info `....000010` so (from right to left):
     //      - edge 0 is not permuted (0)
     //      - edge 1 is reflected (1)
     //      - edge 2 is not permuted (0)
@@ -221,12 +205,7 @@ int main(int argc, char* argv[])
     //      - edge 5 is not permuted (0)
 
     int cell_info = 0b000010;
-    nedelec.pre_apply_dof_transformation(data, num_points, cell_info);
-
-    // std::cout << std::endl
-    //           << "Tabulated data is equal: "
-    //           << xt::allclose(xt::adapt(original_data), xt::adapt(mod_data))
-    //           << std::endl;
+    nedelec.T_apply(data, num_points, cell_info);
   }
 
   return 0;

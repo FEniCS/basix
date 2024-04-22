@@ -5,7 +5,7 @@ if(APPLE)
   set(CMAKE_OSX_DEPLOYMENT_TARGET "10.14")
 endif()
 
-project(basix_nanobind VERSION "0.8.0.0" LANGUAGES CXX)
+project(basix_nanobind VERSION "0.8.0" LANGUAGES CXX)
 
 # Set C++ standard
 set(CMAKE_CXX_STANDARD 20)

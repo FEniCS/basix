@@ -4,10 +4,9 @@
 
 import random
 
+import basix
 import numpy as np
 import pytest
-
-import basix
 
 elements = [
     (basix.ElementFamily.P, [basix.LagrangeVariant.gll_warped]),  # identity
@@ -26,8 +25,14 @@ def run_map_test(e, J, detJ, K, reference_value_size, physical_value_size):
     elif tdim == 2:
         points = np.array([[i / N, j / N] for i in range(N + 1) for j in range(N + 1 - i)])
     elif tdim == 3:
-        points = np.array([[i / N, j / N, k / N]
-                           for i in range(N + 1) for j in range(N + 1 - i) for k in range(N + 1 - i - j)])
+        points = np.array(
+            [
+                [i / N, j / N, k / N]
+                for i in range(N + 1)
+                for j in range(N + 1 - i)
+                for k in range(N + 1 - i - j)
+            ]
+        )
     values = e.tabulate(0, points)[0]
 
     _J = np.array([J for p in points])
@@ -50,8 +55,7 @@ def run_map_test(e, J, detJ, K, reference_value_size, physical_value_size):
 def test_mappings_2d_to_2d(element_type, element_args):
     random.seed(42)
     e = basix.create_element(element_type, basix.CellType.triangle, 1, *element_args)
-    J = np.array([[random.random() + 1, random.random()],
-                  [random.random(), random.random()]])
+    J = np.array([[random.random() + 1, random.random()], [random.random(), random.random()]])
     detJ = np.linalg.det(J)
     K = np.linalg.inv(J)
     run_map_test(e, J, detJ, K, e.value_size, e.value_size)
@@ -62,10 +66,9 @@ def test_mappings_2d_to_3d(element_type, element_args):
     e = basix.create_element(element_type, basix.CellType.triangle, 1, *element_args)
 
     # Map from (0,0)--(1,0)--(0,1) to (1,0,1)--(2,1,0)--(0,1,1)
-    J = np.array([[1., -1.], [1., 1.], [-1., 0.]])
+    J = np.array([[1.0, -1.0], [1.0, 1.0], [-1.0, 0.0]])
     detJ = np.sqrt(6)
-    K = np.array([[0.5, 0.5, 0.], [-0.5, 0.5, 0.]])
-
+    K = np.array([[0.5, 0.5, 0.0], [-0.5, 0.5, 0.0]])
     if e.value_size == 1:
         physical_vs = 1
     elif e.value_size == 2:
@@ -81,11 +84,13 @@ def test_mappings_3d_to_3d(element_type, element_args):
         pytest.xfail("HHJ not implemented on tetrahedra.")
     random.seed(42)
     e = basix.create_element(element_type, basix.CellType.tetrahedron, 1, *element_args)
-
-    J = np.array([[random.random() + 2, random.random(), random.random()],
-                  [random.random(), random.random() + 1, random.random()],
-                  [random.random(), random.random(), random.random()]])
+    J = np.array(
+        [
+            [random.random() + 2, random.random(), random.random()],
+            [random.random(), random.random() + 1, random.random()],
+            [random.random(), random.random(), random.random()],
+        ]
+    )
     detJ = np.linalg.det(J)
     K = np.linalg.inv(J)
-
     run_map_test(e, J, detJ, K, e.value_size, e.value_size)

@@ -1,6 +1,7 @@
 # Basix
 
-![Basix CI](https://github.com/FEniCS/basix/workflows/Basix%20CI/badge.svg)
+[![Basix CI](https://github.com/FEniCS/basix/actions/workflows/pythonapp.yml/badge.svg)](https://github.com/FEniCS/basix/actions/workflows/pythonapp.yml)
+[![Spack install](https://github.com/FEniCS/basix/actions/workflows/spack.yml/badge.svg)](https://github.com/FEniCS/basix/actions/workflows/spack.yml)
 
 Basix is a finite element definition and tabulation runtime library.
 Basix allows users to:
@@ -12,32 +13,27 @@ Basix allows users to:
   reference cell and a physical cell;
 - permute and transform DOFs to allow higher-order elements to be use on
   arbitrary meshes; and
-- interpolate into a finite element space and between finite element
-  spaces.
+- interpolate into and between finite element spaces.
 
-Basix includes a range of built-in elements, and also allows the user to define
-their own custom elements.
+Basix includes a range of built-in elements, and also allows the user to
+define their own custom elements.
 
 Basix is one of the components of FEniCSx, alongside
 [UFL](https://github.com/fenics/ufl),
 [FFCx](https://github.com/fenics/ffcx), and
 [DOLFINx](https://github.com/fenics/dolfinx).
 
-## Installing Basix
 
-To install the latest stable version of Basix from [pypi.org](https://pypi.org/project/fenics-basix/):
+## Installation
+
+To install Basix:
 ```console
 pip install fenics-basix
 ```
 We currently build binary wheels for Linux and macOS x86-64 architectures.
 
-To install the `main` (development) branch of Basix:
-```console
-pip install git+https://github.com/FEniCS/basix.git
-```
-
-For advanced installation instructions see the detailed [install
-instructions](INSTALL.md)
+For advanced and developer installation instructions see the more
+detailed [install instructions](INSTALL.md)
 
 
 ## Documentation
@@ -45,16 +41,20 @@ instructions](INSTALL.md)
 Documentation of Basix can be found at
 https://docs.fenicsproject.org/basix/main/.
 
+
 ## Support
 
-If you find a bug in Basix, you can report it on the [GitHub issue tracker](https://github.com/fenics/basix/issues/new?labels=bug).
+If you find a bug in Basix, you can report it on the [GitHub issue
+tracker](https://github.com/fenics/basix/issues/new?labels=bug).
 
-Questions about using Basix can be asked on the [FEniCS discourse group](https://fenicsproject.discourse.group/).
+Questions about using Basix can be asked on the [FEniCS discourse
+group](https://fenicsproject.discourse.group/).
 
 
 ## Contributing
 
-Information about how to contribute to Basix can be found [here](CONTRIBUTING.md).
+Information about how to contribute to Basix can be found
+[here](CONTRIBUTING.md).
 
 ## Supported elements
 
@@ -72,6 +72,7 @@ The following elements are supported on an interval:
   - [Serendipity](https://defelement.com/elements/serendipity.html)
   - [Hermite](https://defelement.com/elements/hermite.html)
   - [iso](https://defelement.com/elements/p1-iso-p2.html)
+
 
 ### Triangle
 
@@ -166,6 +167,7 @@ follows:
 The following elements are supported on a prism:
 
   - [Lagrange](https://defelement.com/elements/lagrange.html)
+
 
 ### Pyramid
 

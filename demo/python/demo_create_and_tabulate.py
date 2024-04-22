@@ -8,9 +8,8 @@
 #
 # First, we import Basix and Numpy.
 
-import numpy as np
-
 import basix
+import numpy as np
 from basix import CellType, ElementFamily, LagrangeVariant
 
 # Next, we create a degree 4 Lagrange element on a quadrilateral using the function
@@ -22,7 +21,8 @@ from basix import CellType, ElementFamily, LagrangeVariant
 # equally spaced lattice.
 
 lagrange = basix.create_element(
-    ElementFamily.P, CellType.quadrilateral, 4, LagrangeVariant.equispaced)
+    ElementFamily.P, CellType.quadrilateral, 4, LagrangeVariant.equispaced
+)
 
 # We now print the number of DOFs that this element has.
 

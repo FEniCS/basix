@@ -22,7 +22,6 @@
 #include <concepts>
 #include <limits>
 #include <numeric>
-
 #define str_macro(X) #X
 #define str(X) str_macro(X)
 
@@ -182,6 +181,11 @@ std::pair<std::vector<T>, std::array<std::size_t, 2>> compute_dual_matrix(
   return {std::move(C), shape};
 }
 //-----------------------------------------------------------------------------
+void combine_hashes(std::size_t& a, std::size_t b)
+{
+  a ^= b + 0x9e3779b9 + (a << 6) + (a >> 2);
+}
+//-----------------------------------------------------------------------------
 } // namespace
 //-----------------------------------------------------------------------------
 template <std::floating_point T>
@@ -322,6 +326,193 @@ basix::create_element(element::family, cell::type, int,
                       std::vector<int>);
 //-----------------------------------------------------------------------------
 template <std::floating_point T>
+FiniteElement<T>
+basix::create_tp_element(element::family family, cell::type cell, int degree,
+                         element::lagrange_variant lvariant,
+                         element::dpc_variant dvariant, bool discontinuous)
+{
+  std::vector<int> dof_ordering = tp_dof_ordering(
+      family, cell, degree, lvariant, dvariant, discontinuous);
+  return create_element<T>(family, cell, degree, lvariant, dvariant,
+                           discontinuous, dof_ordering);
+}
+//-----------------------------------------------------------------------------
+template basix::FiniteElement<float>
+basix::create_tp_element(element::family, cell::type, int,
+                         element::lagrange_variant, element::dpc_variant, bool);
+template basix::FiniteElement<double>
+basix::create_tp_element(element::family, cell::type, int,
+                         element::lagrange_variant, element::dpc_variant, bool);
+//-----------------------------------------------------------------------------
+template <std::floating_point T>
+std::vector<std::vector<FiniteElement<T>>>
+basix::tp_factors(element::family family, cell::type cell, int degree,
+                  element::lagrange_variant lvariant,
+                  element::dpc_variant dvariant, bool discontinuous,
+                  std::vector<int> dof_ordering)
+{
+  std::vector<int> tp_dofs = tp_dof_ordering(family, cell, degree, lvariant,
+                                             dvariant, discontinuous);
+  if (tp_dofs.size() > 0 && tp_dofs == dof_ordering)
+  {
+    switch (family)
+    {
+    case element::family::P:
+    {
+      FiniteElement<T> sub_element
+          = create_element<T>(element::family::P, cell::type::interval, degree,
+                              lvariant, dvariant, true);
+      switch (cell)
+      {
+      case cell::type::quadrilateral:
+      {
+        return {{sub_element, sub_element}};
+      }
+      case cell::type::hexahedron:
+      {
+        return {{sub_element, sub_element, sub_element}};
+      }
+      default:
+      {
+        throw std::runtime_error("Invalid celltype.");
+      }
+      }
+      break;
+    }
+    default:
+    {
+      throw std::runtime_error("Invalid family.");
+    }
+    }
+  }
+  throw std::runtime_error(
+      "Element does not have tensor product factorisation.");
+}
+//-----------------------------------------------------------------------------
+template std::vector<std::vector<basix::FiniteElement<float>>>
+basix::tp_factors(element::family, cell::type, int, element::lagrange_variant,
+                  element::dpc_variant, bool, std::vector<int>);
+template std::vector<std::vector<basix::FiniteElement<double>>>
+basix::tp_factors(element::family, cell::type, int, element::lagrange_variant,
+                  element::dpc_variant, bool, std::vector<int>);
+//-----------------------------------------------------------------------------
+std::vector<int> basix::tp_dof_ordering(element::family family, cell::type cell,
+                                        int degree, element::lagrange_variant,
+                                        element::dpc_variant, bool)
+{
+  std::vector<int> dof_ordering;
+  std::vector<int> perm;
+
+  switch (family)
+  {
+  case element::family::P:
+  {
+    switch (cell)
+    {
+    case cell::type::quadrilateral:
+    {
+      perm.push_back(0);
+      if (degree > 0)
+      {
+        int n = degree - 1;
+        perm.push_back(2);
+        for (int i = 0; i < n; ++i)
+          perm.push_back(4 + n + i);
+        perm.push_back(1);
+        perm.push_back(3);
+        for (int i = 0; i < n; ++i)
+          perm.push_back(4 + 2 * n + i);
+        for (int i = 0; i < n; ++i)
+        {
+          perm.push_back(4 + i);
+          perm.push_back(4 + 3 * n + i);
+          for (int j = 0; j < n; ++j)
+            perm.push_back(4 + i + (4 + j) * n);
+        }
+      }
+      assert((int)perm.size() == (degree + 1) * (degree + 1));
+      break;
+    }
+    case cell::type::hexahedron:
+    {
+      perm.push_back(0);
+      if (degree > 0)
+      {
+        int n = degree - 1;
+        perm.push_back(4);
+        for (int i = 0; i < n; ++i)
+          perm.push_back(8 + 2 * n + i);
+        perm.push_back(2);
+        perm.push_back(6);
+        for (int i = 0; i < n; ++i)
+          perm.push_back(8 + 6 * n + i);
+        for (int i = 0; i < n; ++i)
+        {
+          perm.push_back(8 + n + i);
+          perm.push_back(8 + 9 * n + i);
+          for (int j = 0; j < n; ++j)
+            perm.push_back(8 + 12 * n + 2 * n * n + i + n * j);
+        }
+        perm.push_back(1);
+        perm.push_back(5);
+        for (int i = 0; i < n; ++i)
+          perm.push_back(8 + 4 * n + i);
+        perm.push_back(3);
+        perm.push_back(7);
+        for (int i = 0; i < n; ++i)
+          perm.push_back(8 + 7 * n + i);
+        for (int i = 0; i < n; ++i)
+        {
+          perm.push_back(8 + 3 * n + i);
+          perm.push_back(8 + 10 * n + i);
+          for (int j = 0; j < n; ++j)
+            perm.push_back(8 + 12 * n + 3 * n * n + i + n * j);
+        }
+        for (int i = 0; i < n; ++i)
+        {
+          perm.push_back(8 + i);
+          perm.push_back(8 + 8 * n + i);
+          for (int j = 0; j < n; ++j)
+            perm.push_back(8 + 12 * n + n * n + i + n * j);
+          perm.push_back(8 + 5 * n + i);
+          perm.push_back(8 + 11 * n + i);
+          for (int j = 0; j < n; ++j)
+            perm.push_back(8 + 12 * n + 4 * n * n + i + n * j);
+          for (int j = 0; j < n; ++j)
+          {
+            perm.push_back(8 + 12 * n + i + n * j);
+            perm.push_back(8 + 12 * n + 5 * n * n + i + n * j);
+            for (int k = 0; k < n; ++k)
+              perm.push_back(8 + 12 * n + 6 * n * n + i + n * j + n * n * k);
+          }
+        }
+      }
+      assert((int)perm.size() == (degree + 1) * (degree + 1) * (degree + 1));
+      break;
+    }
+    default:
+    {
+    }
+    }
+    break;
+  }
+  default:
+  {
+  }
+  }
+
+  if (perm.size() == 0)
+  {
+    throw std::runtime_error(
+        "Element does not have tensor product factorisation.");
+  }
+  dof_ordering.resize(perm.size());
+  for (std::size_t i = 0; i < perm.size(); ++i)
+    dof_ordering[perm[i]] = i;
+  return dof_ordering;
+}
+//-----------------------------------------------------------------------------
+template <std::floating_point T>
 std::tuple<std::array<std::vector<std::vector<T>>, 4>,
            std::array<std::vector<std::array<std::size_t, 2>>, 4>,
            std::array<std::vector<std::vector<T>>, 4>,
@@ -421,11 +612,12 @@ FiniteElement<T> basix::create_custom_element(
     const std::array<std::vector<impl::mdspan_t<const T, 2>>, 4>& x,
     const std::array<std::vector<impl::mdspan_t<const T, 4>>, 4>& M,
     int interpolation_nderivs, maps::type map_type,
-    sobolev::space sobolev_space, bool discontinuous,
-    int highest_complete_degree, int highest_degree, polyset::type poly_type)
+    sobolev::space sobolev_space, bool discontinuous, int embedded_subdegree,
+    int embedded_superdegree, polyset::type poly_type)
 {
   // Check that inputs are valid
-  const std::size_t psize = polyset::dim(cell_type, poly_type, highest_degree);
+  const std::size_t psize
+      = polyset::dim(cell_type, poly_type, embedded_superdegree);
   const std::size_t value_size = std::reduce(
       value_shape.begin(), value_shape.end(), 1, std::multiplies{});
   const std::size_t deriv_count
@@ -501,7 +693,7 @@ FiniteElement<T> basix::create_custom_element(
 
   auto [dualmatrix, dualshape]
       = compute_dual_matrix(cell_type, poly_type, wcoeffs_ortho, x, M,
-                            highest_degree, interpolation_nderivs);
+                            embedded_superdegree, interpolation_nderivs);
   if (math::is_singular(mdspan_t<const T, 2>(dualmatrix.data(), dualshape)))
   {
     throw std::runtime_error(
@@ -509,9 +701,9 @@ FiniteElement<T> basix::create_custom_element(
   }
 
   return basix::FiniteElement<T>(
-      element::family::custom, cell_type, poly_type, highest_degree,
+      element::family::custom, cell_type, poly_type, embedded_superdegree,
       value_shape, wcoeffs_ortho, x, M, interpolation_nderivs, map_type,
-      sobolev_space, discontinuous, highest_complete_degree, highest_degree,
+      sobolev_space, discontinuous, embedded_subdegree, embedded_superdegree,
       element::lagrange_variant::unset, element::dpc_variant::unset);
 }
 //-----------------------------------------------------------------------------
@@ -539,22 +731,18 @@ FiniteElement<F>::FiniteElement(
     const std::array<std::vector<mdspan_t<const F, 2>>, 4>& x,
     const std::array<std::vector<mdspan_t<const F, 4>>, 4>& M,
     int interpolation_nderivs, maps::type map_type,
-    sobolev::space sobolev_space, bool discontinuous,
-    int highest_complete_degree, int highest_degree,
-    element::lagrange_variant lvariant, element::dpc_variant dvariant,
-    std::vector<std::tuple<std::vector<FiniteElement<F>>, std::vector<int>>>
-        tensor_factors,
-    std::vector<int> dof_ordering)
+    sobolev::space sobolev_space, bool discontinuous, int embedded_subdegree,
+    int embedded_superdegree, element::lagrange_variant lvariant,
+    element::dpc_variant dvariant, std::vector<int> dof_ordering)
     : _cell_type(cell_type), _poly_type(poly_type),
       _cell_tdim(cell::topological_dimension(cell_type)),
       _cell_subentity_types(cell::subentity_types(cell_type)), _family(family),
       _lagrange_variant(lvariant), _dpc_variant(dvariant), _degree(degree),
       _interpolation_nderivs(interpolation_nderivs),
-      _highest_degree(highest_degree),
-      _highest_complete_degree(highest_complete_degree),
-      _value_shape(value_shape), _map_type(map_type),
-      _sobolev_space(sobolev_space), _discontinuous(discontinuous),
-      _tensor_factors(tensor_factors), _dof_ordering(dof_ordering)
+      _embedded_superdegree(embedded_superdegree),
+      _embedded_subdegree(embedded_subdegree), _value_shape(value_shape),
+      _map_type(map_type), _sobolev_space(sobolev_space),
+      _discontinuous(discontinuous), _dof_ordering(dof_ordering)
 {
   // Check that discontinuous elements only have DOFs on interior
   if (discontinuous)
@@ -572,13 +760,23 @@ FiniteElement<F>::FiniteElement(
     }
   }
 
+  try
+  {
+    _tensor_factors = tp_factors<F>(family, cell_type, degree, lvariant,
+                                    dvariant, discontinuous, dof_ordering);
+  }
+  catch (...)
+  {
+  }
+
   std::vector<F> wcoeffs_b(wcoeffs.extent(0) * wcoeffs.extent(1));
   std::copy(wcoeffs.data_handle(), wcoeffs.data_handle() + wcoeffs.size(),
             wcoeffs_b.begin());
 
   _wcoeffs = {wcoeffs_b, {wcoeffs.extent(0), wcoeffs.extent(1)}};
-  _dual_matrix = compute_dual_matrix<F>(cell_type, poly_type, wcoeffs, x, M,
-                                        highest_degree, interpolation_nderivs);
+  _dual_matrix
+      = compute_dual_matrix<F>(cell_type, poly_type, wcoeffs, x, M,
+                               embedded_superdegree, interpolation_nderivs);
 
   // Copy x
   for (std::size_t i = 0; i < x.size(); ++i)
@@ -647,7 +845,7 @@ FiniteElement<F>::FiniteElement(
   _entity_transformations = doftransforms::compute_entity_transformations(
       cell_type, x, M,
       mdspan_t<const F, 2>(_coeffs.first.data(), _coeffs.second),
-      highest_degree, value_size, map_type, poly_type);
+      embedded_superdegree, value_size, map_type, poly_type);
 
   const std::size_t nderivs
       = polyset::nderivs(cell_type, interpolation_nderivs);
@@ -978,9 +1176,11 @@ bool FiniteElement<F>::operator==(const FiniteElement& e) const
            and map_type() == e.map_type()
            and sobolev_space() == e.sobolev_space()
            and value_shape() == e.value_shape()
-           and highest_degree() == e.highest_degree()
-           and highest_complete_degree() == e.highest_complete_degree()
-           and coeff_equal and entity_dofs() == e.entity_dofs();
+           and embedded_superdegree() == e.embedded_superdegree()
+           and embedded_subdegree() == e.embedded_subdegree() and coeff_equal
+           and entity_dofs() == e.entity_dofs()
+           and dof_ordering() == e.dof_ordering()
+           and polyset_type() == e.polyset_type();
   }
   else
   {
@@ -988,8 +1188,58 @@ bool FiniteElement<F>::operator==(const FiniteElement& e) const
            and degree() == e.degree() and discontinuous() == e.discontinuous()
            and lagrange_variant() == e.lagrange_variant()
            and dpc_variant() == e.dpc_variant() and map_type() == e.map_type()
-           and sobolev_space() == e.sobolev_space();
+           and sobolev_space() == e.sobolev_space()
+           and dof_ordering() == e.dof_ordering();
   }
+}
+//-----------------------------------------------------------------------------
+template <std::floating_point F>
+std::size_t FiniteElement<F>::hash() const
+{
+  std::size_t dof_ordering_hash = 0;
+  for (std::size_t i = 0; i < dof_ordering().size(); ++i)
+  {
+    if (dof_ordering()[i] != static_cast<int>(i))
+    {
+      combine_hashes(dof_ordering_hash,
+                     std::hash<int>{}(dof_ordering()[i] - i));
+    }
+  }
+
+  std::size_t h = std::hash<int>{}(static_cast<int>(family()));
+  combine_hashes(h, dof_ordering_hash);
+  combine_hashes(h, dof_ordering_hash);
+  combine_hashes(h, std::hash<int>{}(static_cast<int>(cell_type())));
+  combine_hashes(h, std::hash<int>{}(static_cast<int>(lagrange_variant())));
+  combine_hashes(h, std::hash<int>{}(static_cast<int>(dpc_variant())));
+  combine_hashes(h, std::hash<int>{}(static_cast<int>(sobolev_space())));
+  combine_hashes(h, std::hash<int>{}(static_cast<int>(map_type())));
+
+  if (family() == element::family::custom)
+  {
+    std::size_t coeff_hash = 0;
+    for (auto i : _coeffs.first)
+    {
+      // This takes five decimal places of each matrix entry. We should revisit
+      // this
+      combine_hashes(coeff_hash, int(i * 100000));
+    }
+    std::size_t vs_hash = 0;
+    for (std::size_t i = 0; i < value_shape().size(); ++i)
+    {
+      combine_hashes(vs_hash, std::hash<int>{}(value_shape()[i]));
+    }
+    combine_hashes(h, coeff_hash);
+    combine_hashes(h, std::hash<int>{}(embedded_superdegree()));
+    combine_hashes(h, std::hash<int>{}(embedded_subdegree()));
+    combine_hashes(h, std::hash<int>{}(static_cast<int>(polyset_type())));
+    combine_hashes(h, vs_hash);
+  }
+  else
+  {
+    combine_hashes(h, std::hash<int>{}(degree()));
+  }
+  return h;
 }
 //-----------------------------------------------------------------------------
 template <std::floating_point F>
@@ -1026,12 +1276,13 @@ void FiniteElement<F>::tabulate(int nd, impl::mdspan_t<const F, 2> x,
   }
 
   const std::size_t psize
-      = polyset::dim(_cell_type, _poly_type, _highest_degree);
+      = polyset::dim(_cell_type, _poly_type, _embedded_superdegree);
   const std::array<std::size_t, 3> bsize
       = {(std::size_t)polyset::nderivs(_cell_type, nd), psize, x.extent(0)};
   std::vector<F> basis_b(bsize[0] * bsize[1] * bsize[2]);
   mdspan_t<F, 3> basis(basis_b.data(), bsize);
-  polyset::tabulate(basis, _cell_type, _poly_type, _highest_degree, nd, x);
+  polyset::tabulate(basis, _cell_type, _poly_type, _embedded_superdegree, nd,
+                    x);
   const int vs = std::accumulate(_value_shape.begin(), _value_shape.end(), 1,
                                  std::multiplies{});
 

@@ -40,16 +40,15 @@ extern "C"
               int* info);
 }
 
-/// Mathematical functions
+/// @brief Mathematical functions.
 ///
 /// @note The functions in this namespace are designed to be called
 /// multiple times at runtime, so their performance is critical.
 namespace basix::math
 {
-
 namespace impl
 {
-/// Compute C = A * B using BLAS
+/// @brief Compute C = A * B using BLAS.
 /// @param[in] A Input matrix
 /// @param[in] B Input matrix
 /// @return A * B
@@ -99,7 +98,6 @@ outer(const U& u, const V& v)
   for (std::size_t i = 0; i < u.size(); ++i)
     for (std::size_t j = 0; j < v.size(); ++j)
       result[i * v.size() + j] = u[i] * v[j];
-
   return {std::move(result), {u.size(), v.size()}};
 }
 
@@ -178,7 +176,7 @@ std::pair<std::vector<T>, std::vector<T>> eigh(std::span<const T> A,
   return {std::move(w), std::move(M)};
 }
 
-/// Solve A X = B
+/// @brief Solve A X = B.
 /// @param[in] A The matrix
 /// @param[in] B Right-hand side matrix/vector
 /// @return A^{-1} B
@@ -231,7 +229,7 @@ solve(MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<
   return rb;
 }
 
-/// Check if A is a singular matrix
+/// @brief Check if A is a singular matrix,
 /// @param[in] A The matrix
 /// @return A bool indicating if the matrix is singular
 template <std::floating_point T>
@@ -275,10 +273,11 @@ bool is_singular(
     return false;
 }
 
-/// Compute the LU decomposition of the transpose of a square matrix A
+/// @brief Compute the LU decomposition of the transpose of a square
+/// matrix A.
 /// @param[in,out] A The matrix
 /// @return The LU permutation, in prepared format (see
-/// `basix::precompute::prepare_permutation`)
+/// precompute::prepare_permutation)
 template <std::floating_point T>
 std::vector<std::size_t>
 transpose_lu(std::pair<std::vector<T>, std::array<std::size_t, 2>>& A)
@@ -308,7 +307,7 @@ transpose_lu(std::pair<std::vector<T>, std::array<std::size_t, 2>>& A)
   return perm;
 }
 
-/// Compute C = A * B
+/// @brief Compute C = A * B.
 /// @param[in] A Input matrix
 /// @param[in] B Input matrix
 /// @param[out] C Output matrix. Must be sized correctly before calling
@@ -337,7 +336,7 @@ void dot(const U& A, const V& B, W&& C)
   }
 }
 
-/// Build an identity matrix
+/// @brief Build an identity matrix.
 /// @param[in] n The number of rows/columns
 /// @return Identity matrix using row-major storage
 template <std::floating_point T>
@@ -354,10 +353,10 @@ std::vector<T> eye(std::size_t n)
   return I;
 }
 
-/// Orthogonalise the rows of a matrix (in place)
+/// @brief Orthogonalise the rows of a matrix (in place).
 /// @param[in] wcoeffs The matrix
-/// @param[in] start The row to start from. The rows before this should already
-/// be orthogonal
+/// @param[in] start The row to start from. The rows before this should
+/// already be orthogonal.
 template <std::floating_point T>
 void orthogonalise(
     MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<
@@ -367,28 +366,28 @@ void orthogonalise(
 {
   for (std::size_t i = start; i < wcoeffs.extent(0); ++i)
   {
-    for (std::size_t j = start; j < i; ++j)
-    {
-      T a = 0;
-      for (std::size_t k = 0; k < wcoeffs.extent(1); ++k)
-        a += wcoeffs(i, k) * wcoeffs(j, k);
-      for (std::size_t k = 0; k < wcoeffs.extent(1); ++k)
-        wcoeffs(i, k) -= a * wcoeffs(j, k);
-    }
-
     T norm = 0;
     for (std::size_t k = 0; k < wcoeffs.extent(1); ++k)
       norm += wcoeffs(i, k) * wcoeffs(i, k);
-    if (std::abs(norm) < 4 * std::numeric_limits<T>::epsilon())
+
+    norm = std::sqrt(norm);
+    if (norm < 2 * std::numeric_limits<T>::epsilon())
     {
       throw std::runtime_error(
           "Cannot orthogonalise the rows of a matrix with incomplete row rank");
     }
 
     for (std::size_t k = 0; k < wcoeffs.extent(1); ++k)
-      wcoeffs(i, k) /= std::sqrt(norm);
+      wcoeffs(i, k) /= norm;
+
+    for (std::size_t j = i + 1; j < wcoeffs.extent(0); ++j)
+    {
+      T a = 0;
+      for (std::size_t k = 0; k < wcoeffs.extent(1); ++k)
+        a += wcoeffs(i, k) * wcoeffs(j, k);
+      for (std::size_t k = 0; k < wcoeffs.extent(1); ++k)
+        wcoeffs(j, k) -= a * wcoeffs(i, k);
+    }
   }
 }
-//-----------------------------------------------------------------------------
-
 } // namespace basix::math

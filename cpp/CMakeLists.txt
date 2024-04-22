@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.19)
 
 # Set the version
-project(Basix VERSION "0.7.0" LANGUAGES CXX)
+project(Basix VERSION "0.8.0.0" LANGUAGES CXX)
 include(GNUInstallDirs)
 
 if(SKBUILD)
@@ -62,7 +62,6 @@ set(HEADERS_basix
   ${CMAKE_CURRENT_SOURCE_DIR}/basix/e-serendipity.h
   ${CMAKE_CURRENT_SOURCE_DIR}/basix/e-hermite.h
   ${CMAKE_CURRENT_SOURCE_DIR}/basix/mdspan.hpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/basix/docs.h
   ${CMAKE_CURRENT_BINARY_DIR}/basix/version.h)
 
 target_sources(basix PRIVATE

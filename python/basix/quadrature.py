@@ -1,17 +1,32 @@
+# Copyright (C) 2023-2024 Matthew Scroggs and Garth N. Wells
+#
+# This file is part of Basix (https://www.fenicsproject.org)
+#
+# SPDX-License-Identifier:    MIT
 """Functions to manipulate quadrature types."""
 
-import typing as _typing
-
-import numpy as _np
+import numpy as np
 import numpy.typing as _npt
 
-from ._basixcpp import CellType as _CT
-from ._basixcpp import PolysetType as _PT
-from ._basixcpp import QuadratureType as _QT
-from ._basixcpp import make_quadrature as _mq
+from basix._basixcpp import QuadratureType as _QT
+from basix._basixcpp import make_quadrature as _mq
+from basix.cell import CellType
+from basix.polynomials import PolysetType
+from basix.utils import Enum
+
+__all__ = ["string_to_type", "make_quadrature"]
 
 
-def string_to_type(rule: str) -> _QT:
+class QuadratureType(Enum):
+    """Quadrature type."""
+
+    Default = _QT.Default
+    gauss_jacobi = _QT.gauss_jacobi
+    gll = _QT.gll
+    xiao_gimbutas = _QT.xiao_gimbutas
+
+
+def string_to_type(rule: str) -> QuadratureType:
     """Convert a string to a Basix QuadratureType enum.
 
     Args:
@@ -19,43 +34,31 @@ def string_to_type(rule: str) -> _QT:
 
     Returns:
         The quadrature type.
-
     """
     if rule == "default":
-        return _QT.Default
+        return QuadratureType.Default
+    elif rule in ["Gauss-Lobatto-Legendre", "GLL"]:
+        return QuadratureType.gll
+    elif rule in ["Gauss-Legendre", "GL", "Gauss-Jacobi"]:
+        return QuadratureType.gauss_jacobi
+    elif rule == "Xiao-Gimbutas":
+        return QuadratureType.xiao_gimbutas
 
-    if rule in ["Gauss-Lobatto-Legendre", "GLL"]:
-        return _QT.gll
-    if rule in ["Gauss-Legendre", "GL", "Gauss-Jacobi"]:
-        return _QT.gauss_jacobi
-    if rule == "Xiao-Gimbutas":
-        return _QT.xiao_gimbutas
-
-    if not hasattr(_QT, rule):
+    if not hasattr(QuadratureType, rule):
         raise ValueError(f"Unknown quadrature rule: {rule}")
-    return getattr(_QT, rule)
-
-
-def type_to_string(quadraturetype: _QT) -> str:
-    """Convert a Basix QuadratureType enum to a string.
-
-    Args:
-        quadraturetype: Quadrature type.
-
-    Returns:
-        The quadrature rule as a string.
-
-    """
-    return quadraturetype.name
+    return getattr(QuadratureType, rule)
 
 
 def make_quadrature(
-    cell: _CT, degree: int, rule: _QT = _QT.Default, polyset_type: _PT = _PT.standard
-) -> _typing.Tuple[_npt.NDArray[_np.float64], _npt.NDArray[_np.float64]]:
+    cell: CellType,
+    degree: int,
+    rule: QuadratureType = QuadratureType.Default,
+    polyset_type: PolysetType = PolysetType.standard,
+) -> tuple[_npt.NDArray[np.float64], _npt.NDArray[np.float64]]:
     """Create a quadrature rule.
 
     Args:
-        cell: Cell type
+        cell: Cell type.
         degree: Maximum polynomial degree that will be integrated
             exactly.
         rule: Quadrature rule.
@@ -63,7 +66,6 @@ def make_quadrature(
             exactly.
 
     Returns:
-        The quadrature points and weights.
-
+        Quadrature points and weights.
     """
-    return _mq(rule, cell, polyset_type, degree)
+    return _mq(rule.value, cell.value, polyset_type.value, degree)

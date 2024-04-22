@@ -414,13 +414,13 @@ T cell::volume(cell::type cell_type)
   case cell::type::quadrilateral:
     return 1;
   case cell::type::tetrahedron:
-    return 1.0 / 6;
+    return 1.0 / 6.0;
   case cell::type::hexahedron:
     return 1;
   case cell::type::prism:
     return 0.5;
   case cell::type::pyramid:
-    return 1.0 / 3;
+    return 1.0 / 3.0;
   default:
     throw std::runtime_error("Unsupported cell type");
   }

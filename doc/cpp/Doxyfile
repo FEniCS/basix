@@ -564,7 +564,7 @@ INLINE_INFO            = YES
 # name. If set to NO, the members will appear in declaration order.
 # The default value is: YES.
 
-SORT_MEMBER_DOCS       = YES
+SORT_MEMBER_DOCS       = NO
 
 # If the SORT_BRIEF_DOCS tag is set to YES then doxygen will sort the brief
 # descriptions of file, namespace and class members alphabetically by member
@@ -825,7 +825,8 @@ RECURSIVE              = YES
 # run.
 
 EXCLUDE                = ../../cpp/basix/loguru.hpp \
-                         ../../cpp/basix/loguru.cpp
+                         ../../cpp/basix/loguru.cpp \
+                         ../../cpp/basix/mdspan
 
 # The EXCLUDE_SYMLINKS tag can be used to select whether or not files or
 # directories that are symbolic links (a Unix file system feature) are excluded
@@ -878,7 +879,7 @@ EXAMPLE_RECURSIVE      = NO
 # that contain images that are to be included in the documentation (see the
 # \image command).
 
-IMAGE_PATH             = 
+IMAGE_PATH             =
 
 # The INPUT_FILTER tag can be used to specify a program that doxygen should
 # invoke to filter for each input file. Doxygen will invoke the filter program
@@ -1124,7 +1125,7 @@ HTML_FOOTER            =
 # obsolete.
 # This tag requires that the tag GENERATE_HTML is set to YES.
 
-HTML_STYLESHEET        = 
+HTML_STYLESHEET        =
 
 # The HTML_EXTRA_STYLESHEET tag can be used to specify additional user-defined
 # cascading style sheets that are included after the standard style sheets
@@ -1480,6 +1481,17 @@ FORMULA_TRANSPARENT    = YES
 
 USE_MATHJAX            = YES
 
+# With MATHJAX_VERSION it is possible to specify the MathJax version to be used.
+# Note that the different versions of MathJax have different requirements with
+# regards to the different settings, so it is possible that also other MathJax
+# settings have to be changed when switching between the different MathJax
+# versions.
+# Possible values are: MathJax_2 and MathJax_3.
+# The default value is: MathJax_2.
+# This tag requires that the tag USE_MATHJAX is set to YES.
+
+MATHJAX_VERSION        = MathJax_2
+
 # When MathJax is enabled you can set the default output format to be used for
 # the MathJax output. See the MathJax site (see:
 # http://docs.mathjax.org/en/latest/output.html) for more details.
@@ -1501,7 +1513,7 @@ MATHJAX_FORMAT         = HTML-CSS
 # The default value is: http://cdn.mathjax.org/mathjax/latest.
 # This tag requires that the tag USE_MATHJAX is set to YES.
 
-MATHJAX_RELPATH        = https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1
+MATHJAX_RELPATH        = https://cdn.mathjax.org/mathjax/latest
 
 # The MATHJAX_EXTENSIONS tag can be used to specify one or more MathJax
 # extension names that should be enabled during MathJax rendering. For example

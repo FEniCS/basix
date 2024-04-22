@@ -27,8 +27,7 @@ def replace_version(content, version):
     """Replace all occurences of version in content."""
     content = re.sub(
         r"((?:VERSION)|(?:version))([\s=]+)([\"']).+?\3",
-        lambda matches: f"{matches[1]}{matches[2]}{
-            matches[3]}{version}{matches[3]}",
+        lambda matches: f"{matches[1]}{matches[2]}{matches[3]}{version}{matches[3]}",
         content,
     )
     return content

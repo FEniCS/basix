@@ -23,14 +23,14 @@ __all__ = [
     "T_apply_hexahedron",
     "T_apply_prism",
     "T_apply_pyramid",
-    "Tt_post_apply",
-    "Tt_post_apply_interval",
-    "Tt_post_apply_triangle",
-    "Tt_post_apply_quadrilateral",
-    "Tt_post_apply_tetrahedron",
-    "Tt_post_apply_hexahedron",
-    "Tt_post_apply_prism",
-    "Tt_post_apply_pyramid",
+    "Tt_apply_right",
+    "Tt_apply_right_interval",
+    "Tt_apply_right_triangle",
+    "Tt_apply_right_quadrilateral",
+    "Tt_apply_right_tetrahedron",
+    "Tt_apply_right_hexahedron",
+    "Tt_apply_right_prism",
+    "Tt_apply_right_pyramid",
 ]
 
 
@@ -294,7 +294,7 @@ def T_apply_pyramid(
 
 
 @_numba.jit(nopython=True)
-def Tt_post_apply(
+def Tt_apply_right(
     tdim: int,
     edge_count: int,
     face_count: int,
@@ -304,7 +304,7 @@ def Tt_post_apply(
     cell_info: int,
     face_types: list[str],
 ):
-    """Post-apply dof transformations to some transposed data.
+    """Right(post)-apply dof transformations to some transposed data.
 
     Args:
         tdim: The topological dimension of the cell.
@@ -334,13 +334,13 @@ def Tt_post_apply(
 
 
 @_numba.jit(nopython=True)
-def Tt_post_apply_interval(
+def Tt_apply_right_interval(
     entity_transformations: dict[str, npt.NDArray[np.float64]],
     entity_dofs: dict[str, npt.NDArray[np.int32]],
     data: npt.NDArray,
     cell_info: int,
 ):
-    """Post-apply dof transformations to some transposed data on an interval.
+    """Right(post)-apply dof transformations to some transposed data on an interval.
 
     Args:
         entity_transformations: The DOF transformations for each entity.
@@ -354,13 +354,13 @@ def Tt_post_apply_interval(
 
 
 @_numba.jit(nopython=True)
-def Tt_post_apply_triangle(
+def Tt_apply_right_triangle(
     entity_transformations: dict[str, npt.NDArray[np.float64]],
     entity_dofs: dict[str, npt.NDArray[np.int32]],
     data: npt.NDArray,
     cell_info: int,
 ):
-    """Post-apply dof transformations to some transposed data on a triangle.
+    """Right(post)-apply dof transformations to some transposed data on a triangle.
 
     Args:
         entity_transformations: The DOF transformations for each entity.
@@ -370,7 +370,7 @@ def Tt_post_apply_triangle(
             subentities of the cell.
 
     """
-    Tt_post_apply(
+    Tt_apply_right(
         2,
         3,
         1,
@@ -383,13 +383,13 @@ def Tt_post_apply_triangle(
 
 
 @_numba.jit(nopython=True)
-def Tt_post_apply_quadrilateral(
+def Tt_apply_right_quadrilateral(
     entity_transformations: dict[str, npt.NDArray[np.float64]],
     entity_dofs: dict[str, npt.NDArray[np.int32]],
     data: npt.NDArray,
     cell_info: int,
 ):
-    """Post-apply dof transformations to some transposed data on an quadrilateral.
+    """Right(post)-apply dof transformations to some transposed data on an quadrilateral.
 
     Args:
         entity_transformations: The DOF transformations for each entity.
@@ -399,7 +399,7 @@ def Tt_post_apply_quadrilateral(
             subentities of the cell.
 
     """
-    Tt_post_apply(
+    Tt_apply_right(
         2,
         4,
         1,
@@ -412,13 +412,13 @@ def Tt_post_apply_quadrilateral(
 
 
 @_numba.jit(nopython=True)
-def Tt_post_apply_tetrahedron(
+def Tt_apply_right_tetrahedron(
     entity_transformations: dict[str, npt.NDArray[np.float64]],
     entity_dofs: dict[str, npt.NDArray[np.int32]],
     data: npt.NDArray,
     cell_info: int,
 ):
-    """Post-apply dof transformations to some transposed data on a tetrahedron.
+    """Right(post)-apply dof transformations to some transposed data on a tetrahedron.
 
     Args:
         entity_transformations: The DOF transformations for each entity.
@@ -428,7 +428,7 @@ def Tt_post_apply_tetrahedron(
         subentities of the cell.
 
     """
-    Tt_post_apply(
+    Tt_apply_right(
         3,
         6,
         4,
@@ -441,13 +441,13 @@ def Tt_post_apply_tetrahedron(
 
 
 @_numba.jit(nopython=True)
-def Tt_post_apply_hexahedron(
+def Tt_apply_right_hexahedron(
     entity_transformations: dict[str, npt.NDArray[np.float64]],
     entity_dofs: dict[str, npt.NDArray[np.int32]],
     data: npt.NDArray,
     cell_info: int,
 ):
-    """Post-apply dof transformations to some transposed data on a hexahedron.
+    """Right(post)-apply dof transformations to some transposed data on a hexahedron.
 
     Args:
         entity_transformations: The DOF transformations for each entity.
@@ -457,7 +457,7 @@ def Tt_post_apply_hexahedron(
             subentities of the cell.
 
     """
-    Tt_post_apply(
+    Tt_apply_right(
         3,
         12,
         6,
@@ -470,13 +470,13 @@ def Tt_post_apply_hexahedron(
 
 
 @_numba.jit(nopython=True)
-def Tt_post_apply_prism(
+def Tt_apply_right_prism(
     entity_transformations: dict[str, npt.NDArray[np.float64]],
     entity_dofs: dict[str, npt.NDArray[np.int32]],
     data: npt.NDArray,
     cell_info: int,
 ):
-    """Post-apply dof transformations to some transposed data on an prism.
+    """Right(post)-apply dof transformations to some transposed data on an prism.
 
     Args:
         entity_transformations: The DOF transformations for each entity.
@@ -486,7 +486,7 @@ def Tt_post_apply_prism(
             subentities of the cell.
 
     """
-    Tt_post_apply(
+    Tt_apply_right(
         3,
         9,
         5,
@@ -499,13 +499,13 @@ def Tt_post_apply_prism(
 
 
 @_numba.jit(nopython=True)
-def Tt_post_apply_pyramid(
+def Tt_apply_right_pyramid(
     entity_transformations: dict[str, npt.NDArray[np.float64]],
     entity_dofs: dict[str, npt.NDArray[np.int32]],
     data: npt.NDArray,
     cell_info: int,
 ):
-    """Post-apply dof transformations to some transposed data on an prism.
+    """Right(post)-apply dof transformations to some transposed data on an prism.
 
     Args:
         entity_transformations: The DOF transformations for each entity.
@@ -515,7 +515,7 @@ def Tt_post_apply_pyramid(
             subentities of the cell.
 
     """
-    Tt_post_apply(
+    Tt_apply_right(
         3,
         8,
         5,

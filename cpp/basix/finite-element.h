@@ -806,7 +806,7 @@ public:
       permute_data<std::int32_t, false>(d, 1, cell_info, _eperm);
   }
 
-  /// @brief Peform the inverse of the operation applied by permute().
+  /// @brief Perform the inverse of the operation applied by permute().
   ///
   /// Given an array \f$d\f$ that holds an integer associated with each
   /// degree-of-freedom and following the globally consistent physical
@@ -911,143 +911,113 @@ public:
   /// degree-of-freedom are with respect to the physical element
   /// orientation. If the degrees-of-freedom on the physical element
   /// orientation are given by
-  /// \f[
-  /// \phi = T \tilde{\phi},
-  /// \f]
+  ///   \f[ \phi = T \tilde{\phi}, \f]
   /// where \f$T\f$ is a \f$d \times d\f$ matrix, it follows from
   /// \f$f_{h} = \phi^{T} c = \tilde{\phi}^{T} T^{T} c\f$ that
-  /// \f[
-  ///  \tilde{c} = T^{T} c.
-  /// \f]
+  ///   \f[ \tilde{c} = T^{T} c. \f]
   ///
   /// This function applies \f$T\f$ to data. The transformation is
-  /// peformed in-place. The operator \f$T\f$ is orthogonal for many
+  /// performed in-place. The operator \f$T\f$ is orthogonal for many
   /// elements, but not all.
   ///
-  /// @param[in,out] data Data to transform. The shape is `(m, n)`,
-  /// where `m` is the number of dgerees-of-freedom and the storage is
+  /// @param[in,out] u Data to transform. The shape is `(m, n)`, where
+  /// `m` is the number of dgerees-of-freedom and the storage is
   /// row-major.
   /// @param[in] n Number of columns in `data`.
   /// @param cell_info Permutation info for the cell
   template <typename T>
-  void T_apply(std::span<T> data, int n, std::uint32_t cell_info) const;
+  void T_apply(std::span<T> u, int n, std::uint32_t cell_info) const;
 
-  /// @brief Apply the transpose of the operator appplied by T_apply().
+  /// @brief Apply the transpose of the operator applied by T_apply().
   ///
-  /// The transformation
-  /// \f[
-  ///  v = T^{T} u
-  /// \f]
-  /// is peformed in-place.
+  /// The transformation \f[ u \leftarrow T^{T} u \f] is performed
+  /// in-place.
   ///
-  /// @param[in,out] data Data to transform. The shape is `(m, n)`,
-  /// where `m` is the number of dgerees-of-freedom an d the storage is
+  /// @param[in,out] u Data to transform. The shape is `(m, n)`, where
+  /// `m` is the number of dgerees-of-freedom an d the storage is
   /// row-major.
   /// @param[in] n Number of columns in `data`.
   /// @param[in] cell_info Permutation info for the cell,
   template <typename T>
-  void Tt_apply(std::span<T> data, int n, std::uint32_t cell_info) const;
+  void Tt_apply(std::span<T> u, int n, std::uint32_t cell_info) const;
 
-  /// @brief Apply the inverse transpose of the operator appplied by
+  /// @brief Apply the inverse transpose of the operator applied by
   /// T_apply().
   ///
-  /// The transformation
-  /// \f[
-  ///  v = T^{-T} u
-  /// \f]
-  /// is peformed in-place.
+  /// The transformation \f[ u \leftarrow T^{-T} u \f] is performed
+  /// in-place.
   ///
-  /// @param[in,out] data Data to transform. The shape is `(m, n)`,
-  /// where `m` is the number of dgerees-of-freedom and the storage is
+  /// @param[in,out] u Data to transform. The shape is `(m, n)`, where
+  /// `m` is the number of dgerees-of-freedom and the storage is
   /// row-major.
   /// @param[in] n Number of columns in `data`.
   /// @param[in] cell_info Permutation info for the cell.
   template <typename T>
-  void Tt_inv_apply(std::span<T> data, int n, std::uint32_t cell_info) const;
+  void Tt_inv_apply(std::span<T> u, int n, std::uint32_t cell_info) const;
 
-  /// @brief Apply the inverse of the operator appplied by T_apply().
+  /// @brief Apply the inverse of the operator applied by T_apply().
   ///
-  /// The transformation
-  /// \f[
-  ///  v = T^{-1} u
-  /// \f]
-  /// is peformed in-place.
+  /// The transformation \f[ u \leftarrow T^{-1} u \f] is performed
+  /// in-place.
   ///
-  /// @param[in,out] data Data to transform. The shape is `(m, n)`,
-  /// where `m` is the number of dgerees-of-freedom and the storage is
+  /// @param[in,out] u Data to transform. The shape is `(m, n)`, where
+  /// `m` is the number of dgerees-of-freedom and the storage is
   /// row-major.
   /// @param[in] n Number of columns in `data`.
   /// @param[in] cell_info Permutation info for the cell.
   template <typename T>
-  void Tinv_apply(std::span<T> data, int n, std::uint32_t cell_info) const;
+  void Tinv_apply(std::span<T> u, int n, std::uint32_t cell_info) const;
 
-  /// @brief Post(right)-apply the transpose of the operator applied by
+  /// @brief Right(post)-apply the transpose of the operator applied by
   /// T_apply().
   ///
-  /// Computes
-  /// \f[
-  /// v^{T} = u^{T} T^{T}
-  /// \f]
-  /// in-place.
+  /// Computes \f[ u^{T} \leftarrow u^{T} T^{T} \f] in-place.
   ///
-  /// @param[in,out] data Data to transform. The shape is `(m, n)`,
-  /// where `m` is the number of dgerees-of-freedom and the storage is
+  /// @param[in,out] u Data to transform. The shape is `(m, n)`, where
+  /// `m` is the number of dgerees-of-freedom and the storage is
   /// row-major.
   /// @param[in] n Number of columns in `data`.
   /// @param[in] cell_info Permutation info for the cell.
   template <typename T>
-  void Tt_post_apply(std::span<T> data, int n, std::uint32_t cell_info) const;
+  void Tt_apply_right(std::span<T> u, int n, std::uint32_t cell_info) const;
 
-  /// @brief Post(right)-apply the operator applied by T_apply().
+  /// @brief Right(post)-apply the operator applied by T_apply().
   ///
-  /// Computes
-  /// \f[
-  /// v^{T} = u^{T} T
-  /// \f]
-  /// in-place.
+  /// Computes \f[ u^{T} \leftarrow u^{T} T \f] in-place.
   ///
-  /// @param[in,out] data Data to transform. The shape is `(m, n)`,
-  /// where `m` is the number of dgerees-of-freedom and the storage is
+  /// @param[in,out] u Data to transform. The shape is `(m, n)`, where
+  /// `m` is the number of dgerees-of-freedom and the storage is
   /// row-major.
   /// @param[in] n Number of columns in `data`.
   /// @param[in] cell_info Permutation info for the cell.
   template <typename T>
-  void T_post_apply(std::span<T> data, int n, std::uint32_t cell_info) const;
+  void T_apply_right(std::span<T> u, int n, std::uint32_t cell_info) const;
 
-  /// @brief Post(right)-apply the inverse of the operator applied by
+  /// @brief Right(post)-apply the inverse of the operator applied by
   /// T_apply().
   ///
-  /// Computes
-  /// \f[
-  /// v^{T} = u^{T} T^{-1}
-  /// \f]
-  /// in-place.
+  /// Computes \f[ u^{T} \leftarrow u^{T} T^{-1} \f] in-place.
   ///
-  /// @param[in,out] data Data to transform. The shape is `(m, n)`,
-  /// where `m` is the number of dgerees-of-freedom and the storage is
+  /// @param[in,out] u Data to transform. The shape is `(m, n)`, where
+  /// `m` is the number of dgerees-of-freedom and the storage is
   /// row-major.
   /// @param[in] n Number of columns in `data`.
   /// @param cell_info Permutation info for the cell.
   template <typename T>
-  void Tinv_post_apply(std::span<T> data, int n, std::uint32_t cell_info) const;
+  void Tinv_apply_right(std::span<T> u, int n, std::uint32_t cell_info) const;
 
-  /// @brief Post(right)-apply the tranpose inverse of the operator
+  /// @brief Right(post)-apply the transpose inverse of the operator
   /// applied by T_apply().
   ///
-  /// Computes
-  /// \f[
-  /// v^{T} = u^{T} T^{-T}
-  /// \f]
-  /// in-place.
+  /// Computes \f[ u^{T} \leftarrow u^{T} T^{-T} \f] in-place.
   ///
-  /// @param[in,out] data Data to transform. The shape is `(m, n)`,
-  /// where `m` is the number of dgerees-of-freedom and the storage is
+  /// @param[in,out] u Data to transform. The shape is `(m, n)`, where
+  /// `m` is the number of dgerees-of-freedom and the storage is
   /// row-major.
   /// @param[in] n Number of columns in `data`.
   /// @param cell_info Permutation info for the cell.
   template <typename T>
-  void Tt_inv_post_apply(std::span<T> data, int n,
-                         std::uint32_t cell_info) const;
+  void Tt_inv_apply_right(std::span<T> u, int n, std::uint32_t cell_info) const;
 
   /// @brief Return the interpolation points.
   ///
@@ -1698,161 +1668,161 @@ void FiniteElement<F>::transform_data(
 //-----------------------------------------------------------------------------
 template <std::floating_point F>
 template <typename T>
-void FiniteElement<F>::T_apply(std::span<T> data, int n,
+void FiniteElement<F>::T_apply(std::span<T> u, int n,
                                std::uint32_t cell_info) const
 {
   if (_dof_transformations_are_identity)
     return;
 
   if (_dof_transformations_are_permutations)
-    permute_data<T, false>(data, n, cell_info, _eperm);
+    permute_data<T, false>(u, n, cell_info, _eperm);
   else
   {
-    transform_data<T, false>(data, n, cell_info, _etrans,
+    transform_data<T, false>(u, n, cell_info, _etrans,
                              precompute::apply_matrix<F, T>);
   }
 }
 //-----------------------------------------------------------------------------
 template <std::floating_point F>
 template <typename T>
-void FiniteElement<F>::Tt_apply(std::span<T> data, int n,
+void FiniteElement<F>::Tt_apply(std::span<T> u, int n,
                                 std::uint32_t cell_info) const
 {
   if (_dof_transformations_are_identity)
     return;
   else if (_dof_transformations_are_permutations)
-    permute_data<T, true>(data, n, cell_info, _eperm_rev);
+    permute_data<T, true>(u, n, cell_info, _eperm_rev);
   else
   {
-    transform_data<T, true>(data, n, cell_info, _etransT,
+    transform_data<T, true>(u, n, cell_info, _etransT,
                             precompute::apply_matrix<F, T>);
   }
 }
 //-----------------------------------------------------------------------------
 template <std::floating_point F>
 template <typename T>
-void FiniteElement<F>::Tt_inv_apply(std::span<T> data, int n,
+void FiniteElement<F>::Tt_inv_apply(std::span<T> u, int n,
                                     std::uint32_t cell_info) const
 {
   if (_dof_transformations_are_identity)
     return;
   else if (_dof_transformations_are_permutations)
-    permute_data<T, false>(data, n, cell_info, _eperm);
+    permute_data<T, false>(u, n, cell_info, _eperm);
   else
   {
-    transform_data<T, false>(data, n, cell_info, _etrans_invT,
+    transform_data<T, false>(u, n, cell_info, _etrans_invT,
                              precompute::apply_matrix<F, T>);
   }
 }
 //-----------------------------------------------------------------------------
 template <std::floating_point F>
 template <typename T>
-void FiniteElement<F>::Tinv_apply(std::span<T> data, int n,
+void FiniteElement<F>::Tinv_apply(std::span<T> u, int n,
                                   std::uint32_t cell_info) const
 {
   if (_dof_transformations_are_identity)
     return;
   else if (_dof_transformations_are_permutations)
-    permute_data<T, true>(data, n, cell_info, _eperm_rev);
+    permute_data<T, true>(u, n, cell_info, _eperm_rev);
   else
   {
-    transform_data<T, true>(data, n, cell_info, _etrans_inv,
+    transform_data<T, true>(u, n, cell_info, _etrans_inv,
                             precompute::apply_matrix<F, T>);
   }
 }
 //-----------------------------------------------------------------------------
 template <std::floating_point F>
 template <typename T>
-void FiniteElement<F>::Tt_post_apply(std::span<T> data, int n,
+void FiniteElement<F>::Tt_apply_right(std::span<T> u, int n,
+                                      std::uint32_t cell_info) const
+{
+  if (_dof_transformations_are_identity)
+    return;
+  else if (_dof_transformations_are_permutations)
+  {
+    assert(u.size() % n == 0);
+    const int step = u.size() / n;
+    for (int i = 0; i < n; ++i)
+    {
+      std::span<T> dblock(u.data() + i * step, step);
+      permute_data<T, false>(dblock, 1, cell_info, _eperm);
+    }
+  }
+  else
+  {
+    transform_data<T, false>(u, n, cell_info, _etrans,
+                             precompute::apply_tranpose_matrix_right<F, T>);
+  }
+}
+//-----------------------------------------------------------------------------
+template <std::floating_point F>
+template <typename T>
+void FiniteElement<F>::Tinv_apply_right(std::span<T> u, int n,
+                                        std::uint32_t cell_info) const
+{
+  if (_dof_transformations_are_identity)
+    return;
+  else if (_dof_transformations_are_permutations)
+  {
+    assert(u.size() % n == 0);
+    const int step = u.size() / n;
+    for (int i = 0; i < n; ++i)
+    {
+      std::span<T> dblock(u.data() + i * step, step);
+      permute_data<T, false>(dblock, 1, cell_info, _eperm);
+    }
+  }
+  else
+  {
+    transform_data<T, false>(u, n, cell_info, _etrans_invT,
+                             precompute::apply_tranpose_matrix_right<F, T>);
+  }
+}
+//-----------------------------------------------------------------------------
+template <std::floating_point F>
+template <typename T>
+void FiniteElement<F>::T_apply_right(std::span<T> u, int n,
                                      std::uint32_t cell_info) const
 {
   if (_dof_transformations_are_identity)
     return;
   else if (_dof_transformations_are_permutations)
   {
-    assert(data.size() % n == 0);
-    const int step = data.size() / n;
+    assert(u.size() % n == 0);
+    const int step = u.size() / n;
     for (int i = 0; i < n; ++i)
     {
-      std::span<T> dblock(data.data() + i * step, step);
-      permute_data<T, false>(dblock, 1, cell_info, _eperm);
-    }
-  }
-  else
-  {
-    transform_data<T, false>(data, n, cell_info, _etrans,
-                             precompute::apply_tranpose_matrix_right<F, T>);
-  }
-}
-//-----------------------------------------------------------------------------
-template <std::floating_point F>
-template <typename T>
-void FiniteElement<F>::Tinv_post_apply(std::span<T> data, int n,
-                                       std::uint32_t cell_info) const
-{
-  if (_dof_transformations_are_identity)
-    return;
-  else if (_dof_transformations_are_permutations)
-  {
-    assert(data.size() % n == 0);
-    const int step = data.size() / n;
-    for (int i = 0; i < n; ++i)
-    {
-      std::span<T> dblock(data.data() + i * step, step);
-      permute_data<T, false>(dblock, 1, cell_info, _eperm);
-    }
-  }
-  else
-  {
-    transform_data<T, false>(data, n, cell_info, _etrans_invT,
-                             precompute::apply_tranpose_matrix_right<F, T>);
-  }
-}
-//-----------------------------------------------------------------------------
-template <std::floating_point F>
-template <typename T>
-void FiniteElement<F>::T_post_apply(std::span<T> data, int n,
-                                    std::uint32_t cell_info) const
-{
-  if (_dof_transformations_are_identity)
-    return;
-  else if (_dof_transformations_are_permutations)
-  {
-    assert(data.size() % n == 0);
-    const int step = data.size() / n;
-    for (int i = 0; i < n; ++i)
-    {
-      std::span<T> dblock(data.data() + i * step, step);
+      std::span<T> dblock(u.data() + i * step, step);
       permute_data<T, true>(dblock, 1, cell_info, _eperm_rev);
     }
   }
   else
   {
-    transform_data<T, true>(data, n, cell_info, _etransT,
+    transform_data<T, true>(u, n, cell_info, _etransT,
                             precompute::apply_tranpose_matrix_right<F, T>);
   }
 }
 //-----------------------------------------------------------------------------
 template <std::floating_point F>
 template <typename T>
-void FiniteElement<F>::Tt_inv_post_apply(std::span<T> data, int n,
-                                         std::uint32_t cell_info) const
+void FiniteElement<F>::Tt_inv_apply_right(std::span<T> u, int n,
+                                          std::uint32_t cell_info) const
 {
   if (_dof_transformations_are_identity)
     return;
   else if (_dof_transformations_are_permutations)
   {
-    assert(data.size() % n == 0);
-    const int step = data.size() / n;
+    assert(u.size() % n == 0);
+    const int step = u.size() / n;
     for (int i = 0; i < n; ++i)
     {
-      std::span<T> dblock(data.data() + i * step, step);
+      std::span<T> dblock(u.data() + i * step, step);
       permute_data<T, true>(dblock, 1, cell_info, _eperm_rev);
     }
   }
   else
   {
-    transform_data<T, true>(data, n, cell_info, _etrans_inv,
+    transform_data<T, true>(u, n, cell_info, _etrans_inv,
                             precompute::apply_tranpose_matrix_right<F, T>);
   }
 }

@@ -142,21 +142,21 @@ void declare_float(nb::module_& m, std::string type)
              return as_nbarrayp(std::move(U));
            })
       .def("T_apply", [](const FiniteElement<T>& self,
-                         nb::ndarray<T, nb::ndim<1>, nb::c_contig> data, int n,
+                         nb::ndarray<T, nb::ndim<1>, nb::c_contig> u, int n,
                          std::uint32_t cell_info)
-           { self.T_apply(std::span(data.data(), data.size()), n, cell_info); })
-      .def("Tt_post_apply",
+           { self.T_apply(std::span(u.data(), u.size()), n, cell_info); })
+      .def("Tt_apply_right",
            [](const FiniteElement<T>& self,
-              nb::ndarray<T, nb::ndim<1>, nb::c_contig> data, int n,
+              nb::ndarray<T, nb::ndim<1>, nb::c_contig> u, int n,
               std::uint32_t cell_info) {
-             self.Tt_post_apply(std::span(data.data(), data.size()), n,
+             self.Tt_apply_right(std::span(u.data(), u.size()), n,
                                 cell_info);
            })
       .def("Tt_inv_apply",
            [](const FiniteElement<T>& self,
-              nb::ndarray<T, nb::ndim<1>, nb::c_contig> data, int n,
+              nb::ndarray<T, nb::ndim<1>, nb::c_contig> u, int n,
               std::uint32_t cell_info) {
-             self.Tt_inv_apply(std::span(data.data(), data.size()), n,
+             self.Tt_inv_apply(std::span(u.data(), u.size()), n,
                                cell_info);
            })
       .def("base_transformations", [](const FiniteElement<T>& self)
@@ -508,8 +508,7 @@ NB_MODULE(_basixcpp, m)
       .def_prop_ro("name",
                    [](nb::object obj) { return nb::getattr(obj, "__name__"); });
 
-  m.def("cell_volume",
-        [](cell::type cell_type) -> double
+  m.def("cell_volume", [](cell::type cell_type) -> double
         { return cell::volume<double>(cell_type); });
   m.def("cell_facet_normals", [](cell::type cell_type)
         { return as_nbarrayp(cell::facet_normals<double>(cell_type)); });

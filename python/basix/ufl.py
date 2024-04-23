@@ -364,8 +364,13 @@ class _ElementBase(_AbstractFiniteElement):
         return False
 
     @property
-    def is_mixed(self):
+    def is_mixed(self) -> bool:
         """Is this a mixed element?"""
+        return False
+
+    @property
+    def is_symmetric(self) -> bool:
+        """Is the element a symmetric 2-tensor?"""
         return False
 
 
@@ -881,7 +886,7 @@ class _MixedElement(_ElementBase):
         return super().__hash__()
 
     @property
-    def is_mixed(self):
+    def is_mixed(self) -> bool:
         """Is this a mixed element?"""
         return True
 
@@ -1148,6 +1153,7 @@ class _BlockedElement(_ElementBase):
     _block_shape: tuple[int, ...]
     _sub_element: _ElementBase
     _block_size: int
+    _has_symmetry: bool
 
     def __init__(
         self,
@@ -1217,6 +1223,11 @@ class _BlockedElement(_ElementBase):
     def __hash__(self) -> int:
         """Return a hash."""
         return super().__hash__()
+
+    @property
+    def symmetry(self) -> bool:
+        """Is the element a symmetric 2-tensor?"""
+        return self._has_symmetry
 
     @property
     def is_quadrature(self) -> bool:

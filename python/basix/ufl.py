@@ -1225,7 +1225,7 @@ class _BlockedElement(_ElementBase):
         return super().__hash__()
 
     @property
-    def symmetry(self) -> bool:
+    def is_symmetric(self) -> bool:
         """Is the element a symmetric 2-tensor?"""
         return self._has_symmetry
 

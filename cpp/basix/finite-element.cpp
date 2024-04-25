@@ -1170,7 +1170,7 @@ FiniteElement<F>::FiniteElement(
       if (!_dof_transformations_are_identity)
       {
         auto& trans1 = _eperm.at(cell::type::interval)[0];
-        if (dofs[1][0].size() > 0)
+        if (!dofs[1][0].empty())
         {
           precompute::apply_permutation(trans1, std::span(ref), dofs[1][0][0]);
         }

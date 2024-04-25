@@ -230,7 +230,7 @@ basix::create_element(element::family family, cell::type cell, int degree,
       throw std::runtime_error("Cannot pass a DPC variant to this element.");
   }
 
-  if (dof_ordering.size() > 0 and family != element::family::P)
+  if (!dof_ordering.empty() and family != element::family::P)
   {
     throw std::runtime_error("DOF ordering only supported for Lagrange");
   }
@@ -353,7 +353,7 @@ basix::tp_factors(element::family family, cell::type cell, int degree,
 {
   std::vector<int> tp_dofs = tp_dof_ordering(family, cell, degree, lvariant,
                                              dvariant, discontinuous);
-  if (tp_dofs.size() > 0 && tp_dofs == dof_ordering)
+  if (!tp_dofs.empty() && tp_dofs == dof_ordering)
   {
     switch (family)
     {
@@ -1248,24 +1248,24 @@ FiniteElement<F>::FiniteElement(
         auto& trans1 = _eperm.at(cell::type::interval)[0];
         auto& trans2 = _eperm.at(cell::type::triangle);
 
-        if (dofs[1][0].size() > 0)
+        if (!dofs[1][0].empty())
         {
           precompute::apply_permutation(trans1, std::span(rot), dofs[1][0][0]);
         }
-        if (dofs[1][1].size() > 0)
+        if (!dofs[1][1].empty())
         {
           precompute::apply_permutation(trans1, std::span(rot), dofs[1][1][0]);
         }
-        if (dofs[2][0].size() > 0)
+        if (!dofs[2][0].empty())
         {
           precompute::apply_permutation(trans2[0], std::span(rot),
                                         dofs[2][0][0]);
         }
-        if (dofs[1][0].size() > 0)
+        if (!dofs[1][0].empty())
         {
           precompute::apply_permutation(trans1, std::span(ref), dofs[1][0][0]);
         }
-        if (dofs[2][0].size() > 0)
+        if (!dofs[2][0].empty())
         {
           precompute::apply_permutation(trans2[1], std::span(ref),
                                         dofs[2][0][0]);
@@ -1354,21 +1354,21 @@ FiniteElement<F>::FiniteElement(
         auto& trans1 = _eperm.at(cell::type::interval)[0];
         auto& trans2 = _eperm.at(cell::type::quadrilateral);
 
-        if (dofs[1][1].size() > 0)
+        if (!dofs[1][1].empty())
         {
           precompute::apply_permutation(trans1, std::span(rot), dofs[1][1][0]);
         }
-        if (dofs[1][2].size() > 0)
+        if (!dofs[1][2].empty())
         {
           precompute::apply_permutation(trans1, std::span(rot), dofs[1][2][0]);
         }
-        if (dofs[2][0].size() > 0)
+        if (!dofs[2][0].empty())
         {
           precompute::apply_permutation(trans2[0], std::span(rot),
                                         dofs[2][0][0]);
         }
 
-        if (dofs[2][0].size() > 0)
+        if (!dofs[2][0].empty())
         {
           precompute::apply_permutation(trans2[1], std::span(ref),
                                         dofs[2][0][0]);

@@ -5,7 +5,6 @@
 # SPDX-License-Identifier:    MIT
 """Functions to directly wrap Basix elements in UFL."""
 
-import functools as _functools
 import hashlib as _hashlib
 import itertools as _itertools
 import typing as _typing
@@ -1976,7 +1975,6 @@ def _compute_signature(element: _basix.finite_element.FiniteElement) -> str:
     return signature
 
 
-@_functools.cache
 def element(
     family: _typing.Union[_basix.ElementFamily, str],
     cell: _typing.Union[_basix.CellType, str],
@@ -2295,7 +2293,6 @@ def real_element(
     return _RealElement(cell, value_shape)
 
 
-@_functools.cache
 def blocked_element(
     sub_element: _ElementBase,
     shape: tuple[int, ...],

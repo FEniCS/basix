@@ -64,5 +64,3 @@ __all__ = [
     "make_quadrature",
     "compute_interpolation_operator",
 ]
-
-default_scalar_type = np.float64

@@ -587,7 +587,7 @@ def create_element(
     dpc_variant: DPCVariant = DPCVariant.unset,
     discontinuous: bool = False,
     dof_ordering: typing.Optional[list[int]] = None,
-    dtype: typing.Optional[npt.DTypeLike] = None,
+    dtype: npt.DTypeLike = np.float64,
 ) -> FiniteElement:
     """Create a finite element.
 
@@ -607,11 +607,6 @@ def create_element(
     Returns:
         A finite element.
     """
-    if dtype is None:
-        from basix import default_scalar_type
-
-        dtype = default_scalar_type
-
     e = _create_element(
         family.value,
         celltype.value,
@@ -673,11 +668,6 @@ def create_custom_element(
     Returns:
         A custom finite element.
     """
-    if dtype is None:
-        from basix import default_scalar_type
-
-        dtype = default_scalar_type
-
     if wcoeffs.dtype != dtype:
         wcoeffs = np.dtype(dtype).type(wcoeffs)  # type: ignore
         x = [[np.dtype(dtype).type(j) for j in i] for i in x]  # type: ignore

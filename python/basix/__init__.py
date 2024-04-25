@@ -9,8 +9,6 @@ The core of the library is written in C++, but the majority of Basix's
 functionality can be used via this Python interface.
 """
 
-import numpy as np
-
 from basix import cell, finite_element, lattice, polynomials, quadrature, sobolev_spaces
 from basix._basixcpp import __version__
 from basix.cell import CellType, geometry, topology

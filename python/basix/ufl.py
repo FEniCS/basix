@@ -293,6 +293,10 @@ class _ElementBase(_AbstractFiniteElement):
     def basix_sobolev_space(self):
         """Return a Basix enum representing the underlying Sobolev space."""
 
+    @_abstractproperty
+    def dtype(self) -> _npt.DTypeLike:
+        """Element float type."""
+
     def get_tensor_product_representation(self):
         """Get the element's tensor product factorisation."""
         return None
@@ -464,6 +468,11 @@ class _BasixElement(_ElementBase):
         if not self.has_tensor_product_factorisation:
             return None
         return self._element.get_tensor_product_representation()
+
+    @property
+    def dtype(self) -> _npt.DTypeLike:
+        """Element float type."""
+        return self._element.dtype
 
     @property
     def basix_sobolev_space(self):
@@ -712,6 +721,11 @@ class _ComponentElement(_ElementBase):
             raise NotImplementedError()
 
     @property
+    def dtype(self) -> _npt.DTypeLike:
+        """Element float type."""
+        return self._element.dtype
+
+    @property
     def basix_sobolev_space(self):
         """Return a Basix enum representing the underlying Sobolev space."""
         return self._element.basix_sobolev_space
@@ -884,6 +898,11 @@ class _MixedElement(_ElementBase):
     def __hash__(self) -> int:
         """Return a hash."""
         return super().__hash__()
+
+    @property
+    def dtype(self) -> _npt.DTypeLike:
+        """Element float type."""
+        self.elements[0].dtype
 
     @property
     def is_mixed(self) -> bool:
@@ -1225,6 +1244,11 @@ class _BlockedElement(_ElementBase):
         return super().__hash__()
 
     @property
+    def dtype(self) -> _npt.DTypeLike:
+        """Element float type."""
+        return self._sub_element.dtype
+
+    @property
     def is_symmetric(self) -> bool:
         """Is the element a symmetric 2-tensor?"""
         return self._has_symmetry
@@ -1538,6 +1562,12 @@ class _QuadratureElement(_ElementBase):
 
         super().__init__(repr, cell.name, (), degree, pullback=pullback)
 
+    @property
+    def dtype(self) -> _npt.DTypeLike:
+        """Element float type."""
+        raise NotImplementedError()
+
+    @property
     def basix_sobolev_space(self):
         """Underlying Sobolev space."""
         return _basix.sobolev_spaces.L2
@@ -1768,6 +1798,11 @@ class _RealElement(_ElementBase):
     def __hash__(self) -> int:
         """Return a hash."""
         return super().__hash__()
+
+    @property
+    def dtype(self) -> _npt.DTypeLike:
+        """Element float type."""
+        raise NotImplementedError()
 
     def tabulate(self, nderivs: int, points: _npt.NDArray[np.float64]) -> _npt.NDArray[np.float64]:
         """Tabulate the basis functions of the element.

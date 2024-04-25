@@ -15,7 +15,12 @@ from basix._basixcpp import ElementFamily as _EF
 from basix._basixcpp import FiniteElement_float32 as _FiniteElement_float32
 from basix._basixcpp import FiniteElement_float64 as _FiniteElement_float64
 from basix._basixcpp import LagrangeVariant as _LV
-from basix._basixcpp import create_custom_element as _create_custom_element
+from basix._basixcpp import (
+    create_custom_element_float32 as _create_custom_element_float32,
+)
+from basix._basixcpp import (
+    create_custom_element_float64 as _create_custom_element_float64,
+)
 from basix._basixcpp import create_element as _create_element
 from basix._basixcpp import create_tp_element as _create_tp_element
 from basix._basixcpp import tp_dof_ordering as _tp_dof_ordering
@@ -602,18 +607,18 @@ def create_element(
     Returns:
         A finite element.
     """
-    return FiniteElement(
-        _create_element(
-            family.value,
-            celltype.value,
-            degree,
-            lagrange_variant.value,
-            dpc_variant.value,
-            discontinuous,
-            dof_ordering if dof_ordering is not None else [],
-            np.dtype(dtype).char,
-        )
+    e = _create_element(
+        family.value,
+        celltype.value,
+        degree,
+        lagrange_variant.value,
+        dpc_variant.value,
+        discontinuous,
+        dof_ordering if dof_ordering is not None else [],
+        np.dtype(dtype).char,
     )
+
+    return FiniteElement(e)
 
 
 def create_custom_element(
@@ -629,6 +634,7 @@ def create_custom_element(
     embedded_subdegree: int,
     embedded_superdegree: int,
     poly_type: PolysetType,
+    dtype: npt.DTypeLike = np.float64,
 ) -> FiniteElement:
     """Create a custom finite element.
 
@@ -657,10 +663,22 @@ def create_custom_element(
         embedded_superdegree: Degree of a polynomial in this
             element's polyset.
         poly_type: Type of polyset to use for this element.
+        dtype: Element scalar type.
 
     Returns:
         A custom finite element.
     """
+    if wcoeffs.dtype != dtype:
+        wcoeffs = np.dtype(dtype).type(wcoeffs)  # type: ignore
+        x = [[np.dtype(dtype).type(j) for j in i] for i in x]  # type: ignore
+        M = [[np.dtype(dtype).type(j) for j in i] for i in M]  # type: ignore
+    if np.issubdtype(dtype, np.float32):
+        _create_custom_element = _create_custom_element_float32
+    elif np.issubdtype(dtype, np.float64):
+        _create_custom_element = _create_custom_element_float64
+    else:
+        raise NotImplementedError(f"Type {dtype} not supported.")
+
     return FiniteElement(
         _create_custom_element(
             cell_type.value,

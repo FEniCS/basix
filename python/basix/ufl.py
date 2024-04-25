@@ -302,7 +302,9 @@ class _ElementBase(_AbstractFiniteElement):
         """The degree of the element."""
         return self._degree
 
-    def custom_quadrature(self) -> tuple[_npt.NDArray[np.float64], _npt.NDArray[np.float64]]:
+    def custom_quadrature(
+        self,
+    ) -> tuple[_npt.NDArray[np.float64], _npt.NDArray[np.float64]]:
         """Return custom quadrature rule or raise a ValueError."""
         raise ValueError("Element does not have a custom quadrature rule.")
 
@@ -355,6 +357,21 @@ class _ElementBase(_AbstractFiniteElement):
     def basix_element(self):
         """Underlying Basix element."""
         raise NotImplementedError()
+
+    @property
+    def is_quadrature(self) -> bool:
+        """Is this a quadrature element?"""
+        return False
+
+    @property
+    def is_mixed(self) -> bool:
+        """Is this a mixed element?"""
+        return False
+
+    @property
+    def is_symmetric(self) -> bool:
+        """Is the element a symmetric 2-tensor?"""
+        return False
 
 
 class _BasixElement(_ElementBase):
@@ -869,6 +886,11 @@ class _MixedElement(_ElementBase):
         return super().__hash__()
 
     @property
+    def is_mixed(self) -> bool:
+        """Is this a mixed element?"""
+        return True
+
+    @property
     def degree(self) -> int:
         """Degree of the element."""
         return max((e.degree for e in self._sub_elements), default=-1)
@@ -1091,7 +1113,9 @@ class _MixedElement(_ElementBase):
             pt = _basix.polyset_superset(self.cell_type, pt, e.polyset_type)
         return pt
 
-    def custom_quadrature(self) -> tuple[_npt.NDArray[np.float64], _npt.NDArray[np.float64]]:
+    def custom_quadrature(
+        self,
+    ) -> tuple[_npt.NDArray[np.float64], _npt.NDArray[np.float64]]:
         """Return custom quadrature rule or raise a ValueError."""
         custom_q = None
         for e in self._sub_elements:
@@ -1129,6 +1153,7 @@ class _BlockedElement(_ElementBase):
     _block_shape: tuple[int, ...]
     _sub_element: _ElementBase
     _block_size: int
+    _has_symmetry: bool
 
     def __init__(
         self,
@@ -1198,6 +1223,16 @@ class _BlockedElement(_ElementBase):
     def __hash__(self) -> int:
         """Return a hash."""
         return super().__hash__()
+
+    @property
+    def is_symmetric(self) -> bool:
+        """Is the element a symmetric 2-tensor?"""
+        return self._has_symmetry
+
+    @property
+    def is_quadrature(self) -> bool:
+        """Is this a quadrature element?"""
+        return self._sub_element.is_quadrature
 
     def tabulate(self, nderivs: int, points: _npt.NDArray[np.float64]) -> _npt.NDArray[np.float64]:
         """Tabulate the basis functions of the element.
@@ -1461,7 +1496,9 @@ class _BlockedElement(_ElementBase):
         """
         return self._sub_element.has_tensor_product_factorisation
 
-    def custom_quadrature(self) -> tuple[_npt.NDArray[np.float64], _npt.NDArray[np.float64]]:
+    def custom_quadrature(
+        self,
+    ) -> tuple[_npt.NDArray[np.float64], _npt.NDArray[np.float64]]:
         """Return custom quadrature rule or raise a ValueError."""
         return self._sub_element.custom_quadrature()
 
@@ -1552,9 +1589,16 @@ class _QuadratureElement(_ElementBase):
         """
         return self, 0, 1
 
-    def custom_quadrature(self) -> tuple[_npt.NDArray[np.float64], _npt.NDArray[np.float64]]:
+    def custom_quadrature(
+        self,
+    ) -> tuple[_npt.NDArray[np.float64], _npt.NDArray[np.float64]]:
         """Return custom quadrature rule or raise a ValueError."""
         return self._points, self._weights
+
+    @property
+    def is_quadrature(self) -> bool:
+        """Is this a quadrature element?"""
+        return True
 
     @property
     def ufcx_element_type(self) -> str:
@@ -1942,7 +1986,7 @@ def element(
     discontinuous: bool = False,
     shape: _typing.Optional[tuple[int, ...]] = None,
     symmetry: _typing.Optional[bool] = None,
-    dtype: _npt.DTypeLike = np.float64,
+    dtype: _typing.Optional[_npt.DTypeLike] = None,
 ) -> _ElementBase:
     """Create a UFL compatible element using Basix.
 
@@ -2082,7 +2126,12 @@ def enriched_element(
     row = 0
     for e in elements:
         wcoeffs[row : row + e.dim, :] = _basix.polynomials.reshape_coefficients(
-            _basix.PolynomialType.legendre, ct, e._wcoeffs, vsize, e.embedded_superdegree, hd
+            _basix.PolynomialType.legendre,
+            ct,
+            e._wcoeffs,
+            vsize,
+            e.embedded_superdegree,
+            hd,
         )
         row += e.dim
 
@@ -2105,9 +2154,9 @@ def enriched_element(
 def custom_element(
     cell_type: _basix.CellType,
     reference_value_shape: _typing.Union[list[int], tuple[int, ...]],
-    wcoeffs: _npt.NDArray[np.float64],
-    x: list[list[_npt.NDArray[np.float64]]],
-    M: list[list[_npt.NDArray[np.float64]]],
+    wcoeffs: _npt.NDArray[np.floating],
+    x: list[list[_npt.NDArray[np.floating]]],
+    M: list[list[_npt.NDArray[np.floating]]],
     interpolation_nderivs: int,
     map_type: _basix.MapType,
     sobolev_space: _basix.SobolevSpace,
@@ -2115,6 +2164,7 @@ def custom_element(
     embedded_subdegree: int,
     embedded_superdegree: int,
     polyset_type: _basix.PolysetType = _basix.PolysetType.standard,
+    dtype: _typing.Optional[_npt.DTypeLike] = None,
 ) -> _ElementBase:
     """Create a UFL compatible custom Basix element.
 
@@ -2142,6 +2192,7 @@ def custom_element(
         embedded_superdegree: The highest degree of a polynomial in this
             element's polyset.
         polyset_type: Polyset type for the element.
+        dtype: Floating point data type.
 
     Returns:
         A custom finite element.
@@ -2159,6 +2210,7 @@ def custom_element(
         embedded_subdegree,
         embedded_superdegree,
         polyset_type,
+        dtype=dtype,
     )
     return _BasixElement(e)
 
@@ -2180,8 +2232,8 @@ def quadrature_element(
     value_shape: tuple[int, ...] = (),
     scheme: _typing.Optional[str] = None,
     degree: _typing.Optional[int] = None,
-    points: _typing.Optional[_npt.NDArray[np.float64]] = None,
-    weights: _typing.Optional[_npt.NDArray[np.float64]] = None,
+    points: _typing.Optional[_npt.NDArray[np.floating]] = None,
+    weights: _typing.Optional[_npt.NDArray[np.floating]] = None,
     pullback: _AbstractPullback = _ufl.identity_pullback,
 ) -> _ElementBase:
     """Create a quadrature element.

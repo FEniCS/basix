@@ -2084,6 +2084,7 @@ def enriched_element(
             if e.map_type != map_type:
                 raise ValueError("Enriched elements on different map types not supported.")
 
+    dtype = e.dtype
     hcd = min(e.embedded_subdegree for e in elements)
     hd = max(e.embedded_superdegree for e in elements)
     ss = _basix.sobolev_spaces.intersection([e.basix_sobolev_space for e in elements])
@@ -2097,6 +2098,8 @@ def enriched_element(
             raise ValueError("Enriched elements on different polyset types not supported.")
         if e.reference_value_shape != vshape or e.reference_value_size != vsize:
             raise ValueError("Enriched elements on different value shapes not supported.")
+        if e.dtype != dtype:
+            raise ValueError("Enriched elements with different dtypes no supported.")
     nderivs = max(e.interpolation_nderivs for e in elements)
 
     x = []
@@ -2148,6 +2151,7 @@ def enriched_element(
         hcd,
         hd,
         ptype,
+        dtype=dtype
     )
 
 

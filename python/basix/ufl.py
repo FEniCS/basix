@@ -2151,7 +2151,7 @@ def enriched_element(
         hcd,
         hd,
         ptype,
-        dtype=dtype
+        dtype=dtype,
     )
 
 

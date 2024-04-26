@@ -222,10 +222,6 @@ class _ElementBase(_AbstractFiniteElement):
         """
 
     @_abstractproperty
-    def ufcx_element_type(self) -> str:
-        """Element type."""
-
-    @_abstractproperty
     def dim(self) -> int:
         """Number of DOFs the element has."""
 
@@ -478,14 +474,6 @@ class _BasixElement(_ElementBase):
     def basix_sobolev_space(self):
         """Return a Basix enum representing the underlying Sobolev space."""
         return self._element.sobolev_space
-
-    @property
-    def ufcx_element_type(self) -> str:
-        """Element type."""
-        if self._is_custom:
-            return "ufcx_basix_custom_element"
-        else:
-            return "ufcx_basix_element"
 
     @property
     def dim(self) -> int:
@@ -810,11 +798,6 @@ class _ComponentElement(_ElementBase):
         return self._element.interpolation_nderivs
 
     @property
-    def ufcx_element_type(self) -> str:
-        """Element type."""
-        raise NotImplementedError()
-
-    @property
     def map_type(self) -> _basix.MapType:
         """The Basix map type."""
         raise NotImplementedError()
@@ -1018,11 +1001,6 @@ class _MixedElement(_ElementBase):
     def sub_elements(self) -> list[_ElementBase]:
         """List of sub elements."""
         return self._sub_elements
-
-    @property
-    def ufcx_element_type(self) -> str:
-        """Element type."""
-        return "ufcx_mixed_element"
 
     @property
     def dim(self) -> int:
@@ -1333,11 +1311,6 @@ class _BlockedElement(_ElementBase):
         return [self._sub_element for _ in range(self._block_size)]
 
     @property
-    def ufcx_element_type(self) -> str:
-        """Element type."""
-        return self._sub_element.ufcx_element_type
-
-    @property
     def dim(self) -> int:
         """Number of DOFs the element has."""
         return self._sub_element.dim * self._block_size
@@ -1631,11 +1604,6 @@ class _QuadratureElement(_ElementBase):
         return True
 
     @property
-    def ufcx_element_type(self) -> str:
-        """Element type."""
-        return "ufcx_quadrature_element"
-
-    @property
     def dim(self) -> int:
         """Number of DOFs the element has."""
         return self._points.shape[0]
@@ -1835,11 +1803,6 @@ class _RealElement(_ElementBase):
         """
         assert flat_component < self.reference_value_size
         return self, 0, 1
-
-    @property
-    def ufcx_element_type(self) -> str:
-        """Element type."""
-        return "ufcx_real_element"
 
     @property
     def dim(self) -> int:

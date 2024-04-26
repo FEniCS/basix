@@ -324,29 +324,9 @@ class _ElementBase(_AbstractFiniteElement):
         return 1
 
     @property
-    def _wcoeffs(self) -> _npt.NDArray[np.float64]:
-        """The coefficients used to define the polynomial set."""
-        raise NotImplementedError()
-
-    @property
-    def _x(self) -> list[list[_npt.NDArray[np.float64]]]:
-        """The points used to define interpolation."""
-        raise NotImplementedError()
-
-    @property
-    def _M(self) -> list[list[_npt.NDArray[np.float64]]]:
-        """The matrices used to define interpolation."""
-        raise NotImplementedError()
-
-    @property
     def interpolation_nderivs(self) -> int:
         """The number of derivatives needed when interpolating."""
         raise NotImplementedError()
-
-    @property
-    def is_custom_element(self) -> bool:
-        """True if the element is a custom Basix element."""
-        return False
 
     @property
     def has_custom_quadrature(self) -> bool:
@@ -551,11 +531,6 @@ class _BasixElement(_ElementBase):
         return self._element.interpolation_nderivs
 
     @property
-    def is_custom_element(self) -> bool:
-        """True if the element is a custom Basix element."""
-        return self._is_custom
-
-    @property
     def map_type(self) -> _basix.MapType:
         """The Basix map type."""
         return self._element.map_type
@@ -597,21 +572,6 @@ class _BasixElement(_ElementBase):
     @property
     def polyset_type(self) -> _basix.PolysetType:
         return self._element.polyset_type
-
-    @property
-    def _wcoeffs(self) -> _npt.NDArray[np.float64]:
-        """The coefficients used to define the polynomial set."""
-        return self._element.wcoeffs
-
-    @property
-    def _x(self) -> list[list[_npt.NDArray[np.float64]]]:
-        """The points used to define interpolation."""
-        return self._element.x
-
-    @property
-    def _M(self) -> list[list[_npt.NDArray[np.float64]]]:
-        """The matrices used to define interpolation."""
-        return self._element.M
 
     @property
     def has_tensor_product_factorisation(self) -> bool:
@@ -1439,49 +1399,6 @@ class _BlockedElement(_ElementBase):
     @property
     def polyset_type(self) -> _basix.PolysetType:
         return self._sub_element.polyset_type
-
-    @property
-    def _wcoeffs(self) -> _npt.NDArray[np.float64]:
-        """Coefficients used to define the polynomial set."""
-        sub_wc = self._sub_element._wcoeffs
-        wcoeffs = np.zeros((sub_wc.shape[0] * self._block_size, sub_wc.shape[1] * self._block_size))
-        for i in range(self._block_size):
-            wcoeffs[
-                sub_wc.shape[0] * i : sub_wc.shape[0] * (i + 1),
-                sub_wc.shape[1] * i : sub_wc.shape[1] * (i + 1),
-            ] = sub_wc
-        return wcoeffs
-
-    @property
-    def _x(self) -> list[list[_npt.NDArray[np.float64]]]:
-        """Points used to define interpolation."""
-        return self._sub_element._x
-
-    @property
-    def _M(self) -> list[list[_npt.NDArray[np.float64]]]:
-        """Matrices used to define interpolation."""
-        M = []
-        for M_list in self._sub_element._M:
-            M_row = []
-            for mat in M_list:
-                new_mat = np.zeros(
-                    (
-                        mat.shape[0] * self._block_size,
-                        mat.shape[1] * self._block_size,
-                        mat.shape[2],
-                        mat.shape[3],
-                    )
-                )
-                for i in range(self._block_size):
-                    new_mat[
-                        i * mat.shape[0] : (i + 1) * mat.shape[0],
-                        i * mat.shape[1] : (i + 1) * mat.shape[1],
-                        :,
-                        :,
-                    ] = mat
-                M_row.append(new_mat)
-            M.append(M_row)
-        return M
 
     @property
     def has_tensor_product_factorisation(self) -> bool:

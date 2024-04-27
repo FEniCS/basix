@@ -38,7 +38,9 @@ jobs:
           python-version: "3.11"
 
       - name: Install Basix
-        run: pip -v install .[test]
+        run: |
+          pip install nanobind scikit-build-core[pyproject]
+          pip -v install --no-build-isolation .[test]
 
       - name: Run units tests
         run: |

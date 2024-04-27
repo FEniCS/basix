@@ -19,7 +19,7 @@ jobs:
     name: Build and test (Windows)
     runs-on: windows-2022
     env:
-      CMAKE_ARGS: -DCMAKE_TOOLCHAIN_FILE=$env{VCPKG_INSTALLATION_ROOT}/scripts/buildsystems/vcpkg.cmake
+      CMAKE_ARGS: -DCMAKE_TOOLCHAIN_FILE=C:/vcpkg/scripts/buildsystems/vcpkg.cmake
     steps:
       - uses: actions/checkout@v4
 

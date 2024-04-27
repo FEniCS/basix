@@ -36,11 +36,22 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-
-      - name: Install Basix
+      
+      - name: Install Basix C++ library
         run: |
-          pip install nanobind scikit-build-core[pyproject]
+          cd cpp
+          cmake -DCMAKE_BUILD_TYPE=Release -B build-dir -S . # Use make (not ninja)
+          cmake --build build-dir
+          cmake --install build-dir
+      - name: Install Basix Python wrapper
+        run: |
+          cd python
           pip -v install --no-build-isolation .
+
+      #- name: Install Basix
+      #  run: |
+      #    pip install nanobind scikit-build-core[pyproject]
+      #    pip -v install --no-build-isolation .
 
       - name: Run units tests
         run: |

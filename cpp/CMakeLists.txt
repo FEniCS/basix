@@ -1,8 +1,10 @@
 cmake_minimum_required(VERSION 3.19)
 
+set(VCPKG_BUILD_TYPE release)
+
 # Set the version
 project(Basix VERSION "0.9.0.0" LANGUAGES CXX)
-#include(GNUInstallDirs)
+include(GNUInstallDirs)
 
 if(SKBUILD)
   # Always use lib/ in the Python root. Otherwise, environment used for

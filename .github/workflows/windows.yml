@@ -6,9 +6,9 @@ on:
       - main
   push:
     tags:
-      - "**"
+      - "v*"
     branches:
-      - main
+      - "**"
   merge_group:
     branches:
       - main

@@ -1,0 +1,41 @@
+name: Basix CI on Windows
+
+on:
+  pull_request:
+    branches:
+      - main
+  push:
+    tags:
+      - "v*"
+    branches:
+      - main
+  merge_group:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build and test (Windows)
+    runs-on: windows-2022
+    env:
+      CMAKE_ARGS: -DCMAKE_TOOLCHAIN_FILE=$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Basix
+        run: pip -v install .[test]
+
+      - name: Run units tests
+        run: |
+          pip install pytest-xdist
+          pytest -n auto --durations 20 test/
+      - name: Run python demos
+        run: pytest demo/python/test.py
+      - name: Run C++ demos
+        run: pytest demo/cpp/test.py

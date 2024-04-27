@@ -21,7 +21,8 @@ jobs:
     env:
       CMAKE_ARGS: -DCMAKE_TOOLCHAIN_FILE=C:/vcpkg/scripts/buildsystems/vcpkg.cmake
       VCPKG_BINARY_SOURCES: "clear;x-gha,readwrite"
-
+      VCPKG_BUILD_TYPE: debug
+    
     steps:
       - uses: actions/checkout@v4
 
@@ -40,7 +41,7 @@ jobs:
       - name: Install Basix C++ library
         run: |
           cd cpp
-          cmake -DCMAKE_INSTALL_PREFIX=D:/a/basix/install -DCMAKE_TOOLCHAIN_FILE=C:/vcpkg/scripts/buildsystems/vcpkg.cmake -DCMAKE_BUILD_TYPE=Debug -B build-dir -S . # Use make (not ninja)
+          cmake -DCMAKE_INSTALL_PREFIX=D:/a/basix/install -DCMAKE_TOOLCHAIN_FILE=C:/vcpkg/scripts/buildsystems/vcpkg.cmake -B build-dir -S . # Use make (not ninja)
           cmake --build build-dir
           cmake --install build-dir
       - name: Install Basix Python wrapper

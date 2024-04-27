@@ -104,6 +104,9 @@ list(APPEND basix_compiler_flags -Wall;-Werror;-Wextra;-Wno-comment;-pedantic;)
 target_compile_options(basix PRIVATE "$<$<OR:$<CONFIG:Debug>,$<CONFIG:Developer>>:${basix_compiler_flags}>")
 target_compile_options(basix PRIVATE $<$<CONFIG:Developer>:${BASIX_DEVELOPER_FLAGS}>)
 
+# TODO: MSVC only - to clean.
+add_compile_definitions(_USE_MATH_DEFINES)
+
 # Install the Basix library
 install(TARGETS basix
   EXPORT BasixTargets

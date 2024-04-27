@@ -40,7 +40,7 @@ jobs:
       - name: Install Basix
         run: |
           pip install nanobind scikit-build-core[pyproject]
-          pip -v install --no-build-isolation .[test]
+          pip -v install --no-build-isolation .
 
       - name: Run units tests
         run: |

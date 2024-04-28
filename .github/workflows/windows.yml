@@ -19,7 +19,7 @@ jobs:
     name: Build and test (Windows)
     runs-on: windows-2022
     env:
-      CMAKE_ARGS: -DCMAKE_TOOLCHAIN_FILE=C:/vcpkg/scripts/buildsystems/vcpkg.cmake -DBasix_DIR=D:/a/basix/basix/cpp/build-dir/debug
+      CMAKE_ARGS: -DCMAKE_TOOLCHAIN_FILE=C:/vcpkg/scripts/buildsystems/vcpkg.cmake -DBasix_DIR=D:/a/basix/basix/cpp/build-dir/Debug
       VCPKG_BINARY_SOURCES: "clear;x-gha,readwrite"
     
     steps:

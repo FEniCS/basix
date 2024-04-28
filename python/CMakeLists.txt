@@ -54,4 +54,4 @@ else()
   set_target_properties(_basixcpp PROPERTIES INSTALL_RPATH ${_basix_dir})
 endif()
 
-install(TARGETS _basixcpp LIBRARY DESTINATION .)
+install(TARGETS _basixcpp LIBRARY DESTINATION basix)

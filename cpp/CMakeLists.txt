@@ -31,7 +31,7 @@ find_package(LAPACK REQUIRED)
 feature_summary(WHAT ALL)
 
 # Source files
-add_library(basix)
+add_library(basix SHARED)
 
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/basix/version.h.in basix/version.h)
 include_directories(${CMAKE_CURRENT_BINARY_DIR})

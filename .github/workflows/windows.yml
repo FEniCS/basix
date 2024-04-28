@@ -41,8 +41,8 @@ jobs:
         run: |
           cd cpp
           cmake -DCMAKE_TOOLCHAIN_FILE=C:/vcpkg/scripts/buildsystems/vcpkg.cmake -B build-dir -S . # Use make (not ninja)
-          cmake --build --config Debug build-dir
-          cmake --install --config Debug --prefix D:/a/basix/install build-dir
+          cmake --build build-dir --config Debug
+          cmake --install build-dir --config Debug --prefix D:/a/basix/install
       - name: Install Basix Python wrapper
         run: |
           cd python

@@ -20,5 +20,7 @@ def test_demo(demo):
     """Test demos."""
     demo_build = f"{path}/{demo}/_build"
     command = f"""mkdir -p {demo_build} && cd {demo_build} && \
-                  cmake -DPython3_EXECUTABLE={sys.executable} .. && make && ./{demo}"""
+                  cmake -DBasix_DIR=D:/a/basix/install/lib/cmake/basix
+                  -DPython3_EXECUTABLE={sys.executable} .. && \
+                  make && ./{demo}"""
     assert os.system(command) == 0

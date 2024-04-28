@@ -1,7 +1,5 @@
 cmake_minimum_required(VERSION 3.19)
 
-set(VCPKG_BUILD_TYPE release)
-
 # Set the version
 project(Basix VERSION "0.9.0.0" LANGUAGES CXX)
 include(GNUInstallDirs)
@@ -10,8 +8,8 @@ if(SKBUILD)
   # Always use lib/ in the Python root. Otherwise, environment used for
   # wheels might place in lib64/, which CMake on some systems will not
   # find.
-  set(CMAKE_INSTALL_LIBDIR basix/lib)
-  set(CMAKE_INSTALL_INCLUDEDIR basix/include)
+  #set(CMAKE_INSTALL_LIBDIR basix/lib)
+  #set(CMAKE_INSTALL_INCLUDEDIR basix/include)
 endif()
 
 include(FeatureSummary)
@@ -31,7 +29,7 @@ find_package(LAPACK REQUIRED)
 feature_summary(WHAT ALL)
 
 # Source files
-add_library(basix SHARED)
+add_library(basix)
 
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/basix/version.h.in basix/version.h)
 include_directories(${CMAKE_CURRENT_BINARY_DIR})

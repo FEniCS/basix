@@ -40,7 +40,7 @@ jobs:
       - name: Install Basix C++ library
         run: |
           cd cpp
-          cmake -DCMAKE_TOOLCHAIN_FILE=C:/vcpkg/scripts/buildsystems/vcpkg.cmake -B build-dir -S . # Use make (not ninja)
+          cmake -DCMAKE_TOOLCHAIN_FILE=C:/vcpkg/scripts/buildsystems/vcpkg.cmake -DCMAKE_WINDOWS_EXPORT_ALL_SYMBOLS=ON -B build-dir -S . # Use make (not ninja)
           cmake --build build-dir --config Debug
           cmake --install build-dir --config Debug --prefix D:/a/basix/install
       - name: Install Basix Python wrapper

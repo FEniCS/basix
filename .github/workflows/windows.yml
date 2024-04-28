@@ -49,10 +49,10 @@ jobs:
           pip install scikit-build-core[pyproject] nanobind
           pip -v install --no-build-isolation .
 
-      #- name: Install Basix
-      #  run: |
-      #    pip install nanobind scikit-build-core[pyproject]
-      #    pip -v install --no-build-isolation .
+      - name: Install Basix (combined)
+        run: |
+          pip install nanobind scikit-build-core[pyproject]
+          pip -v install --no-build-isolation .
 
       - name: Run units tests
         run: |

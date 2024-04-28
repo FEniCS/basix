@@ -47,6 +47,7 @@ jobs:
       - name: Install Basix Python wrapper
         run: |
           cd python
+          pip install scikit-build-core[pyproject] nanobind
           pip -v install --no-build-isolation .
 
       #- name: Install Basix

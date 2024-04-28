@@ -19,7 +19,7 @@ jobs:
     name: Build and test (Windows)
     runs-on: windows-2022
     env:
-      CMAKE_ARGS: -DCMAKE_TOOLCHAIN_FILE=C:/vcpkg/scripts/buildsystems/vcpkg.cmake -DBasix_DIR=D:/a/basix/basix/cpp/build-dir/Debug
+      CMAKE_ARGS: -DCMAKE_TOOLCHAIN_FILE=C:/vcpkg/scripts/buildsystems/vcpkg.cmake -DBasix_DIR=D:/a/basix/install
       VCPKG_BINARY_SOURCES: "clear;x-gha,readwrite"
     
     steps:
@@ -42,7 +42,7 @@ jobs:
           cd cpp
           cmake -DCMAKE_INSTALL_PREFIX=D:/a/basix/install -DCMAKE_TOOLCHAIN_FILE=C:/vcpkg/scripts/buildsystems/vcpkg.cmake -B build-dir -S . # Use make (not ninja)
           cmake --build build-dir
-          #cmake --install build-dir
+          cmake --install --target Debug build-dir
       - name: Install Basix Python wrapper
         run: |
           cd python

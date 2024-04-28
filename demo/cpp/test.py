@@ -21,4 +21,5 @@ def test_demo(demo):
     demo_build = f"{path}/{demo}/_build"
     command = f"""mkdir -p {demo_build} && cd {demo_build} && \
                   cmake -DPython3_EXECUTABLE={sys.executable} .. && make && ./{demo}"""
+    subprocess.run(["ls", "-l", "/dev/null"], capture_output=True)
     assert os.system(command) == 0

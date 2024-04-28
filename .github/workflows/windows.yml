@@ -19,7 +19,7 @@ jobs:
     name: Build and test (Windows)
     runs-on: windows-2022
     env:
-      CMAKE_ARGS: -DCMAKE_TOOLCHAIN_FILE=C:/vcpkg/scripts/buildsystems/vcpkg.cmake -DCMAKE_WINDOWS_EXPORT_ALL_SYMBOLS=ON
+      CMAKE_ARGS: -DCMAKE_TOOLCHAIN_FILE=C:/vcpkg/scripts/buildsystems/vcpkg.cmake -DCMAKE_WINDOWS_EXPORT_ALL_SYMBOLS=ON   -DVCPKG_TARGET_TRIPLET=x64-windows-static
       VCPKG_BINARY_SOURCES: "clear;x-gha,readwrite"
     
     steps:

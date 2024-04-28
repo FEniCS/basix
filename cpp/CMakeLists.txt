@@ -20,7 +20,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 # Options
-option(BUILD_SHARED_LIBS "Build Basix with shared libraries." ON)
+option(BUILD_SHARED_LIBS "Build Basix with shared libraries." OFF)
 add_feature_info(BUILD_SHARED_LIBS BUILD_SHARED_LIBS "Build Basix with shared libraries.")
 
 find_package(BLAS REQUIRED)

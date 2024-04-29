@@ -28,6 +28,12 @@ find_package(LAPACK REQUIRED)
 
 feature_summary(WHAT ALL)
 
+if (WIN32)
+    # Windows requires all symbols to be manually exported.
+    # This flag exports all symbols automatically, as in Unix.
+    set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS TRUE)
+endif()
+
 # Source files
 add_library(basix)
 
@@ -110,11 +116,6 @@ if (MSVC)
     add_compile_definitions(_USE_MATH_DEFINES)
 endif()
 
-if (WIN32)
-    # Windows requires all symbols to be manually exported.
-    # This flag exports all symbols automatically, as in Unix.
-    set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS TRUE)
-endif()
 
 if (DEFINED VCPKG_INSTALLED_DIR)
     # Find all vcpkg installed dlls

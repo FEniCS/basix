@@ -43,7 +43,8 @@ jobs:
           cmake -DCMAKE_TOOLCHAIN_FILE=C:/vcpkg/scripts/buildsystems/vcpkg.cmake -B build-dir -S .
           cmake --build build-dir --config Release
           cmake --install build-dir --config Release --prefix D:/a/basix/install
-          echo "D:/a/basix/install/bin" >> $GITHUB_PATH
+          echo "D:/a/basix/install/bin" | Out-File -Append -FilePath $env:GITHUB_PATH -Encoding utf8
+
       - name: Install Basix Python wrapper
         run: |
           cd python

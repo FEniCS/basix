@@ -61,7 +61,7 @@ else()
   set_target_properties(_basixcpp PROPERTIES INSTALL_RPATH ${_basix_dir})
 endif()
 
-install(TARGETS _basixcpp LIBRARY DESTINATION basix RUNTIME_DEPENDENCY_SET dependencies)
+install(TARGETS _basixcpp RUNTIME_DEPENDENCY_SET dependencies LIBRARY DESTINATION basix)
 
 # Copies all runtime dependencies to same path as basix.dll
 # Only enabled on Windows because never seen the necessity on Unix.

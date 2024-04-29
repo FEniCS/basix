@@ -23,6 +23,7 @@ if(TARGET basix)
   add_library(Basix::basix ALIAS basix)
 else()
   find_package(Basix REQUIRED)
+  set_target_properties(Basix PROPERTIES IMPORTED_LOCATION "${Basix_DIR}/bin/basix.dll")
 endif()
 
 find_package(Python COMPONENTS Interpreter Development.Module REQUIRED)
@@ -68,6 +69,7 @@ install(TARGETS _basixcpp RUNTIME_DEPENDENCY_SET dependencies LIBRARY DESTINATIO
 if (WIN32)
     LIST(APPEND PRE_EXCLUDE_REGEXES "api-ms-.*")
     LIST(APPEND PRE_EXCLUDE_REGEXES "ext-ms-.*")
+    LIST(APPEND PRE_EXCLUDE_REGEXES "python.*")
 
     install(RUNTIME_DEPENDENCY_SET dependencies PRE_EXCLUDE_REGEXES ${PRE_EXCLUDE_REGEXES} POST_EXCLUDE_REGEXES ".*system32/.*\\.dll")
 endif()

@@ -116,15 +116,18 @@ if (MSVC)
     add_compile_definitions(_USE_MATH_DEFINES)
 endif()
 
-
 if (DEFINED VCPKG_INSTALLED_DIR)
+    # vcpkg requires that dynamic libraries are installed as runtime
+    # dependencies alongside basix.
+
     # Find all vcpkg installed dlls
     file(GLOB VCPKG_DEPENDENCIES
          RELATIVE "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/bin/"
          "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/bin/*"
     )
 
-    # Install the Basix library including linked vcpkg libraries
+    # Install the Basix library including linked vcpkg dynamic libraries as
+    # runtime dependencies
     install(TARGETS basix
     RUNTIME_DEPENDENCIES
     PRE_INCLUDE_REGEXES ${VCPKG_DEPENDENCIES}

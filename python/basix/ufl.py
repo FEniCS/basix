@@ -2260,6 +2260,8 @@ def quadrature_element(
         points: Quadrature points.
         weights: Quadrature weights.
         pullback: Map name.
+        symmetry: Set to ``True`` if the tensor is symmetric. Valid for
+            rank 2 elements only.
 
     Returns:
         A 'quadrature' finite element.

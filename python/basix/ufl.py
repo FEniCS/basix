@@ -122,6 +122,10 @@ class _ElementBase(_AbstractFiniteElement):
         """Return a hash."""
         return hash("basix" + self._repr)
 
+    def basix_hash(self) -> _typing.Optional[int]:
+        """Return the hash of the Basix element if this is a standard Basix element."""
+        return None
+
     @_abstractmethod
     def __eq__(self, other) -> bool:
         """Check if two elements are equal."""
@@ -417,6 +421,10 @@ class _BasixElement(_ElementBase):
     def __hash__(self) -> int:
         """Return a hash."""
         return super().__hash__()
+
+    def basix_hash(self) -> _typing.Optional[int]:
+        """Return the hash of the Basix element if this is a standard Basix element."""
+        return self._element.hash()
 
     def tabulate(self, nderivs: int, points: _npt.NDArray[np.float64]) -> _npt.NDArray[np.float64]:
         """Tabulate the basis functions of the element.

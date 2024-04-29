@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.19)
+cmake_minimum_required(VERSION 3.21)
 
 # Set the version
 project(Basix VERSION "0.9.0.0" LANGUAGES CXX)
@@ -116,37 +116,16 @@ if (MSVC)
     add_compile_definitions(_USE_MATH_DEFINES)
 endif()
 
-if (DEFINED VCPKG_INSTALLED_DIR)
-    # vcpkg requires that dynamic libraries are installed as runtime
-    # dependencies alongside basix.
+install(TARGETS basix
+EXPORT BasixTargets
+PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+PRIVATE_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/basix
+RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT RuntimeExecutables
+LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT RuntimeLibraries
+ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Development
+RUNTIME_DEPENDENCY_SET dependencies)
 
-    # Find all vcpkg installed dlls
-    file(GLOB VCPKG_DEPENDENCIES
-         RELATIVE "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/bin/"
-         "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/bin/*"
-    )
-
-    # Install the Basix library including linked vcpkg dynamic libraries as
-    # runtime dependencies
-    install(TARGETS basix
-    RUNTIME_DEPENDENCIES
-    PRE_INCLUDE_REGEXES ${VCPKG_DEPENDENCIES}
-    PRE_EXCLUDE_REGEXES ".*"
-    EXPORT BasixTargets
-    PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
-    PRIVATE_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/basix
-    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT RuntimeExecutables
-    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT RuntimeLibraries
-    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Development)
-else()
-    install(TARGETS basix
-    EXPORT BasixTargets
-    PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
-    PRIVATE_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/basix
-    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT RuntimeExecutables
-    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT RuntimeLibraries
-    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Development)
-endif()
+install(RUNTIME_DEPENDENCY_SET dependencies)
 
 # Configure CMake helpers
 include(CMakePackageConfigHelpers)

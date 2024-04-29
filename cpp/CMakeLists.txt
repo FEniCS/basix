@@ -126,7 +126,14 @@ LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT RuntimeLibraries
 ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Development
 )
 
-install(RUNTIME_DEPENDENCY_SET dependencies)
+# Copies all runtime dependencies to same path as basix.dll
+# Only enabled on Windows because never seen the necessity on Unix.
+if (WIN32)
+    LIST(APPEND PRE_EXCLUDE_REGEXES "api-ms-.*")
+    LIST(APPEND PRE_EXCLUDE_REGEXES "ext-ms-.*")
+
+    install(RUNTIME_DEPENDENCY_SET dependencies PRE_EXCLUDE_REGEXES ${PRE_EXCLUDE_REGEXES})
+endif()
 
 # Configure CMake helpers
 include(CMakePackageConfigHelpers)

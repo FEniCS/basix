@@ -8,8 +8,8 @@ if(SKBUILD)
   # Always use lib/ in the Python root. Otherwise, environment used for
   # wheels might place in lib64/, which CMake on some systems will not
   # find.
-  #set(CMAKE_INSTALL_LIBDIR basix/lib)
-  #set(CMAKE_INSTALL_INCLUDEDIR basix/include)
+  set(CMAKE_INSTALL_LIBDIR basix/lib)
+  set(CMAKE_INSTALL_INCLUDEDIR basix/include)
 endif()
 
 include(FeatureSummary)
@@ -98,31 +98,51 @@ target_include_directories(basix PUBLIC
 target_link_libraries(basix PRIVATE BLAS::BLAS)
 target_link_libraries(basix PRIVATE LAPACK::LAPACK)
 
-# Set compiler flags
-#list(APPEND BASIX_DEVELOPER_FLAGS -O2;-g;-pipe)
-#list(APPEND basix_compiler_flags -Wall;-Werror;-Wextra;-Wno-comment;-pedantic;)
-#target_compile_options(basix PRIVATE "$<$<OR:$<CONFIG:Debug>,$<CONFIG:Developer>>:${basix_compiler_flags}>")
-#target_compile_options(basix PRIVATE $<$<CONFIG:Developer>:${BASIX_DEVELOPER_FLAGS}>)
+if (UNIX)
+    list(APPEND BASIX_DEVELOPER_FLAGS -O2;-g;-pipe)
+    list(APPEND BASIX_COMPILER_FLAGS -Wall;-Werror;-Wextra;-Wno-comment;-pedantic;)
+    target_compile_options(basix PRIVATE "$<$<OR:$<CONFIG:Debug>,$<CONFIG:Developer>>:${BASIX_COMPILER_FLAGS}>")
+    target_compile_options(basix PRIVATE $<$<CONFIG:Developer>:${BASIX_DEVELOPER_FLAGS}>)
+endif()
 
-# TODO: MSVC only - to clean.
-add_compile_definitions(_USE_MATH_DEFINES)
+if (MSVC)
+    # M_PI etc. are not not in the standard-compliant MSVC headers.
+    add_compile_definitions(_USE_MATH_DEFINES)
+endif()
 
-file(GLOB VCPKG_DEPENDENCIES
-     RELATIVE "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/bin/"
-     "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/bin/*"
-)
+if (WIN32)
+    # Windows requires all symbols to be manually exported.
+    # This flag exports all symbols automatically, as in Unix.
+    set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS TRUE)
+endif()
 
-# Install the Basix library
-install(TARGETS basix
-  RUNTIME_DEPENDENCIES
-  PRE_INCLUDE_REGEXES ${VCPKG_DEPENDENCIES}
-  PRE_EXCLUDE_REGEXES ".*"
-  EXPORT BasixTargets
-  PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
-  PRIVATE_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/basix
-  RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT RuntimeExecutables
-  LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT RuntimeLibraries
-  ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Development)
+if (DEFINED VCPKG_INSTALLED_DIR)
+    # Find all vcpkg installed dlls
+    file(GLOB VCPKG_DEPENDENCIES
+         RELATIVE "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/bin/"
+         "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/bin/*"
+    )
+
+    # Install the Basix library including linked vcpkg libraries
+    install(TARGETS basix
+    RUNTIME_DEPENDENCIES
+    PRE_INCLUDE_REGEXES ${VCPKG_DEPENDENCIES}
+    PRE_EXCLUDE_REGEXES ".*"
+    EXPORT BasixTargets
+    PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+    PRIVATE_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/basix
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT RuntimeExecutables
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT RuntimeLibraries
+    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Development)
+else()
+    install(TARGETS basix
+    EXPORT BasixTargets
+    PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+    PRIVATE_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/basix
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT RuntimeExecutables
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT RuntimeLibraries
+    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Development)
+endif()
 
 # Configure CMake helpers
 include(CMakePackageConfigHelpers)

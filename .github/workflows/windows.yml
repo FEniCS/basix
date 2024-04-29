@@ -19,7 +19,7 @@ jobs:
 
     runs-on: windows-2022
     env:
-      CMAKE_ARGS: -DCMAKE_WINDOWS_EXPORT_ALL_SYMBOLS=ON -DBasix_DIR=D:/a/basix/install/lib/cmake/basix
+      CMAKE_ARGS: -DBasix_DIR=D:/a/basix/install/lib/cmake/basix
       VCPKG_BINARY_SOURCES: "clear;x-gha,readwrite"
     
     steps:
@@ -40,7 +40,7 @@ jobs:
       - name: Install Basix C++ library
         run: |
           cd cpp
-          cmake -DCMAKE_WINDOWS_EXPORT_ALL_SYMBOLS=ON -DCMAKE_TOOLCHAIN_FILE=C:/vcpkg/scripts/buildsystems/vcpkg.cmake -B build-dir -S .
+          cmake -DCMAKE_TOOLCHAIN_FILE=C:/vcpkg/scripts/buildsystems/vcpkg.cmake -B build-dir -S .
           cmake --build build-dir --config Release
           cmake --install build-dir --config Release --prefix D:/a/basix/install
       - name: Install Basix Python wrapper

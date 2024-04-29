@@ -132,7 +132,7 @@ if (WIN32)
     LIST(APPEND PRE_EXCLUDE_REGEXES "api-ms-.*")
     LIST(APPEND PRE_EXCLUDE_REGEXES "ext-ms-.*")
 
-    install(RUNTIME_DEPENDENCY_SET dependencies PRE_EXCLUDE_REGEXES ${PRE_EXCLUDE_REGEXES})
+    install(RUNTIME_DEPENDENCY_SET dependencies PRE_EXCLUDE_REGEXES ${PRE_EXCLUDE_REGEXES} POST_EXCLUDE_REGEXES ".*system32/.*\\.dll")
 endif()
 
 # Configure CMake helpers

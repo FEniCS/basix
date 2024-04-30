@@ -2245,6 +2245,7 @@ def quadrature_element(
     points: _typing.Optional[_npt.NDArray[np.floating]] = None,
     weights: _typing.Optional[_npt.NDArray[np.floating]] = None,
     pullback: _AbstractPullback = _ufl.identity_pullback,
+    symmetry: _typing.Optional[bool] = None,
 ) -> _ElementBase:
     """Create a quadrature element.
 
@@ -2259,6 +2260,8 @@ def quadrature_element(
         points: Quadrature points.
         weights: Quadrature weights.
         pullback: Map name.
+        symmetry: Set to ``True`` if the tensor is symmetric. Valid for
+            rank 2 elements only.
 
     Returns:
         A 'quadrature' finite element.
@@ -2281,9 +2284,11 @@ def quadrature_element(
 
     e = _QuadratureElement(cell, points, weights, pullback, degree)
     if value_shape == ():
+        if symmetry is not None:
+            raise ValueError("Cannot pass a symmetry argument to this element.")
         return e
     else:
-        return _BlockedElement(e, value_shape)
+        return blocked_element(e, shape=value_shape, symmetry=symmetry)
 
 
 def real_element(

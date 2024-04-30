@@ -1,8 +1,8 @@
 """Script for testing."""
 
 import os
-from subprocess import run
 import sys
+from subprocess import run
 
 import pytest
 

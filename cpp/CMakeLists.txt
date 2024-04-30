@@ -136,7 +136,14 @@ if (WIN32)
   LIST(APPEND PRE_EXCLUDE_REGEXES "api-ms-.*")
   LIST(APPEND PRE_EXCLUDE_REGEXES "ext-ms-.*")
 
-  install(RUNTIME_DEPENDENCY_SET dependencies DESTINATION ${CMAKE_INSTALL_PREFIX} PRE_EXCLUDE_REGEXES ${PRE_EXCLUDE_REGEXES} POST_EXCLUDE_REGEXES ".*system32/.*\\.dll" )
+  if (BASIX_FULL_SKBUILD)
+    # Install runtime dependencies into Python platlib directory alongside pyd.
+    install(RUNTIME_DEPENDENCY_SET dependencies DESTINATION ${SKBUILD_PLATLIB_DIR} PRE_EXCLUDE_REGEXES ${PRE_EXCLUDE_REGEXES} POST_EXCLUDE_REGEXES ".*system32/.*\\.dll" )
+  elseif()
+    # Install runtime dependencies with Basix C++ library.
+    install(RUNTIME_DEPENDENCY_SET dependencies PRE_EXCLUDE_REGEXES ${PRE_EXCLUDE_REGEXES} POST_EXCLUDE_REGEXES ".*system32/.*\\.dll" )
+  endif()
+
 else()
   install(TARGETS basix
   EXPORT BasixTargets

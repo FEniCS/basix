@@ -16,7 +16,7 @@ on:
 
 jobs:
   build-combined:
-    name: Windows vcpkg combined
+    name: Combined build and test
     runs-on: windows-2022
     env:
       VCPKG_BINARY_SOURCES: "clear;x-gha,readwrite"
@@ -48,7 +48,7 @@ jobs:
         run: python -m pytest demo/python/test.py
 
   build-split:
-    name: Windows vcpkg split
+    name: Split build and test
     runs-on: windows-2022
     env:
       VCPKG_BINARY_SOURCES: "clear;x-gha,readwrite"

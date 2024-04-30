@@ -11,10 +11,10 @@ functionality can be used via this Python interface.
 
 import sys
 
-if sys.platform.startswith("win32"):
-    import os
-
-    os.add_dll_directory("D:/a/basix/install/bin")
+#if sys.platform.startswith("win32"):
+#    import os
+#
+#    os.add_dll_directory("D:/a/basix/install/bin")
 
 from basix import cell, finite_element, lattice, polynomials, quadrature, sobolev_spaces
 from basix._basixcpp import __version__

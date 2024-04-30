@@ -6,6 +6,7 @@ endif()
 
 # Set the version
 project(Basix VERSION "0.9.0.0" LANGUAGES CXX)
+include(GNUInstallDirs)
 
 include(FeatureSummary)
 
@@ -113,7 +114,7 @@ endif()
 
 if (WIN32)
   if (SKBUILD)
-    # Install all runtime dependencies to same path as basix shared object.
+    # Install basix runtime to same directory as eventual basix wrapper dll.
     install(TARGETS basix
     EXPORT BasixTargets
     RUNTIME_DEPENDENCY_SET dependencies
@@ -125,7 +126,8 @@ if (WIN32)
     LIST(APPEND PRE_EXCLUDE_REGEXES "api-ms-.*")
     LIST(APPEND PRE_EXCLUDE_REGEXES "ext-ms-.*")
     
-    # Also install runtime dependencies into Python platlib directory alongside pyd.
+    # Also install runtime dependencies to same directory as eventual basix
+    # wrapper dll.
     install(RUNTIME_DEPENDENCY_SET dependencies DESTINATION ${SKBUILD_PLATLIB_DIR}/basix PRE_EXCLUDE_REGEXES ${PRE_EXCLUDE_REGEXES} POST_EXCLUDE_REGEXES ".*system32/.*\\.dll" )
   elseif()
     # Separate C++ build, use defaults.
@@ -144,11 +146,10 @@ if (WIN32)
   endif()
 else()
   # Unix build.
-  include(GNUInstallDirs)
 
   if(SKBUILD)
     # Make sure libraries and includes end up inside basix/ subdirectory in
-    # wheel.
+    # wheel. Avoid lib64/ which can lead to linking issues.
     set(CMAKE_INSTALL_LIBDIR basix/lib)
     set(CMAKE_INSTALL_INCLUDEDIR basix/include)
   endif()

@@ -97,7 +97,7 @@ void declare_float(nb::module_& m, std::string type)
              return as_nbarrayp(self.tabulate(n, _x));
            })
       .def("__eq__", &FiniteElement<T>::operator==)
-      .def("__hash__", &FiniteElement<T>::hash)
+      .def("hash", &FiniteElement<T>::hash)
       .def("push_forward",
            [](const FiniteElement<T>& self,
               nb::ndarray<const T, nb::ndim<3>, nb::c_contig> U,

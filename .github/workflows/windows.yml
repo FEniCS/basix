@@ -57,6 +57,8 @@ jobs:
         run: |
           cd python
           python -m pip -v install .[ci] --config-settings=cmake.args=-DBasix_DIR=D:/a/basix/install/lib/cmake/basix
+          cd ../
+          echo "import os; os.add_dll_directory('D:/a/basix/install/bin')" | Out-File -Append -FilePath conftest.py -Encoding utf8
       - name: Run units tests
         run: |
           python -m pytest -n auto --durations 20 test/

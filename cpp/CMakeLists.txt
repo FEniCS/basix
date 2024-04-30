@@ -112,56 +112,30 @@ if (MSVC)
     add_compile_definitions(_USE_MATH_DEFINES)
 endif()
 
+if(SKBUILD AND UNIX)
+  # Avoid lib64/ which can lead to linking issues.
+  set(CMAKE_INSTALL_LIBDIR basix/lib)
+endif()
+
+if (SKBUILD)
+  # Make sure includes end up inside basix/ subdirectory in wheel. 
+  set(CMAKE_INSTALL_INCLUDEDIR basix/include)
+endif()
+
+install(TARGETS basix
+EXPORT BasixTargets
+RUNTIME_DEPENDENCY_SET dependencies
+PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+PRIVATE_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/basix
+RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT RuntimeExecutables
+LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT RuntimeLibraries
+ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Development
+)
+
 if (WIN32)
-  if (SKBUILD)
-    # Install basix runtime to same directory as eventual basix wrapper dll.
-    install(TARGETS basix
-    EXPORT BasixTargets
-    RUNTIME_DEPENDENCY_SET dependencies
-    PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
-    PRIVATE_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/basix
-    RUNTIME DESTINATION ${SKBUILD_PLATLIB_DIR}/basix COMPONENT RuntimeExecutables
-    )
-    
-    LIST(APPEND PRE_EXCLUDE_REGEXES "api-ms-.*")
-    LIST(APPEND PRE_EXCLUDE_REGEXES "ext-ms-.*")
-    
-    # Also install runtime dependencies to same directory as eventual basix
-    # wrapper dll.
-    install(RUNTIME_DEPENDENCY_SET dependencies DESTINATION ${SKBUILD_PLATLIB_DIR}/basix PRE_EXCLUDE_REGEXES ${PRE_EXCLUDE_REGEXES} POST_EXCLUDE_REGEXES ".*system32/.*\\.dll" )
-  elseif()
-    # Separate C++ build, use defaults.
-    install(TARGETS basix
-    EXPORT BasixTargets
-    RUNTIME_DEPENDENCY_SET dependencies
-    PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
-    PRIVATE_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/basix
-    )
-    
-    LIST(APPEND PRE_EXCLUDE_REGEXES "api-ms-.*")
-    LIST(APPEND PRE_EXCLUDE_REGEXES "ext-ms-.*")
-   
-    # Also install runtime dependencies into defaults.
-    install(RUNTIME_DEPENDENCY_SET dependencies PRE_EXCLUDE_REGEXES ${PRE_EXCLUDE_REGEXES} POST_EXCLUDE_REGEXES ".*system32/.*\\.dll" )
-  endif()
-else()
-  # Unix build.
-
-  if(SKBUILD)
-    # Make sure libraries and includes end up inside basix/ subdirectory in
-    # wheel. Avoid lib64/ which can lead to linking issues.
-    set(CMAKE_INSTALL_LIBDIR basix/lib)
-    set(CMAKE_INSTALL_INCLUDEDIR basix/include)
-  endif()
-
-  install(TARGETS basix
-  EXPORT BasixTargets
-  PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
-  PRIVATE_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/basix
-  RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT RuntimeExecutables
-  LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT RuntimeLibraries
-  ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Development
-  )
+  LIST(APPEND PRE_EXCLUDE_REGEXES "api-ms-.*")
+  LIST(APPEND PRE_EXCLUDE_REGEXES "ext-ms-.*")
+  install(RUNTIME_DEPENDENCY_SET dependencies DESTINATION ${CMAKE_INSTALL_BINDIR} PRE_EXCLUDE_REGEXES ${PRE_EXCLUDE_REGEXES} POST_EXCLUDE_REGEXES ".*system32/.*\\.dll" )
 endif()
 
 # Configure CMake helpers

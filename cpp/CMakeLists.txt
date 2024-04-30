@@ -8,6 +8,18 @@ endif()
 project(Basix VERSION "0.9.0.0" LANGUAGES CXX)
 include(GNUInstallDirs)
 
+if(SKBUILD AND UNIX)
+  # Avoid lib64/ which can lead to linking issues.
+  set(CMAKE_INSTALL_LIBDIR basix/lib)
+endif()
+
+if (SKBUILD)
+  # Make sure includes end up inside basix/ subdirectory in wheel. 
+  set(CMAKE_INSTALL_INCLUDEDIR basix/include)
+  # Make sure all binaries end up inside basix/ subdirectory in wheel.
+  set(CMAKE_INSTALL_BINDIR basix)
+endif()
+
 include(FeatureSummary)
 
 # Set the C++ standard
@@ -112,17 +124,6 @@ if (MSVC)
     add_compile_definitions(_USE_MATH_DEFINES)
 endif()
 
-if(SKBUILD AND UNIX)
-  # Avoid lib64/ which can lead to linking issues.
-  set(CMAKE_INSTALL_LIBDIR basix/lib)
-endif()
-
-if (SKBUILD)
-  # Make sure includes end up inside basix/ subdirectory in wheel. 
-  set(CMAKE_INSTALL_INCLUDEDIR basix/include)
-  # Make sure all binaries end up inside basix/ subdirectory in wheel.
-  set(CMAKE_INSTALL_BINDIR basix)
-endif()
 
 # TODO: This if can be removed once all platforms have CMake 3.21.
 if (WIN32)

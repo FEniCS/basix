@@ -1,7 +1,7 @@
 """Script for testing."""
 
 import os
-import sys
+from subprocess import run
 
 import pytest
 
@@ -15,12 +15,16 @@ for folder in os.listdir(path):
             demos.append(folder)
 
 
+@pytest.fixture
+def cmake_args(request):
+    return request.config.getoption("--cmake-args")
+
+
 @pytest.mark.parametrize("demo", demos)
-def test_demo(demo):
+def test_demo(demo, cmake_args):
     """Test demos."""
-    demo_build = f"{path}/{demo}/_build"
-    command = f"""mkdir -p {demo_build} && cd {demo_build} && \
-                  cmake -DBasix_DIR=D:/a/basix/install/lib/cmake/basix
-                  -DPython3_EXECUTABLE={sys.executable} .. && \
-                  make && ./{demo}"""
-    assert os.system(command) == 0
+    demo_build = os.path.join(path, demo, "_build")
+    output = run(f"cmake {cmake_args} -B {demo_build} -S .", check=True, capture_output=True)
+    output = run("cmake --build {demo_build}", check=True, capture_output=True)
+    output = run("cmake --install {demo_build}", check=True, capture_output=True)
+    output = run(os.path.join(demo_build, demo), check=True, capture_output=True)

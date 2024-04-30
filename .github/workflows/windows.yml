@@ -43,18 +43,17 @@ jobs:
           cmake -DCMAKE_TOOLCHAIN_FILE=C:/vcpkg/scripts/buildsystems/vcpkg.cmake -B build-dir -S .
           cmake --build build-dir --config Release
           cmake --install build-dir --config Release --prefix D:/a/basix/install
-          echo "D:/a/basix/install/bin" | Out-File -Append -FilePath $env:GITHUB_PATH -Encoding utf8
 
       - name: Install Basix Python wrapper
         run: |
           cd python
-          pip -v install .[ci]
+          python -m pip -v install .[ci]
 
+      - name: Run C++ demos
+        run: python -m pytest --cmake-args="-DBasix_DIR=D:/a/basix/install" demo/cpp/test.py
       - name: Run units tests
         run: |
-          pip install pytest-xdist
-          pytest -n auto --durations 20 test/
+          python -m pip install pytest-xdist
+          python -m pytest -n auto --durations 20 test/
       - name: Run python demos
-        run: pytest demo/python/test.py
-      - name: Run C++ demos
-        run: pytest demo/cpp/test.py
+        run: python -m pytest demo/python/test.py

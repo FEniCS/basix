@@ -62,14 +62,4 @@ else()
   set_target_properties(_basixcpp PROPERTIES INSTALL_RPATH ${_basix_dir})
 endif()
 
-install(TARGETS _basixcpp RUNTIME_DEPENDENCY_SET dependencies LIBRARY DESTINATION basix)
-
-# Copies all runtime dependencies to same path as basix.dll
-# Only enabled on Windows because never seen the necessity on Unix.
-if (WIN32)
-    LIST(APPEND PRE_EXCLUDE_REGEXES "api-ms-.*")
-    LIST(APPEND PRE_EXCLUDE_REGEXES "ext-ms-.*")
-    LIST(APPEND PRE_EXCLUDE_REGEXES "python.*")
-
-    install(RUNTIME_DEPENDENCY_SET dependencies PRE_EXCLUDE_REGEXES ${PRE_EXCLUDE_REGEXES} POST_EXCLUDE_REGEXES ".*system32/.*\\.dll")
-endif()
+install(TARGETS _basixcpp LIBRARY DESTINATION basix)

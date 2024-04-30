@@ -12,6 +12,12 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
+if (WIN32)
+    # Windows requires all symbols to be manually exported.
+    # This flag exports all symbols automatically, as in Unix.
+    set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS TRUE)
+endif(WIN32)
+
 # See https://gitlab.kitware.com/cmake/cmake/-/issues/16414
 if(TARGET basix)
   add_library(Basix::basix ALIAS basix)
@@ -40,12 +46,13 @@ if(HAVE_PEDANTIC)
   target_compile_options(_basixcpp PRIVATE -Wall;-Wextra;-Werror;-Wno-comment)
 endif()
 
+
 # Add relative rpath so _basixcpp can find the Basix::basix library
 # when the build is relocated
 if(BASIX_FULL_SKBUILD)
   if(APPLE)
     set_target_properties(_basixcpp PROPERTIES INSTALL_RPATH "@loader_path/lib")
-  else()
+  elseif(UNIX)
     set_target_properties(_basixcpp PROPERTIES INSTALL_RPATH "$ORIGIN/lib")
   endif()
 else()

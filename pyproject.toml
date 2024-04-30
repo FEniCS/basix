@@ -34,8 +34,6 @@ testpaths = ["test"]
 minimum-version = "0.5"
 cmake.minimum-version = "3.19.0"
 wheel.packages = ["python/basix"]
-cmake.verbose = true
-logging.level = "DEBUG"
 
 [tool.cibuildwheel]
 build = [

@@ -121,6 +121,10 @@ class _ElementBase(_AbstractFiniteElement):
         """Return a hash."""
         return hash("basix" + self._repr)
 
+    def basix_hash(self) -> _typing.Optional[int]:
+        """Return the hash of the Basix element if this is a standard Basix element."""
+        return None
+
     @_abstractmethod
     def __eq__(self, other) -> bool:
         """Check if two elements are equal."""
@@ -219,10 +223,6 @@ class _ElementBase(_AbstractFiniteElement):
         Returns:
             component element, offset of the component, stride of the component
         """
-
-    @_abstractproperty
-    def ufcx_element_type(self) -> str:
-        """Element type."""
 
     @_abstractproperty
     def dim(self) -> int:
@@ -421,6 +421,10 @@ class _BasixElement(_ElementBase):
         """Return a hash."""
         return super().__hash__()
 
+    def basix_hash(self) -> _typing.Optional[int]:
+        """Return the hash of the Basix element if this is a standard Basix element."""
+        return self._element.hash()
+
     def tabulate(self, nderivs: int, points: _npt.NDArray[np.float64]) -> _npt.NDArray[np.float64]:
         """Tabulate the basis functions of the element.
 
@@ -477,14 +481,6 @@ class _BasixElement(_ElementBase):
     def basix_sobolev_space(self):
         """Return a Basix enum representing the underlying Sobolev space."""
         return self._element.sobolev_space
-
-    @property
-    def ufcx_element_type(self) -> str:
-        """Element type."""
-        if self._is_custom:
-            return "ufcx_basix_custom_element"
-        else:
-            return "ufcx_basix_element"
 
     @property
     def dim(self) -> int:
@@ -809,11 +805,6 @@ class _ComponentElement(_ElementBase):
         return self._element.interpolation_nderivs
 
     @property
-    def ufcx_element_type(self) -> str:
-        """Element type."""
-        raise NotImplementedError()
-
-    @property
     def map_type(self) -> _basix.MapType:
         """The Basix map type."""
         raise NotImplementedError()
@@ -1017,11 +1008,6 @@ class _MixedElement(_ElementBase):
     def sub_elements(self) -> list[_ElementBase]:
         """List of sub elements."""
         return self._sub_elements
-
-    @property
-    def ufcx_element_type(self) -> str:
-        """Element type."""
-        return "ufcx_mixed_element"
 
     @property
     def dim(self) -> int:
@@ -1332,11 +1318,6 @@ class _BlockedElement(_ElementBase):
         return [self._sub_element for _ in range(self._block_size)]
 
     @property
-    def ufcx_element_type(self) -> str:
-        """Element type."""
-        return self._sub_element.ufcx_element_type
-
-    @property
     def dim(self) -> int:
         """Number of DOFs the element has."""
         return self._sub_element.dim * self._block_size
@@ -1630,11 +1611,6 @@ class _QuadratureElement(_ElementBase):
         return True
 
     @property
-    def ufcx_element_type(self) -> str:
-        """Element type."""
-        return "ufcx_quadrature_element"
-
-    @property
     def dim(self) -> int:
         """Number of DOFs the element has."""
         return self._points.shape[0]
@@ -1834,11 +1810,6 @@ class _RealElement(_ElementBase):
         """
         assert flat_component < self.reference_value_size
         return self, 0, 1
-
-    @property
-    def ufcx_element_type(self) -> str:
-        """Element type."""
-        return "ufcx_real_element"
 
     @property
     def dim(self) -> int:
@@ -2272,6 +2243,7 @@ def quadrature_element(
     points: _typing.Optional[_npt.NDArray[np.floating]] = None,
     weights: _typing.Optional[_npt.NDArray[np.floating]] = None,
     pullback: _AbstractPullback = _ufl.identity_pullback,
+    symmetry: _typing.Optional[bool] = None,
 ) -> _ElementBase:
     """Create a quadrature element.
 
@@ -2286,6 +2258,8 @@ def quadrature_element(
         points: Quadrature points.
         weights: Quadrature weights.
         pullback: Map name.
+        symmetry: Set to ``True`` if the tensor is symmetric. Valid for
+            rank 2 elements only.
 
     Returns:
         A 'quadrature' finite element.
@@ -2308,9 +2282,11 @@ def quadrature_element(
 
     e = _QuadratureElement(cell, points, weights, pullback, degree)
     if value_shape == ():
+        if symmetry is not None:
+            raise ValueError("Cannot pass a symmetry argument to this element.")
         return e
     else:
-        return _BlockedElement(e, value_shape)
+        return blocked_element(e, shape=value_shape, symmetry=symmetry)
 
 
 def real_element(

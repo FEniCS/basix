@@ -23,7 +23,6 @@ if(TARGET basix)
   add_library(Basix::basix ALIAS basix)
 else()
   find_package(Basix REQUIRED)
-  set_target_properties(Basix::basix PROPERTIES IMPORTED_LOCATION "${Basix_DIR}/bin/basix.dll")
 endif()
 
 find_package(Python COMPONENTS Interpreter Development.Module REQUIRED)

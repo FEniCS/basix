@@ -121,26 +121,30 @@ if (MSVC)
 endif()
 
 if (WIN32)
-  # Copy all runtime dependencies to same path as basix shared object.
-  # Only enabled on Windows because never seen the necessity on Unix.
-  install(TARGETS basix
-  EXPORT BasixTargets
-  RUNTIME_DEPENDENCY_SET dependencies
-  PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
-  PRIVATE_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/basix
-  RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT RuntimeExecutables
-  LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT RuntimeLibraries
-  ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Development
-  )
-  
-  LIST(APPEND PRE_EXCLUDE_REGEXES "api-ms-.*")
-  LIST(APPEND PRE_EXCLUDE_REGEXES "ext-ms-.*")
-
   if (BASIX_FULL_SKBUILD)
-    # Install runtime dependencies into Python platlib directory alongside pyd.
+    # Copy all runtime dependencies to same path as basix shared object.
+    install(TARGETS basix
+    EXPORT BasixTargets
+    RUNTIME_DEPENDENCY_SET dependencies
+    RUNTIME DESTINATION ${SKBUILD_PLATLIB_DIR} COMPONENT RuntimeExecutables
+    )
+    
+    LIST(APPEND PRE_EXCLUDE_REGEXES "api-ms-.*")
+    LIST(APPEND PRE_EXCLUDE_REGEXES "ext-ms-.*")
+    
+    # Also install runtime dependencies into Python platlib directory alongside pyd.
     install(RUNTIME_DEPENDENCY_SET dependencies DESTINATION ${SKBUILD_PLATLIB_DIR} PRE_EXCLUDE_REGEXES ${PRE_EXCLUDE_REGEXES} POST_EXCLUDE_REGEXES ".*system32/.*\\.dll" )
   elseif()
-    # Install runtime dependencies with Basix C++ library.
+    # Use defaults.
+    install(TARGETS basix
+    EXPORT BasixTargets
+    RUNTIME_DEPENDENCY_SET dependencies
+    )
+    
+    LIST(APPEND PRE_EXCLUDE_REGEXES "api-ms-.*")
+    LIST(APPEND PRE_EXCLUDE_REGEXES "ext-ms-.*")
+   
+    # Also install runtime dependencies into defaults.
     install(RUNTIME_DEPENDENCY_SET dependencies PRE_EXCLUDE_REGEXES ${PRE_EXCLUDE_REGEXES} POST_EXCLUDE_REGEXES ".*system32/.*\\.dll" )
   endif()
 

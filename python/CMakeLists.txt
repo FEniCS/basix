@@ -49,10 +49,10 @@ endif()
 
 # Add relative rpath so _basixcpp can find the Basix::basix library
 # when the build is relocated
-if(BASIX_FULL_SKBUILD AND NOT WIN32)
+if(BASIX_FULL_SKBUILD)
   if(APPLE)
     set_target_properties(_basixcpp PROPERTIES INSTALL_RPATH "@loader_path/lib")
-  elseif()
+  elseif(UNIX)
     set_target_properties(_basixcpp PROPERTIES INSTALL_RPATH "$ORIGIN/lib")
   endif()
 else()

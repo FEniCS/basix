@@ -37,11 +37,14 @@ jobs:
           python-version: "3.11"
       
       - name: Install Basix (combined)
+        run: |
           python -m pip -v install .[ci] --config-settings=cmake.args=-DCMAKE_TOOLCHAIN_FILE=C:/vcpkg/scripts/buildsystems/vcpkg.cmake
       - name: Run units tests
         run: |
           python -m pip install pytest-xdist
           python -m pytest -n auto --durations 20 test/
+      - name: Run python demos
+        run: python -m pytest demo/python/test.py
 
       - name: Install Basix C++ library
         run: |
@@ -50,12 +53,10 @@ jobs:
           cmake --build build-dir --config Release
           cmake --install build-dir --config Release --prefix D:/a/basix/install
           echo "D:/a/basix/install/bin" | Out-File -Append -FilePath $env:GITHUB_PATH -Encoding utf8
-
       - name: Install Basix Python wrapper
         run: |
           cd python
           python -m pip -v install .[ci] --config-settings=cmake.args=-DBasix_DIR=D:/a/basix/install/lib/cmake/basix
-
       - name: Run units tests
         run: |
           python -m pytest -n auto --durations 20 test/
@@ -63,4 +64,3 @@ jobs:
         run: python -m pytest demo/python/test.py
       - name: Run C++ demos
         run: python -m pytest demo/cpp/test.py --cmake-args="-DBasix_DIR=D:/a/basix/install/lib/cmake/basix"
-

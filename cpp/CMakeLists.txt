@@ -6,15 +6,6 @@ endif()
 
 # Set the version
 project(Basix VERSION "0.9.0.0" LANGUAGES CXX)
-include(GNUInstallDirs)
-
-if(SKBUILD)
-  # Always use lib/ in the Python root. Otherwise, environment used for
-  # wheels might place in lib64/, which CMake on some systems will not
-  # find.
-  set(CMAKE_INSTALL_LIBDIR basix/lib)
-  set(CMAKE_INSTALL_INCLUDEDIR basix/include)
-endif()
 
 include(FeatureSummary)
 
@@ -121,24 +112,28 @@ if (MSVC)
 endif()
 
 if (WIN32)
-  if (BASIX_FULL_SKBUILD)
-    # Copy all runtime dependencies to same path as basix shared object.
+  if (SKBUILD)
+    # Install all runtime dependencies to same path as basix shared object.
     install(TARGETS basix
     EXPORT BasixTargets
     RUNTIME_DEPENDENCY_SET dependencies
-    RUNTIME DESTINATION ${SKBUILD_PLATLIB_DIR} COMPONENT RuntimeExecutables
+    PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+    PRIVATE_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/basix
+    RUNTIME DESTINATION ${SKBUILD_PLATLIB_DIR}/basix COMPONENT RuntimeExecutables
     )
     
     LIST(APPEND PRE_EXCLUDE_REGEXES "api-ms-.*")
     LIST(APPEND PRE_EXCLUDE_REGEXES "ext-ms-.*")
     
     # Also install runtime dependencies into Python platlib directory alongside pyd.
-    install(RUNTIME_DEPENDENCY_SET dependencies DESTINATION ${SKBUILD_PLATLIB_DIR} PRE_EXCLUDE_REGEXES ${PRE_EXCLUDE_REGEXES} POST_EXCLUDE_REGEXES ".*system32/.*\\.dll" )
+    install(RUNTIME_DEPENDENCY_SET dependencies DESTINATION ${SKBUILD_PLATLIB_DIR}/basix PRE_EXCLUDE_REGEXES ${PRE_EXCLUDE_REGEXES} POST_EXCLUDE_REGEXES ".*system32/.*\\.dll" )
   elseif()
-    # Use defaults.
+    # Separate C++ build, use defaults.
     install(TARGETS basix
     EXPORT BasixTargets
     RUNTIME_DEPENDENCY_SET dependencies
+    PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+    PRIVATE_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/basix
     )
     
     LIST(APPEND PRE_EXCLUDE_REGEXES "api-ms-.*")
@@ -147,8 +142,17 @@ if (WIN32)
     # Also install runtime dependencies into defaults.
     install(RUNTIME_DEPENDENCY_SET dependencies PRE_EXCLUDE_REGEXES ${PRE_EXCLUDE_REGEXES} POST_EXCLUDE_REGEXES ".*system32/.*\\.dll" )
   endif()
-
 else()
+  # Unix build.
+  include(GNUInstallDirs)
+
+  if(SKBUILD)
+    # Make sure libraries and includes end up inside basix/ subdirectory in
+    # wheel.
+    set(CMAKE_INSTALL_LIBDIR basix/lib)
+    set(CMAKE_INSTALL_INCLUDEDIR basix/include)
+  endif()
+
   install(TARGETS basix
   EXPORT BasixTargets
   PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}

@@ -33,12 +33,12 @@ def test_demo(demo, cmake_args):
     if sys.platform.startswith("win32"):
         # Assume default generator is MSVC generator with multiple build targets
         run(f"cmake {cmake_args} -B {demo_build} -S {demo_source}", check=True, shell=True)
-        run(f"cmake --build {demo_build} --config Debug", check=True, shell=True)
+        run(f"cmake --build {demo_build} --config Release", check=True, shell=True)
 
         # MSVC generator supports multiple build targets per cmake configuration, each gets
         # its own subdirectory in {demo_build} e.g. Debug/ Release/ etc.
         demo_executable = demo + ".exe"
-        run(os.path.join(demo_build, "Debug", demo_executable), check=True, shell=True)
+        run(os.path.join(demo_build, "Release", demo_executable), check=True, shell=True)
     else:
         # Uses default generator (usually make)
         run(

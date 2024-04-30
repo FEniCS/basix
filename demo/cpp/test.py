@@ -27,14 +27,26 @@ def test_demo(demo, cmake_args):
     demo_source = os.path.join(path, demo)
     demo_build = os.path.join(path, demo, "_build")
 
-    run(f"cmake {cmake_args} -B {demo_build} -S {demo_source}", check=True, shell=True)
-    run(f"cmake --build {demo_build} --config Debug", check=True, shell=True)
-
-    if sys.platform.startswith("win32"):
-        demo_executable = demo + ".exe"
-    else:
-        demo_executable = demo
-
-    # No generic way to get cmake to execute a target
+    # There is no cross-platform way to get cmake to execute a target.
     # See e.g. https://discourse.cmake.org/t/feature-request-cmake-run-target/9170
-    run(os.path.join(demo_build, "Debug", demo_executable), check=True, shell=True)
+    # TODO: Check existence of cross-platform target executer in cmake.
+    if sys.platform.startswith("win32"):
+        # Assume default generator is MSVC generator with multiple build targets
+        run(f"cmake {cmake_args} -B {demo_build} -S {demo_source}", check=True, shell=True)
+        run(f"cmake --build {demo_build} --config Debug", check=True, shell=True)
+
+        # MSVC generator supports multiple build targets per cmake configuration, each gets
+        # its own subdirectory in {demo_build} e.g. Debug/ Release/ etc.
+        demo_executable = demo + ".exe"
+        run(os.path.join(demo_build, "Debug", demo_executable), check=True, shell=True)
+    else:
+        # Uses default generator (usually make)
+        run(
+            f"cmake -DCMAKE_BUILD_TYPE=Debug {cmake_args} -B {demo_build} -S {demo_source}",
+            check=True,
+            shell=True,
+        )
+        run(f"cmake --build {demo_build}", check=True, shell=True)
+
+        demo_executable = demo
+        run(os.path.join(demo_build, demo_executable), check=True, shell=True)

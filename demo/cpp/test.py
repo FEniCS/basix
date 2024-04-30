@@ -33,6 +33,7 @@ def test_demo(demo, cmake_args):
     if sys.platform.startswith("win32"):
         # Assume default generator is MSVC generator with multiple build targets
         run(f"cmake {cmake_args} -B {demo_build} -S {demo_source}", check=True, shell=True)
+        # MSVC produces really slow binaries with --config Debug.
         run(f"cmake --build {demo_build} --config Release", check=True, shell=True)
 
         # MSVC generator supports multiple build targets per cmake configuration, each gets

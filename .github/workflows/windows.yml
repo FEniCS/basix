@@ -19,7 +19,6 @@ jobs:
 
     runs-on: windows-2022
     env:
-      CMAKE_ARGS: -DBasix_DIR=D:/a/basix/install/lib/cmake/basix
       VCPKG_BINARY_SOURCES: "clear;x-gha,readwrite"
     
     steps:
@@ -47,7 +46,8 @@ jobs:
       - name: Install Basix Python wrapper
         run: |
           cd python
-          python -m pip -v install .[ci]
+          python -m pip -v install .[ci] --config-settings=cmake.args=-DBasix_DIR=D:/a/basix/install/lib/cmake/basix
+
 
       - name: Run C++ demos
         run: python -m pytest demo/cpp/test.py --cmake-args="-DBasix_DIR=D:/a/basix/install/lib/cmake/basix" 

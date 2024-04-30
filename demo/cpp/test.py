@@ -24,7 +24,7 @@ def cmake_args(request):
 def test_demo(demo, cmake_args):
     """Test demos."""
     demo_build = os.path.join(path, demo, "_build")
-    output = run(f"cmake {cmake_args} -B {demo_build} -S .", check=True, capture_output=True)
-    output = run("cmake --build {demo_build}", check=True, capture_output=True)
-    output = run("cmake --install {demo_build}", check=True, capture_output=True)
-    output = run(os.path.join(demo_build, demo), check=True, capture_output=True)
+    run(f"cmake {cmake_args} -B {demo_build} -S {demo}", check=True, capture_output=True)
+    run(f"cmake --build {demo_build}", check=True)
+    run(f"cmake --install {demo_build}", check=True)
+    run(os.path.join(demo_build, demo), check=True)

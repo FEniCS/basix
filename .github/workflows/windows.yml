@@ -15,8 +15,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  build:
-
+  build-combined:
     runs-on: windows-2022
     env:
       VCPKG_BINARY_SOURCES: "clear;x-gha,readwrite"
@@ -38,7 +37,7 @@ jobs:
       
       - name: Install Basix (combined)
         run: |
-          python -m pip -v install .[ci] --config-settings=cmake.args=-DCMAKE_TOOLCHAIN_FILE=C:/vcpkg/scripts/buildsystems/vcpkg.cmake
+          python -m pip -v install --no-cache-dir .[ci] --config-settings=cmake.args=-DCMAKE_TOOLCHAIN_FILE=C:/vcpkg/scripts/buildsystems/vcpkg.cmake
       - name: Run units tests
         run: |
           python -m pip install pytest-xdist
@@ -46,19 +45,39 @@ jobs:
       - name: Run python demos
         run: python -m pytest demo/python/test.py
 
-      - name: Install Basix C++ library
+  build-split:
+    runs-on: windows-2022
+    env:
+      VCPKG_BINARY_SOURCES: "clear;x-gha,readwrite"
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Export GitHub Actions cache environment variables
+        uses: actions/github-script@v6
+        with:
+          script: |
+            core.exportVariable('ACTIONS_CACHE_URL', process.env.ACTIONS_CACHE_URL || '');
+            core.exportVariable('ACTIONS_RUNTIME_TOKEN', process.env.ACTIONS_RUNTIME_TOKEN || '');
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Basix (C++)
         run: |
           cd cpp
           cmake -DCMAKE_TOOLCHAIN_FILE=C:/vcpkg/scripts/buildsystems/vcpkg.cmake -B build-dir -S .
           cmake --build build-dir --config Release
           cmake --install build-dir --config Release --prefix D:/a/basix/install
           echo "D:/a/basix/install/bin" | Out-File -Append -FilePath $env:GITHUB_PATH -Encoding utf8
-      - name: Install Basix Python wrapper
+      - name: Install Basix (Python)
         run: |
           cd python
-          python -m pip -v install .[ci] --config-settings=cmake.args=-DBasix_DIR=D:/a/basix/install/lib/cmake/basix
+          python -m pip -v install --no-cache-dir .[ci] --config-settings=cmake.args=-DBasix_DIR=D:/a/basix/install/lib/cmake/basix
           cd ../
           echo "import os; os.add_dll_directory('D:/a/basix/install/bin')" | Out-File -Append -FilePath conftest.py -Encoding utf8
+      
       - name: Run units tests
         run: |
           python -m pytest -n auto --durations 20 test/

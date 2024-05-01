@@ -24,7 +24,6 @@
 #include <utility>
 #include <vector>
 
-/// Basix: FEniCS runtime basis evaluation library
 namespace basix
 {
 

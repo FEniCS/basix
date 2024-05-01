@@ -2,6 +2,7 @@
 // FEniCS Project
 // SPDX-License-Identifier:    MIT
 
+#include "basix.h"
 #include <basix/version.h>
 #define str_macro(X) #X
 #define str(X) str_macro(X)

@@ -6,7 +6,7 @@
 // and tabulate the values of its basis functions at a set of
 // points.
 
-#include <basix/finite-element-utils.h>
+#include <basix/basix.h>
 #include <basix/mdspan.hpp>
 #include <iostream>
 

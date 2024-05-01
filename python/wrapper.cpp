@@ -2,20 +2,7 @@
 // FEniCS Project
 // SPDX-License-Identifier:    MIT
 
-#include <basix/cell.h>
-#include <basix/element-families.h>
-#include <basix/finite-element-utils.h>
-#include <basix/finite-element.h>
-#include <basix/indexing.h>
-#include <basix/interpolation.h>
-#include <basix/lattice.h>
-#include <basix/maps.h>
-#include <basix/mdspan.hpp>
-#include <basix/polynomials.h>
-#include <basix/polyset.h>
-#include <basix/quadrature.h>
-#include <basix/sobolev-spaces.h>
-#include <basix/version.h>
+#include <basix/basix.h>
 #include <memory>
 #include <nanobind/nanobind.h>
 #include <nanobind/ndarray.h>

@@ -20,7 +20,7 @@
 // Functions to permute and transform high degree elements are
 // provided by Basix. In this demo, we show how these can be used from C++.
 
-#include <basix/finite-element.h>
+#include <basix/finite-element-utils.h>
 #include <basix/lattice.h>
 #include <iomanip>
 #include <iostream>

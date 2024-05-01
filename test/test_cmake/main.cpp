@@ -2,7 +2,7 @@
 // FEniCS Project
 // SPDX-License-Identifier: MIT
 
-#include <basix/finite-element.h>
+#include <basix/finite-element-utils.h>
 #include <memory>
 
 int main()

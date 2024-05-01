@@ -1,15 +1,23 @@
-cmake_minimum_required(VERSION 3.19)
+if (WIN32)
+  cmake_minimum_required(VERSION 3.21)
+else()
+  cmake_minimum_required(VERSION 3.19)
+endif()
 
 # Set the version
-project(Basix VERSION "0.8.0.0" LANGUAGES CXX)
+project(Basix VERSION "0.9.0.0" LANGUAGES CXX)
 include(GNUInstallDirs)
 
-if(SKBUILD)
-  # Always use lib/ in the Python root. Otherwise, environment used for
-  # wheels might place in lib64/, which CMake on some systems will not
-  # find.
+if(SKBUILD AND UNIX)
+  # Avoid lib64/ which can lead to linking issues.
   set(CMAKE_INSTALL_LIBDIR basix/lib)
+endif()
+
+if (SKBUILD)
+  # Make sure includes end up inside basix/ subdirectory in wheel. 
   set(CMAKE_INSTALL_INCLUDEDIR basix/include)
+  # Make sure all binaries end up inside basix/ subdirectory in wheel.
+  set(CMAKE_INSTALL_BINDIR basix)
 endif()
 
 include(FeatureSummary)
@@ -27,6 +35,12 @@ find_package(BLAS REQUIRED)
 find_package(LAPACK REQUIRED)
 
 feature_summary(WHAT ALL)
+
+if (WIN32)
+    # Windows requires all symbols to be manually exported.
+    # This flag exports all symbols automatically, as in Unix.
+    set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS TRUE)
+endif()
 
 # Source files
 add_library(basix)
@@ -98,20 +112,44 @@ target_include_directories(basix PUBLIC
 target_link_libraries(basix PRIVATE BLAS::BLAS)
 target_link_libraries(basix PRIVATE LAPACK::LAPACK)
 
-# Set compiler flags
-list(APPEND BASIX_DEVELOPER_FLAGS -O2;-g;-pipe)
-list(APPEND basix_compiler_flags -Wall;-Werror;-Wextra;-Wno-comment;-pedantic;)
-target_compile_options(basix PRIVATE "$<$<OR:$<CONFIG:Debug>,$<CONFIG:Developer>>:${basix_compiler_flags}>")
-target_compile_options(basix PRIVATE $<$<CONFIG:Developer>:${BASIX_DEVELOPER_FLAGS}>)
+if (UNIX)
+    list(APPEND BASIX_DEVELOPER_FLAGS -O2;-g;-pipe)
+    list(APPEND BASIX_COMPILER_FLAGS -Wall;-Werror;-Wextra;-Wno-comment;-pedantic;)
+    target_compile_options(basix PRIVATE "$<$<OR:$<CONFIG:Debug>,$<CONFIG:Developer>>:${BASIX_COMPILER_FLAGS}>")
+    target_compile_options(basix PRIVATE $<$<CONFIG:Developer>:${BASIX_DEVELOPER_FLAGS}>)
+endif()
 
-# Install the Basix library
-install(TARGETS basix
+if (MSVC)
+    # M_PI etc. are not not in the standard-compliant MSVC headers.
+    add_compile_definitions(_USE_MATH_DEFINES)
+endif()
+
+
+# TODO: This if can be removed once all platforms have CMake 3.21.
+if (WIN32)
+  install(TARGETS basix
+  EXPORT BasixTargets
+  RUNTIME_DEPENDENCY_SET dependencies
+  PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+  PRIVATE_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/basix
+  RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT RuntimeExecutables
+  LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT RuntimeLibraries
+  ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Development
+  )
+  
+  LIST(APPEND PRE_EXCLUDE_REGEXES "api-ms-.*")
+  LIST(APPEND PRE_EXCLUDE_REGEXES "ext-ms-.*")
+  install(RUNTIME_DEPENDENCY_SET dependencies DESTINATION ${CMAKE_INSTALL_BINDIR} PRE_EXCLUDE_REGEXES ${PRE_EXCLUDE_REGEXES} POST_EXCLUDE_REGEXES ".*system32/.*\\.dll" )
+else()
+  install(TARGETS basix
   EXPORT BasixTargets
   PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
   PRIVATE_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/basix
   RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT RuntimeExecutables
   LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT RuntimeLibraries
-  ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Development)
+  ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Development
+  )
+endif()
 
 # Configure CMake helpers
 include(CMakePackageConfigHelpers)

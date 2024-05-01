@@ -122,6 +122,10 @@ class _ElementBase(_AbstractFiniteElement):
         """Return a hash."""
         return hash("basix" + self._repr)
 
+    def basix_hash(self) -> _typing.Optional[int]:
+        """Return the hash of the Basix element if this is a standard Basix element."""
+        return None
+
     @_abstractmethod
     def __eq__(self, other) -> bool:
         """Check if two elements are equal."""
@@ -222,10 +226,6 @@ class _ElementBase(_AbstractFiniteElement):
         """
 
     @_abstractproperty
-    def ufcx_element_type(self) -> str:
-        """Element type."""
-
-    @_abstractproperty
     def dim(self) -> int:
         """Number of DOFs the element has."""
 
@@ -293,6 +293,10 @@ class _ElementBase(_AbstractFiniteElement):
     def basix_sobolev_space(self):
         """Return a Basix enum representing the underlying Sobolev space."""
 
+    @_abstractproperty
+    def dtype(self) -> _npt.DTypeLike:
+        """Element float type."""
+
     def get_tensor_product_representation(self):
         """Get the element's tensor product factorisation."""
         return None
@@ -302,7 +306,9 @@ class _ElementBase(_AbstractFiniteElement):
         """The degree of the element."""
         return self._degree
 
-    def custom_quadrature(self) -> tuple[_npt.NDArray[np.float64], _npt.NDArray[np.float64]]:
+    def custom_quadrature(
+        self,
+    ) -> tuple[_npt.NDArray[np.float64], _npt.NDArray[np.float64]]:
         """Return custom quadrature rule or raise a ValueError."""
         raise ValueError("Element does not have a custom quadrature rule.")
 
@@ -356,6 +362,21 @@ class _ElementBase(_AbstractFiniteElement):
         """Underlying Basix element."""
         raise NotImplementedError()
 
+    @property
+    def is_quadrature(self) -> bool:
+        """Is this a quadrature element?"""
+        return False
+
+    @property
+    def is_mixed(self) -> bool:
+        """Is this a mixed element?"""
+        return False
+
+    @property
+    def is_symmetric(self) -> bool:
+        """Is the element a symmetric 2-tensor?"""
+        return False
+
 
 class _BasixElement(_ElementBase):
     """A wrapper allowing Basix elements to be used directly with UFL.
@@ -400,6 +421,10 @@ class _BasixElement(_ElementBase):
     def __hash__(self) -> int:
         """Return a hash."""
         return super().__hash__()
+
+    def basix_hash(self) -> _typing.Optional[int]:
+        """Return the hash of the Basix element if this is a standard Basix element."""
+        return self._element.hash()
 
     def tabulate(self, nderivs: int, points: _npt.NDArray[np.float64]) -> _npt.NDArray[np.float64]:
         """Tabulate the basis functions of the element.
@@ -449,17 +474,14 @@ class _BasixElement(_ElementBase):
         return self._element.get_tensor_product_representation()
 
     @property
+    def dtype(self) -> _npt.DTypeLike:
+        """Element float type."""
+        return self._element.dtype
+
+    @property
     def basix_sobolev_space(self):
         """Return a Basix enum representing the underlying Sobolev space."""
         return self._element.sobolev_space
-
-    @property
-    def ufcx_element_type(self) -> str:
-        """Element type."""
-        if self._is_custom:
-            return "ufcx_basix_custom_element"
-        else:
-            return "ufcx_basix_element"
 
     @property
     def dim(self) -> int:
@@ -695,6 +717,11 @@ class _ComponentElement(_ElementBase):
             raise NotImplementedError()
 
     @property
+    def dtype(self) -> _npt.DTypeLike:
+        """Element float type."""
+        return self._element.dtype
+
+    @property
     def basix_sobolev_space(self):
         """Return a Basix enum representing the underlying Sobolev space."""
         return self._element.basix_sobolev_space
@@ -777,11 +804,6 @@ class _ComponentElement(_ElementBase):
     def interpolation_nderivs(self) -> int:
         """The number of derivatives needed when interpolating."""
         return self._element.interpolation_nderivs
-
-    @property
-    def ufcx_element_type(self) -> str:
-        """Element type."""
-        raise NotImplementedError()
 
     @property
     def map_type(self) -> _basix.MapType:
@@ -867,6 +889,16 @@ class _MixedElement(_ElementBase):
     def __hash__(self) -> int:
         """Return a hash."""
         return super().__hash__()
+
+    @property
+    def dtype(self) -> _npt.DTypeLike:
+        """Element float type."""
+        self.elements[0].dtype
+
+    @property
+    def is_mixed(self) -> bool:
+        """Is this a mixed element?"""
+        return True
 
     @property
     def degree(self) -> int:
@@ -979,11 +1011,6 @@ class _MixedElement(_ElementBase):
         return self._sub_elements
 
     @property
-    def ufcx_element_type(self) -> str:
-        """Element type."""
-        return "ufcx_mixed_element"
-
-    @property
     def dim(self) -> int:
         """Dimension (number of DOFs) for the element."""
         return sum(e.dim for e in self._sub_elements)
@@ -1091,7 +1118,9 @@ class _MixedElement(_ElementBase):
             pt = _basix.polyset_superset(self.cell_type, pt, e.polyset_type)
         return pt
 
-    def custom_quadrature(self) -> tuple[_npt.NDArray[np.float64], _npt.NDArray[np.float64]]:
+    def custom_quadrature(
+        self,
+    ) -> tuple[_npt.NDArray[np.float64], _npt.NDArray[np.float64]]:
         """Return custom quadrature rule or raise a ValueError."""
         custom_q = None
         for e in self._sub_elements:
@@ -1129,6 +1158,7 @@ class _BlockedElement(_ElementBase):
     _block_shape: tuple[int, ...]
     _sub_element: _ElementBase
     _block_size: int
+    _has_symmetry: bool
 
     def __init__(
         self,
@@ -1198,6 +1228,21 @@ class _BlockedElement(_ElementBase):
     def __hash__(self) -> int:
         """Return a hash."""
         return super().__hash__()
+
+    @property
+    def dtype(self) -> _npt.DTypeLike:
+        """Element float type."""
+        return self._sub_element.dtype
+
+    @property
+    def is_symmetric(self) -> bool:
+        """Is the element a symmetric 2-tensor?"""
+        return self._has_symmetry
+
+    @property
+    def is_quadrature(self) -> bool:
+        """Is this a quadrature element?"""
+        return self._sub_element.is_quadrature
 
     def tabulate(self, nderivs: int, points: _npt.NDArray[np.float64]) -> _npt.NDArray[np.float64]:
         """Tabulate the basis functions of the element.
@@ -1272,11 +1317,6 @@ class _BlockedElement(_ElementBase):
     def sub_elements(self) -> list[_ElementBase]:
         """List of sub elements."""
         return [self._sub_element for _ in range(self._block_size)]
-
-    @property
-    def ufcx_element_type(self) -> str:
-        """Element type."""
-        return self._sub_element.ufcx_element_type
 
     @property
     def dim(self) -> int:
@@ -1461,7 +1501,9 @@ class _BlockedElement(_ElementBase):
         """
         return self._sub_element.has_tensor_product_factorisation
 
-    def custom_quadrature(self) -> tuple[_npt.NDArray[np.float64], _npt.NDArray[np.float64]]:
+    def custom_quadrature(
+        self,
+    ) -> tuple[_npt.NDArray[np.float64], _npt.NDArray[np.float64]]:
         """Return custom quadrature rule or raise a ValueError."""
         return self._sub_element.custom_quadrature()
 
@@ -1501,6 +1543,12 @@ class _QuadratureElement(_ElementBase):
 
         super().__init__(repr, cell.name, (), degree, pullback=pullback)
 
+    @property
+    def dtype(self) -> _npt.DTypeLike:
+        """Element float type."""
+        raise NotImplementedError()
+
+    @property
     def basix_sobolev_space(self):
         """Underlying Sobolev space."""
         return _basix.sobolev_spaces.L2
@@ -1552,14 +1600,16 @@ class _QuadratureElement(_ElementBase):
         """
         return self, 0, 1
 
-    def custom_quadrature(self) -> tuple[_npt.NDArray[np.float64], _npt.NDArray[np.float64]]:
+    def custom_quadrature(
+        self,
+    ) -> tuple[_npt.NDArray[np.float64], _npt.NDArray[np.float64]]:
         """Return custom quadrature rule or raise a ValueError."""
         return self._points, self._weights
 
     @property
-    def ufcx_element_type(self) -> str:
-        """Element type."""
-        return "ufcx_quadrature_element"
+    def is_quadrature(self) -> bool:
+        """Is this a quadrature element?"""
+        return True
 
     @property
     def dim(self) -> int:
@@ -1725,6 +1775,11 @@ class _RealElement(_ElementBase):
         """Return a hash."""
         return super().__hash__()
 
+    @property
+    def dtype(self) -> _npt.DTypeLike:
+        """Element float type."""
+        raise NotImplementedError()
+
     def tabulate(self, nderivs: int, points: _npt.NDArray[np.float64]) -> _npt.NDArray[np.float64]:
         """Tabulate the basis functions of the element.
 
@@ -1756,11 +1811,6 @@ class _RealElement(_ElementBase):
         """
         assert flat_component < self.reference_value_size
         return self, 0, 1
-
-    @property
-    def ufcx_element_type(self) -> str:
-        """Element type."""
-        return "ufcx_real_element"
 
     @property
     def dim(self) -> int:
@@ -1942,7 +1992,7 @@ def element(
     discontinuous: bool = False,
     shape: _typing.Optional[tuple[int, ...]] = None,
     symmetry: _typing.Optional[bool] = None,
-    dtype: _npt.DTypeLike = np.float64,
+    dtype: _typing.Optional[_npt.DTypeLike] = None,
 ) -> _ElementBase:
     """Create a UFL compatible element using Basix.
 
@@ -2040,6 +2090,7 @@ def enriched_element(
             if e.map_type != map_type:
                 raise ValueError("Enriched elements on different map types not supported.")
 
+    dtype = e.dtype
     hcd = min(e.embedded_subdegree for e in elements)
     hd = max(e.embedded_superdegree for e in elements)
     ss = _basix.sobolev_spaces.intersection([e.basix_sobolev_space for e in elements])
@@ -2053,6 +2104,8 @@ def enriched_element(
             raise ValueError("Enriched elements on different polyset types not supported.")
         if e.reference_value_shape != vshape or e.reference_value_size != vsize:
             raise ValueError("Enriched elements on different value shapes not supported.")
+        if e.dtype != dtype:
+            raise ValueError("Enriched elements with different dtypes no supported.")
     nderivs = max(e.interpolation_nderivs for e in elements)
 
     x = []
@@ -2082,7 +2135,12 @@ def enriched_element(
     row = 0
     for e in elements:
         wcoeffs[row : row + e.dim, :] = _basix.polynomials.reshape_coefficients(
-            _basix.PolynomialType.legendre, ct, e._wcoeffs, vsize, e.embedded_superdegree, hd
+            _basix.PolynomialType.legendre,
+            ct,
+            e._wcoeffs,
+            vsize,
+            e.embedded_superdegree,
+            hd,
         )
         row += e.dim
 
@@ -2099,15 +2157,16 @@ def enriched_element(
         hcd,
         hd,
         ptype,
+        dtype=dtype,
     )
 
 
 def custom_element(
     cell_type: _basix.CellType,
     reference_value_shape: _typing.Union[list[int], tuple[int, ...]],
-    wcoeffs: _npt.NDArray[np.float64],
-    x: list[list[_npt.NDArray[np.float64]]],
-    M: list[list[_npt.NDArray[np.float64]]],
+    wcoeffs: _npt.NDArray[np.floating],
+    x: list[list[_npt.NDArray[np.floating]]],
+    M: list[list[_npt.NDArray[np.floating]]],
     interpolation_nderivs: int,
     map_type: _basix.MapType,
     sobolev_space: _basix.SobolevSpace,
@@ -2115,6 +2174,7 @@ def custom_element(
     embedded_subdegree: int,
     embedded_superdegree: int,
     polyset_type: _basix.PolysetType = _basix.PolysetType.standard,
+    dtype: _typing.Optional[_npt.DTypeLike] = None,
 ) -> _ElementBase:
     """Create a UFL compatible custom Basix element.
 
@@ -2142,6 +2202,7 @@ def custom_element(
         embedded_superdegree: The highest degree of a polynomial in this
             element's polyset.
         polyset_type: Polyset type for the element.
+        dtype: Floating point data type.
 
     Returns:
         A custom finite element.
@@ -2159,6 +2220,7 @@ def custom_element(
         embedded_subdegree,
         embedded_superdegree,
         polyset_type,
+        dtype=dtype,
     )
     return _BasixElement(e)
 
@@ -2180,9 +2242,10 @@ def quadrature_element(
     value_shape: tuple[int, ...] = (),
     scheme: _typing.Optional[str] = None,
     degree: _typing.Optional[int] = None,
-    points: _typing.Optional[_npt.NDArray[np.float64]] = None,
-    weights: _typing.Optional[_npt.NDArray[np.float64]] = None,
+    points: _typing.Optional[_npt.NDArray[np.floating]] = None,
+    weights: _typing.Optional[_npt.NDArray[np.floating]] = None,
     pullback: _AbstractPullback = _ufl.identity_pullback,
+    symmetry: _typing.Optional[bool] = None,
 ) -> _ElementBase:
     """Create a quadrature element.
 
@@ -2197,6 +2260,8 @@ def quadrature_element(
         points: Quadrature points.
         weights: Quadrature weights.
         pullback: Map name.
+        symmetry: Set to ``True`` if the tensor is symmetric. Valid for
+            rank 2 elements only.
 
     Returns:
         A 'quadrature' finite element.
@@ -2219,9 +2284,11 @@ def quadrature_element(
 
     e = _QuadratureElement(cell, points, weights, pullback, degree)
     if value_shape == ():
+        if symmetry is not None:
+            raise ValueError("Cannot pass a symmetry argument to this element.")
         return e
     else:
-        return _BlockedElement(e, value_shape)
+        return blocked_element(e, shape=value_shape, symmetry=symmetry)
 
 
 def real_element(

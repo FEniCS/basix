@@ -97,7 +97,7 @@ void declare_float(nb::module_& m, std::string type)
              return as_nbarrayp(self.tabulate(n, _x));
            })
       .def("__eq__", &FiniteElement<T>::operator==)
-      .def("__hash__", &FiniteElement<T>::hash)
+      .def("hash", &FiniteElement<T>::hash)
       .def("permute_subentity_closure",
            [](const FiniteElement<T>& self,
               nb::ndarray<std::int32_t, nb::ndim<1>, nb::c_contig> d,
@@ -335,8 +335,9 @@ void declare_float(nb::module_& m, std::string type)
                    });
 
   // Create FiniteElement
+  std::string custom_name = "create_custom_element_" + type;
   m.def(
-      "create_custom_element",
+      custom_name.c_str(),
       [](cell::type cell_type, const std::vector<std::size_t>& value_shape,
          nb::ndarray<const T, nb::ndim<2>, nb::c_contig> wcoeffs,
          std::vector<

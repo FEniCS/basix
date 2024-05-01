@@ -5,6 +5,7 @@
 #include "e-raviart-thomas.h"
 #include "e-lagrange.h"
 #include "element-families.h"
+#include "finite-element-utils.h"
 #include "maps.h"
 #include "math.h"
 #include "moments.h"

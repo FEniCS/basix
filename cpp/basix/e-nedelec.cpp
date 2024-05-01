@@ -6,6 +6,7 @@
 #include "e-lagrange.h"
 #include "e-raviart-thomas.h"
 #include "element-families.h"
+#include "finite-element-utils.h"
 #include "maps.h"
 #include "math.h"
 #include "mdspan.hpp"

@@ -5,6 +5,7 @@
 #include "e-serendipity.h"
 #include "e-lagrange.h"
 #include "element-families.h"
+#include "finite-element-utils.h"
 #include "lattice.h"
 #include "maps.h"
 #include "math.h"

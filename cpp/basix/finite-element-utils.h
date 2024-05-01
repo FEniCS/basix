@@ -1,34 +1,14 @@
-// Copyright (c) 2020-2024 Chris Richardson, Matthew Scroggs and Garth . Wells
+// Copyright (c) 2020-2024 Chris Richardson, Matthew Scroggs and Garth N. Wells
 // FEniCS Project
 // SPDX-License-Identifier:    MIT
 
 #pragma once
 
-#include "cell.h"
-#include "element-families.h"
-#include "finite-element.h"
-#include "maps.h"
-#include "mdspan.hpp"
-#include "polyset.h"
-#include "precompute.h"
-#include "sobolev-spaces.h"
+#include "types.h"
 #include <array>
-#include <concepts>
-#include <cstdint>
-#include <functional>
-#include <map>
-#include <numeric>
-#include <span>
-#include <string>
-#include <tuple>
-#include <utility>
 #include <vector>
 
-/// Basix: FEniCS runtime basis evaluation library
-namespace basix
-{
-
-namespace element
+namespace basix::element
 {
 /// Typedef for mdspan
 template <typename T, std::size_t d>
@@ -58,6 +38,4 @@ make_discontinuous(const std::array<std::vector<mdspan_t<const T, 2>>, 4>& x,
                    const std::array<std::vector<mdspan_t<const T, 4>>, 4>& M,
                    std::size_t tdim, std::size_t value_size);
 
-} // namespace element
-
-} // namespace basix
+} // namespace basix::element

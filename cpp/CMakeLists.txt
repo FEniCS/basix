@@ -65,6 +65,7 @@ set(HEADERS_basix
   ${CMAKE_CURRENT_SOURCE_DIR}/basix/precompute.h
   ${CMAKE_CURRENT_SOURCE_DIR}/basix/quadrature.h
   ${CMAKE_CURRENT_SOURCE_DIR}/basix/sobolev-spaces.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/basix/types.h
   ${CMAKE_CURRENT_SOURCE_DIR}/basix/e-lagrange.h
   ${CMAKE_CURRENT_SOURCE_DIR}/basix/e-nce-rtc.h
   ${CMAKE_CURRENT_SOURCE_DIR}/basix/e-brezzi-douglas-marini.h

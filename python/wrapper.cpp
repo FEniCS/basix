@@ -4,6 +4,7 @@
 
 #include <basix/cell.h>
 #include <basix/element-families.h>
+#include <basix/finite-element-utils.h>
 #include <basix/finite-element.h>
 #include <basix/indexing.h>
 #include <basix/interpolation.h>

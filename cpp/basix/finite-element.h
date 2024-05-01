@@ -1257,10 +1257,6 @@ private:
   std::array<array4_t, 4> _M;
 };
 
-/// Return the Basix version number
-/// @return version string
-std::string version();
-
 //-----------------------------------------------------------------------------
 template <std::floating_point F>
 template <typename T, bool post>

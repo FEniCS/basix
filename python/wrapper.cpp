@@ -15,6 +15,7 @@
 #include <basix/polyset.h>
 #include <basix/quadrature.h>
 #include <basix/sobolev-spaces.h>
+#include <basix/version.h>
 #include <memory>
 #include <nanobind/nanobind.h>
 #include <nanobind/ndarray.h>

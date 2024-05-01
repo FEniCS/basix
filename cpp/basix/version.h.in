@@ -4,7 +4,17 @@
 
 #pragma once
 
+#include <string>
+
 #define BASIX_VERSION @PROJECT_VERSION@
 #define BASIX_VERSION_MAJOR @PROJECT_VERSION_MAJOR@
 #define BASIX_VERSION_MINOR @PROJECT_VERSION_MINOR@
 #define BASIX_VERSION_PATCH @PROJECT_VERSION_PATCH@
+
+namespace basix {
+
+/// Return the Basix version number
+/// @return version string
+std::string version();
+
+} // namespace basix

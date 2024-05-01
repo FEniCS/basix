@@ -7,13 +7,10 @@
 #include "finite-element-utils.h"
 #include "math.h"
 #include "polyset.h"
-#include <basix/version.h>
 #include <cmath>
 #include <concepts>
 #include <limits>
 #include <numeric>
-#define str_macro(X) #X
-#define str(X) str_macro(X)
 
 using namespace basix;
 
@@ -835,12 +832,6 @@ FiniteElement<F>::pull_back(impl::mdspan_t<const F, 3> u,
   }
 
   return {std::move(Ub), shape};
-}
-//-----------------------------------------------------------------------------
-std::string basix::version()
-{
-  static const std::string version_str = str(BASIX_VERSION);
-  return version_str;
 }
 //-----------------------------------------------------------------------------
 /// @cond

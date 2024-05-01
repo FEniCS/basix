@@ -103,7 +103,8 @@ target_sources(basix PRIVATE
   ${CMAKE_CURRENT_SOURCE_DIR}/basix/e-crouzeix-raviart.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/basix/e-bubble.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/basix/e-hermite.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/basix/e-serendipity.cpp)
+  ${CMAKE_CURRENT_SOURCE_DIR}/basix/e-serendipity.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/basix/version.cpp)
 
 # Configure the library
 set_target_properties(basix PROPERTIES PUBLIC_HEADER basix/finite-element.h)

@@ -1150,22 +1150,18 @@ FiniteElement<F>::FiniteElement(
         for (std::size_t i = 0; i < conn[dim].size(); ++i)
         {
           const int e = conn[dim][i];
-          for (int j : _edofs[dim][e])
+          for (std::size_t j = 0; j < _edofs[dim][e].size(); ++j)
           {
-            std::ignore = j;
             dofs[dim][i].push_back(dof_n++);
           }
         }
       }
 
       std::vector<std::size_t> ref;
-      for (int i : dofs[0][1])
-        ref.push_back(i);
-      for (int i : dofs[0][0])
-        ref.push_back(i);
+      ref.insert(ref.end(), dofs[0][1].begin(), dofs[0][1].end());
+      ref.insert(ref.end(), dofs[0][0].begin(), dofs[0][0].end());
       // Edges
-      for (int i : dofs[1][0])
-        ref.push_back(i);
+      ref.insert(ref.end(), dofs[1][0].begin(), dofs[1][0].end());
 
       if (!_dof_transformations_are_identity)
       {
@@ -1208,40 +1204,27 @@ FiniteElement<F>::FiniteElement(
 
       std::vector<std::size_t> rot;
       // Vertices
-      for (int i : dofs[0][1])
-        rot.push_back(i);
-      for (int i : dofs[0][2])
-        rot.push_back(i);
-      for (int i : dofs[0][0])
-        rot.push_back(i);
+      rot.insert(rot.end(), dofs[0][1].begin(), dofs[0][1].end());
+      rot.insert(rot.end(), dofs[0][2].begin(), dofs[0][2].end());
+      rot.insert(rot.end(), dofs[0][0].begin(), dofs[0][0].end());
       // Edges
-      for (int i : dofs[1][1])
-        rot.push_back(i);
-      for (int i : dofs[1][2])
-        rot.push_back(i);
-      for (int i : dofs[1][0])
-        rot.push_back(i);
+      rot.insert(rot.end(), dofs[1][1].begin(), dofs[1][1].end());
+      rot.insert(rot.end(), dofs[1][2].begin(), dofs[1][2].end());
+      rot.insert(rot.end(), dofs[1][0].begin(), dofs[1][0].end());
       // Face
-      for (int i : dofs[2][0])
-        rot.push_back(i);
+      rot.insert(rot.end(), dofs[2][0].begin(), dofs[2][0].end());
 
       std::vector<std::size_t> ref;
-      for (int i : dofs[0][0])
-        ref.push_back(i);
-      for (int i : dofs[0][2])
-        ref.push_back(i);
-      for (int i : dofs[0][1])
-        ref.push_back(i);
+      // Vertices
+      ref.insert(ref.end(), dofs[0][0].begin(), dofs[0][0].end());
+      ref.insert(ref.end(), dofs[0][2].begin(), dofs[0][2].end());
+      ref.insert(ref.end(), dofs[0][1].begin(), dofs[0][1].end());
       // Edges
-      for (int i : dofs[1][0])
-        ref.push_back(i);
-      for (int i : dofs[1][2])
-        ref.push_back(i);
-      for (int i : dofs[1][1])
-        ref.push_back(i);
+      ref.insert(ref.end(), dofs[1][0].begin(), dofs[1][0].end());
+      ref.insert(ref.end(), dofs[1][2].begin(), dofs[1][2].end());
+      ref.insert(ref.end(), dofs[1][1].begin(), dofs[1][1].end());
       // Face
-      for (int i : dofs[2][0])
-        ref.push_back(i);
+      ref.insert(ref.end(), dofs[2][0].begin(), dofs[2][0].end());
 
       if (!_dof_transformations_are_identity)
       {
@@ -1306,48 +1289,30 @@ FiniteElement<F>::FiniteElement(
 
       std::vector<std::size_t> rot;
       // Vertices
-      for (int i : dofs[0][1])
-        rot.push_back(i);
-      for (int i : dofs[0][3])
-        rot.push_back(i);
-      for (int i : dofs[0][0])
-        rot.push_back(i);
-      for (int i : dofs[0][2])
-        rot.push_back(i);
+      rot.insert(rot.end(), dofs[0][1].begin(), dofs[0][1].end());
+      rot.insert(rot.end(), dofs[0][3].begin(), dofs[0][3].end());
+      rot.insert(rot.end(), dofs[0][0].begin(), dofs[0][0].end());
+      rot.insert(rot.end(), dofs[0][2].begin(), dofs[0][2].end());
       // Edges
-      for (int i : dofs[1][2])
-        rot.push_back(i);
-      for (int i : dofs[1][0])
-        rot.push_back(i);
-      for (int i : dofs[1][3])
-        rot.push_back(i);
-      for (int i : dofs[1][1])
-        rot.push_back(i);
+      rot.insert(rot.end(), dofs[1][2].begin(), dofs[1][2].end());
+      rot.insert(rot.end(), dofs[1][0].begin(), dofs[1][0].end());
+      rot.insert(rot.end(), dofs[1][3].begin(), dofs[1][3].end());
+      rot.insert(rot.end(), dofs[1][1].begin(), dofs[1][1].end());
       // Face
-      for (int i : dofs[2][0])
-        rot.push_back(i);
+      rot.insert(rot.end(), dofs[2][0].begin(), dofs[2][0].end());
 
       std::vector<std::size_t> ref;
-      for (int i : dofs[0][0])
-        ref.push_back(i);
-      for (int i : dofs[0][2])
-        ref.push_back(i);
-      for (int i : dofs[0][1])
-        ref.push_back(i);
-      for (int i : dofs[0][3])
-        ref.push_back(i);
+      ref.insert(ref.end(), dofs[0][0].begin(), dofs[0][0].end());
+      ref.insert(ref.end(), dofs[0][2].begin(), dofs[0][2].end());
+      ref.insert(ref.end(), dofs[0][1].begin(), dofs[0][1].end());
+      ref.insert(ref.end(), dofs[0][3].begin(), dofs[0][3].end());
       // Edges
-      for (int i : dofs[1][1])
-        ref.push_back(i);
-      for (int i : dofs[1][0])
-        ref.push_back(i);
-      for (int i : dofs[1][3])
-        ref.push_back(i);
-      for (int i : dofs[1][2])
-        ref.push_back(i);
+      ref.insert(ref.end(), dofs[1][1].begin(), dofs[1][1].end());
+      ref.insert(ref.end(), dofs[1][0].begin(), dofs[1][0].end());
+      ref.insert(ref.end(), dofs[1][3].begin(), dofs[1][3].end());
+      ref.insert(ref.end(), dofs[1][2].begin(), dofs[1][2].end());
       // Face
-      for (int i : dofs[2][0])
-        ref.push_back(i);
+      ref.insert(ref.end(), dofs[2][0].begin(), dofs[2][0].end());
 
       if (!_dof_transformations_are_identity)
       {

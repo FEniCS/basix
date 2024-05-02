@@ -21,8 +21,4 @@ namespace basix
 /// @return version string
 std::string version();
 
-// using basix::create_custom_element;
-// using basix::create_element;
-// using basix::FiniteElement;
-
 } // namespace basix

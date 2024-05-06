@@ -43,17 +43,17 @@ jobs:
           cmake -G Ninja -DCMAKE_BUILD_TYPE=Developer -B build-dir -S ./cpp
           cmake --build build-dir
           cmake --install build-dir
-          python3 -m pip install ./python
+          python3 -m pip install --break-system-packages ./python
       - name: Install FEniCS Python components
         if: github.event_name != 'workflow_dispatch'
         run: |
-          python3 -m pip install git+https://github.com/FEniCS/ufl.git
-          python3 -m pip install git+https://github.com/FEniCS/ffcx.git
+          python3 -m pip install --break-system-packages git+https://github.com/FEniCS/ufl.git
+          python3 -m pip install --break-system-packages git+https://github.com/FEniCS/ffcx.git
       - name: Install FEniCS Python components
         if: github.event_name == 'workflow_dispatch'
         run: |
-          python3 -m pip install git+https://github.com/FEniCS/ufl.git@${{ github.event.inputs.ufl_branch }}
-          python3 -m pip install git+https://github.com/FEniCS/ffcx.git@${{ github.event.inputs.ffcx_branch }}
+          python3 -m pip install --break-system-packages git+https://github.com/FEniCS/ufl.git@${{ github.event.inputs.ufl_branch }}
+          python3 -m pip install --break-system-packages git+https://github.com/FEniCS/ffcx.git@${{ github.event.inputs.ffcx_branch }}
       - name: Get DOLFINx
         if: github.event_name != 'workflow_dispatch'
         uses: actions/checkout@v4
@@ -75,7 +75,7 @@ jobs:
           cmake --install build
       - name: Install DOLFINx (Python)
         run: |
-          python3 -m pip install -r dolfinx/python/build-requirements.txt # TO REMOVE
+          python3 -m pip install --break-system-packages -r dolfinx/python/build-requirements.txt # TO REMOVE
           python3 -m pip -v install --break-system-packages --check-build-dependencies --no-build-isolation dolfinx/python/
       - name: Run mypy checks
         run: |

@@ -5,6 +5,7 @@
 #include "e-crouzeix-raviart.h"
 #include "cell.h"
 #include "element-families.h"
+#include "finite-element-utils.h"
 #include "maps.h"
 #include "math.h"
 #include "mdspan.hpp"

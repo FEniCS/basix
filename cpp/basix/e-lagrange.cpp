@@ -3,6 +3,7 @@
 // SPDX-License-Identifier:    MIT
 
 #include "e-lagrange.h"
+#include "finite-element-utils.h"
 #include "lattice.h"
 #include "maps.h"
 #include "math.h"

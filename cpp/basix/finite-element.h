@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2024 Chris Richardson, Matthew Scroggs and Garth . Wells
+// Copyright (c) 2020-2024 Chris Richardson, Matthew Scroggs and Garth N. Wells
 // FEniCS Project
 // SPDX-License-Identifier:    MIT
 
@@ -11,6 +11,7 @@
 #include "polyset.h"
 #include "precompute.h"
 #include "sobolev-spaces.h"
+#include "types.h"
 #include <array>
 #include <concepts>
 #include <cstdint>
@@ -23,111 +24,8 @@
 #include <utility>
 #include <vector>
 
-/// Basix: FEniCS runtime basis evaluation library
 namespace basix
 {
-
-namespace impl
-{
-template <typename T, std::size_t d>
-using mdspan_t = MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<
-    T, MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, d>>;
-template <typename T, std::size_t d>
-using mdarray_t
-    = MDSPAN_IMPL_STANDARD_NAMESPACE::MDSPAN_IMPL_PROPOSED_NAMESPACE::mdarray<
-        T, MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, d>>;
-
-/// Create a container of cmdspan2_t objects from a container of
-/// mdarray2_t objects
-template <typename T>
-std::array<std::vector<mdspan_t<const T, 2>>, 4>
-to_mdspan(std::array<std::vector<mdarray_t<T, 2>>, 4>& x)
-{
-  std::array<std::vector<mdspan_t<const T, 2>>, 4> x1;
-  for (std::size_t i = 0; i < x.size(); ++i)
-    for (std::size_t j = 0; j < x[i].size(); ++j)
-      x1[i].emplace_back(x[i][j].data(), x[i][j].extents());
-
-  return x1;
-}
-
-/// Create a container of cmdspan4_t objects from a container of
-/// mdarray4_t objects
-template <typename T>
-std::array<std::vector<mdspan_t<const T, 4>>, 4>
-to_mdspan(std::array<std::vector<mdarray_t<T, 4>>, 4>& M)
-{
-  std::array<std::vector<mdspan_t<const T, 4>>, 4> M1;
-  for (std::size_t i = 0; i < M.size(); ++i)
-    for (std::size_t j = 0; j < M[i].size(); ++j)
-      M1[i].emplace_back(M[i][j].data(), M[i][j].extents());
-
-  return M1;
-}
-
-/// Create a container of cmdspan2_t objects from containers holding
-/// data buffers and shapes
-template <typename T>
-std::array<std::vector<mdspan_t<const T, 2>>, 4>
-to_mdspan(const std::array<std::vector<std::vector<T>>, 4>& x,
-          const std::array<std::vector<std::array<std::size_t, 2>>, 4>& shape)
-{
-  std::array<std::vector<mdspan_t<const T, 2>>, 4> x1;
-  for (std::size_t i = 0; i < x.size(); ++i)
-    for (std::size_t j = 0; j < x[i].size(); ++j)
-      x1[i].push_back(mdspan_t<const T, 2>(x[i][j].data(), shape[i][j]));
-
-  return x1;
-}
-
-/// Create a container of cmdspan4_t objects from containers holding
-/// data buffers and shapes
-template <typename T>
-std::array<std::vector<mdspan_t<const T, 4>>, 4>
-to_mdspan(const std::array<std::vector<std::vector<T>>, 4>& M,
-          const std::array<std::vector<std::array<std::size_t, 4>>, 4>& shape)
-{
-  std::array<std::vector<mdspan_t<const T, 4>>, 4> M1;
-  for (std::size_t i = 0; i < M.size(); ++i)
-    for (std::size_t j = 0; j < M[i].size(); ++j)
-      M1[i].push_back(mdspan_t<const T, 4>(M[i][j].data(), shape[i][j]));
-
-  return M1;
-}
-
-} // namespace impl
-
-namespace element
-{
-/// Typedef for mdspan
-template <typename T, std::size_t d>
-using mdspan_t = impl::mdspan_t<T, d>;
-
-/// Create a version of the interpolation points, interpolation
-/// matrices and entity transformation that represent a discontinuous
-/// version of the element. This discontinuous version will have the
-/// same DOFs but they will all be associated with the interior of the
-/// reference cell.
-/// @param[in] x Interpolation points. Indices are (tdim, entity index,
-/// point index, dim)
-/// @param[in] M The interpolation matrices. Indices are (tdim, entity
-/// index, dof, vs, point_index, derivative)
-/// @param[in] tdim The topological dimension of the cell the element is
-/// defined on
-/// @param[in] value_size The value size of the element
-/// @return (xdata, xshape, Mdata, Mshape), where the x and M data are
-/// for  a discontinuous version of the element (with the same shapes as
-/// x and M)
-template <std::floating_point T>
-std::tuple<std::array<std::vector<std::vector<T>>, 4>,
-           std::array<std::vector<std::array<std::size_t, 2>>, 4>,
-           std::array<std::vector<std::vector<T>>, 4>,
-           std::array<std::vector<std::array<std::size_t, 4>>, 4>>
-make_discontinuous(const std::array<std::vector<mdspan_t<const T, 2>>, 4>& x,
-                   const std::array<std::vector<mdspan_t<const T, 4>>, 4>& M,
-                   std::size_t tdim, std::size_t value_size);
-
-} // namespace element
 
 /// @brief A finite element.
 ///
@@ -1357,114 +1255,6 @@ private:
       = std::vector<std::pair<std::vector<F>, std::array<std::size_t, 4>>>;
   std::array<array4_t, 4> _M;
 };
-
-/// Create a custom finite element
-/// @param[in] cell_type The cell type
-/// @param[in] value_shape The value shape of the element
-/// @param[in] wcoeffs Matrices for the kth value index containing the
-/// expansion coefficients defining a polynomial basis spanning the
-/// polynomial space for this element. Shape is (dim(finite element polyset),
-/// dim(Legendre polynomials))
-/// @param[in] x Interpolation points. Indices are (tdim, entity index,
-/// point index, dim)
-/// @param[in] M The interpolation matrices. Indices are (tdim, entity
-/// index, dof, vs, point_index, derivative)
-/// @param[in] interpolation_nderivs The number of derivatives that need to be
-/// used during interpolation
-/// @param[in] map_type The type of map to be used to map values from
-/// the reference to a cell
-/// @param[in] sobolev_space The underlying Sobolev space for the element
-/// @param[in] discontinuous Indicates whether or not this is the
-/// discontinuous version of the element
-/// @param[in] embedded_subdegree The highest degree n such that a
-/// Lagrange (or vector Lagrange) element of degree n is a subspace of this
-/// element
-/// @param[in] embedded_superdegree The degree of a polynomial in this element's
-/// polyset
-/// @param[in] poly_type The type of polyset to use for this element
-/// @return A custom finite element
-template <std::floating_point T>
-FiniteElement<T> create_custom_element(
-    cell::type cell_type, const std::vector<std::size_t>& value_shape,
-    impl::mdspan_t<const T, 2> wcoeffs,
-    const std::array<std::vector<impl::mdspan_t<const T, 2>>, 4>& x,
-    const std::array<std::vector<impl::mdspan_t<const T, 4>>, 4>& M,
-    int interpolation_nderivs, maps::type map_type,
-    sobolev::space sobolev_space, bool discontinuous, int embedded_subdegree,
-    int embedded_superdegree, polyset::type poly_type);
-
-/// Create an element using a given Lagrange variant and a given DPC variant
-/// @param[in] family The element family
-/// @param[in] cell The reference cell type that the element is defined on
-/// @param[in] degree The degree of the element
-/// @param[in] lvariant The variant of Lagrange to use
-/// @param[in] dvariant The variant of DPC to use
-/// @param[in] discontinuous Indicates whether the element is discontinuous
-/// between cells points of the element. The discontinuous element will have the
-/// same DOFs, but they will all be associated with the interior of the cell.
-/// @param[in] dof_ordering Ordering of dofs for ElementDofLayout
-/// @return A finite element
-template <std::floating_point T>
-FiniteElement<T> create_element(element::family family, cell::type cell,
-                                int degree, element::lagrange_variant lvariant,
-                                element::dpc_variant dvariant,
-                                bool discontinuous,
-                                std::vector<int> dof_ordering = {});
-
-/// Get the tensor product DOF ordering for an element
-/// @param[in] family The element family
-/// @param[in] cell The reference cell type that the element is defined on.
-/// Currently limited to quadrilateral or hexahedron.
-/// @param[in] degree The degree of the element
-/// @param[in] lvariant The variant of Lagrange to use
-/// @param[in] dvariant The variant of DPC to use
-/// @param[in] discontinuous Indicates whether the element is discontinuous
-/// between cells points of the element. The discontinuous element will have the
-/// same DOFs, but they will all be associated with the interior of the cell.
-/// @return A vector containing the dof ordering
-std::vector<int> tp_dof_ordering(element::family family, cell::type cell,
-                                 int degree, element::lagrange_variant lvariant,
-                                 element::dpc_variant dvariant,
-                                 bool discontinuous);
-
-/// Get the tensor factors of an element
-/// @param[in] family The element family
-/// @param[in] cell The reference cell type that the element is defined on.
-/// Currently limited to quadrilateral or hexahedron.
-/// @param[in] degree The degree of the element
-/// @param[in] lvariant The variant of Lagrange to use
-/// @param[in] dvariant The variant of DPC to use
-/// @param[in] discontinuous Indicates whether the element is discontinuous
-/// between cells points of the element. The discontinuous element will have the
-/// same DOFs, but they will all be associated with the interior of the cell.
-/// @param[in] dof_ordering The ordering of the DOFs
-/// @return A list of lists of finite element factors
-template <std::floating_point T>
-std::vector<std::vector<FiniteElement<T>>>
-tp_factors(element::family family, cell::type cell, int degree,
-           element::lagrange_variant lvariant, element::dpc_variant dvariant,
-           bool discontinuous, std::vector<int> dof_ordering);
-
-/// Create an element with Tensor Product dof ordering
-/// @param[in] family The element family
-/// @param[in] cell The reference cell type that the element is defined on.
-/// Currently limited to quadrilateral or hexahedron.
-/// @param[in] degree The degree of the element
-/// @param[in] lvariant The variant of Lagrange to use
-/// @param[in] dvariant The variant of DPC to use
-/// @param[in] discontinuous Indicates whether the element is discontinuous
-/// between cells points of the element. The discontinuous element will have the
-/// same DOFs, but they will all be associated with the interior of the cell.
-/// @return A finite element
-template <std::floating_point T>
-FiniteElement<T>
-create_tp_element(element::family family, cell::type cell, int degree,
-                  element::lagrange_variant lvariant,
-                  element::dpc_variant dvariant, bool discontinuous);
-
-/// Return the Basix version number
-/// @return version string
-std::string version();
 
 //-----------------------------------------------------------------------------
 template <std::floating_point F>

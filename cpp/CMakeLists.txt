@@ -56,6 +56,7 @@ set(HEADERS_basix
   ${CMAKE_CURRENT_SOURCE_DIR}/basix/dof-transformations.h
   ${CMAKE_CURRENT_SOURCE_DIR}/basix/element-families.h
   ${CMAKE_CURRENT_SOURCE_DIR}/basix/finite-element.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/basix/finite-element-utils.h
   ${CMAKE_CURRENT_SOURCE_DIR}/basix/indexing.h
   ${CMAKE_CURRENT_SOURCE_DIR}/basix/interpolation.h
   ${CMAKE_CURRENT_SOURCE_DIR}/basix/lattice.h
@@ -67,6 +68,7 @@ set(HEADERS_basix
   ${CMAKE_CURRENT_SOURCE_DIR}/basix/precompute.h
   ${CMAKE_CURRENT_SOURCE_DIR}/basix/quadrature.h
   ${CMAKE_CURRENT_SOURCE_DIR}/basix/sobolev-spaces.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/basix/types.h
   ${CMAKE_CURRENT_SOURCE_DIR}/basix/e-lagrange.h
   ${CMAKE_CURRENT_SOURCE_DIR}/basix/e-nce-rtc.h
   ${CMAKE_CURRENT_SOURCE_DIR}/basix/e-brezzi-douglas-marini.h
@@ -79,12 +81,14 @@ set(HEADERS_basix
   ${CMAKE_CURRENT_SOURCE_DIR}/basix/e-serendipity.h
   ${CMAKE_CURRENT_SOURCE_DIR}/basix/e-hermite.h
   ${CMAKE_CURRENT_SOURCE_DIR}/basix/mdspan.hpp
-  ${CMAKE_CURRENT_BINARY_DIR}/basix/version.h)
+  ${CMAKE_CURRENT_BINARY_DIR}/basix/version.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/basix/basix.h)
 
 target_sources(basix PRIVATE
   ${CMAKE_CURRENT_SOURCE_DIR}/basix/cell.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/basix/dof-transformations.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/basix/finite-element.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/basix/finite-element-utils.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/basix/interpolation.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/basix/lattice.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/basix/moments.cpp
@@ -103,7 +107,8 @@ target_sources(basix PRIVATE
   ${CMAKE_CURRENT_SOURCE_DIR}/basix/e-crouzeix-raviart.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/basix/e-bubble.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/basix/e-hermite.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/basix/e-serendipity.cpp)
+  ${CMAKE_CURRENT_SOURCE_DIR}/basix/e-serendipity.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/basix/basix.cpp)
 
 # Configure the library
 set_target_properties(basix PROPERTIES PUBLIC_HEADER basix/finite-element.h)

@@ -424,22 +424,16 @@ NB_MODULE(_basixcpp, m)
       .value("equispaced", lattice::type::equispaced)
       .value("gll", lattice::type::gll)
       .value("chebyshev", lattice::type::chebyshev)
-      .value("gl", lattice::type::gl)
-      .def_prop_ro("name",
-                   [](nb::object obj) { return nb::getattr(obj, "__name__"); });
+      .value("gl", lattice::type::gl);
   nb::enum_<lattice::simplex_method>(m, "LatticeSimplexMethod", nb::is_arithmetic())
       .value("none", lattice::simplex_method::none)
       .value("warp", lattice::simplex_method::warp)
       .value("isaac", lattice::simplex_method::isaac)
-      .value("centroid", lattice::simplex_method::centroid)
-      .def_prop_ro("name",
-                   [](nb::object obj) { return nb::getattr(obj, "__name__"); });
+      .value("centroid", lattice::simplex_method::centroid);
 
   nb::enum_<polynomials::type>(m, "PolynomialType", nb::is_arithmetic())
       .value("legendre", polynomials::type::legendre)
-      .value("bernstein", polynomials::type::bernstein)
-      .def_prop_ro("name",
-                   [](nb::object obj) { return nb::getattr(obj, "__name__"); });
+      .value("bernstein", polynomials::type::bernstein);
 
   m.def("tabulate_polynomials",
         [](polynomials::type polytype, cell::type celltype, int d,
@@ -463,9 +457,7 @@ NB_MODULE(_basixcpp, m)
       .value("covariantPiola", maps::type::covariantPiola)
       .value("contravariantPiola", maps::type::contravariantPiola)
       .value("doubleCovariantPiola", maps::type::doubleCovariantPiola)
-      .value("doubleContravariantPiola", maps::type::doubleContravariantPiola)
-      .def_prop_ro("name",
-                   [](nb::object obj) { return nb::getattr(obj, "__name__"); });
+      .value("doubleContravariantPiola", maps::type::doubleContravariantPiola);
 
   nb::enum_<sobolev::space>(m, "SobolevSpace", nb::is_arithmetic())
       .value("L2", sobolev::space::L2)
@@ -476,17 +468,13 @@ NB_MODULE(_basixcpp, m)
       .value("HDiv", sobolev::space::HDiv)
       .value("HCurl", sobolev::space::HCurl)
       .value("HEin", sobolev::space::HEin)
-      .value("HDivDiv", sobolev::space::HDivDiv)
-      .def_prop_ro("name",
-                   [](nb::object obj) { return nb::getattr(obj, "__name__"); });
+      .value("HDivDiv", sobolev::space::HDivDiv);
 
   nb::enum_<quadrature::type>(m, "QuadratureType", nb::is_arithmetic())
       .value("Default", quadrature::type::Default)
       .value("gauss_jacobi", quadrature::type::gauss_jacobi)
       .value("gll", quadrature::type::gll)
-      .value("xiao_gimbutas", quadrature::type::xiao_gimbutas)
-      .def_prop_ro("name",
-                   [](nb::object obj) { return nb::getattr(obj, "__name__"); });
+      .value("xiao_gimbutas", quadrature::type::xiao_gimbutas);
 
   nb::enum_<cell::type>(m, "CellType", nb::is_arithmetic())
       .value("point", cell::type::point)
@@ -496,9 +484,7 @@ NB_MODULE(_basixcpp, m)
       .value("quadrilateral", cell::type::quadrilateral)
       .value("hexahedron", cell::type::hexahedron)
       .value("prism", cell::type::prism)
-      .value("pyramid", cell::type::pyramid)
-      .def_prop_ro("name",
-                   [](nb::object obj) { return nb::getattr(obj, "__name__"); });
+      .value("pyramid", cell::type::pyramid);
 
   m.def("cell_volume", [](cell::type cell_type) -> double
         { return cell::volume<double>(cell_type); });
@@ -536,9 +522,7 @@ NB_MODULE(_basixcpp, m)
       .value("DPC", element::family::DPC)
       .value("CR", element::family::CR)
       .value("Hermite", element::family::Hermite)
-      .value("iso", element::family::iso)
-      .def_prop_ro("name",
-                   [](nb::object obj) { return nb::getattr(obj, "__name__"); });
+      .value("iso", element::family::iso);
 
   nb::enum_<element::lagrange_variant>(m, "LagrangeVariant", nb::is_arithmetic())
       .value("unset", element::lagrange_variant::unset)
@@ -554,9 +538,7 @@ NB_MODULE(_basixcpp, m)
       .value("gl_isaac", element::lagrange_variant::gl_isaac)
       .value("gl_centroid", element::lagrange_variant::gl_centroid)
       .value("legendre", element::lagrange_variant::legendre)
-      .value("bernstein", element::lagrange_variant::bernstein)
-      .def_prop_ro("name",
-                   [](nb::object obj) { return nb::getattr(obj, "__name__"); });
+      .value("bernstein", element::lagrange_variant::bernstein);
 
   nb::enum_<element::dpc_variant>(m, "DPCVariant", nb::is_arithmetic())
       .value("unset", element::dpc_variant::unset)
@@ -567,9 +549,7 @@ NB_MODULE(_basixcpp, m)
       .value("horizontal_gll", element::dpc_variant::horizontal_gll)
       .value("diagonal_equispaced", element::dpc_variant::diagonal_equispaced)
       .value("diagonal_gll", element::dpc_variant::diagonal_gll)
-      .value("legendre", element::dpc_variant::legendre)
-      .def_prop_ro("name",
-                   [](nb::object obj) { return nb::getattr(obj, "__name__"); });
+      .value("legendre", element::dpc_variant::legendre);
 
   m.def("create_element",
         [](element::family family_name, cell::type cell, int degree,
@@ -653,9 +633,7 @@ NB_MODULE(_basixcpp, m)
 
   nb::enum_<polyset::type>(m, "PolysetType", nb::is_arithmetic())
       .value("standard", polyset::type::standard)
-      .value("macroedge", polyset::type::macroedge)
-      .def_prop_ro("name",
-                   [](nb::object obj) { return nb::getattr(obj, "__name__"); });
+      .value("macroedge", polyset::type::macroedge);
 
   m.def("superset",
         [](cell::type cell, polyset::type type1, polyset::type type2)

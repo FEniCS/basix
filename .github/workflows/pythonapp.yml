@@ -55,10 +55,22 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y doxygen graphviz libopenblas-dev liblapack-dev ninja-build
+      - name: Install Python dependencies
+        run: |
+          pip install --upgrade setuptools
+          pip install scikit-build-core[pyproject] wheel
       - name: Install UFL branch
         run: pip -v install git+https://github.com/FEniCS/ufl.git
+      - name: Install nanobind from source
+        run: |
+          git clone https://github.com/wjakob/nanobind.git /tmp/nanobind-src
+          cd /tmp/nanobind-src
+          git submodule update --init --recursive
+          cmake -D NB_TEST=off .
+          python3 -m pip install .
+          rm -rf /tmp/nanobind-src
       - name: Install Basix
-        run: pip -v install .[ci]
+        run: pip -v install --check-build-dependencies --no-build-isolation .[ci]
       - name: Run units tests
         run: pytest -n auto --durations 20 test/
       - name: Run simple CMake integration test

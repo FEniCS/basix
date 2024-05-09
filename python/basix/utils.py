@@ -6,7 +6,7 @@
 """Utility funcitons."""
 
 import typing
-from enum import Enum as _Enum
+from enum import IntEnum as _Enum
 
 from basix._basixcpp import index as _index
 

@@ -912,7 +912,7 @@ public:
     default:
       throw std::runtime_error("Unsupported cell dimension");
     }
-    permute_subentity_closure(d, entity_info, entity_type);
+    permute_subentity_closure_inv(d, entity_info, entity_type);
   }
 
   /// @brief Permute indices associated with degree-of-freedoms on the

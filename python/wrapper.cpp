@@ -98,6 +98,24 @@ void declare_float(nb::module_& m, std::string type)
            })
       .def("__eq__", &FiniteElement<T>::operator==)
       .def("hash", &FiniteElement<T>::hash)
+      .def("permute_subentity_closure",
+           [](const FiniteElement<T>& self,
+              nb::ndarray<std::int32_t, nb::ndim<1>, nb::c_contig> d,
+              std::uint32_t entity_info, cell::type entity_type)
+           {
+             std::span<std::int32_t> _d(d.data(), d.shape(0));
+             self.permute_subentity_closure(_d, entity_info, entity_type);
+             return as_nbarray(std::move(_d));
+           })
+      .def("permute_subentity_closure_inv",
+           [](const FiniteElement<T>& self,
+              nb::ndarray<std::int32_t, nb::ndim<1>, nb::c_contig> d,
+              std::uint32_t entity_info, cell::type entity_type)
+           {
+             std::span<std::int32_t> _d(d.data(), d.shape(0));
+             self.permute_subentity_closure_inv(_d, entity_info, entity_type);
+             return as_nbarray(std::move(_d));
+           })
       .def("push_forward",
            [](const FiniteElement<T>& self,
               nb::ndarray<const T, nb::ndim<3>, nb::c_contig> U,
@@ -143,13 +161,10 @@ void declare_float(nb::module_& m, std::string type)
              self.Tt_apply_right(std::span(u.data(), u.size()), n,
                                 cell_info);
            })
-      .def("Tt_inv_apply",
-           [](const FiniteElement<T>& self,
-              nb::ndarray<T, nb::ndim<1>, nb::c_contig> u, int n,
-              std::uint32_t cell_info) {
-             self.Tt_inv_apply(std::span(u.data(), u.size()), n,
-                               cell_info);
-           })
+      .def("Tt_inv_apply", [](const FiniteElement<T>& self,
+                              nb::ndarray<T, nb::ndim<1>, nb::c_contig> u,
+                              int n, std::uint32_t cell_info)
+           { self.Tt_inv_apply(std::span(u.data(), u.size()), n, cell_info); })
       .def("base_transformations", [](const FiniteElement<T>& self)
            { return as_nbarrayp(self.base_transformations()); })
       .def("entity_transformations",

@@ -849,8 +849,87 @@ public:
   /// @param[in,out] d Indices associated with each reference element
   /// degree-of-freedom (in). Indices associated with each physical
   /// element degree-of-freedom (out).
-  /// @param entity_info Permutation info for the cell
+  /// @param cell_info Permutation info for the cell
   /// @param entity_type The cell type of the sub-entity
+  /// @param entity_index The index of the entity
+  void permute_subentity_closure(std::span<std::int32_t> d,
+                                 std::uint32_t cell_info,
+                                 cell::type entity_type, int entity_index) const
+  {
+    const int entity_dim = cell::topological_dimension(entity_type);
+
+    int face_start = _cell_tdim == 3 ? 3 * _edofs[2].size() : 0;
+
+    std::uint32_t entity_info = 0;
+    switch (entity_dim)
+    {
+    case 0:
+      return;
+    case 1:
+      entity_info = cell_info >> (face_start + entity_index) & 1;
+      break;
+    case 2:
+      entity_info = cell_info >> (3 * entity_index) & 7;
+      break;
+    default:
+      throw std::runtime_error("Unsupported cell dimension");
+    }
+    permute_subentity_closure(d, entity_info, entity_type);
+  }
+
+  /// @brief Perform the inverse of the operation applied by
+  /// permute_subentity_closure().
+  ///
+  /// @note This function is designed to be called at runtime, so its
+  /// performance is critical.
+  ///
+  /// @param[in,out] d Indices associated with each reference element
+  /// degree-of-freedom (in). Indices associated with each physical
+  /// element degree-of-freedom (out).
+  /// @param cell_info Permutation info for the cell
+  /// @param entity_type The cell type of the sub-entity
+  /// @param entity_index The index of the entity
+  void permute_subentity_closure_inv(std::span<std::int32_t> d,
+                                     std::uint32_t cell_info,
+                                     cell::type entity_type,
+                                     int entity_index) const
+  {
+    const int entity_dim = cell::topological_dimension(entity_type);
+
+    int face_start = _cell_tdim == 3 ? 3 * _edofs[2].size() : 0;
+
+    std::uint32_t entity_info;
+    switch (entity_dim)
+    {
+    case 0:
+      return;
+    case 1:
+      entity_info = cell_info >> (face_start + entity_index) & 1;
+      break;
+    case 2:
+      entity_info = cell_info >> (3 * entity_index) & 7;
+      break;
+    default:
+      throw std::runtime_error("Unsupported cell dimension");
+    }
+    permute_subentity_closure(d, entity_info, entity_type);
+  }
+
+  /// @brief Permute indices associated with degree-of-freedoms on the
+  /// closure of a sub-entity of the reference element
+  ///
+  /// This function performs a similar permutation to permute() but
+  /// additionally permutes the positions of vertices and edges
+  ///
+  /// @note This function is designed to be called at runtime, so its
+  /// performance is critical.
+  ///
+  /// @param[in,out] d Indices associated with each reference element
+  /// degree-of-freedom (in). Indices associated with each physical
+  /// element degree-of-freedom (out).
+  /// @param entity_info Permutation info for the entity
+  /// @param entity_type The cell type of the sub-entity
+
   void permute_subentity_closure(std::span<std::int32_t> d,
                                  std::uint32_t entity_info,
                                  cell::type entity_type) const
@@ -904,7 +983,7 @@ public:
   /// @param[in,out] d Indices associated with each reference element
   /// degree-of-freedom (in). Indices associated with each physical
   /// element degree-of-freedom (out).
-  /// @param entity_info Permutation info for the cell
+  /// @param entity_info Permutation info for the entity
   /// @param entity_type The cell type of the sub-entity
   void permute_subentity_closure_inv(std::span<std::int32_t> d,
                                      std::uint32_t entity_info,

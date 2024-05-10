@@ -834,7 +834,7 @@ public:
     if (_dof_transformations_are_identity)
       return;
     else
-      permute_data<std::int32_t, true>(d, 1, cell_info, _eperm_rev);
+      permute_data<std::int32_t, true>(d, 1, cell_info, _eperm_inv);
   }
 
   /// @brief Permute indices associated with degree-of-freedoms on the
@@ -849,10 +849,10 @@ public:
   /// @param[in,out] d Indices associated with each reference element
   /// degree-of-freedom (in). Indices associated with each physical
   /// element degree-of-freedom (out).
-  /// @param cell_info Permutation info for the cell
+  /// @param entity_info Permutation info for the cell
   /// @param entity_type The cell type of the sub-entity
   void permute_subentity_closure(std::span<std::int32_t> d,
-                                 std::uint32_t cell_info,
+                                 std::uint32_t entity_info,
                                  cell::type entity_type) const
   {
     if (!_dof_transformations_are_permutations)
@@ -869,7 +869,7 @@ public:
     auto& perm = _subentity_closure_perm.at(entity_type);
     if (entity_dim == 1)
     {
-      if (cell_info & 1)
+      if (entity_info & 1)
       {
         precompute::apply_permutation(perm[0], d);
       }
@@ -877,15 +877,70 @@ public:
     else if (entity_dim == 2)
     {
       // Rotate a face
-      for (std::uint32_t r = 0; r < (cell_info >> 1 & 3); ++r)
+      for (std::uint32_t r = 0; r < (entity_info >> 1 & 3); ++r)
       {
         precompute::apply_permutation(perm[0], d);
       }
 
       // Reflect a face (post rotate)
-      if (cell_info & 1)
+      if (entity_info & 1)
       {
         precompute::apply_permutation(perm[1], d);
+      }
+    }
+    else
+    {
+      throw std::runtime_error(
+          "Invalid dimension for permute_subentity_closure");
+    }
+  }
+
+  /// @brief Perform the inverse of the operation applied by
+  /// permute_subentity_closure().
+  ///
+  /// @note This function is designed to be called at runtime, so its
+  /// performance is critical.
+  ///
+  /// @param[in,out] d Indices associated with each reference element
+  /// degree-of-freedom (in). Indices associated with each physical
+  /// element degree-of-freedom (out).
+  /// @param entity_info Permutation info for the cell
+  /// @param entity_type The cell type of the sub-entity
+  void permute_subentity_closure_inv(std::span<std::int32_t> d,
+                                     std::uint32_t entity_info,
+                                     cell::type entity_type) const
+  {
+    if (!_dof_transformations_are_permutations)
+    {
+      throw std::runtime_error(
+          "The DOF transformations for this element are not permutations");
+    }
+
+    const int entity_dim = cell::topological_dimension(entity_type);
+
+    if (entity_dim == 0)
+      return;
+
+    auto& perm = _subentity_closure_perm_inv.at(entity_type);
+    if (entity_dim == 1)
+    {
+      if (entity_info & 1)
+      {
+        precompute::apply_permutation(perm[0], d);
+      }
+    }
+    else if (entity_dim == 2)
+    {
+      // Reflect a face (pre rotate)
+      if (entity_info & 1)
+      {
+        precompute::apply_permutation(perm[1], d);
+      }
+
+      // Rotate a face
+      for (std::uint32_t r = 0; r < (entity_info >> 1 & 3); ++r)
+      {
+        precompute::apply_permutation(perm[0], d);
       }
     }
     else
@@ -1367,7 +1422,7 @@ private:
   // The reverse entity permutations (factorised). This will only be set
   // if _dof_transformations_are_permutations is True and
   // _dof_transformations_are_identity is False
-  std::map<cell::type, std::vector<std::vector<std::size_t>>> _eperm_rev;
+  std::map<cell::type, std::vector<std::vector<std::size_t>>> _eperm_inv;
 
   // The entity transformations in precomputed form
   std::map<cell::type, trans_data_t> _etrans;
@@ -1385,6 +1440,11 @@ private:
   // _dof_transformations_are_permutations is True
   std::map<cell::type, std::vector<std::vector<std::size_t>>>
       _subentity_closure_perm;
+
+  // The inverse subentity closure permutations (factorised). This will only be
+  // set if _dof_transformations_are_permutations is True
+  std::map<cell::type, std::vector<std::vector<std::size_t>>>
+      _subentity_closure_perm_inv;
 
   // Indicates whether or not this is the discontinuous version of the
   // element
@@ -1691,7 +1751,7 @@ void FiniteElement<F>::Tt_apply(std::span<T> u, int n,
   if (_dof_transformations_are_identity)
     return;
   else if (_dof_transformations_are_permutations)
-    permute_data<T, true>(u, n, cell_info, _eperm_rev);
+    permute_data<T, true>(u, n, cell_info, _eperm_inv);
   else
   {
     transform_data<T, true>(u, n, cell_info, _etransT,
@@ -1723,7 +1783,7 @@ void FiniteElement<F>::Tinv_apply(std::span<T> u, int n,
   if (_dof_transformations_are_identity)
     return;
   else if (_dof_transformations_are_permutations)
-    permute_data<T, true>(u, n, cell_info, _eperm_rev);
+    permute_data<T, true>(u, n, cell_info, _eperm_inv);
   else
   {
     transform_data<T, true>(u, n, cell_info, _etrans_inv,
@@ -1793,7 +1853,7 @@ void FiniteElement<F>::T_apply_right(std::span<T> u, int n,
     for (int i = 0; i < n; ++i)
     {
       std::span<T> dblock(u.data() + i * step, step);
-      permute_data<T, true>(dblock, 1, cell_info, _eperm_rev);
+      permute_data<T, true>(dblock, 1, cell_info, _eperm_inv);
     }
   }
   else
@@ -1817,7 +1877,7 @@ void FiniteElement<F>::Tt_inv_apply_right(std::span<T> u, int n,
     for (int i = 0; i < n; ++i)
     {
       std::span<T> dblock(u.data() + i * step, step);
-      permute_data<T, true>(dblock, 1, cell_info, _eperm_rev);
+      permute_data<T, true>(dblock, 1, cell_info, _eperm_inv);
     }
   }
   else

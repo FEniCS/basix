@@ -582,8 +582,11 @@ def test_transformation_of_tabulated_data_pyramid(element_type, degree, element_
 def test_permute_subentity_closure(family, cell_type, degree, args, subentity, results):
     e = basix.create_element(family, cell_type, degree, *args)
 
-    for cell_info, result in results.items():
-        data = np.array(list(range(len(result))))
-        data = list(e._e.permute_subentity_closure(data, cell_info, subentity.value))
-
+    for entity_info, result in results.items():
+        data = np.arange(len(result))
+        data = list(e._e.permute_subentity_closure(data, entity_info, subentity.value))
         assert result == data
+
+        data = np.array(result)
+        data = list(e._e.permute_subentity_closure_inv(data, entity_info, subentity.value))
+        assert data == list(range(len(result)))

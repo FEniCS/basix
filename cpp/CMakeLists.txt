@@ -31,7 +31,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 option(BUILD_SHARED_LIBS "Build Basix with shared libraries." ON)
 add_feature_info(BUILD_SHARED_LIBS BUILD_SHARED_LIBS "Build Basix with shared libraries.")
 
-option(INSTALL_RUNTIME_DEPENDENCIES "Include runtime dependencies in install (Windows-only)" ON)
+option(INSTALL_RUNTIME_DEPENDENCIES "Include runtime dependencies in install (Windows-only)" OFF)
 add_feature_info(INSTALL_RUNTIME_DEPENDENCIES INSTALL_RUNTIME_DEPENDENCIES "Include runtime dependencies in install (Windows-only)")
 
 find_package(BLAS REQUIRED)

@@ -38,7 +38,7 @@ jobs:
       
       - name: Install Basix (combined)
         run: |
-          python -m pip -v install --no-cache-dir .[ci] --config-settings=cmake.args=-DCMAKE_TOOLCHAIN_FILE=C:/vcpkg/scripts/buildsystems/vcpkg.cmake
+          python -m pip -v install --no-cache-dir .[ci] --config-settings=cmake.args=-DINSTALL_RUNTIME_DEPENDENCES=ON --config-settings=cmake.args=-DCMAKE_TOOLCHAIN_FILE=C:/vcpkg/scripts/buildsystems/vcpkg.cmake
       - name: Run units tests
         run: |
           python -m pytest -n auto --durations 20 test/
@@ -69,7 +69,7 @@ jobs:
       - name: Install Basix (C++)
         run: |
           cd cpp
-          cmake -DCMAKE_TOOLCHAIN_FILE=C:/vcpkg/scripts/buildsystems/vcpkg.cmake -B build-dir -S .
+          cmake -DINSTALL_RUNTIME_DEPENDENCES=ON -DCMAKE_TOOLCHAIN_FILE=C:/vcpkg/scripts/buildsystems/vcpkg.cmake -B build-dir -S .
           cmake --build build-dir --config Release
           cmake --install build-dir --config Release --prefix D:/a/basix/install
           echo "D:/a/basix/install/bin" | Out-File -Append -FilePath $env:GITHUB_PATH -Encoding utf8

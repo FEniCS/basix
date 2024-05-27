@@ -90,6 +90,9 @@ jobs:
         run: |
           cd build/test
           ctest -V --output-on-failure -R unittests
+
+      - name: Install Python demo/test dependencies
+        run: python3 -m pip install --break-system-packages matplotlib numba pyamg pytest pytest-xdist scipy
       - name: Run DOLFINx Python unit tests
         run: |
           cd dolfinx

@@ -79,6 +79,7 @@ jobs:
           python3 -m pip -v install --break-system-packages --check-build-dependencies --no-build-isolation dolfinx/python/
       - name: Run mypy checks
         run: |
+          python3 -m pip install --break-system-packages mypy
           cd dolfinx/python
           python3 -m mypy dolfinx
       - name: Build DOLFINx C++ unit tests

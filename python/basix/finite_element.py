@@ -58,9 +58,9 @@ class FiniteElement:
         """Compute basis values and derivatives at set of points.
 
         Note:
-            The version of `FiniteElement::tabulate` with the basis data
-            as an out argument should be preferred for repeated call
-            where performance is critical
+            The version of ``FiniteElement::tabulate`` with the basis
+            data as an out argument should be preferred for repeated
+            call where performance is critical.
 
         Args:
             n: The order of derivatives, up to and including, to

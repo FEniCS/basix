@@ -5,7 +5,6 @@
 # SPDX-License-Identifier:    MIT
 """Functions to manipulate quadrature types."""
 
-import numpy as np
 import numpy.typing as _npt
 
 from basix._basixcpp import QuadratureType
@@ -42,7 +41,7 @@ def make_quadrature(
     degree: int,
     rule: QuadratureType = QuadratureType.Default,
     polyset_type: PolysetType = PolysetType.standard,
-) -> tuple[_npt.NDArray[np.float64], _npt.NDArray[np.float64]]:
+) -> tuple[_npt.ArrayLike, _npt.ArrayLike]:
     """Create a quadrature rule.
 
     Args:
@@ -56,4 +55,4 @@ def make_quadrature(
     Returns:
         Quadrature points and weights.
     """
-    return _mq(rule.value, cell, polyset_type.value, degree)
+    return _mq(rule, cell, polyset_type, degree)

@@ -20,9 +20,9 @@ def intersection(spaces: list[SobolevSpace]) -> SobolevSpace:
     Returns:
         Intersection of the Sobolev spaces.
     """
-    space = spaces[0].value
+    space = spaces[0]
     for s in spaces[1:]:
-        space = _ssi(space, s.value)
+        space = _ssi(space, s)
     return SobolevSpace[space.name]
 
 

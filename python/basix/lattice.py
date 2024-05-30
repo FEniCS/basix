@@ -44,7 +44,7 @@ def create_lattice(
     ltype: LatticeType,
     exterior: bool,
     method: LatticeSimplexMethod = LatticeSimplexMethod.none,
-) -> npt.NDArray:
+) -> npt.ArrayLike:
     """Create a lattice of points on a reference cell.
 
     Args:
@@ -58,4 +58,4 @@ def create_lattice(
     Returns:
         Lattice points
     """
-    return _create_lattice(celltype, n, ltype.value, exterior, method.value)
+    return _create_lattice(celltype, n, ltype, exterior, method)

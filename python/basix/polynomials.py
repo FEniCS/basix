@@ -146,12 +146,12 @@ def dim(ptype: PolynomialType, celltype: CellType, degree: int) -> int:
     Returns:
         The dimension of the polynomial space
     """
-    return _pd(ptype.value, celltype, degree)
+    return _pd(ptype, celltype, degree)
 
 
 def tabulate_polynomials(
     ptype: PolynomialType, celltype: CellType, degree: int, pts: npt.NDArray
-) -> npt.NDArray:
+) -> npt.ArrayLike:
     """Tabulate a set of polynomials on a reference cell.
 
     Args:
@@ -208,7 +208,7 @@ def string_to_polyset_type(pname: str) -> PolysetType:
 
 def tabulate_polynomial_set(
     celltype: CellType, ptype: PolysetType, degree: int, nderiv: int, pts: npt.NDArray
-) -> npt.NDArray:
+) -> npt.ArrayLike:
     """Tabulate a polynomial set.
 
     Args:

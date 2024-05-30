@@ -54,7 +54,7 @@ class FiniteElement:
         """
         self._e = e
 
-    def tabulate(self, n: int, x: npt.NDArray) -> npt.NDArray[np.floating]:
+    def tabulate(self, n: int, x: npt.NDArray) -> npt.ArrayLike:
         """Compute basis values and derivatives at set of points.
 
         Note:
@@ -103,7 +103,7 @@ class FiniteElement:
         """Hash."""
         return self.hash()
 
-    def push_forward(self, U, J, detJ, K) -> npt.NDArray[np.floating]:
+    def push_forward(self, U, J, detJ, K) -> npt.ArrayLike:
         """Map function values from the reference to a physical cell.
 
         This function can perform the mapping for multiple points,
@@ -127,7 +127,7 @@ class FiniteElement:
 
     def pull_back(
         self, u: npt.NDArray, J: npt.NDArray, detJ: npt.NDArray, K: npt.NDArray
-    ) -> npt.NDArray[np.floating]:
+    ) -> npt.ArrayLike:
         """Map function values from a physical cell to the reference.
 
         Args:
@@ -185,7 +185,7 @@ class FiniteElement:
         """
         self._e.Tt_inv_apply(data, block_size, cell_info)
 
-    def base_transformations(self) -> npt.NDArray[np.floating]:
+    def base_transformations(self) -> npt.ArrayLike:
         r"""Get the base transformations.
 
         The base transformations represent the effect of rotating or
@@ -452,7 +452,7 @@ class FiniteElement:
         return self._e.sobolev_space
 
     @property
-    def points(self) -> npt.NDArray[np.floating]:
+    def points(self) -> npt.ArrayLike:
         """Interpolation points.
 
         Coordinates on the reference element where a function need to be
@@ -462,7 +462,7 @@ class FiniteElement:
         return self._e.points
 
     @property
-    def interpolation_matrix(self) -> npt.NDArray[np.floating]:
+    def interpolation_matrix(self) -> npt.ArrayLike:
         """Interpolation points.
 
         Coordinates on the reference element where a function need to be
@@ -472,7 +472,7 @@ class FiniteElement:
         return self._e.interpolation_matrix
 
     @property
-    def dual_matrix(self) -> npt.NDArray[np.floating]:
+    def dual_matrix(self) -> npt.ArrayLike:
         """Matrix $BD^{T}$.
 
         See C++ documentation.
@@ -480,12 +480,12 @@ class FiniteElement:
         return self._e.dual_matrix
 
     @property
-    def coefficient_matrix(self) -> npt.NDArray[np.floating]:
+    def coefficient_matrix(self) -> npt.ArrayLike:
         """Matrix of coefficients."""
         return self._e.coefficient_matrix
 
     @property
-    def wcoeffs(self) -> npt.NDArray[np.floating]:
+    def wcoeffs(self) -> npt.ArrayLike:
         """Coefficients that define the polynomial set in terms of the orthonormal polynomials.
 
         See C++ documentation for details.
@@ -493,7 +493,7 @@ class FiniteElement:
         return self._e.wcoeffs
 
     @property
-    def M(self) -> list[list[npt.NDArray[np.floating]]]:
+    def M(self) -> list[list[npt.ArrayLike]]:
         """Interpolation matrices for each sub-entity.
 
         See C++ documentation for details.
@@ -501,7 +501,7 @@ class FiniteElement:
         return self._e.M
 
     @property
-    def x(self) -> list[list[npt.NDArray[np.floating]]]:
+    def x(self) -> list[list[npt.ArrayLike]]:
         """Interpolation points for each sub-entity.
 
         The indices of this data are ``(tdim, entity index, point index,
@@ -559,11 +559,11 @@ def create_element(
         A finite element.
     """
     e = _create_element(
-        family.value,
+        family,
         celltype,
         degree,
-        lagrange_variant.value,
-        dpc_variant.value,
+        lagrange_variant,
+        dpc_variant,
         discontinuous,
         dof_ordering if dof_ordering is not None else [],
         np.dtype(dtype).char,
@@ -624,9 +624,9 @@ def create_custom_element(
         x = [[np.dtype(dtype).type(j) for j in i] for i in x]  # type: ignore
         M = [[np.dtype(dtype).type(j) for j in i] for i in M]  # type: ignore
     if np.issubdtype(dtype, np.float32):
-        _create_custom_element = _create_custom_element_float32
+        _create_custom_element = _create_custom_element_float32  # type: ignore
     elif np.issubdtype(dtype, np.float64):
-        _create_custom_element = _create_custom_element_float64
+        _create_custom_element = _create_custom_element_float64  # type: ignore
     else:
         raise NotImplementedError(f"Type {dtype} not supported.")
 
@@ -638,12 +638,12 @@ def create_custom_element(
             x,
             M,
             interpolation_nderivs,
-            map_type.value,
-            sobolev_space.value,
+            map_type,
+            sobolev_space,
             discontinuous,
             embedded_subdegree,
             embedded_superdegree,
-            poly_type.value,
+            poly_type,
         )
     )
 
@@ -676,11 +676,11 @@ def create_tp_element(
     """
     return FiniteElement(
         _create_tp_element(
-            family.value,
+            family,
             celltype,
             degree,
-            lagrange_variant.value,
-            dpc_variant.value,
+            lagrange_variant,
+            dpc_variant,
             discontinuous,
             np.dtype(dtype).char,
         )
@@ -720,11 +720,11 @@ def tp_factors(
     return [
         [FiniteElement(e) for e in elements]
         for elements in _tp_factors(
-            family.value,
+            family,
             celltype,
             degree,
-            lagrange_variant.value,
-            dpc_variant.value,
+            lagrange_variant,
+            dpc_variant,
             discontinuous,
             dof_ordering if dof_ordering is not None else [],
             np.dtype(dtype).char,
@@ -763,11 +763,11 @@ def tp_dof_ordering(
         The DOF ordering.
     """
     return _tp_dof_ordering(
-        family.value,
+        family,
         celltype,
         degree,
-        lagrange_variant.value,
-        dpc_variant.value,
+        lagrange_variant,
+        dpc_variant,
         discontinuous,
     )
 

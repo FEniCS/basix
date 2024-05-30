@@ -66,7 +66,7 @@ def volume(celltype: CellType) -> float:
     return _v(celltype)
 
 
-def facet_jacobians(celltype: CellType) -> npt.NDArray:
+def facet_jacobians(celltype: CellType) -> npt.ArrayLike:
     """Jacobians of the facets of a reference cell.
 
     Args:
@@ -78,7 +78,7 @@ def facet_jacobians(celltype: CellType) -> npt.NDArray:
     return _fj(celltype)
 
 
-def facet_normals(celltype: CellType) -> npt.NDArray:
+def facet_normals(celltype: CellType) -> npt.ArrayLike:
     """Normals to the facets of a reference cell.
 
     These normals will be oriented using the low-to-high ordering of the
@@ -93,7 +93,7 @@ def facet_normals(celltype: CellType) -> npt.NDArray:
     return _fn(celltype)
 
 
-def facet_orientations(celltype: CellType) -> list[bool]:
+def facet_orientations(celltype: CellType) -> list[int]:
     """Orientations of the facets of a reference cell.
 
     This returns a list of bools that are ``True`` if the facet normal
@@ -108,7 +108,7 @@ def facet_orientations(celltype: CellType) -> list[bool]:
     return _fo(celltype)
 
 
-def facet_outward_normals(celltype: CellType) -> npt.NDArray:
+def facet_outward_normals(celltype: CellType) -> npt.ArrayLike:
     """Normals to the facets of a reference cell.
 
     These normals will be oriented to be pointing outwards.
@@ -122,7 +122,7 @@ def facet_outward_normals(celltype: CellType) -> npt.NDArray:
     return _fon(celltype)
 
 
-def facet_reference_volumes(celltype: CellType) -> npt.NDArray:
+def facet_reference_volumes(celltype: CellType) -> npt.ArrayLike:
     """Reference volumes of the facets of a reference cell.
 
     Args:
@@ -134,7 +134,7 @@ def facet_reference_volumes(celltype: CellType) -> npt.NDArray:
     return _frv(celltype)
 
 
-def geometry(celltype: CellType) -> npt.NDArray:
+def geometry(celltype: CellType) -> npt.ArrayLike:
     """Cell geometry.
 
     Args:

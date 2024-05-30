@@ -22,6 +22,10 @@ optional = ["numba", "fenics-ufl@git+https://github.com/fenics/ufl"]
 test = ["pytest", "sympy", "scipy", "matplotlib", "fenics-basix[optional]"]
 ci = ["mypy", "pytest-xdist", "fenics-basix[docs,lint,test,optional]"]
 
+[tool.mypy]
+ignore_missing_imports = true
+exclude = ["_basixcpp.pyi"]
+
 
 [tool.ruff]
 line-length = 100

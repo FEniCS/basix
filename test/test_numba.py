@@ -4,9 +4,10 @@
 
 import random
 
-import basix
 import numpy as np
 import pytest
+
+import basix
 from basix import CellType
 
 
@@ -34,9 +35,10 @@ def test_dof_transformations(cell, element, degree, element_args, block_size):
     except ImportError:
         pytest.skip("Numba must be installed to run this test.")
 
-    from basix import numba_helpers
     from numba.core import types
     from numba.typed import Dict
+
+    from basix import numba_helpers
 
     transform_functions = {
         CellType.triangle: numba_helpers.T_apply_triangle,
@@ -99,9 +101,10 @@ def test_dof_transformations_to_transpose(cell, element, degree, block_size, ele
     except ImportError:
         pytest.skip("Numba must be installed to run this test.")
 
-    from basix import numba_helpers
     from numba.core import types
     from numba.typed import Dict
+
+    from basix import numba_helpers
 
     transform_functions = {
         CellType.triangle: numba_helpers.Tt_apply_right_triangle,

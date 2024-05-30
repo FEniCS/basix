@@ -2,8 +2,9 @@
 # FEniCS Project
 # SPDX-License-Identifier: MIT
 
-import basix
 import numpy as np
+
+import basix
 
 np.set_printoptions(suppress=True)
 

@@ -25,8 +25,9 @@
 #
 # We begin by importing Basix and Numpy.
 
-import basix
 import numpy as np
+
+import basix
 from basix import CellType, ElementFamily, LagrangeVariant, LatticeType
 
 # In this demo, we consider Lagrange elements defined on a triangle. We start

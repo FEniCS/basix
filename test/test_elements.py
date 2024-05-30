@@ -23,10 +23,11 @@
 
 import random
 
-import basix
-import basix.ufl
 import numpy as np
 import pytest
+
+import basix
+import basix.ufl
 
 
 def random_point(cell):

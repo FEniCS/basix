@@ -442,7 +442,8 @@ NB_MODULE(_basixcpp, m)
       .value("gl", lattice::type::gl)
       .def_prop_ro("name",
                    [](nb::object obj) { return nb::getattr(obj, "__name__"); });
-  nb::enum_<lattice::simplex_method>(m, "LatticeSimplexMethod", nb::is_arithmetic())
+  nb::enum_<lattice::simplex_method>(m, "LatticeSimplexMethod",
+                                     nb::is_arithmetic())
       .value("none", lattice::simplex_method::none)
       .value("warp", lattice::simplex_method::warp)
       .value("isaac", lattice::simplex_method::isaac)
@@ -512,8 +513,9 @@ NB_MODULE(_basixcpp, m)
       .value("hexahedron", cell::type::hexahedron)
       .value("prism", cell::type::prism)
       .value("pyramid", cell::type::pyramid)
-      .def_prop_ro("name",
-                   [](nb::object obj) { return nb::getattr(obj, "__name__"); });
+      .def_prop_ro(
+          "name", [](nb::object obj) { return nb::getattr(obj, "__name__"); },
+          "Cell type.");
 
   m.def("cell_volume", [](cell::type cell_type) -> double
         { return cell::volume<double>(cell_type); });
@@ -555,7 +557,8 @@ NB_MODULE(_basixcpp, m)
       .def_prop_ro("name",
                    [](nb::object obj) { return nb::getattr(obj, "__name__"); });
 
-  nb::enum_<element::lagrange_variant>(m, "LagrangeVariant", nb::is_arithmetic())
+  nb::enum_<element::lagrange_variant>(m, "LagrangeVariant",
+                                       nb::is_arithmetic())
       .value("unset", element::lagrange_variant::unset)
       .value("equispaced", element::lagrange_variant::equispaced)
       .value("gll_warped", element::lagrange_variant::gll_warped)

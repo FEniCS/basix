@@ -7,7 +7,7 @@
 
 import numpy.typing as npt
 
-from basix._basixcpp import CellType as _CT
+from basix._basixcpp import CellType
 from basix._basixcpp import cell_facet_jacobians as _fj
 from basix._basixcpp import cell_facet_normals as _fn
 from basix._basixcpp import cell_facet_orientations as _fo
@@ -20,6 +20,7 @@ from basix._basixcpp import topology as _topology
 from basix.utils import Enum
 
 __all__ = [
+    # "CellType",
     "string_to_type",
     "sub_entity_connectivity",
     "volume",
@@ -31,17 +32,17 @@ __all__ = [
 ]
 
 
-class CellType(Enum):
-    """Cell type."""
+# class CellType(Enum):
+#     """Cell type."""
 
-    point = _CT.point
-    interval = _CT.interval
-    triangle = _CT.triangle
-    tetrahedron = _CT.tetrahedron
-    quadrilateral = _CT.quadrilateral
-    hexahedron = _CT.hexahedron
-    prism = _CT.prism
-    pyramid = _CT.pyramid
+#     point = _CT.point
+#     interval = _CT.interval
+#     triangle = _CT.triangle
+#     tetrahedron = _CT.tetrahedron
+#     quadrilateral = _CT.quadrilateral
+#     hexahedron = _CT.hexahedron
+#     prism = _CT.prism
+#     pyramid = _CT.pyramid
 
 
 def string_to_type(cell: str) -> CellType:
@@ -53,6 +54,7 @@ def string_to_type(cell: str) -> CellType:
     Returns:
         The cell type.
     """
+    return CellType[cell]
     if not hasattr(CellType, cell):
         raise ValueError(f"Unknown cell: {cell}")
     return getattr(CellType, cell)

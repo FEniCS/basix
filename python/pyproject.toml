@@ -26,7 +26,6 @@ ci = ["mypy", "pytest-xdist", "fenics-basix[docs,lint,test,optional]"]
 ignore_missing_imports = true
 exclude = ["_basixcpp.pyi"]
 
-
 [tool.ruff]
 line-length = 100
 indent-width = 4

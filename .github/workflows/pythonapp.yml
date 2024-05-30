@@ -28,8 +28,6 @@ jobs:
         with:
           python-version: '3.12'
       - uses: actions/checkout@v4
-      - name: Install linting dependencies
-        run: pip install mypy ruf
       - name: Ruff check
         run: |
           pip install ruff

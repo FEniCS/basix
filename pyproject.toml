@@ -69,7 +69,6 @@ before-build = "export HOMEBREW_AUTO_UPDATING=0 && brew update && brew install n
 
 [tool.mypy]
 ignore_missing_imports = true
-exclude = ["_basixcpp.pyi"]
 
 [tool.ruff]
 line-length = 100

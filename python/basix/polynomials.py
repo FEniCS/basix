@@ -19,6 +19,7 @@ from basix.utils import index
 
 __all__ = ["reshape_coefficients", "dim", "tabulate_polynomial_set"]
 
+
 def reshape_coefficients(
     poly_type: PolynomialType,
     cell_type: CellType,

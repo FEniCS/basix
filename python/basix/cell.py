@@ -17,10 +17,8 @@ from basix._basixcpp import cell_volume as _v
 from basix._basixcpp import geometry as _geometry
 from basix._basixcpp import sub_entity_connectivity as _sec
 from basix._basixcpp import topology as _topology
-from basix.utils import Enum
 
 __all__ = [
-    # "CellType",
     "string_to_type",
     "sub_entity_connectivity",
     "volume",
@@ -30,19 +28,6 @@ __all__ = [
     "facet_outward_normals",
     "facet_reference_volumes",
 ]
-
-
-# class CellType(Enum):
-#     """Cell type."""
-
-#     point = _CT.point
-#     interval = _CT.interval
-#     triangle = _CT.triangle
-#     tetrahedron = _CT.tetrahedron
-#     quadrilateral = _CT.quadrilateral
-#     hexahedron = _CT.hexahedron
-#     prism = _CT.prism
-#     pyramid = _CT.pyramid
 
 
 def string_to_type(cell: str) -> CellType:
@@ -55,9 +40,6 @@ def string_to_type(cell: str) -> CellType:
         The cell type.
     """
     return CellType[cell]
-    if not hasattr(CellType, cell):
-        raise ValueError(f"Unknown cell: {cell}")
-    return getattr(CellType, cell)
 
 
 def sub_entity_connectivity(celltype: CellType) -> list[list[list[list[int]]]]:

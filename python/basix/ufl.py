@@ -192,7 +192,7 @@ class _ElementBase(_AbstractFiniteElement):
 
     # Basix specific functions
     @_abstractmethod
-    def tabulate(self, nderivs: int, points: _npt.NDArray[np.float64]) -> _npt.NDArray[np.float64]:
+    def tabulate(self, nderivs: int, points: _npt.NDArray[np.float64]) -> _npt.ArrayLike:
         """Tabulate the basis functions of the element.
 
         Args:
@@ -253,7 +253,7 @@ class _ElementBase(_AbstractFiniteElement):
         """Topology of the reference element."""
 
     @_abstractproperty
-    def reference_geometry(self) -> _npt.NDArray[np.float64]:
+    def reference_geometry(self) -> _npt.ArrayLike:
         """Geometry of the reference element."""
 
     @_abstractproperty
@@ -327,7 +327,7 @@ class _ElementBase(_AbstractFiniteElement):
         return 1
 
     @property
-    def _wcoeffs(self) -> _npt.NDArray[np.float64]:
+    def _wcoeffs(self) -> _npt.ArrayLike:
         """The coefficients used to define the polynomial set."""
         raise NotImplementedError()
 
@@ -425,7 +425,7 @@ class _BasixElement(_ElementBase):
         """Return the hash of the Basix element if this is a standard Basix element."""
         return self._element.hash()
 
-    def tabulate(self, nderivs: int, points: _npt.NDArray[np.float64]) -> _npt.NDArray[np.float64]:
+    def tabulate(self, nderivs: int, points: _npt.NDArray[np.float64]) -> _npt.ArrayLike:
         """Tabulate the basis functions of the element.
 
         Args:
@@ -518,7 +518,7 @@ class _BasixElement(_ElementBase):
         return _basix.topology(self._element.cell_type)
 
     @property
-    def reference_geometry(self) -> _npt.NDArray[np.float64]:
+    def reference_geometry(self) -> _npt.ArrayLike:
         """Geometry of the reference element."""
         return _basix.geometry(self._element.cell_type)
 
@@ -606,17 +606,17 @@ class _BasixElement(_ElementBase):
         return self._element.polyset_type
 
     @property
-    def _wcoeffs(self) -> _npt.NDArray[np.float64]:
+    def _wcoeffs(self) -> _npt.ArrayLike:
         """The coefficients used to define the polynomial set."""
         return self._element.wcoeffs
 
     @property
-    def _x(self) -> list[list[_npt.NDArray[np.float64]]]:
+    def _x(self) -> list[list[_npt.ArrayLike]]:
         """The points used to define interpolation."""
         return self._element.x
 
     @property
-    def _M(self) -> list[list[_npt.NDArray[np.float64]]]:
+    def _M(self) -> list[list[_npt.ArrayLike]]:
         """The matrices used to define interpolation."""
         return self._element.M
 
@@ -668,7 +668,7 @@ class _ComponentElement(_ElementBase):
         """Return a hash."""
         return super().__hash__()
 
-    def tabulate(self, nderivs: int, points: _npt.NDArray[np.float64]) -> _npt.NDArray[np.float64]:
+    def tabulate(self, nderivs: int, points: _npt.NDArray[np.float64]) -> _npt.ArrayLike:
         """Tabulate the basis functions of the element.
 
         Args:
@@ -766,7 +766,7 @@ class _ComponentElement(_ElementBase):
         raise NotImplementedError()
 
     @property
-    def reference_geometry(self) -> _npt.NDArray[np.float64]:
+    def reference_geometry(self) -> _npt.ArrayLike:
         """Geometry of the reference element."""
         raise NotImplementedError()
 
@@ -892,7 +892,7 @@ class _MixedElement(_ElementBase):
     @property
     def dtype(self) -> _npt.DTypeLike:
         """Element float type."""
-        self.elements[0].dtype
+        return self.elements[0].dtype
 
     @property
     def is_mixed(self) -> bool:
@@ -904,7 +904,7 @@ class _MixedElement(_ElementBase):
         """Degree of the element."""
         return max((e.degree for e in self._sub_elements), default=-1)
 
-    def tabulate(self, nderivs: int, points: _npt.NDArray[np.float64]) -> _npt.NDArray[np.float64]:
+    def tabulate(self, nderivs: int, points: _npt.NDArray[np.float64]) -> _npt.ArrayLike:
         """Tabulate the basis functions of the element.
 
         Args:
@@ -1076,7 +1076,7 @@ class _MixedElement(_ElementBase):
         return self._sub_elements[0].reference_topology
 
     @property
-    def reference_geometry(self) -> _npt.NDArray[np.float64]:
+    def reference_geometry(self) -> _npt.ArrayLike:
         """Geometry of the reference element."""
         return self._sub_elements[0].reference_geometry
 
@@ -1243,7 +1243,7 @@ class _BlockedElement(_ElementBase):
         """Is this a quadrature element?"""
         return self._sub_element.is_quadrature
 
-    def tabulate(self, nderivs: int, points: _npt.NDArray[np.float64]) -> _npt.NDArray[np.float64]:
+    def tabulate(self, nderivs: int, points: _npt.NDArray[np.float64]) -> _npt.ArrayLike:
         """Tabulate the basis functions of the element.
 
         Args:
@@ -1370,7 +1370,7 @@ class _BlockedElement(_ElementBase):
         return self._sub_element.reference_topology
 
     @property
-    def reference_geometry(self) -> _npt.NDArray[np.float64]:
+    def reference_geometry(self) -> _npt.ArrayLike:
         """Geometry of the reference element."""
         return self._sub_element.reference_geometry
 
@@ -1567,7 +1567,7 @@ class _QuadratureElement(_ElementBase):
         """Return a hash."""
         return super().__hash__()
 
-    def tabulate(self, nderivs: int, points: _npt.NDArray[np.float64]) -> _npt.NDArray[np.float64]:
+    def tabulate(self, nderivs: int, points: _npt.NDArray[np.float64]) -> _npt.ArrayLike:
         """Tabulate the basis functions of the element.
 
         Args:
@@ -1659,7 +1659,7 @@ class _QuadratureElement(_ElementBase):
         raise NotImplementedError()
 
     @property
-    def reference_geometry(self) -> _npt.NDArray[np.float64]:
+    def reference_geometry(self) -> _npt.ArrayLike:
         """Geometry of the reference element."""
         raise NotImplementedError()
 
@@ -1779,7 +1779,7 @@ class _RealElement(_ElementBase):
         """Element float type."""
         raise NotImplementedError()
 
-    def tabulate(self, nderivs: int, points: _npt.NDArray[np.float64]) -> _npt.NDArray[np.float64]:
+    def tabulate(self, nderivs: int, points: _npt.NDArray[np.float64]) -> _npt.ArrayLike:
         """Tabulate the basis functions of the element.
 
         Args:
@@ -1894,7 +1894,7 @@ class _RealElement(_ElementBase):
         raise NotImplementedError()
 
     @property
-    def reference_geometry(self) -> _npt.NDArray[np.float64]:
+    def reference_geometry(self) -> _npt.ArrayLike:
         """Geometry of the reference element."""
         raise NotImplementedError()
 

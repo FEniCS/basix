@@ -36,6 +36,7 @@ jobs:
       - name: MyPy check
         run: |
           pip install mypy numpy
+          pip install git+https://github.com/FEniCS/ufl.git
           mypy python/basix
 
   build:

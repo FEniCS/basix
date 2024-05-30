@@ -483,7 +483,8 @@ NB_MODULE(_basixcpp, m)
       .value("HInf", sobolev::space::HInf)
       .value("HDiv", sobolev::space::HDiv)
       .value("HCurl", sobolev::space::HCurl)
-      .value("HEin", sobolev::space::HEin);
+      .value("HEin", sobolev::space::HEin)
+      .value("HDivDiv", sobolev::space::HDivDiv);
 
   nb::enum_<quadrature::type>(m, "QuadratureType", nb::is_arithmetic())
       .value("Default", quadrature::type::Default)

@@ -32,11 +32,10 @@ jobs:
         run: pip install mypy ruff
       - name: Ruff check
         run: |
-          pip install ruff
           ruff check .
           ruff format --check .
       - name: Mypy check
-        run: mypy python/basix
+        run: mypy -vv python/basix
 
   build:
     name: Build and test

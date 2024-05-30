@@ -39,7 +39,7 @@ def string_to_type(cell: str) -> CellType:
     Returns:
         The cell type.
     """
-    return CellType[cell]
+    return CellType[cell]  # type: ignore
 
 
 def sub_entity_connectivity(celltype: CellType) -> list[list[list[list[int]]]]:
@@ -51,7 +51,7 @@ def sub_entity_connectivity(celltype: CellType) -> list[list[list[list[int]]]]:
     Returns:
         Topology (vertex indices) for each dimension (0..tdim).
     """
-    return _sec(celltype.value)
+    return _sec(celltype)
 
 
 def volume(celltype: CellType) -> float:
@@ -63,7 +63,7 @@ def volume(celltype: CellType) -> float:
     Returns:
         Volume of the reference cell.
     """
-    return _v(celltype.value)
+    return _v(celltype)
 
 
 def facet_jacobians(celltype: CellType) -> npt.NDArray:
@@ -75,7 +75,7 @@ def facet_jacobians(celltype: CellType) -> npt.NDArray:
     Returns:
         Jacobians of the facets.
     """
-    return _fj(celltype.value)
+    return _fj(celltype)
 
 
 def facet_normals(celltype: CellType) -> npt.NDArray:
@@ -90,7 +90,7 @@ def facet_normals(celltype: CellType) -> npt.NDArray:
     Returns:
         Normals to the facets.
     """
-    return _fn(celltype.value)
+    return _fn(celltype)
 
 
 def facet_orientations(celltype: CellType) -> list[bool]:
@@ -105,7 +105,7 @@ def facet_orientations(celltype: CellType) -> list[bool]:
     Returns:
         Facet orientations.
     """
-    return _fo(celltype.value)
+    return _fo(celltype)
 
 
 def facet_outward_normals(celltype: CellType) -> npt.NDArray:
@@ -119,7 +119,7 @@ def facet_outward_normals(celltype: CellType) -> npt.NDArray:
     Returns:
         Normals to the facets.
     """
-    return _fon(celltype.value)
+    return _fon(celltype)
 
 
 def facet_reference_volumes(celltype: CellType) -> npt.NDArray:
@@ -131,7 +131,7 @@ def facet_reference_volumes(celltype: CellType) -> npt.NDArray:
     Returns:
         Reference volumes.
     """
-    return _frv(celltype.value)
+    return _frv(celltype)
 
 
 def geometry(celltype: CellType) -> npt.NDArray:
@@ -143,7 +143,7 @@ def geometry(celltype: CellType) -> npt.NDArray:
     Returns:
         Vertices of the cell.
     """
-    return _geometry(celltype.value)
+    return _geometry(celltype)
 
 
 def topology(celltype: CellType) -> list[list[list[int]]]:
@@ -155,4 +155,4 @@ def topology(celltype: CellType) -> list[list[list[int]]]:
     Returns:
         Vertex indices for each sub-entity of the cell.
     """
-    return _topology(celltype.value)
+    return _topology(celltype)

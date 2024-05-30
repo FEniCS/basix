@@ -613,7 +613,7 @@ def create_element(
     """
     e = _create_element(
         family.value,
-        celltype.value,
+        celltype,
         degree,
         lagrange_variant.value,
         dpc_variant.value,
@@ -685,7 +685,7 @@ def create_custom_element(
 
     return FiniteElement(
         _create_custom_element(
-            cell_type.value,
+            cell_type,
             value_shape,
             wcoeffs,
             x,
@@ -730,7 +730,7 @@ def create_tp_element(
     return FiniteElement(
         _create_tp_element(
             family.value,
-            celltype.value,
+            celltype,
             degree,
             lagrange_variant.value,
             dpc_variant.value,
@@ -774,7 +774,7 @@ def tp_factors(
         [FiniteElement(e) for e in elements]
         for elements in _tp_factors(
             family.value,
-            celltype.value,
+            celltype,
             degree,
             lagrange_variant.value,
             dpc_variant.value,
@@ -817,7 +817,7 @@ def tp_dof_ordering(
     """
     return _tp_dof_ordering(
         family.value,
-        celltype.value,
+        celltype,
         degree,
         lagrange_variant.value,
         dpc_variant.value,

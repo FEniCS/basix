@@ -82,4 +82,4 @@ def create_lattice(
     Returns:
         Lattice points
     """
-    return _create_lattice(celltype.value, n, ltype.value, exterior, method.value)
+    return _create_lattice(celltype, n, ltype.value, exterior, method.value)

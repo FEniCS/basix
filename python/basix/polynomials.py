@@ -162,7 +162,7 @@ def dim(ptype: PolynomialType, celltype: CellType, degree: int) -> int:
     Returns:
         The dimension of the polynomial space
     """
-    return _pd(ptype.value, celltype.value, degree)
+    return _pd(ptype.value, celltype, degree)
 
 
 def tabulate_polynomials(
@@ -179,7 +179,7 @@ def tabulate_polynomials(
     Returns:
         Tabulated polynomials
     """
-    return _tabulate_polynomials(ptype.value, celltype.value, degree, pts)
+    return _tabulate_polynomials(ptype.value, celltype, degree, pts)
 
 
 def restriction(ptype: PolysetType, cell: CellType, restriction_cell: CellType) -> PolysetType:
@@ -193,7 +193,7 @@ def restriction(ptype: PolysetType, cell: CellType, restriction_cell: CellType) 
     Returns:
         The restricted polyset type
     """
-    return getattr(PolysetType, _restriction(ptype.value, cell.value, restriction_cell.value).name)
+    return getattr(PolysetType, _restriction(ptype.value, cell, restriction_cell).name)
 
 
 def superset(cell: CellType, type1: PolysetType, type2: PolysetType) -> PolysetType:
@@ -207,7 +207,7 @@ def superset(cell: CellType, type1: PolysetType, type2: PolysetType) -> PolysetT
     Returns:
         The superset type
     """
-    return getattr(PolysetType, _superset(cell.value, type1.value, type2.value).name)
+    return getattr(PolysetType, _superset(cell, type1, type2.value).name)
 
 
 def string_to_polyset_type(pname: str) -> PolysetType:
@@ -239,4 +239,4 @@ def tabulate_polynomial_set(
     Returns:
         Tabulated polynomial set
     """
-    return _tps(celltype.value, ptype.value, degree, nderiv, pts)
+    return _tps(celltype, ptype.value, degree, nderiv, pts)

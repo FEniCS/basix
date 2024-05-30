@@ -68,4 +68,4 @@ def make_quadrature(
     Returns:
         Quadrature points and weights.
     """
-    return _mq(rule.value, cell.value, polyset_type.value, degree)
+    return _mq(rule.value, cell, polyset_type.value, degree)

@@ -8,22 +8,12 @@
 import numpy as np
 import numpy.typing as _npt
 
-from basix._basixcpp import QuadratureType as _QT
+from basix._basixcpp import QuadratureType
 from basix._basixcpp import make_quadrature as _mq
 from basix.cell import CellType
 from basix.polynomials import PolysetType
-from basix.utils import Enum
 
 __all__ = ["string_to_type", "make_quadrature"]
-
-
-class QuadratureType(Enum):
-    """Quadrature type."""
-
-    Default = _QT.Default
-    gauss_jacobi = _QT.gauss_jacobi
-    gll = _QT.gll
-    xiao_gimbutas = _QT.xiao_gimbutas
 
 
 def string_to_type(rule: str) -> QuadratureType:
@@ -44,9 +34,7 @@ def string_to_type(rule: str) -> QuadratureType:
     elif rule == "Xiao-Gimbutas":
         return QuadratureType.xiao_gimbutas
 
-    if not hasattr(QuadratureType, rule):
-        raise ValueError(f"Unknown quadrature rule: {rule}")
-    return getattr(QuadratureType, rule)
+    return QuadratureType[rule]
 
 
 def make_quadrature(

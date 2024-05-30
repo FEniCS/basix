@@ -8,32 +8,16 @@
 import numpy as np
 import numpy.typing as npt
 
-from basix._basixcpp import PolynomialType as _PT
-from basix._basixcpp import PolysetType as _PST
+from basix._basixcpp import PolynomialType, PolysetType
 from basix._basixcpp import polynomials_dim as _pd
 from basix._basixcpp import restriction as _restriction
 from basix._basixcpp import superset as _superset
 from basix._basixcpp import tabulate_polynomial_set as _tps
 from basix._basixcpp import tabulate_polynomials as _tabulate_polynomials
 from basix.cell import CellType
-from basix.utils import Enum, index
+from basix.utils import index
 
 __all__ = ["reshape_coefficients", "dim", "tabulate_polynomial_set"]
-
-
-class PolynomialType(Enum):
-    """Polynomial type."""
-
-    legendre = _PT.legendre
-    bernstein = _PT.bernstein
-
-
-class PolysetType(Enum):
-    """Polyset type."""
-
-    standard = _PST.standard
-    macroedge = _PST.macroedge
-
 
 def reshape_coefficients(
     poly_type: PolynomialType,
@@ -179,7 +163,7 @@ def tabulate_polynomials(
     Returns:
         Tabulated polynomials
     """
-    return _tabulate_polynomials(ptype.value, celltype, degree, pts)
+    return _tabulate_polynomials(ptype, celltype, degree, pts)
 
 
 def restriction(ptype: PolysetType, cell: CellType, restriction_cell: CellType) -> PolysetType:
@@ -193,7 +177,7 @@ def restriction(ptype: PolysetType, cell: CellType, restriction_cell: CellType) 
     Returns:
         The restricted polyset type
     """
-    return getattr(PolysetType, _restriction(ptype.value, cell, restriction_cell).name)
+    return _restriction(ptype, cell, restriction_cell)
 
 
 def superset(cell: CellType, type1: PolysetType, type2: PolysetType) -> PolysetType:
@@ -207,7 +191,7 @@ def superset(cell: CellType, type1: PolysetType, type2: PolysetType) -> PolysetT
     Returns:
         The superset type
     """
-    return getattr(PolysetType, _superset(cell, type1, type2.value).name)
+    return _superset(cell, type1, type2)
 
 
 def string_to_polyset_type(pname: str) -> PolysetType:
@@ -219,9 +203,7 @@ def string_to_polyset_type(pname: str) -> PolysetType:
     Returns:
         The polyset type.
     """
-    if not hasattr(PolysetType, pname):
-        raise ValueError(f"Unknown polyset: {pname}")
-    return getattr(PolysetType, pname)
+    return PolysetType[pname]
 
 
 def tabulate_polynomial_set(
@@ -239,4 +221,4 @@ def tabulate_polynomial_set(
     Returns:
         Tabulated polynomial set
     """
-    return _tps(celltype, ptype.value, degree, nderiv, pts)
+    return _tps(celltype, ptype, degree, nderiv, pts)

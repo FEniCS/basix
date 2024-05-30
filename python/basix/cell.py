@@ -39,7 +39,7 @@ def string_to_type(cell: str) -> CellType:
     Returns:
         The cell type.
     """
-    return CellType[cell]  # type: ignore
+    return CellType[cell]
 
 
 def sub_entity_connectivity(celltype: CellType) -> list[list[list[list[int]]]]:

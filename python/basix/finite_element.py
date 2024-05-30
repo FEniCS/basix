@@ -10,11 +10,9 @@ import typing
 import numpy as np
 import numpy.typing as npt
 
-from basix._basixcpp import DPCVariant as _DPCV
-from basix._basixcpp import ElementFamily as _EF
+from basix._basixcpp import DPCVariant, ElementFamily, LagrangeVariant
 from basix._basixcpp import FiniteElement_float32 as _FiniteElement_float32
 from basix._basixcpp import FiniteElement_float64 as _FiniteElement_float64
-from basix._basixcpp import LagrangeVariant as _LV
 from basix._basixcpp import (
     create_custom_element_float32 as _create_custom_element_float32,
 )
@@ -29,7 +27,6 @@ from basix.cell import CellType
 from basix.maps import MapType
 from basix.polynomials import PolysetType
 from basix.sobolev_spaces import SobolevSpace
-from basix.utils import Enum
 
 __all__ = [
     "FiniteElement",
@@ -42,56 +39,6 @@ __all__ = [
     "tp_factors",
     "tp_dof_ordering",
 ]
-
-
-class ElementFamily(Enum):
-    """Element family."""
-
-    custom = _EF.custom
-    P = _EF.P
-    BDM = _EF.BDM
-    RT = _EF.RT
-    N1E = _EF.N1E
-    N2E = _EF.N2E
-    Regge = _EF.Regge
-    HHJ = _EF.HHJ
-    bubble = _EF.bubble
-    serendipity = _EF.serendipity
-    DPC = _EF.DPC
-    CR = _EF.CR
-    Hermite = _EF.Hermite
-    iso = _EF.iso
-
-
-class LagrangeVariant(Enum):
-    """Lagrange variant."""
-
-    unset = _LV.unset
-    equispaced = _LV.equispaced
-    gll_warped = _LV.gll_warped
-    gll_isaac = _LV.gll_isaac
-    gll_centroid = _LV.gll_centroid
-    chebyshev_warped = _LV.chebyshev_warped
-    chebyshev_isaac = _LV.chebyshev_isaac
-    chebyshev_centroid = _LV.chebyshev_centroid
-    gl_warped = _LV.gl_warped
-    gl_isaac = _LV.gl_isaac
-    gl_centroid = _LV.gl_centroid
-    legendre = _LV.legendre
-    bernstein = _LV.bernstein
-
-
-class DPCVariant(Enum):
-    """DPC variant."""
-
-    unset = _DPCV.unset
-    simplex_equispaced = _DPCV.simplex_equispaced
-    simplex_gll = _DPCV.simplex_gll
-    horizontal_equispaced = _DPCV.horizontal_equispaced
-    horizontal_gll = _DPCV.horizontal_gll
-    diagonal_equispaced = _DPCV.diagonal_equispaced
-    diagonal_gll = _DPCV.diagonal_gll
-    legendre = _DPCV.legendre
 
 
 class FiniteElement:
@@ -391,7 +338,7 @@ class FiniteElement:
     @property
     def cell_type(self) -> CellType:
         """Element cell type."""
-        return getattr(CellType, self._e.cell_type.name)
+        return self._e.cell_type
 
     @property
     def polyset_type(self) -> PolysetType:
@@ -467,17 +414,17 @@ class FiniteElement:
     @property
     def family(self) -> ElementFamily:
         """Finite element family."""
-        return getattr(ElementFamily, self._e.family.name)
+        return self._e.family
 
     @property
     def lagrange_variant(self) -> LagrangeVariant:
         """Lagrange variant of the element."""
-        return getattr(LagrangeVariant, self._e.lagrange_variant.name)
+        return self._e.lagrange_variant
 
     @property
     def dpc_variant(self) -> DPCVariant:
         """DPC variant of the element."""
-        return getattr(DPCVariant, self._e.dpc_variant.name)
+        return self._e.dpc_variant
 
     @property
     def dof_transformations_are_permutations(self) -> bool:
@@ -497,12 +444,12 @@ class FiniteElement:
     @property
     def map_type(self) -> MapType:
         """Map type for this element."""
-        return getattr(MapType, self._e.map_type.name)
+        return self._e.map_type
 
     @property
     def sobolev_space(self) -> SobolevSpace:
         """Underlying Sobolev space for this element."""
-        return getattr(SobolevSpace, self._e.sobolev_space.name)
+        return self._e.sobolev_space
 
     @property
     def points(self) -> npt.NDArray[np.floating]:
@@ -943,9 +890,7 @@ def string_to_lagrange_variant(variant: str) -> LagrangeVariant:
     elif variant.lower() == "gl":
         return LagrangeVariant.gl_isaac
 
-    if not hasattr(LagrangeVariant, variant.lower()):
-        raise ValueError(f"Unknown variant: {variant}")
-    return getattr(LagrangeVariant, variant.lower())
+    return LagrangeVariant[variant.lower()]
 
 
 def string_to_dpc_variant(variant: str) -> DPCVariant:
@@ -957,6 +902,4 @@ def string_to_dpc_variant(variant: str) -> DPCVariant:
     Returns:
         The DPC variant.
     """
-    if not hasattr(DPCVariant, variant.lower()):
-        raise ValueError(f"Unknown variant: {variant}")
-    return getattr(DPCVariant, variant.lower())
+    return DPCVariant[variant.lower()]

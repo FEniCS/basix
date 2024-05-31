@@ -435,19 +435,21 @@ NB_MODULE(_basixcpp, m)
 
   m.def("sobolev_space_intersection", &sobolev::space_intersection);
 
-  nb::enum_<lattice::type>(m, "LatticeType", nb::is_arithmetic())
+  nb::enum_<lattice::type>(m, "LatticeType", nb::is_arithmetic(),
+                           "Lattice type.")
       .value("equispaced", lattice::type::equispaced)
       .value("gll", lattice::type::gll)
       .value("chebyshev", lattice::type::chebyshev)
       .value("gl", lattice::type::gl);
-  nb::enum_<lattice::simplex_method>(m, "LatticeSimplexMethod",
-                                     nb::is_arithmetic())
+  nb::enum_<lattice::simplex_method>(
+      m, "LatticeSimplexMethod", nb::is_arithmetic(), "Lattice simplex method.")
       .value("none", lattice::simplex_method::none)
       .value("warp", lattice::simplex_method::warp)
       .value("isaac", lattice::simplex_method::isaac)
       .value("centroid", lattice::simplex_method::centroid);
 
-  nb::enum_<polynomials::type>(m, "PolynomialType", nb::is_arithmetic())
+  nb::enum_<polynomials::type>(m, "PolynomialType", nb::is_arithmetic(),
+                               "Polynomial type.")
       .value("legendre", polynomials::type::legendre)
       .value("bernstein", polynomials::type::bernstein);
 
@@ -467,7 +469,7 @@ NB_MODULE(_basixcpp, m)
               lattice::create<double>(celltype, n, type, exterior, method));
         });
 
-  nb::enum_<maps::type>(m, "MapType", nb::is_arithmetic())
+  nb::enum_<maps::type>(m, "MapType", nb::is_arithmetic(), "Element map type.")
       .value("identity", maps::type::identity)
       .value("L2Piola", maps::type::L2Piola)
       .value("covariantPiola", maps::type::covariantPiola)
@@ -475,7 +477,8 @@ NB_MODULE(_basixcpp, m)
       .value("doubleCovariantPiola", maps::type::doubleCovariantPiola)
       .value("doubleContravariantPiola", maps::type::doubleContravariantPiola);
 
-  nb::enum_<sobolev::space>(m, "SobolevSpace", nb::is_arithmetic())
+  nb::enum_<sobolev::space>(m, "SobolevSpace", nb::is_arithmetic(),
+                            "Sobolev space.")
       .value("L2", sobolev::space::L2)
       .value("H1", sobolev::space::H1)
       .value("H2", sobolev::space::H2)
@@ -486,13 +489,14 @@ NB_MODULE(_basixcpp, m)
       .value("HEin", sobolev::space::HEin)
       .value("HDivDiv", sobolev::space::HDivDiv);
 
-  nb::enum_<quadrature::type>(m, "QuadratureType", nb::is_arithmetic())
+  nb::enum_<quadrature::type>(m, "QuadratureType", nb::is_arithmetic(),
+                              "Quadrature type.")
       .value("Default", quadrature::type::Default)
       .value("gauss_jacobi", quadrature::type::gauss_jacobi)
       .value("gll", quadrature::type::gll)
       .value("xiao_gimbutas", quadrature::type::xiao_gimbutas);
 
-  nb::enum_<cell::type>(m, "CellType", nb::is_arithmetic())
+  nb::enum_<cell::type>(m, "CellType", nb::is_arithmetic(), "Cell type.")
       .value("point", cell::type::point)
       .value("interval", cell::type::interval)
       .value("triangle", cell::type::triangle)
@@ -524,7 +528,8 @@ NB_MODULE(_basixcpp, m)
   m.def("cell_facet_jacobians", [](cell::type cell_type)
         { return as_nbarrayp(cell::facet_jacobians<double>(cell_type)); });
 
-  nb::enum_<element::family>(m, "ElementFamily", nb::is_arithmetic())
+  nb::enum_<element::family>(m, "ElementFamily", nb::is_arithmetic(),
+                             "Finite element family.")
       .value("custom", element::family::custom)
       .value("P", element::family::P)
       .value("BDM", element::family::BDM)
@@ -540,8 +545,8 @@ NB_MODULE(_basixcpp, m)
       .value("Hermite", element::family::Hermite)
       .value("iso", element::family::iso);
 
-  nb::enum_<element::lagrange_variant>(m, "LagrangeVariant",
-                                       nb::is_arithmetic())
+  nb::enum_<element::lagrange_variant>(
+      m, "LagrangeVariant", nb::is_arithmetic(), "Lagrange element variant.")
       .value("unset", element::lagrange_variant::unset)
       .value("equispaced", element::lagrange_variant::equispaced)
       .value("gll_warped", element::lagrange_variant::gll_warped)
@@ -557,7 +562,8 @@ NB_MODULE(_basixcpp, m)
       .value("legendre", element::lagrange_variant::legendre)
       .value("bernstein", element::lagrange_variant::bernstein);
 
-  nb::enum_<element::dpc_variant>(m, "DPCVariant", nb::is_arithmetic())
+  nb::enum_<element::dpc_variant>(m, "DPCVariant", nb::is_arithmetic(),
+                                  "DPC variant.")
       .value("unset", element::dpc_variant::unset)
       .value("simplex_equispaced", element::dpc_variant::simplex_equispaced)
       .value("simplex_gll", element::dpc_variant::simplex_gll)
@@ -648,7 +654,8 @@ NB_MODULE(_basixcpp, m)
                                         discontinuous);
         });
 
-  nb::enum_<polyset::type>(m, "PolysetType", nb::is_arithmetic())
+  nb::enum_<polyset::type>(m, "PolysetType", nb::is_arithmetic(),
+                           "Polyset type.")
       .value("standard", polyset::type::standard)
       .value("macroedge", polyset::type::macroedge);
 

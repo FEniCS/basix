@@ -73,7 +73,7 @@ ignore_missing_imports = true
 [tool.ruff]
 line-length = 100
 indent-width = 4
-extend-exclude = ["./joss", "make_html.py"]
+extend-exclude = ["_basixcpp.pyi", "./joss", "make_html.py"]
 
 [tool.ruff.format]
 docstring-code-format = true

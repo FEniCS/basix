@@ -28,15 +28,16 @@ jobs:
         with:
           python-version: '3.12'
       - uses: actions/checkout@v4
-      - name: Install linting dependencies
-        run: pip install mypy ruff
       - name: Ruff check
         run: |
           pip install ruff
           ruff check .
           ruff format --check .
-      - name: Mypy check
-        run: mypy python/basix
+      - name: MyPy check
+        run: |
+          pip install mypy numpy
+          pip install git+https://github.com/FEniCS/ufl.git
+          mypy python/basix
 
   build:
     name: Build and test

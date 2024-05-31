@@ -22,6 +22,14 @@ optional = ["numba", "fenics-ufl@git+https://github.com/fenics/ufl"]
 test = ["pytest", "sympy", "scipy", "matplotlib", "fenics-basix[optional]"]
 ci = ["mypy", "pytest-xdist", "fenics-basix[docs,lint,test,optional]"]
 
+[tool.mypy]
+ignore_missing_imports = true
+
+[tool.ruff]
+line-length = 100
+indent-width = 4
+extend-exclude = ["_basixcpp.pyi"]
+
 [tool.scikit-build]
 minimum-version = "0.5"
 cmake.minimum-version = "3.19.0"

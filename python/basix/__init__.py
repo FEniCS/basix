@@ -12,7 +12,7 @@ import os
 os.add_dll_directory('D:/a/dolfinx/basix-install/bin')
 
 from basix import cell, finite_element, lattice, polynomials, quadrature, sobolev_spaces
-from basix._basixcpp import __version__
+from basix._basixcpp import __version__  # type: ignore
 from basix.cell import CellType, geometry, topology
 from basix.finite_element import (
     DPCVariant,

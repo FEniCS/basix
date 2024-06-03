@@ -10,11 +10,9 @@ import typing
 import numpy as np
 import numpy.typing as npt
 
-from basix._basixcpp import DPCVariant as _DPCV
-from basix._basixcpp import ElementFamily as _EF
+from basix._basixcpp import DPCVariant, ElementFamily, LagrangeVariant
 from basix._basixcpp import FiniteElement_float32 as _FiniteElement_float32
 from basix._basixcpp import FiniteElement_float64 as _FiniteElement_float64
-from basix._basixcpp import LagrangeVariant as _LV
 from basix._basixcpp import (
     create_custom_element_float32 as _create_custom_element_float32,
 )
@@ -29,7 +27,6 @@ from basix.cell import CellType
 from basix.maps import MapType
 from basix.polynomials import PolysetType
 from basix.sobolev_spaces import SobolevSpace
-from basix.utils import Enum
 
 __all__ = [
     "FiniteElement",
@@ -42,56 +39,6 @@ __all__ = [
     "tp_factors",
     "tp_dof_ordering",
 ]
-
-
-class ElementFamily(Enum):
-    """Element family."""
-
-    custom = _EF.custom
-    P = _EF.P
-    BDM = _EF.BDM
-    RT = _EF.RT
-    N1E = _EF.N1E
-    N2E = _EF.N2E
-    Regge = _EF.Regge
-    HHJ = _EF.HHJ
-    bubble = _EF.bubble
-    serendipity = _EF.serendipity
-    DPC = _EF.DPC
-    CR = _EF.CR
-    Hermite = _EF.Hermite
-    iso = _EF.iso
-
-
-class LagrangeVariant(Enum):
-    """Lagrange variant."""
-
-    unset = _LV.unset
-    equispaced = _LV.equispaced
-    gll_warped = _LV.gll_warped
-    gll_isaac = _LV.gll_isaac
-    gll_centroid = _LV.gll_centroid
-    chebyshev_warped = _LV.chebyshev_warped
-    chebyshev_isaac = _LV.chebyshev_isaac
-    chebyshev_centroid = _LV.chebyshev_centroid
-    gl_warped = _LV.gl_warped
-    gl_isaac = _LV.gl_isaac
-    gl_centroid = _LV.gl_centroid
-    legendre = _LV.legendre
-    bernstein = _LV.bernstein
-
-
-class DPCVariant(Enum):
-    """DPC variant."""
-
-    unset = _DPCV.unset
-    simplex_equispaced = _DPCV.simplex_equispaced
-    simplex_gll = _DPCV.simplex_gll
-    horizontal_equispaced = _DPCV.horizontal_equispaced
-    horizontal_gll = _DPCV.horizontal_gll
-    diagonal_equispaced = _DPCV.diagonal_equispaced
-    diagonal_gll = _DPCV.diagonal_gll
-    legendre = _DPCV.legendre
 
 
 class FiniteElement:
@@ -107,13 +54,13 @@ class FiniteElement:
         """
         self._e = e
 
-    def tabulate(self, n: int, x: npt.NDArray) -> npt.NDArray[np.floating]:
+    def tabulate(self, n: int, x: npt.NDArray) -> npt.ArrayLike:
         """Compute basis values and derivatives at set of points.
 
         Note:
-            The version of `FiniteElement::tabulate` with the basis data
-            as an out argument should be preferred for repeated call
-            where performance is critical
+            The version of ``FiniteElement::tabulate`` with the basis
+            data as an out argument should be preferred for repeated
+            call where performance is critical.
 
         Args:
             n: The order of derivatives, up to and including, to
@@ -156,7 +103,7 @@ class FiniteElement:
         """Hash."""
         return self.hash()
 
-    def push_forward(self, U, J, detJ, K) -> npt.NDArray[np.floating]:
+    def push_forward(self, U, J, detJ, K) -> npt.ArrayLike:
         """Map function values from the reference to a physical cell.
 
         This function can perform the mapping for multiple points,
@@ -180,7 +127,7 @@ class FiniteElement:
 
     def pull_back(
         self, u: npt.NDArray, J: npt.NDArray, detJ: npt.NDArray, K: npt.NDArray
-    ) -> npt.NDArray[np.floating]:
+    ) -> npt.ArrayLike:
         """Map function values from a physical cell to the reference.
 
         Args:
@@ -238,7 +185,7 @@ class FiniteElement:
         """
         self._e.Tt_inv_apply(data, block_size, cell_info)
 
-    def base_transformations(self) -> npt.NDArray[np.floating]:
+    def base_transformations(self) -> npt.ArrayLike:
         r"""Get the base transformations.
 
         The base transformations represent the effect of rotating or
@@ -391,7 +338,7 @@ class FiniteElement:
     @property
     def cell_type(self) -> CellType:
         """Element cell type."""
-        return getattr(CellType, self._e.cell_type.name)
+        return self._e.cell_type
 
     @property
     def polyset_type(self) -> PolysetType:
@@ -467,17 +414,17 @@ class FiniteElement:
     @property
     def family(self) -> ElementFamily:
         """Finite element family."""
-        return getattr(ElementFamily, self._e.family.name)
+        return self._e.family
 
     @property
     def lagrange_variant(self) -> LagrangeVariant:
         """Lagrange variant of the element."""
-        return getattr(LagrangeVariant, self._e.lagrange_variant.name)
+        return self._e.lagrange_variant
 
     @property
     def dpc_variant(self) -> DPCVariant:
         """DPC variant of the element."""
-        return getattr(DPCVariant, self._e.dpc_variant.name)
+        return self._e.dpc_variant
 
     @property
     def dof_transformations_are_permutations(self) -> bool:
@@ -497,15 +444,15 @@ class FiniteElement:
     @property
     def map_type(self) -> MapType:
         """Map type for this element."""
-        return getattr(MapType, self._e.map_type.name)
+        return self._e.map_type
 
     @property
     def sobolev_space(self) -> SobolevSpace:
         """Underlying Sobolev space for this element."""
-        return getattr(SobolevSpace, self._e.sobolev_space.name)
+        return self._e.sobolev_space
 
     @property
-    def points(self) -> npt.NDArray[np.floating]:
+    def points(self) -> npt.ArrayLike:
         """Interpolation points.
 
         Coordinates on the reference element where a function need to be
@@ -515,7 +462,7 @@ class FiniteElement:
         return self._e.points
 
     @property
-    def interpolation_matrix(self) -> npt.NDArray[np.floating]:
+    def interpolation_matrix(self) -> npt.ArrayLike:
         """Interpolation points.
 
         Coordinates on the reference element where a function need to be
@@ -525,7 +472,7 @@ class FiniteElement:
         return self._e.interpolation_matrix
 
     @property
-    def dual_matrix(self) -> npt.NDArray[np.floating]:
+    def dual_matrix(self) -> npt.ArrayLike:
         """Matrix $BD^{T}$.
 
         See C++ documentation.
@@ -533,12 +480,12 @@ class FiniteElement:
         return self._e.dual_matrix
 
     @property
-    def coefficient_matrix(self) -> npt.NDArray[np.floating]:
+    def coefficient_matrix(self) -> npt.ArrayLike:
         """Matrix of coefficients."""
         return self._e.coefficient_matrix
 
     @property
-    def wcoeffs(self) -> npt.NDArray[np.floating]:
+    def wcoeffs(self) -> npt.ArrayLike:
         """Coefficients that define the polynomial set in terms of the orthonormal polynomials.
 
         See C++ documentation for details.
@@ -546,7 +493,7 @@ class FiniteElement:
         return self._e.wcoeffs
 
     @property
-    def M(self) -> list[list[npt.NDArray[np.floating]]]:
+    def M(self) -> list[list[npt.ArrayLike]]:
         """Interpolation matrices for each sub-entity.
 
         See C++ documentation for details.
@@ -554,7 +501,7 @@ class FiniteElement:
         return self._e.M
 
     @property
-    def x(self) -> list[list[npt.NDArray[np.floating]]]:
+    def x(self) -> list[list[npt.ArrayLike]]:
         """Interpolation points for each sub-entity.
 
         The indices of this data are ``(tdim, entity index, point index,
@@ -612,11 +559,11 @@ def create_element(
         A finite element.
     """
     e = _create_element(
-        family.value,
-        celltype.value,
+        family,
+        celltype,
         degree,
-        lagrange_variant.value,
-        dpc_variant.value,
+        lagrange_variant,
+        dpc_variant,
         discontinuous,
         dof_ordering if dof_ordering is not None else [],
         np.dtype(dtype).char,
@@ -677,26 +624,26 @@ def create_custom_element(
         x = [[np.dtype(dtype).type(j) for j in i] for i in x]  # type: ignore
         M = [[np.dtype(dtype).type(j) for j in i] for i in M]  # type: ignore
     if np.issubdtype(dtype, np.float32):
-        _create_custom_element = _create_custom_element_float32
+        _create_custom_element = _create_custom_element_float32  # type: ignore
     elif np.issubdtype(dtype, np.float64):
-        _create_custom_element = _create_custom_element_float64
+        _create_custom_element = _create_custom_element_float64  # type: ignore
     else:
         raise NotImplementedError(f"Type {dtype} not supported.")
 
     return FiniteElement(
         _create_custom_element(
-            cell_type.value,
+            cell_type,
             value_shape,
             wcoeffs,
             x,
             M,
             interpolation_nderivs,
-            map_type.value,
-            sobolev_space.value,
+            map_type,
+            sobolev_space,
             discontinuous,
             embedded_subdegree,
             embedded_superdegree,
-            poly_type.value,
+            poly_type,
         )
     )
 
@@ -729,11 +676,11 @@ def create_tp_element(
     """
     return FiniteElement(
         _create_tp_element(
-            family.value,
-            celltype.value,
+            family,
+            celltype,
             degree,
-            lagrange_variant.value,
-            dpc_variant.value,
+            lagrange_variant,
+            dpc_variant,
             discontinuous,
             np.dtype(dtype).char,
         )
@@ -773,11 +720,11 @@ def tp_factors(
     return [
         [FiniteElement(e) for e in elements]
         for elements in _tp_factors(
-            family.value,
-            celltype.value,
+            family,
+            celltype,
             degree,
-            lagrange_variant.value,
-            dpc_variant.value,
+            lagrange_variant,
+            dpc_variant,
             discontinuous,
             dof_ordering if dof_ordering is not None else [],
             np.dtype(dtype).char,
@@ -816,11 +763,11 @@ def tp_dof_ordering(
         The DOF ordering.
     """
     return _tp_dof_ordering(
-        family.value,
-        celltype.value,
+        family,
+        celltype,
         degree,
-        lagrange_variant.value,
-        dpc_variant.value,
+        lagrange_variant,
+        dpc_variant,
         discontinuous,
     )
 
@@ -943,9 +890,7 @@ def string_to_lagrange_variant(variant: str) -> LagrangeVariant:
     elif variant.lower() == "gl":
         return LagrangeVariant.gl_isaac
 
-    if not hasattr(LagrangeVariant, variant.lower()):
-        raise ValueError(f"Unknown variant: {variant}")
-    return getattr(LagrangeVariant, variant.lower())
+    return LagrangeVariant[variant.lower()]
 
 
 def string_to_dpc_variant(variant: str) -> DPCVariant:
@@ -957,6 +902,4 @@ def string_to_dpc_variant(variant: str) -> DPCVariant:
     Returns:
         The DPC variant.
     """
-    if not hasattr(DPCVariant, variant.lower()):
-        raise ValueError(f"Unknown variant: {variant}")
-    return getattr(DPCVariant, variant.lower())
+    return DPCVariant[variant.lower()]

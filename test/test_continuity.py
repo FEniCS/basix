@@ -2,9 +2,10 @@
 # FEniCS Project
 # SPDX-License-Identifier: MIT
 
-import basix
 import numpy as np
 import pytest
+
+import basix
 from basix import ElementFamily
 
 elements = [

@@ -5,8 +5,9 @@
 import re
 from importlib.metadata import version
 
-import basix
 import pytest
+
+import basix
 
 
 def is_canonical(version):

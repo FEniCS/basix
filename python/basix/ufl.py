@@ -192,7 +192,7 @@ class _ElementBase(_AbstractFiniteElement):
 
     # Basix specific functions
     @_abstractmethod
-    def tabulate(self, nderivs: int, points: _npt.NDArray[np.float64]) -> _npt.NDArray[np.float64]:
+    def tabulate(self, nderivs: int, points: _npt.NDArray[np.float64]) -> _npt.ArrayLike:
         """Tabulate the basis functions of the element.
 
         Args:
@@ -253,7 +253,7 @@ class _ElementBase(_AbstractFiniteElement):
         """Topology of the reference element."""
 
     @_abstractproperty
-    def reference_geometry(self) -> _npt.NDArray[np.float64]:
+    def reference_geometry(self) -> _npt.ArrayLike:
         """Geometry of the reference element."""
 
     @_abstractproperty
@@ -327,17 +327,17 @@ class _ElementBase(_AbstractFiniteElement):
         return 1
 
     @property
-    def _wcoeffs(self) -> _npt.NDArray[np.float64]:
+    def _wcoeffs(self) -> _npt.ArrayLike:
         """The coefficients used to define the polynomial set."""
         raise NotImplementedError()
 
     @property
-    def _x(self) -> list[list[_npt.NDArray[np.float64]]]:
+    def _x(self) -> list[list[_npt.ArrayLike]]:
         """The points used to define interpolation."""
         raise NotImplementedError()
 
     @property
-    def _M(self) -> list[list[_npt.NDArray[np.float64]]]:
+    def _M(self) -> list[list[_npt.ArrayLike]]:
         """The matrices used to define interpolation."""
         raise NotImplementedError()
 
@@ -425,7 +425,7 @@ class _BasixElement(_ElementBase):
         """Return the hash of the Basix element if this is a standard Basix element."""
         return self._element.hash()
 
-    def tabulate(self, nderivs: int, points: _npt.NDArray[np.float64]) -> _npt.NDArray[np.float64]:
+    def tabulate(self, nderivs: int, points: _npt.NDArray[np.float64]) -> _npt.ArrayLike:
         """Tabulate the basis functions of the element.
 
         Args:
@@ -438,7 +438,7 @@ class _BasixElement(_ElementBase):
         """
         tab = self._element.tabulate(nderivs, points)
         # TODO: update FFCx to remove the need for transposing here
-        return tab.transpose((0, 1, 3, 2)).reshape((tab.shape[0], tab.shape[1], -1))
+        return tab.transpose((0, 1, 3, 2)).reshape((tab.shape[0], tab.shape[1], -1))  # type: ignore
 
     def get_component_element(self, flat_component: int) -> tuple[_ElementBase, int, int]:
         """Get element that represents a component.
@@ -518,7 +518,7 @@ class _BasixElement(_ElementBase):
         return _basix.topology(self._element.cell_type)
 
     @property
-    def reference_geometry(self) -> _npt.NDArray[np.float64]:
+    def reference_geometry(self) -> _npt.ArrayLike:
         """Geometry of the reference element."""
         return _basix.geometry(self._element.cell_type)
 
@@ -606,17 +606,17 @@ class _BasixElement(_ElementBase):
         return self._element.polyset_type
 
     @property
-    def _wcoeffs(self) -> _npt.NDArray[np.float64]:
+    def _wcoeffs(self) -> _npt.ArrayLike:
         """The coefficients used to define the polynomial set."""
         return self._element.wcoeffs
 
     @property
-    def _x(self) -> list[list[_npt.NDArray[np.float64]]]:
+    def _x(self) -> list[list[_npt.ArrayLike]]:
         """The points used to define interpolation."""
         return self._element.x
 
     @property
-    def _M(self) -> list[list[_npt.NDArray[np.float64]]]:
+    def _M(self) -> list[list[_npt.ArrayLike]]:
         """The matrices used to define interpolation."""
         return self._element.M
 
@@ -668,7 +668,7 @@ class _ComponentElement(_ElementBase):
         """Return a hash."""
         return super().__hash__()
 
-    def tabulate(self, nderivs: int, points: _npt.NDArray[np.float64]) -> _npt.NDArray[np.float64]:
+    def tabulate(self, nderivs: int, points: _npt.NDArray[np.float64]) -> _npt.ArrayLike:
         """Tabulate the basis functions of the element.
 
         Args:
@@ -680,9 +680,9 @@ class _ComponentElement(_ElementBase):
         """
         tables = self._element.tabulate(nderivs, points)
         output = []
-        for tbl in tables:
+        for tbl in tables:  # type: ignore
             shape = (points.shape[0], *self._element._reference_value_shape, -1)
-            tbl = tbl.reshape(shape)
+            tbl = tbl.reshape(shape)  # type: ignore
             if len(self._element._reference_value_shape) == 0:
                 output.append(tbl)
             elif len(self._element._reference_value_shape) == 1:
@@ -766,7 +766,7 @@ class _ComponentElement(_ElementBase):
         raise NotImplementedError()
 
     @property
-    def reference_geometry(self) -> _npt.NDArray[np.float64]:
+    def reference_geometry(self) -> _npt.ArrayLike:
         """Geometry of the reference element."""
         raise NotImplementedError()
 
@@ -892,7 +892,7 @@ class _MixedElement(_ElementBase):
     @property
     def dtype(self) -> _npt.DTypeLike:
         """Element float type."""
-        self.elements[0].dtype
+        return self.elements[0].dtype
 
     @property
     def is_mixed(self) -> bool:
@@ -904,7 +904,7 @@ class _MixedElement(_ElementBase):
         """Degree of the element."""
         return max((e.degree for e in self._sub_elements), default=-1)
 
-    def tabulate(self, nderivs: int, points: _npt.NDArray[np.float64]) -> _npt.NDArray[np.float64]:
+    def tabulate(self, nderivs: int, points: _npt.NDArray[np.float64]) -> _npt.ArrayLike:
         """Tabulate the basis functions of the element.
 
         Args:
@@ -1076,7 +1076,7 @@ class _MixedElement(_ElementBase):
         return self._sub_elements[0].reference_topology
 
     @property
-    def reference_geometry(self) -> _npt.NDArray[np.float64]:
+    def reference_geometry(self) -> _npt.ArrayLike:
         """Geometry of the reference element."""
         return self._sub_elements[0].reference_geometry
 
@@ -1243,7 +1243,7 @@ class _BlockedElement(_ElementBase):
         """Is this a quadrature element?"""
         return self._sub_element.is_quadrature
 
-    def tabulate(self, nderivs: int, points: _npt.NDArray[np.float64]) -> _npt.NDArray[np.float64]:
+    def tabulate(self, nderivs: int, points: _npt.NDArray[np.float64]) -> _npt.ArrayLike:
         """Tabulate the basis functions of the element.
 
         Args:
@@ -1257,11 +1257,11 @@ class _BlockedElement(_ElementBase):
         assert len(self._block_shape) == 1  # TODO: block shape
         assert self.reference_value_size == self._block_size  # TODO: remove this assumption
         output = []
-        for table in self._sub_element.tabulate(nderivs, points):
+        for table in self._sub_element.tabulate(nderivs, points):  # type: ignore
             # Repeat sub element horizontally
-            assert len(table.shape) == 2
+            assert len(table.shape) == 2  # type: ignore
             new_table = np.zeros(
-                (table.shape[0], *self._block_shape, self._block_size * table.shape[1])
+                (table.shape[0], *self._block_shape, self._block_size * table.shape[1])  # type: ignore
             )
             for i, j in enumerate(_itertools.product(*[range(s) for s in self._block_shape])):
                 if len(j) == 1:
@@ -1370,7 +1370,7 @@ class _BlockedElement(_ElementBase):
         return self._sub_element.reference_topology
 
     @property
-    def reference_geometry(self) -> _npt.NDArray[np.float64]:
+    def reference_geometry(self) -> _npt.ArrayLike:
         """Geometry of the reference element."""
         return self._sub_element.reference_geometry
 
@@ -1448,24 +1448,24 @@ class _BlockedElement(_ElementBase):
         return self._sub_element.polyset_type
 
     @property
-    def _wcoeffs(self) -> _npt.NDArray[np.float64]:
+    def _wcoeffs(self) -> _npt.ArrayLike:
         """Coefficients used to define the polynomial set."""
         sub_wc = self._sub_element._wcoeffs
-        wcoeffs = np.zeros((sub_wc.shape[0] * self._block_size, sub_wc.shape[1] * self._block_size))
+        wcoeffs = np.zeros((sub_wc.shape[0] * self._block_size, sub_wc.shape[1] * self._block_size))  # type: ignore
         for i in range(self._block_size):
             wcoeffs[
-                sub_wc.shape[0] * i : sub_wc.shape[0] * (i + 1),
-                sub_wc.shape[1] * i : sub_wc.shape[1] * (i + 1),
+                sub_wc.shape[0] * i : sub_wc.shape[0] * (i + 1),  # type: ignore
+                sub_wc.shape[1] * i : sub_wc.shape[1] * (i + 1),  # type: ignore
             ] = sub_wc
         return wcoeffs
 
     @property
-    def _x(self) -> list[list[_npt.NDArray[np.float64]]]:
+    def _x(self) -> list[list[_npt.ArrayLike]]:
         """Points used to define interpolation."""
         return self._sub_element._x
 
     @property
-    def _M(self) -> list[list[_npt.NDArray[np.float64]]]:
+    def _M(self) -> list[list[_npt.ArrayLike]]:
         """Matrices used to define interpolation."""
         M = []
         for M_list in self._sub_element._M:
@@ -1473,22 +1473,22 @@ class _BlockedElement(_ElementBase):
             for mat in M_list:
                 new_mat = np.zeros(
                     (
-                        mat.shape[0] * self._block_size,
-                        mat.shape[1] * self._block_size,
-                        mat.shape[2],
-                        mat.shape[3],
+                        mat.shape[0] * self._block_size,  # type: ignore
+                        mat.shape[1] * self._block_size,  # type: ignore
+                        mat.shape[2],  # type: ignore
+                        mat.shape[3],  # type: ignore
                     )
                 )
                 for i in range(self._block_size):
                     new_mat[
-                        i * mat.shape[0] : (i + 1) * mat.shape[0],
-                        i * mat.shape[1] : (i + 1) * mat.shape[1],
+                        i * mat.shape[0] : (i + 1) * mat.shape[0],  # type: ignore
+                        i * mat.shape[1] : (i + 1) * mat.shape[1],  # type: ignore
                         :,
                         :,
                     ] = mat
                 M_row.append(new_mat)
             M.append(M_row)
-        return M
+        return M  # type: ignore
 
     @property
     def has_tensor_product_factorisation(self) -> bool:
@@ -1567,7 +1567,7 @@ class _QuadratureElement(_ElementBase):
         """Return a hash."""
         return super().__hash__()
 
-    def tabulate(self, nderivs: int, points: _npt.NDArray[np.float64]) -> _npt.NDArray[np.float64]:
+    def tabulate(self, nderivs: int, points: _npt.NDArray[np.float64]) -> _npt.ArrayLike:
         """Tabulate the basis functions of the element.
 
         Args:
@@ -1659,7 +1659,7 @@ class _QuadratureElement(_ElementBase):
         raise NotImplementedError()
 
     @property
-    def reference_geometry(self) -> _npt.NDArray[np.float64]:
+    def reference_geometry(self) -> _npt.ArrayLike:
         """Geometry of the reference element."""
         raise NotImplementedError()
 
@@ -1779,7 +1779,7 @@ class _RealElement(_ElementBase):
         """Element float type."""
         raise NotImplementedError()
 
-    def tabulate(self, nderivs: int, points: _npt.NDArray[np.float64]) -> _npt.NDArray[np.float64]:
+    def tabulate(self, nderivs: int, points: _npt.NDArray[np.float64]) -> _npt.ArrayLike:
         """Tabulate the basis functions of the element.
 
         Args:
@@ -1894,7 +1894,7 @@ class _RealElement(_ElementBase):
         raise NotImplementedError()
 
     @property
-    def reference_geometry(self) -> _npt.NDArray[np.float64]:
+    def reference_geometry(self) -> _npt.ArrayLike:
         """Geometry of the reference element."""
         raise NotImplementedError()
 
@@ -1959,17 +1959,17 @@ def _compute_signature(element: _basix.finite_element.FiniteElement) -> str:
         f"{element.discontinuous}, {element.embedded_subdegree}, {element.embedded_superdegree}, "
         f"{element.dtype}, {element.dof_ordering}"
     )
-    data = ",".join([f"{i}" for row in element.wcoeffs for i in row])
+    data = ",".join([f"{i}" for row in element.wcoeffs for i in row])  # type: ignore
     data += "__"
     for entity in element.x:
         for points in entity:
-            data += ",".join([f"{i}" for p in points for i in p])
+            data += ",".join([f"{i}" for p in points for i in p])  # type: ignore
             data += "_"
     data += "__"
 
     for entity in element.M:
         for matrices in entity:
-            data += ",".join([f"{i}" for mat in matrices for row in mat for i in row])
+            data += ",".join([f"{i}" for mat in matrices for row in mat for i in row])  # type: ignore
             data += "_"
     data += "__"
 
@@ -2135,7 +2135,7 @@ def enriched_element(
         wcoeffs[row : row + e.dim, :] = _basix.polynomials.reshape_coefficients(
             _basix.PolynomialType.legendre,
             ct,
-            e._wcoeffs,
+            e._wcoeffs,  # type: ignore
             vsize,
             e.embedded_superdegree,
             hd,
@@ -2271,9 +2271,9 @@ def quadrature_element(
         assert weights is None
         assert degree is not None
         if scheme is None:
-            points, weights = _basix.make_quadrature(cell, degree)
+            points, weights = _basix.make_quadrature(cell, degree)  # type: ignore
         else:
-            points, weights = _basix.make_quadrature(
+            points, weights = _basix.make_quadrature(  # type: ignore
                 cell, degree, rule=_basix.quadrature.string_to_type(scheme)
             )
 

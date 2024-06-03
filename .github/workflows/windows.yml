@@ -53,6 +53,12 @@ jobs:
       VCPKG_BINARY_SOURCES: "clear;x-gha,readwrite"
     steps:
       - uses: actions/checkout@v4
+      
+      - name: Insert add_dll_directory calls
+        working-directory: python/basix
+        run: |
+          (Get-Content __init__.py).Replace('# WINDOWSDLL', 'import os; os.add_dll_directory("D:/a/basix/install/bin")') | Set-Content __init__.py
+          Get-Content __init__.py
 
       - name: Export GitHub Actions cache environment variables
         uses: actions/github-script@v6
@@ -78,7 +84,6 @@ jobs:
           cd python
           python -m pip -v install --no-cache-dir .[ci] --config-settings=cmake.args=-DBasix_DIR=D:/a/basix/install/lib/cmake/basix
           cd ../
-          echo "import os; os.add_dll_directory('D:/a/basix/install/bin')" | Out-File -Append -FilePath conftest.py -Encoding utf8
       
       - name: Run units tests
         run: |

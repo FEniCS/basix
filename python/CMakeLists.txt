@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.19)
+cmake_minimum_required(VERSION 3.21)
 
 # nanobind uses aligned deallocators only present on macOS > 10.14
 if(APPLE)

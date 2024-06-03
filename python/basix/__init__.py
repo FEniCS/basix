@@ -9,6 +9,9 @@ The core of the library is written in C++, but the majority of Basix's
 functionality can be used via this Python interface.
 """
 
+# Template placeholder for injecting Windows dll directories in CI
+# WINDOWSDLL
+
 from basix import cell, finite_element, lattice, polynomials, quadrature, sobolev_spaces
 from basix._basixcpp import __version__  # type: ignore
 from basix.cell import CellType, geometry, topology

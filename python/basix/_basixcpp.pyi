@@ -6,6 +6,8 @@ from numpy.typing import ArrayLike
 
 
 class CellType(enum.IntEnum):
+    """Cell type."""
+
     point = 0
 
     interval = 1
@@ -23,6 +25,8 @@ class CellType(enum.IntEnum):
     pyramid = 7
 
 class DPCVariant(enum.IntEnum):
+    """DPC variant."""
+
     unset = 0
 
     simplex_equispaced = 1
@@ -40,6 +44,8 @@ class DPCVariant(enum.IntEnum):
     legendre = 7
 
 class ElementFamily(enum.IntEnum):
+    """Finite element family."""
+
     custom = 0
 
     P = 1
@@ -317,6 +323,8 @@ class FiniteElement_float64:
     def dtype(self) -> str: ...
 
 class LagrangeVariant(enum.IntEnum):
+    """Lagrange element variant."""
+
     unset = 0
 
     equispaced = 1
@@ -344,6 +352,8 @@ class LagrangeVariant(enum.IntEnum):
     bernstein = 12
 
 class LatticeSimplexMethod(enum.IntEnum):
+    """Lattice simplex method."""
+
     none = 0
 
     warp = 1
@@ -353,6 +363,8 @@ class LatticeSimplexMethod(enum.IntEnum):
     centroid = 3
 
 class LatticeType(enum.IntEnum):
+    """Lattice type."""
+
     equispaced = 0
 
     gll = 1
@@ -362,6 +374,8 @@ class LatticeType(enum.IntEnum):
     gl = 4
 
 class MapType(enum.IntEnum):
+    """Element map type."""
+
     identity = 0
 
     L2Piola = 1
@@ -375,17 +389,23 @@ class MapType(enum.IntEnum):
     doubleContravariantPiola = 5
 
 class PolynomialType(enum.IntEnum):
+    """Polynomial type."""
+
     legendre = 0
 
     bernstein = 1
 
 class PolysetType(enum.IntEnum):
+    """Polyset type."""
+
     standard = 0
 
     macroedge = 1
 
 class QuadratureType(enum.IntEnum):
-    Default = 0
+    """Quadrature type."""
+
+    default = 0
 
     gauss_jacobi = 1
 
@@ -394,6 +414,8 @@ class QuadratureType(enum.IntEnum):
     xiao_gimbutas = 3
 
 class SobolevSpace(enum.IntEnum):
+    """Sobolev space."""
+
     L2 = 0
 
     H1 = 1

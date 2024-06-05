@@ -31,7 +31,7 @@ import basix.ufl
 
 
 def random_point(cell):
-    vertices = basix.geometry(basix.cell.string_to_type(cell))
+    vertices = basix.geometry(basix.CellType[cell])
     w = [random.random() for _ in vertices]
     return sum(v * i for v, i in zip(vertices, w)) / sum(w)
 

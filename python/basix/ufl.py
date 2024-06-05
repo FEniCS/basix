@@ -2014,7 +2014,7 @@ def element(
     """
     # Conversion of string arguments to types
     if isinstance(cell, str):
-        cell = _basix.cell.string_to_type(cell)
+        cell = _basix.CellType[cell]
     if isinstance(family, str):
         if family.startswith("Discontinuous "):
             family = family[14:]
@@ -2265,7 +2265,7 @@ def quadrature_element(
         A 'quadrature' finite element.
     """
     if isinstance(cell, str):
-        cell = _basix.cell.string_to_type(cell)
+        cell = _basix.CellType[cell]
 
     if points is None:
         assert weights is None
@@ -2303,7 +2303,7 @@ def real_element(
 
     """
     if isinstance(cell, str):
-        cell = _basix.cell.string_to_type(cell)
+        cell = _basix.CelType[cell]
 
     return _RealElement(cell, value_shape)
 

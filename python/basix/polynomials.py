@@ -195,18 +195,6 @@ def superset(cell: CellType, type1: PolysetType, type2: PolysetType) -> PolysetT
     return _superset(cell, type1, type2)
 
 
-def string_to_polyset_type(pname: str) -> PolysetType:
-    """Convert a string to a Basix PolysetType.
-
-    Args:
-        pname: Name of the polyset type as a string.
-
-    Returns:
-        The polyset type.
-    """
-    return PolysetType[pname]
-
-
 def tabulate_polynomial_set(
     celltype: CellType, ptype: PolysetType, degree: int, nderiv: int, pts: npt.NDArray
 ) -> npt.ArrayLike:

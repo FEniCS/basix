@@ -30,18 +30,6 @@ __all__ = [
 ]
 
 
-def string_to_type(cell: str) -> CellType:
-    """Convert a string to a Basix CellType.
-
-    Args:
-        cell: Name of the cell as a string.
-
-    Returns:
-        The cell type.
-    """
-    return CellType[cell]
-
-
 def sub_entity_connectivity(celltype: CellType) -> list[list[list[list[int]]]]:
     """Numbers of entities connected to each sub-entity of the cell.
 

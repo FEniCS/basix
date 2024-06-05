@@ -872,34 +872,3 @@ def string_to_family(family: str, cell: str) -> ElementFamily:
         return families[family]
     except KeyError:
         raise ValueError(f"Unknown element family: {family} with cell type {cell}")
-
-
-def string_to_lagrange_variant(variant: str) -> LagrangeVariant:
-    """Convert a string to a Basix LagrangeVariant enum.
-
-    Args:
-        variant: Lagrange variant string.
-
-    Returns:
-        The Lagrange variant.
-    """
-    if variant.lower() == "gll":
-        return LagrangeVariant.gll_warped
-    elif variant.lower() == "chebyshev":
-        return LagrangeVariant.chebyshev_isaac
-    elif variant.lower() == "gl":
-        return LagrangeVariant.gl_isaac
-
-    return LagrangeVariant[variant.lower()]
-
-
-def string_to_dpc_variant(variant: str) -> DPCVariant:
-    """Convert a string to a Basix DPCVariant enum.
-
-    Args:
-        variant: DPC variant as a string.
-
-    Returns:
-        The DPC variant.
-    """
-    return DPCVariant[variant.lower()]

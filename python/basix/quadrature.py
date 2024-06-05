@@ -25,7 +25,7 @@ def string_to_type(rule: str) -> QuadratureType:
         The quadrature type.
     """
     if rule == "default":
-        return QuadratureType.Default
+        return QuadratureType.default
     elif rule in ["Gauss-Lobatto-Legendre", "GLL"]:
         return QuadratureType.gll
     elif rule in ["Gauss-Legendre", "GL", "Gauss-Jacobi"]:
@@ -39,7 +39,7 @@ def string_to_type(rule: str) -> QuadratureType:
 def make_quadrature(
     cell: CellType,
     degree: int,
-    rule: QuadratureType = QuadratureType.Default,
+    rule: QuadratureType = QuadratureType.default,
     polyset_type: PolysetType = PolysetType.standard,
 ) -> tuple[_npt.ArrayLike, _npt.ArrayLike]:
     """Create a quadrature rule.

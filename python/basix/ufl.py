@@ -2303,7 +2303,7 @@ def real_element(
 
     """
     if isinstance(cell, str):
-        cell = _basix.CelType[cell]
+        cell = _basix.CellType[cell]
 
     return _RealElement(cell, value_shape)
 

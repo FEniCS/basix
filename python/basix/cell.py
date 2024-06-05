@@ -19,7 +19,6 @@ from basix._basixcpp import sub_entity_connectivity as _sec
 from basix._basixcpp import topology as _topology
 
 __all__ = [
-    "string_to_type",
     "sub_entity_connectivity",
     "volume",
     "facet_jacobians",

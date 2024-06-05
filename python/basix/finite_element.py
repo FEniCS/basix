@@ -24,7 +24,7 @@ from basix._basixcpp import create_tp_element as _create_tp_element
 from basix._basixcpp import tp_dof_ordering as _tp_dof_ordering
 from basix._basixcpp import tp_factors as _tp_factors
 from basix.cell import CellType
-from basix.maps import MapType
+from basix import MapType
 from basix.polynomials import PolysetType
 from basix.sobolev_spaces import SobolevSpace
 
@@ -34,8 +34,6 @@ __all__ = [
     "create_custom_element",
     "create_tp_element",
     "string_to_family",
-    "string_to_lagrange_variant",
-    "string_to_dpc_variant",
     "tp_factors",
     "tp_dof_ordering",
 ]

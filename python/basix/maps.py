@@ -5,6 +5,5 @@
 # SPDX-License-Identifier:    MIT
 """Maps."""
 
-from basix._basixcpp import MapType
 
-__all__ = ["string_to_type"]
+# __all__ = ["string_to_type"]

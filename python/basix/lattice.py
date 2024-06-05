@@ -11,7 +11,7 @@ from basix._basixcpp import LatticeSimplexMethod, LatticeType
 from basix._basixcpp import create_lattice as _create_lattice
 from basix.cell import CellType
 
-__all__ = ["string_to_type", "string_to_simplex_method"]
+__all__ = []
 
 
 def create_lattice(

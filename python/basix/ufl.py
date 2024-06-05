@@ -70,7 +70,7 @@ def _ufl_sobolev_space_from_enum(s: _basix.SobolevSpace):
     return _spacemap[s]
 
 
-def _ufl_pullback_from_enum(m: _basix.maps.MapType) -> _AbstractPullback:
+def _ufl_pullback_from_enum(m: _basix.MapType) -> _AbstractPullback:
     """Convert an enum to a UFL pull back.
 
     Args:

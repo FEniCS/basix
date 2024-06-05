@@ -491,7 +491,7 @@ NB_MODULE(_basixcpp, m)
 
   nb::enum_<quadrature::type>(m, "QuadratureType", nb::is_arithmetic(),
                               "Quadrature type.")
-      .value("Default", quadrature::type::Default)
+      .value("default", quadrature::type::Default)
       .value("gauss_jacobi", quadrature::type::gauss_jacobi)
       .value("gll", quadrature::type::gll)
       .value("xiao_gimbutas", quadrature::type::xiao_gimbutas);

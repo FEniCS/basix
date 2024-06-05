@@ -27,7 +27,7 @@ def test_cell_quadrature(celltype, order):
 
 
 @pytest.mark.parametrize("m", range(7))
-@pytest.mark.parametrize("scheme", [basix.QuadratureType.Default, basix.QuadratureType.gll])
+@pytest.mark.parametrize("scheme", [basix.QuadratureType.default, basix.QuadratureType.gll])
 def test_qorder_line(m, scheme):
     Qpts, Qwts = basix.make_quadrature(basix.CellType.interval, m, rule=scheme)
     x = sympy.Symbol("x")
@@ -41,7 +41,7 @@ def test_qorder_line(m, scheme):
 
 @pytest.mark.parametrize("m", range(6))
 @pytest.mark.parametrize(
-    "scheme", [basix.QuadratureType.Default, basix.QuadratureType.gauss_jacobi]
+    "scheme", [basix.QuadratureType.default, basix.QuadratureType.gauss_jacobi]
 )
 def test_qorder_tri(m, scheme):
     Qpts, Qwts = basix.make_quadrature(basix.CellType.triangle, m, rule=scheme)
@@ -86,7 +86,7 @@ def test_xiao_gimbutas_tet(m, scheme):
 
 @pytest.mark.parametrize("m", range(9))
 @pytest.mark.parametrize(
-    "scheme", [basix.QuadratureType.Default, basix.QuadratureType.gauss_jacobi]
+    "scheme", [basix.QuadratureType.default, basix.QuadratureType.gauss_jacobi]
 )
 def test_qorder_tet(m, scheme):
     Qpts, Qwts = basix.make_quadrature(basix.CellType.tetrahedron, m, rule=scheme)

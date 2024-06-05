@@ -70,7 +70,7 @@ def _ufl_sobolev_space_from_enum(s: _basix.SobolevSpace):
     return _spacemap[s]
 
 
-def _ufl_pullback_from_enum(m: _basix.maps.MapType) -> _AbstractPullback:
+def _ufl_pullback_from_enum(m: _basix.MapType) -> _AbstractPullback:
     """Convert an enum to a UFL pull back.
 
     Args:
@@ -2014,7 +2014,7 @@ def element(
     """
     # Conversion of string arguments to types
     if isinstance(cell, str):
-        cell = _basix.cell.string_to_type(cell)
+        cell = _basix.CellType[cell]
     if isinstance(family, str):
         if family.startswith("Discontinuous "):
             family = family[14:]
@@ -2265,7 +2265,7 @@ def quadrature_element(
         A 'quadrature' finite element.
     """
     if isinstance(cell, str):
-        cell = _basix.cell.string_to_type(cell)
+        cell = _basix.CellType[cell]
 
     if points is None:
         assert weights is None
@@ -2303,7 +2303,7 @@ def real_element(
 
     """
     if isinstance(cell, str):
-        cell = _basix.cell.string_to_type(cell)
+        cell = _basix.CellType[cell]
 
     return _RealElement(cell, value_shape)
 

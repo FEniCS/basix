@@ -8,7 +8,7 @@
 from basix._basixcpp import SobolevSpace
 from basix._basixcpp import sobolev_space_intersection as _ssi
 
-__all__ = ["intersection", "string_to_sobolev_space"]
+__all__ = ["intersection"]
 
 
 def intersection(spaces: list[SobolevSpace]) -> SobolevSpace:
@@ -24,15 +24,3 @@ def intersection(spaces: list[SobolevSpace]) -> SobolevSpace:
     for s in spaces[1:]:
         space = _ssi(space, s)
     return SobolevSpace[space.name]
-
-
-def string_to_sobolev_space(space: str) -> SobolevSpace:
-    """Convert a string to a Basix SobolevSpace.
-
-    Args:
-        space: Name of the space.
-
-    Returns:
-        Cell type.
-    """
-    return SobolevSpace[space]

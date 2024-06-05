@@ -5,18 +5,5 @@
 # SPDX-License-Identifier:    MIT
 """Maps."""
 
-from basix._basixcpp import MapType
 
-__all__ = ["string_to_type"]
-
-
-def string_to_type(mapname: str) -> MapType:
-    """Convert a string to a Basix MapType.
-
-    Args:
-        mapname: Name of the map as a string.
-
-    Returns:
-        The map type.
-    """
-    return MapType[mapname]
+# __all__ = ["string_to_type"]

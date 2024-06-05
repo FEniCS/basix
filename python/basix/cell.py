@@ -19,7 +19,6 @@ from basix._basixcpp import sub_entity_connectivity as _sec
 from basix._basixcpp import topology as _topology
 
 __all__ = [
-    "string_to_type",
     "sub_entity_connectivity",
     "volume",
     "facet_jacobians",
@@ -28,18 +27,6 @@ __all__ = [
     "facet_outward_normals",
     "facet_reference_volumes",
 ]
-
-
-def string_to_type(cell: str) -> CellType:
-    """Convert a string to a Basix CellType.
-
-    Args:
-        cell: Name of the cell as a string.
-
-    Returns:
-        The cell type.
-    """
-    return CellType[cell]
 
 
 def sub_entity_connectivity(celltype: CellType) -> list[list[list[list[int]]]]:

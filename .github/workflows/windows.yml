@@ -1,12 +1,23 @@
 name: Basix CI on Windows
 
 on:
+  pull_request:
+    branches:
+      - main
+  push:
+    tags:
+      - "v*"
+    branches:
+      - "**"
+  merge_group:
+    branches:
+      - main
   workflow_dispatch:
 
 jobs:
   build-combined:
     name: Combined build and test
-    runs-on: windows-2022
+    runs-on: windows-2019
     env:
       VCPKG_BINARY_SOURCES: "clear;x-gha,readwrite"
 

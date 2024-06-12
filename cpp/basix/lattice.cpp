@@ -804,7 +804,7 @@ create_pyramid(int n, lattice::type lattice_type, bool exterior,
 {
   if (n == 0)
     return {{0.4, 0.4, 0.2}, {1, 3}};
-  else if (lattice_type == lattice::type::equispaced)
+  else if (n == 1 || lattice_type == lattice::type::equispaced)
     return create_pyramid_equispaced<T>(n, exterior);
   else
   {

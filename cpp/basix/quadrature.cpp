@@ -415,7 +415,18 @@ std::array<std::vector<T>, 2> make_gauss_jacobi_quadrature(cell::type celltype,
     return {std::move(pts), std::move(wts)};
   }
   case cell::type::pyramid:
-    throw std::runtime_error("Pyramid not yet supported");
+  {
+    auto [pts, wts] = make_gauss_jacobi_quadrature<T>(cell::type::hexahedron, m + 2);
+    mdspan_t<T, 2> x(pts.data(), pts.size() / 3, 3);
+    for (std::size_t i = 0; i < x.extent(0); ++i)
+    {
+      const auto z = x(i, 2);
+      x(i, 0) *= (1 - z);
+      x(i, 1) *= (1 - z);
+      wts[i] *= (1 - z) * (1 - z);
+    }
+    return {std::move(pts), std::move(wts)};
+  }
   case cell::type::triangle:
     return make_quadrature_triangle_collapsed<T>(np);
   case cell::type::tetrahedron:

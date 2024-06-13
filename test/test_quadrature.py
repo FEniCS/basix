@@ -32,7 +32,7 @@ def test_qorder_line(m, scheme):
     Qpts, Qwts = basix.make_quadrature(basix.CellType.interval, m, rule=scheme)
     x = sympy.Symbol("x")
     f = x**m
-    q = sympy.integrate(f, (x, 0, (1)))
+    q = sympy.integrate(f, (x, 0, 1))
     s = 0.0
     for pt, wt in zip(Qpts, Qwts):
         s += wt * f.subs([(x, pt[0])])
@@ -48,7 +48,7 @@ def test_qorder_tri(m, scheme):
     x = sympy.Symbol("x")
     y = sympy.Symbol("y")
     f = x**m + y**m
-    q = sympy.integrate(sympy.integrate(f, (x, 0, (1 - y))), (y, 0, 1))
+    q = sympy.integrate(f, (x, 0, 1 - y), (y, 0, 1))
     s = 0.0
     for pt, wt in zip(Qpts, Qwts):
         s += wt * f.subs([(x, pt[0]), (y, pt[1])])
@@ -62,7 +62,7 @@ def test_xiao_gimbutas_tri(m, scheme):
     x = sympy.Symbol("x")
     y = sympy.Symbol("y")
     f = x**m + 2 * y**m
-    q = sympy.integrate(sympy.integrate(f, (x, 0, 1 - y)), (y, 0, 1))
+    q = sympy.integrate(f, (x, 0, 1 - y), (y, 0, 1))
     s = 0.0
     for pt, wt in zip(Qpts, Qwts):
         s += wt * f.subs([(x, pt[0]), (y, pt[1])])
@@ -94,13 +94,55 @@ def test_qorder_tet(m, scheme):
     y = sympy.Symbol("y")
     z = sympy.Symbol("z")
     f = x**m + y**m + z**m
-    q = sympy.integrate(
-        sympy.integrate(sympy.integrate(f, (x, 0, (1 - y - z))), (y, 0, 1 - z)), (z, 0, 1)
-    )
+    q = sympy.integrate(f, (x, 0, 1 - y - z), (y, 0, 1 - z), (z, 0, 1))
     s = 0.0
     for pt, wt in zip(Qpts, Qwts):
         s += wt * f.subs([(x, pt[0]), (y, pt[1]), (z, pt[2])])
     assert np.isclose(float(q), float(s))
+
+
+@pytest.mark.parametrize("m", range(9))
+@pytest.mark.parametrize(
+    "scheme", [basix.QuadratureType.default, basix.QuadratureType.gauss_jacobi]
+)
+def test_qorder_prism(m, scheme):
+    Qpts, Qwts = basix.make_quadrature(basix.CellType.prism, m, rule=scheme)
+    x = sympy.Symbol("x")
+    y = sympy.Symbol("y")
+    z = sympy.Symbol("z")
+    f = x**m + y**m + z**m
+    q = sympy.integrate(f, (x, 0, 1 - y), (y, 0, 1), (z, 0, 1))
+    s = 0.0
+    for pt, wt in zip(Qpts, Qwts):
+        s += wt * f.subs([(x, pt[0]), (y, pt[1]), (z, pt[2])])
+    assert np.isclose(float(q), float(s))
+
+
+@pytest.mark.parametrize("m", range(6))
+@pytest.mark.parametrize(
+    "scheme", [basix.QuadratureType.default, basix.QuadratureType.gauss_jacobi]
+)
+def test_qorder_pyramid(m, scheme):
+    Qpts, Qwts = basix.make_quadrature(basix.CellType.pyramid, m, rule=scheme)
+    x = sympy.Symbol("x")
+    y = sympy.Symbol("y")
+    z = sympy.Symbol("z")
+    polyset = [
+        x**i * y**j * z**k
+        for i in range(m + 1)
+        for j in range(m + 1 - i)
+        for k in range(m + 1 - i - j)
+    ]
+    polyset += [x * y**m / (1 - z) ** m, x**m * y / (1 - z) ** m]
+    polyset += [x**a * y**b / (1 - z) ** min(a, b) for a in range(m) for b in range(m + 1 - a, m)]
+    for f in polyset:
+        q = sympy.integrate(f, (x, 0, 1 - z), (y, 0, 1 - z), (z, 0, 1))
+        print(Qpts)
+        print(Qwts)
+        s = 0.0
+        for pt, wt in zip(Qpts, Qwts):
+            s += wt * f.subs([(x, pt[0]), (y, pt[1]), (z, pt[2])])
+        assert np.isclose(float(q), float(s))
 
 
 def test_quadrature_function():

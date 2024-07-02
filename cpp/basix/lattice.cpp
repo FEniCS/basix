@@ -403,7 +403,7 @@ std::vector<T> isaac_point(lattice::type lattice_type,
       denominator += x[sub_size];
     }
 
-    std::ranges::for_each(res, [denominator](auto x) { return x / denominator; });
+    std::ranges::for_each(res, [denominator](auto& x) { x /= denominator; });
 
     return res;
   }

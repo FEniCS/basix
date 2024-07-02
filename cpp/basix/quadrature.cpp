@@ -89,11 +89,11 @@ std::array<std::vector<T>, 2> gauss(std::span<const T> alpha,
   std::vector<T> Abuffer(alpha.size() * alpha.size(), 0);
   mdspan_t<T, 2> A(Abuffer.data(), alpha.size(), alpha.size());
   for (std::size_t i = 0; i < alpha.size(); ++i)
-    A(i, i) = alpha[i];
+    A[i, i] = alpha[i];
   for (std::size_t i = 0; i < alpha.size() - 1; ++i)
   {
-    A(i + 1, i) = std::sqrt(beta[i + 1]);
-    A(i, i + 1) = std::sqrt(beta[i + 1]);
+    A[i + 1, i] = std::sqrt(beta[i + 1]);
+    A[i, i + 1] = std::sqrt(beta[i + 1]);
   }
 
   auto [evals, evecs] = math::eigh<T>(Abuffer, alpha.size());
@@ -165,12 +165,12 @@ mdarray_t<T, 2> compute_jacobi_deriv(T a, std::size_t n, std::size_t nderiv,
     if (i == 0)
     {
       for (std::size_t j = 0; j < Jd.extent(1); ++j)
-        Jd(0, j) = 1.0;
+        Jd[0, j] = 1.0;
     }
     else
     {
       for (std::size_t j = 0; j < Jd.extent(1); ++j)
-        Jd(0, j) = 0.0;
+        Jd[0, j] = 0.0;
     }
 
     if (n > 0)
@@ -178,17 +178,17 @@ mdarray_t<T, 2> compute_jacobi_deriv(T a, std::size_t n, std::size_t nderiv,
       if (i == 0)
       {
         for (std::size_t j = 0; j < Jd.extent(1); ++j)
-          Jd(1, j) = (x[j] * (a + 2.0) + a) * 0.5;
+          Jd[1, j] = (x[j] * (a + 2.0) + a) * 0.5;
       }
       else if (i == 1)
       {
         for (std::size_t j = 0; j < Jd.extent(1); ++j)
-          Jd(1, j) = a * 0.5 + 1;
+          Jd[1, j] = a * 0.5 + 1;
       }
       else
       {
         for (std::size_t j = 0; j < Jd.extent(1); ++j)
-          Jd(1, j) = 0.0;
+          Jd[1, j] = 0.0;
       }
     }
 
@@ -199,23 +199,23 @@ mdarray_t<T, 2> compute_jacobi_deriv(T a, std::size_t n, std::size_t nderiv,
       const T a3 = (2 * j + a - 1) * (2 * j + a) / (2 * j * (j + a));
       const T a4 = 2 * (j + a - 1) * (j - 1) * (2 * j + a) / a1;
       for (std::size_t k = 0; k < Jd.extent(1); ++k)
-        Jd(j, k) = Jd(j - 1, k) * (x[k] * a3 + a2) - Jd(j - 2, k) * a4;
+        Jd[j, k] = Jd[j - 1, k] * (x[k] * a3 + a2) - Jd[j - 2, k] * a4;
       if (i > 0)
       {
         for (std::size_t k = 0; k < Jd.extent(1); ++k)
-          Jd(j, k) += i * a3 * J(i - 1, j - 1, k);
+          Jd[j, k] += i * a3 * J[i - 1, j - 1, k];
       }
     }
 
     for (std::size_t j = 0; j < Jd.extent(0); ++j)
       for (std::size_t k = 0; k < Jd.extent(1); ++k)
-        J(i, j, k) = Jd(j, k);
+        J[i, j, k] = Jd[j, k];
   }
 
   mdarray_t<T, 2> result(nderiv + 1, x.size());
   for (std::size_t i = 0; i < result.extent(0); ++i)
     for (std::size_t j = 0; j < result.extent(1); ++j)
-      result(i, j) = J(i, n, j);
+      result[i, j] = J[i, n, j];
 
   return result;
 }
@@ -245,7 +245,7 @@ std::vector<T> compute_gauss_jacobi_points(T a, int m)
         s += 1.0 / (x[k] - x[i]);
       std::span<const T> _x(&x[k], 1);
       mdarray_t<T, 2> f = compute_jacobi_deriv<T>(a, m, 1, _x);
-      T delta = f(0, 0) / (f(1, 0) - f(0, 0) * s);
+      T delta = f[0, 0] / (f[1, 0] - f[0, 0] * s);
       x[k] -= delta;
       if (std::abs(delta) < eps)
         break;
@@ -268,7 +268,7 @@ std::array<std::vector<T>, 2> compute_gauss_jacobi_rule(T a, int m)
   for (int i = 0; i < m; ++i)
   {
     T x = pts[i];
-    T f = Jd(1, i);
+    T f = Jd[1, i];
     wts[i] = a1 / (1.0 - x * x) / (f * f);
   }
 
@@ -298,8 +298,8 @@ std::array<std::vector<T>, 2> make_quadrature_triangle_collapsed(std::size_t m)
   {
     for (std::size_t j = 0; j < m; ++j)
     {
-      x(c, 0) = 0.25 * (1.0 + ptx[i]) * (1.0 - pty[j]);
-      x(c, 1) = 0.5 * (1.0 + pty[j]);
+      x[c, 0] = 0.25 * (1.0 + ptx[i]) * (1.0 - pty[j]);
+      x[c, 1] = 0.5 * (1.0 + pty[j]);
       wts[c] = wx[i] * wy[j] * 0.125;
       ++c;
     }
@@ -326,9 +326,9 @@ make_quadrature_tetrahedron_collapsed(std::size_t m)
     {
       for (std::size_t k = 0; k < m; ++k)
       {
-        x(c, 0) = 0.125 * (1.0 + ptx[i]) * (1.0 - pty[j]) * (1.0 - ptz[k]);
-        x(c, 1) = 0.25 * (1. + pty[j]) * (1. - ptz[k]);
-        x(c, 2) = 0.5 * (1.0 + ptz[k]);
+        x[c, 0] = 0.125 * (1.0 + ptx[i]) * (1.0 - pty[j]) * (1.0 - ptz[k]);
+        x[c, 1] = 0.25 * (1. + pty[j]) * (1. - ptz[k]);
+        x[c, 2] = 0.5 * (1.0 + ptz[k]);
         wts[c] = wx[i] * wy[j] * wz[k] * 0.125 * 0.125;
         ++c;
       }
@@ -358,8 +358,8 @@ std::array<std::vector<T>, 2> make_gauss_jacobi_quadrature(cell::type celltype,
     {
       for (std::size_t j = 0; j < np; ++j)
       {
-        x(c, 0) = QptsL[i];
-        x(c, 1) = QptsL[j];
+        x[c, 0] = QptsL[i];
+        x[c, 1] = QptsL[j];
         wts[c] = QwtsL[i] * QwtsL[j];
         ++c;
       }
@@ -379,9 +379,9 @@ std::array<std::vector<T>, 2> make_gauss_jacobi_quadrature(cell::type celltype,
       {
         for (std::size_t k = 0; k < np; ++k)
         {
-          x(c, 0) = QptsL[i];
-          x(c, 1) = QptsL[j];
-          x(c, 2) = QptsL[k];
+          x[c, 0] = QptsL[i];
+          x[c, 1] = QptsL[j];
+          x[c, 2] = QptsL[k];
           wts[c] = QwtsL[i] * QwtsL[j] * QwtsL[k];
           ++c;
         }
@@ -403,9 +403,9 @@ std::array<std::vector<T>, 2> make_gauss_jacobi_quadrature(cell::type celltype,
     {
       for (std::size_t k = 0; k < np; ++k)
       {
-        x(c, 0) = QptsT(i, 0);
-        x(c, 1) = QptsT(i, 1);
-        x(c, 2) = QptsL[k];
+        x[c, 0] = QptsT[i, 0];
+        x[c, 1] = QptsT[i, 1];
+        x[c, 2] = QptsL[k];
         wts[c] = QwtsT[i] * QwtsL[k];
         ++c;
       }
@@ -418,9 +418,9 @@ std::array<std::vector<T>, 2> make_gauss_jacobi_quadrature(cell::type celltype,
     mdspan_t<T, 2> x(pts.data(), pts.size() / 3, 3);
     for (std::size_t i = 0; i < x.extent(0); ++i)
     {
-      const auto z = x(i, 2);
-      x(i, 0) *= (1 - z);
-      x(i, 1) *= (1 - z);
+      const auto z = x[i, 2];
+      x[i, 0] *= (1 - z);
+      x[i, 1] *= (1 - z);
       wts[i] *= (1 - z) * (1 - z);
     }
     return {std::move(pts), std::move(wts)};
@@ -492,8 +492,8 @@ std::array<std::vector<T>, 2> make_gll_quadrature(cell::type celltype,
     {
       for (std::size_t j = 0; j < np; ++j)
       {
-        x(c, 0) = QptsL[i];
-        x(c, 1) = QptsL[j];
+        x[c, 0] = QptsL[i];
+        x[c, 1] = QptsL[j];
         wts[c] = QwtsL[i] * QwtsL[j];
         ++c;
       }
@@ -513,9 +513,9 @@ std::array<std::vector<T>, 2> make_gll_quadrature(cell::type celltype,
       {
         for (std::size_t k = 0; k < np; ++k)
         {
-          x(c, 0) = QptsL[i];
-          x(c, 1) = QptsL[j];
-          x(c, 2) = QptsL[k];
+          x[c, 0] = QptsL[i];
+          x[c, 1] = QptsL[j];
+          x[c, 2] = QptsL[k];
           wts[c] = QwtsL[i] * QwtsL[j] * QwtsL[k];
           ++c;
         }

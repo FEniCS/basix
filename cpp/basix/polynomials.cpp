@@ -66,13 +66,13 @@ tabulate_bernstein(cell::type celltype, int d, mdspan_t<const T, 2> x)
 
   mdarray_t<T, 2> lambdas(x.extent(1) + 1, x.extent(0));
   for (std::size_t j = 0; j < lambdas.extent(1); ++j)
-    lambdas(0, j) = 1.0;
+    lambdas[0, j] = 1.0;
   for (std::size_t i = 0; i < x.extent(1); ++i)
   {
     for (std::size_t j = 0; j < x.extent(0); ++j)
     {
-      lambdas(0, j) -= x(j, i);
-      lambdas(i + 1, j) = x(j, i);
+      lambdas[0, j] -= x[j, i];
+      lambdas[i + 1, j] = x[j, i];
     }
   }
 
@@ -85,13 +85,13 @@ tabulate_bernstein(cell::type celltype, int d, mdspan_t<const T, 2> x)
     {
       const int p = choose(d, powers);
       for (std::size_t j = 0; j < values.extent(1); ++j)
-        values(n, j) = p;
+        values[n, j] = p;
     }
 
     for (std::size_t l = 0; l < lambdas.extent(0); ++l)
       for (int a = 0; a < powers[l]; ++a)
         for (std::size_t j = 0; j < values.extent(1); ++j)
-          values(n, j) *= lambdas(l, j);
+          values[n, j] *= lambdas[l, j];
 
     powers[0] -= 1;
     powers[1] += 1;

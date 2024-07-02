@@ -631,7 +631,7 @@ public:
         assert(U.extent(1) == u.extent(1));
         for (std::size_t i = 0; i < U.extent(0); ++i)
           for (std::size_t j = 0; j < U.extent(1); ++j)
-            u(i, j) = U(i, j);
+            u[i, j] = U[i, j];
       };
     case maps::type::covariantPiola:
       return [](O& u, const P& U, const Q& J, F detJ, const R& K)

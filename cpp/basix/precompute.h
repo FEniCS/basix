@@ -258,16 +258,16 @@ void apply_matrix(
       for (std::size_t j = i + 1; j < dim; ++j)
       {
         data[n * (offset + i) + b]
-            += static_cast<U>(M(i, j)) * data[n * (offset + j) + b];
+            += static_cast<U>(M[i, j]) * data[n * (offset + j) + b];
       }
     }
     for (std::size_t i = 1; i <= dim; ++i)
     {
-      data[n * (offset + dim - i) + b] *= static_cast<U>(M(dim - i, dim - i));
+      data[n * (offset + dim - i) + b] *= static_cast<U>(M[dim - i, dim - i]);
       for (std::size_t j = 0; j < dim - i; ++j)
       {
         data[n * (offset + dim - i) + b]
-            += static_cast<U>(M(dim - i, j)) * data[n * (offset + j) + b];
+            += static_cast<U>(M[dim - i, j]) * data[n * (offset + j) + b];
       }
     }
   }
@@ -301,17 +301,17 @@ void apply_tranpose_matrix_right(
       for (std::size_t j = i + 1; j < dim; ++j)
       {
         data[data_size * b + offset + i]
-            += static_cast<U>(M(i, j)) * data[data_size * b + offset + j];
+            += static_cast<U>(M[i, j]) * data[data_size * b + offset + j];
       }
     }
     for (std::size_t i = 1; i <= dim; ++i)
     {
       data[data_size * b + offset + dim - i]
-          *= static_cast<U>(M(dim - i, dim - i));
+          *= static_cast<U>(M[dim - i, dim - i]);
       for (std::size_t j = 0; j < dim - i; ++j)
       {
         data[data_size * b + offset + dim - i]
-            += static_cast<U>(M(dim - i, j)) * data[data_size * b + offset + j];
+            += static_cast<U>(M[dim - i, j]) * data[data_size * b + offset + j];
       }
     }
   }

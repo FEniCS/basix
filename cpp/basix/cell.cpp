@@ -338,7 +338,7 @@ cell::sub_entity_geometry(cell::type celltype, int dim, int index)
   mdspan_t<T, 2> sub_entity(sub_geometry.data(), subshape);
   for (std::size_t i = 0; i < sub_entity.extent(0); ++i)
     for (std::size_t j = 0; j < sub_entity.extent(1); ++j)
-      sub_entity(i, j) = geometry(t[index][i], j);
+      sub_entity[i, j] = geometry[t[index][i], j];
 
   return {sub_geometry, subshape};
 }
@@ -439,7 +439,7 @@ cell::facet_outward_normals(cell::type cell_type)
     if (facet_orientations[f])
     {
       for (std::size_t k = 0; k < n.extent(1); ++k)
-        n(f, k) = -n(f, k);
+        n[f, k] = -n[f, k];
     }
   }
 
@@ -469,11 +469,11 @@ cell::facet_normals(cell::type cell_type)
     {
       const std::vector<int>& facet = facets[f];
       assert(facet.size() == 2);
-      n(f, 0) = x(facet[1], 1) - x(facet[0], 1);
-      n(f, 1) = x(facet[0], 0) - x(facet[1], 0);
-      T L = std::sqrt(n(f, 0) * n(f, 0) + n(f, 1) * n(f, 1));
-      n(f, 0) /= L;
-      n(f, 1) /= L;
+      n[f, 0] = x[facet[1], 1] - x[facet[0], 1];
+      n[f, 1] = x[facet[0], 0] - x[facet[1], 0];
+      T L = std::sqrt(n[f, 0] * n[f, 0] + n[f, 1] * n[f, 1]);
+      n[f, 0] /= L;
+      n[f, 1] /= L;
     }
     return {normal, shape};
   }
@@ -486,15 +486,15 @@ cell::facet_normals(cell::type cell_type)
       std::array<T, 3> e0, e1;
       for (std::size_t i = 0; i < 3; ++i)
       {
-        e0[i] = x(facet[1], i) - x(facet[0], i);
-        e1[i] = x(facet[2], i) - x(facet[0], i);
+        e0[i] = x[facet[1], i] - x[facet[0], i];
+        e1[i] = x[facet[2], i] - x[facet[0], i];
       }
       std::array<T, 3> n_f
           = {e0[1] * e1[2] - e0[2] * e1[1], e0[2] * e1[0] - e0[0] * e1[2],
              e0[0] * e1[1] - e0[1] * e1[0]};
       T L = std::sqrt(n_f[0] * n_f[0] + n_f[1] * n_f[1] + n_f[2] * n_f[2]);
       for (std::size_t i = 0; i < 3; ++i)
-        n(f, i) = n_f[i] / L;
+        n[f, i] = n_f[i] / L;
     }
     return {normal, shape};
   }
@@ -517,7 +517,7 @@ std::vector<bool> cell::facet_orientations(cell::type cell_type)
   for (std::size_t i = 0; i < x.extent(1); ++i)
   {
     for (std::size_t j = 0; j < x.extent(0); ++j)
-      midpoint[i] += x(j, i);
+      midpoint[i] += x[j, i];
     midpoint[i] /= x.extent(0);
   }
 
@@ -526,7 +526,7 @@ std::vector<bool> cell::facet_orientations(cell::type cell_type)
   {
     double dot = 0.0;
     for (std::size_t i = 0; i < n.extent(1); ++i)
-      dot += n(f, i) * (x(facets[f][0], i) - midpoint[i]);
+      dot += n[f, i] * (x[facets[f][0], i] - midpoint[i]);
     orientations[f] = dot < 0;
   }
 
@@ -629,7 +629,7 @@ cell::facet_jacobians(cell::type cell_type)
     const std::vector<int>& facet = facets[f];
     for (std::size_t j = 0; j < tdim - 1; ++j)
       for (std::size_t k = 0; k < J.extent(1); ++k)
-        J(f, k, j) = x(facet[1 + j], k) - x(facet[0], k);
+        J[f, k, j] = x[facet[1 + j], k] - x[facet[0], k];
   }
 
   return {std::move(jacobians), std::move(shape)};

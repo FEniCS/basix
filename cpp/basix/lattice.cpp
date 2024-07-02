@@ -189,7 +189,7 @@ tabulate_dlagrange(std::size_t n, std::span<const T> x)
       dualmat(dualmat_b.data(), dual_values.extent(1), dual_values.extent(2));
   for (std::size_t i = 0; i < dualmat.extent(0); ++i)
     for (std::size_t j = 0; j < dualmat.extent(1); ++j)
-      dualmat(i, j) = dual_values(0, i, j);
+      dualmat[i, j] = dual_values[0, i, j];
 
   using cmdspan2_t = MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<
       const T,
@@ -211,7 +211,7 @@ tabulate_dlagrange(std::size_t n, std::span<const T> x)
 
   for (std::size_t i = 0; i < tabulated.extent(0); ++i)
     for (std::size_t j = 0; j < tabulated.extent(1); ++j)
-      tabulated(i, j) = tabulated_values(0, i, j);
+      tabulated[i, j] = tabulated_values[0, i, j];
 
   std::vector<T> c = math::solve<T>(dualmat, tabulated);
   return stdex::mdarray<
@@ -232,7 +232,7 @@ std::vector<T> warp_function(lattice::type lattice_type, int n,
   std::vector<T> w(v.extent(1), 0);
   for (std::size_t i = 0; i < v.extent(0); ++i)
     for (std::size_t j = 0; j < v.extent(1); ++j)
-      w[j] += v(i, j) * pts[i];
+      w[j] += v[i, j] * pts[i];
 
   return w;
 }
@@ -258,8 +258,8 @@ create_quad(std::size_t n, lattice::type lattice_type, bool exterior)
     {
       for (std::size_t i = 0; i < m; ++i)
       {
-        x(c, 0) = r[i];
-        x(c, 1) = r[j];
+        x[c, 0] = r[i];
+        x[c, 1] = r[j];
         c++;
       }
     }
@@ -295,9 +295,9 @@ create_hex(int n, lattice::type lattice_type, bool exterior)
       {
         for (std::size_t i = 0; i < m; ++i)
         {
-          x(k, j, i, 0) = r[i];
-          x(k, j, i, 1) = r[j];
-          x(k, j, i, 2) = r[k];
+          x[k, j, i, 0] = r[i];
+          x[k, j, i, 1] = r[j];
+          x[k, j, i, 2] = r[k];
         }
       }
     }
@@ -326,8 +326,8 @@ create_tri_equispaced(std::size_t n, bool exterior)
   {
     for (std::size_t i = b; i < (n - b + 1 - j); ++i)
     {
-      p(c, 0) = r[2 * i];
-      p(c, 1) = r[2 * j];
+      p[c, 0] = r[2 * i];
+      p[c, 1] = r[2 * j];
       ++c;
     }
   }
@@ -367,12 +367,12 @@ create_tri_warped(std::size_t n, lattice::type lattice_type, bool exterior)
     {
       const T x = r[2 * i];
       const T y = r[2 * j];
-      p(c, 0) = x;
-      p(c, 1) = y;
+      p[c, 0] = x;
+      p[c, 1] = y;
       const std::size_t l = n - j - i;
       const T a = r[2 * l];
-      p(c, 0) += x * (a * wbar[n + i - l] + y * wbar[n + i - j]);
-      p(c, 1) += y * (a * wbar[n + j - l] + x * wbar[n + j - i]);
+      p[c, 0] += x * (a * wbar[n + i - l] + y * wbar[n + i - j]);
+      p[c, 1] += y * (a * wbar[n + j - l] + x * wbar[n + j - i]);
       ++c;
     }
   }
@@ -434,7 +434,7 @@ create_tri_isaac(std::size_t n, lattice::type lattice_type, bool exterior)
       const std::vector isaac_p
           = isaac_point<T>(lattice_type, std::array{i, j, n - i - j});
       for (std::size_t k = 0; k < 2; ++k)
-        p(c, k) = isaac_p[k];
+        p[c, k] = isaac_p[k];
       ++c;
     }
   }
@@ -471,8 +471,8 @@ create_tri_centroid(std::size_t n, lattice::type lattice_type, bool exterior)
     {
       const T xj = x[j];
       const T xk = x[i + j + 1];
-      p(c, 0) = (2 * xj + xk - xi) / 3;
-      p(c, 1) = (2 * xi + xk - xj) / 3;
+      p[c, 0] = (2 * xj + xk - xi) / 3;
+      p[c, 1] = (2 * xi + xk - xj) / 3;
       ++c;
     }
   }
@@ -538,9 +538,9 @@ create_tet_equispaced(std::size_t n, bool exterior)
     {
       for (std::size_t i = b; i < (n - b + 1 - j - k); ++i)
       {
-        x(c, 0) = r[2 * i];
-        x(c, 1) = r[2 * j];
-        x(c, 2) = r[2 * k];
+        x[c, 0] = r[2 * i];
+        x[c, 1] = r[2 * j];
+        x[c, 2] = r[2 * k];
         ++c;
       }
     }
@@ -576,7 +576,7 @@ create_tet_isaac(std::size_t n, lattice::type lattice_type, bool exterior)
         const std::vector ip
             = isaac_point<T>(lattice_type, std::array{i, j, k, n - i - j - k});
         for (std::size_t l = 0; l < 3; ++l)
-          x(c, l) = ip[l];
+          x[c, l] = ip[l];
         ++c;
       }
     }
@@ -617,9 +617,9 @@ create_tet_warped(std::size_t n, lattice::type lattice_type, bool exterior)
         const T y = r[2 * j];
         const T z = r[2 * k];
         const T a = r[2 * l];
-        p(c, 0) = x;
-        p(c, 1) = y;
-        p(c, 2) = z;
+        p[c, 0] = x;
+        p[c, 1] = y;
+        p[c, 2] = z;
         const T dx = x
                      * (a * wbar[n + i - l] + y * wbar[n + i - j]
                         + z * wbar[n + i - k]);
@@ -629,9 +629,9 @@ create_tet_warped(std::size_t n, lattice::type lattice_type, bool exterior)
         const T dz = z
                      * (a * wbar[n + k - l] + x * wbar[n + k - i]
                         + y * wbar[n + k - j]);
-        p(c, 0) += dx;
-        p(c, 1) += dy;
-        p(c, 2) += dz;
+        p[c, 0] += dx;
+        p[c, 1] += dy;
+        p[c, 2] += dz;
 
         ++c;
       }
@@ -674,9 +674,9 @@ create_tet_centroid(std::size_t n, lattice::type lattice_type, bool exterior)
       {
         const T xk = x[k];
         const T xl = x[i + j + k + 2];
-        p(c, 0) = (3 * xk + xl - xi - xj) / 4;
-        p(c, 1) = (3 * xj + xl - xi - xk) / 4;
-        p(c, 2) = (3 * xi + xl - xj - xk) / 4;
+        p[c, 0] = (3 * xk + xl - xi - xj) / 4;
+        p[c, 1] = (3 * xj + xl - xi - xk) / 4;
+        p[c, 2] = (3 * xi + xl - xj - xk) / 4;
         ++c;
       }
     }
@@ -750,14 +750,14 @@ create_prism(std::size_t n, lattice::type lattice_type, bool exterior,
     for (std::size_t i = 0; i < line_pts.size(); ++i)
       for (std::size_t j = 0; j < tri_pts.extent(0); ++j)
         for (std::size_t k = 0; k < 2; ++k)
-          x(i * tri_pts.extent(0) + j, k) = tri_pts(j, k);
+          x[i * tri_pts.extent(0) + j, k] = tri_pts[j, k];
 
     for (std::size_t i = 0; i < line_pts.size(); ++i)
     {
       for (std::size_t j = i * tri_pts.extent(0);
            j < (i + 1) * tri_pts.extent(0); ++j)
       {
-        x(j, 2) = line_pts[i];
+        x[j, 2] = line_pts[i];
       }
     }
 
@@ -787,9 +787,9 @@ create_pyramid_equispaced(int n, bool exterior)
     {
       for (int i = 0; i < n + 1 - k; ++i)
       {
-        x(c, 0) = h * (i + b);
-        x(c, 1) = h * (j + b);
-        x(c, 2) = h * (k + b);
+        x[c, 0] = h * (i + b);
+        x[c, 1] = h * (j + b);
+        x[c, 2] = h * (k + b);
         c++;
       }
     }

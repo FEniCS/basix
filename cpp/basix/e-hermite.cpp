@@ -50,9 +50,9 @@ FiniteElement<T> basix::element::create_hermite(cell::type celltype, int degree,
         = cell::sub_entity_geometry<T>(celltype, 0, e);
     x[0].emplace_back(entity_shape, entity_x);
     auto& _M = M[0].emplace_back(1 + tdim, 1, 1, deriv_count);
-    _M(0, 0, 0, 0) = 1;
+    _M[0, 0, 0, 0] = 1;
     for (std::size_t d = 0; d < tdim; ++d)
-      _M(d + 1, 0, 0, d + 1) = 1;
+      _M[d + 1, 0, 0, d + 1] = 1;
   }
 
   for (std::size_t e = 0; e < topology[1].size(); ++e)
@@ -69,9 +69,9 @@ FiniteElement<T> basix::element::create_hermite(cell::type celltype, int degree,
       std::vector<T> midpoint(tdim, 0);
       for (auto p : topology[2][e])
         for (std::size_t i = 0; i < geometry.extent(1); ++i)
-          _x(0, i) += geometry(p, i) / topology[2][e].size();
+          _x[0, i] += geometry[p, i] / topology[2][e].size();
       auto& _M = M[2].emplace_back(1, 1, 1, deriv_count);
-      _M(0, 0, 0, 0) = 1;
+      _M[0, 0, 0, 0] = 1;
     }
   }
 

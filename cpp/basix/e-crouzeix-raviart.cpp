@@ -66,7 +66,7 @@ FiniteElement<T> basix::element::create_cr(cell::type celltype, int degree,
     for (std::size_t i = 0; i < ft.size(); ++i)
     {
       for (std::size_t j = 0; j < geometry.extent(1); ++j)
-        _x(0, j) += geometry(ft[i], j) / ft.size();
+        _x[0, j] += geometry[ft[i], j] / ft.size();
     }
   }
 

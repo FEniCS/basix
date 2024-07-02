@@ -53,7 +53,7 @@ int main(int argc, char* argv[])
   mdspan_t<const T, 4> tab(tab_data.data(), shape);
   std::cout << "Tabulate data (0, 0, :, 0): [ ";
   for (std::size_t i = 0; i < tab.extent(2); ++i)
-    std::cout << tab(0, 0, i, 0) << " ";
+    std::cout << tab[0, 0, i, 0] << " ";
   std::cout << "]" << std::endl;
 
   return 0;

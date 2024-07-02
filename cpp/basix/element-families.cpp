@@ -77,4 +77,4 @@ element::lagrange_variant element::to_type(const std::string& variant)
     throw std::runtime_error("Unknown lagrange variant (" + variant + ")");
 }
 
-} // namespace basix::element
+} // namespace basix

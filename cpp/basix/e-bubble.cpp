@@ -92,7 +92,7 @@ FiniteElement<T> basix::element::create_bubble(cell::type celltype, int degree,
     impl::mdspan_t<T, 2> phi1(buffer.data(), phi.extent(1), phi.extent(2));
     for (std::size_t i = 0; i < phi1.extent(0); ++i)
       for (std::size_t j = 0; j < phi1.extent(1); ++j)
-        phi1(i, j) = phi(0, i, j);
+        phi1[i, j] = phi[0, i, j];
     return phi1;
   };
 
@@ -110,7 +110,7 @@ FiniteElement<T> basix::element::create_bubble(cell::type celltype, int degree,
     phi1 = create_phi1(p1, phi1_buffer);
     for (std::size_t i = 0; i < pts.extent(0); ++i)
     {
-      T x0 = pts(i, 0);
+      T x0 = pts[i, 0];
       bubble.push_back(x0 * (1.0 - x0));
     }
     break;
@@ -123,8 +123,8 @@ FiniteElement<T> basix::element::create_bubble(cell::type celltype, int degree,
     phi1 = create_phi1(p1, phi1_buffer);
     for (std::size_t i = 0; i < pts.extent(0); ++i)
     {
-      T x0 = pts(i, 0);
-      T x1 = pts(i, 1);
+      T x0 = pts[i, 0];
+      T x1 = pts[i, 1];
       bubble.push_back(x0 * x1 * (1.0 - x0 - x1));
     }
     break;
@@ -137,9 +137,9 @@ FiniteElement<T> basix::element::create_bubble(cell::type celltype, int degree,
     phi1 = create_phi1(p1, phi1_buffer);
     for (std::size_t i = 0; i < pts.extent(0); ++i)
     {
-      T x0 = pts(i, 0);
-      T x1 = pts(i, 1);
-      T x2 = pts(i, 2);
+      T x0 = pts[i, 0];
+      T x1 = pts[i, 1];
+      T x2 = pts[i, 2];
       bubble.push_back(x0 * x1 * x2 * (1 - x0 - x1 - x2));
     }
     break;
@@ -152,8 +152,8 @@ FiniteElement<T> basix::element::create_bubble(cell::type celltype, int degree,
     phi1 = create_phi1(p1, phi1_buffer);
     for (std::size_t i = 0; i < pts.extent(0); ++i)
     {
-      T x0 = pts(i, 0);
-      T x1 = pts(i, 1);
+      T x0 = pts[i, 0];
+      T x1 = pts[i, 1];
       bubble.push_back(x0 * (1 - x0) * x1 * (1 - x1));
     }
     break;
@@ -166,9 +166,9 @@ FiniteElement<T> basix::element::create_bubble(cell::type celltype, int degree,
     phi1 = create_phi1(p1, phi1_buffer);
     for (std::size_t i = 0; i < pts.extent(0); ++i)
     {
-      T x0 = pts(i, 0);
-      T x1 = pts(i, 1);
-      T x2 = pts(i, 2);
+      T x0 = pts[i, 0];
+      T x1 = pts[i, 1];
+      T x2 = pts[i, 2];
       bubble.push_back(x0 * (1 - x0) * x1 * (1 - x1) * x2 * (1 - x2));
     }
     break;
@@ -181,13 +181,13 @@ FiniteElement<T> basix::element::create_bubble(cell::type celltype, int degree,
   for (std::size_t i = 0; i < phi1.extent(0); ++i)
     for (std::size_t j = 0; j < psize; ++j)
       for (std::size_t k = 0; k < wts.size(); ++k)
-        wcoeffs(i, j) += wts[k] * phi1(i, k) * bubble[k] * phi(0, j, k);
+        wcoeffs[i, j] += wts[k] * phi1[i, k] * bubble[k] * phi[0, j, k];
 
   math::orthogonalise<T>(wcoeffs);
 
   auto& _M = M[tdim].emplace_back(ndofs, 1, ndofs, 1);
   for (std::size_t i = 0; i < _M.extent(0); ++i)
-    _M(i, 0, i, 0) = 1.0;
+    _M[i, 0, i, 0] = 1.0;
 
   impl::mdspan_t<T, 2> wview(wcoeffs.data(), wcoeffs.extents());
   sobolev::space space

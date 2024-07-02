@@ -137,6 +137,10 @@
 #  define __has_include(x) 0
 #endif
 
+#if __has_include(<mdspan>)
+#include <mdspan>
+#else
+
 #if __has_include(<version>)
 #  include <version>
 #else
@@ -5781,3 +5785,4 @@ private:
 //END_FILE_INCLUDE: /home/runner/work/mdspan/mdspan/include/experimental/mdarray
 #endif // _MDSPAN_SINGLE_HEADER_INCLUDE_GUARD_
 
+#endif // has include <mdspan>

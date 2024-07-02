@@ -43,7 +43,7 @@ impl::mdarray_t<T, 2> make_serendipity_space_2d(int degree)
   int row_n = 0;
   for (int i = 0; i <= degree; ++i)
     for (int j = 0; j <= degree - i + (i == 1 || i == degree ? 1 : 0); ++j)
-      wcoeffs(row_n++, i * (degree + 1) + j) = 1;
+      wcoeffs[row_n++, i * (degree + 1) + j] = 1;
 
   assert(std::size_t(row_n) == ndofs);
 
@@ -88,7 +88,7 @@ impl::mdarray_t<T, 2> make_serendipity_space_3d(int degree)
                                       ? 1
                                       : 0);
            ++k)
-        wcoeffs(row_n++, i * (degree + 1) * (degree + 1) + j * (degree + 1) + k)
+        wcoeffs[row_n++, i * (degree + 1) * (degree + 1) + j * (degree + 1) + k]
             = 1;
 
   assert((std::size_t)row_n == ndofs);
@@ -121,7 +121,7 @@ impl::mdarray_t<T, 2> make_serendipity_div_space_2d(int degree)
   for (int i = 0; i <= degree; ++i)
     for (int j = 0; j <= degree - i; ++j)
       for (int d = 0; d < 2; ++d)
-        wcoeffs(row_n++, d * psize + i * (degree + 2) + j) = 1;
+        wcoeffs[row_n++, d * psize + i * (degree + 2) + j] = 1;
 
   std::vector<std::size_t> nonzero;
   for (int i = 0; i <= degree + 1; ++i)
@@ -136,34 +136,34 @@ impl::mdarray_t<T, 2> make_serendipity_div_space_2d(int degree)
       for (std::size_t a = 0; a < 2; ++a)
       {
         for (std::size_t i = 0; i < integrand.size(); ++i)
-          integrand[i] = wts[i] * Pq(0, nonzero[k], i);
+          integrand[i] = wts[i] * Pq[0, nonzero[k], i];
 
         if (a == 0 and d == 0)
         {
           for (std::size_t i = 0; i < integrand.size(); ++i)
-            integrand[i] *= pts(i, 0);
+            integrand[i] *= pts[i, 0];
         }
         else if (a == 0 and d == 1)
         {
           for (std::size_t i = 0; i < integrand.size(); ++i)
-            integrand[i] *= (degree + 1) * pts(i, 1);
+            integrand[i] *= (degree + 1) * pts[i, 1];
         }
         else if (a == 1 and d == 0)
         {
           for (std::size_t i = 0; i < integrand.size(); ++i)
-            integrand[i] *= (degree + 1) * pts(i, 0);
+            integrand[i] *= (degree + 1) * pts[i, 0];
         }
         else if (a == 1 and d == 1)
         {
           for (std::size_t i = 0; i < integrand.size(); ++i)
-            integrand[i] *= pts(i, 1);
+            integrand[i] *= pts[i, 1];
         }
 
         for (int i = 0; i < degree; ++i)
           for (std::size_t j = 0; j < integrand.size(); ++j)
-            integrand[j] *= pts(j, a);
+            integrand[j] *= pts[j, a];
 
-        wcoeffs(2 * nv + a, psize * d + nonzero[k])
+        wcoeffs[2 * nv + a, psize * d + nonzero[k]]
             = std::reduce(integrand.begin(), integrand.end(), 0.0);
       }
     }
@@ -207,8 +207,8 @@ impl::mdarray_t<T, 2> make_serendipity_div_space_3d(int degree)
       {
         for (int d = 0; d < 3; ++d)
         {
-          wcoeffs(row_n++, d * psize + i * (degree + 2) * (degree + 2)
-                               + j * (degree + 2) + k)
+          wcoeffs[row_n++, d * psize + i * (degree + 2) * (degree + 2)
+                               + j * (degree + 2) + k]
               = 1;
         }
       }
@@ -239,35 +239,35 @@ impl::mdarray_t<T, 2> make_serendipity_div_space_3d(int degree)
         for (int index = 0; index <= degree; ++index)
         {
           for (std::size_t i = 0; i < integrand.size(); ++i)
-            integrand[i] = wts[i] * Pq(0, nonzero[k], i);
+            integrand[i] = wts[i] * Pq[0, nonzero[k], i];
 
           if (a == 0)
           {
             if (d == 0)
             {
               for (std::size_t i = 0; i < integrand.size(); ++i)
-                integrand[i] *= -(degree + 2) * pts(i, 0);
+                integrand[i] *= -(degree + 2) * pts[i, 0];
             }
             else if (d == 1)
             {
               for (std::size_t i = 0; i < integrand.size(); ++i)
-                integrand[i] *= pts(i, 1);
+                integrand[i] *= pts[i, 1];
             }
             else if (d == 2)
             {
               for (std::size_t i = 0; i < integrand.size(); ++i)
-                integrand[i] *= pts(i, 2);
+                integrand[i] *= pts[i, 2];
             }
 
             for (int i = 0; i < index; ++i)
             {
               for (std::size_t i = 0; i < integrand.size(); ++i)
-                integrand[i] *= pts(i, 1);
+                integrand[i] *= pts[i, 1];
             }
             for (int i = 0; i < degree - index; ++i)
             {
               for (std::size_t i = 0; i < integrand.size(); ++i)
-                integrand[i] *= pts(i, 2);
+                integrand[i] *= pts[i, 2];
             }
           }
           else if (a == 1)
@@ -275,28 +275,28 @@ impl::mdarray_t<T, 2> make_serendipity_div_space_3d(int degree)
             if (d == 0)
             {
               for (std::size_t i = 0; i < integrand.size(); ++i)
-                integrand[i] *= -pts(i, 0);
+                integrand[i] *= -pts[i, 0];
             }
             else if (d == 1)
             {
               for (std::size_t i = 0; i < integrand.size(); ++i)
-                integrand[i] *= (degree + 2) * pts(i, 1);
+                integrand[i] *= (degree + 2) * pts[i, 1];
             }
             else if (d == 2)
             {
               for (std::size_t i = 0; i < integrand.size(); ++i)
-                integrand[i] *= -pts(i, 2);
+                integrand[i] *= -pts[i, 2];
             }
 
             for (int i = 0; i < index; ++i)
             {
               for (std::size_t i = 0; i < integrand.size(); ++i)
-                integrand[i] *= pts(i, 0);
+                integrand[i] *= pts[i, 0];
             }
             for (int i = 0; i < degree - index; ++i)
             {
               for (std::size_t i = 0; i < integrand.size(); ++i)
-                integrand[i] *= pts(i, 2);
+                integrand[i] *= pts[i, 2];
             }
           }
           else if (a == 2)
@@ -304,32 +304,32 @@ impl::mdarray_t<T, 2> make_serendipity_div_space_3d(int degree)
             if (d == 0)
             {
               for (std::size_t i = 0; i < integrand.size(); ++i)
-                integrand[i] *= pts(i, 0);
+                integrand[i] *= pts[i, 0];
             }
             else if (d == 1)
             {
               for (std::size_t i = 0; i < integrand.size(); ++i)
-                integrand[i] *= pts(i, 1);
+                integrand[i] *= pts[i, 1];
             }
             else if (d == 2)
             {
               for (std::size_t i = 0; i < integrand.size(); ++i)
-                integrand[i] *= -(degree + 2) * pts(i, 2);
+                integrand[i] *= -(degree + 2) * pts[i, 2];
             }
 
             for (int i = 0; i < index; ++i)
             {
               for (std::size_t i = 0; i < integrand.size(); ++i)
-                integrand[i] *= pts(i, 0);
+                integrand[i] *= pts[i, 0];
             }
             for (int i = 0; i < degree - index; ++i)
             {
               for (std::size_t i = 0; i < integrand.size(); ++i)
-                integrand[i] *= pts(i, 1);
+                integrand[i] *= pts[i, 1];
             }
           }
 
-          wcoeffs(3 * nv + 3 * index + a, psize * d + nonzero[k])
+          wcoeffs[3 * nv + 3 * index + a, psize * d + nonzero[k]]
               = std::reduce(integrand.begin(), integrand.end(), 0.0);
         }
       }
@@ -368,7 +368,7 @@ impl::mdarray_t<T, 2> make_serendipity_curl_space_2d(int degree)
   for (int i = 0; i <= degree; ++i)
     for (int j = 0; j <= degree - i; ++j)
       for (int d = 0; d < 2; ++d)
-        wcoeffs(row_n++, d * psize + i * (degree + 2) + j) = 1;
+        wcoeffs[row_n++, d * psize + i * (degree + 2) + j] = 1;
 
   std::vector<std::size_t> nonzero;
   for (int i = 0; i <= degree + 1; ++i)
@@ -383,36 +383,36 @@ impl::mdarray_t<T, 2> make_serendipity_curl_space_2d(int degree)
       for (std::size_t a = 0; a < 2; ++a)
       {
         for (std::size_t i = 0; i < integrand.size(); ++i)
-          integrand[i] = wts[i] * Pq(0, nonzero[k], i);
+          integrand[i] = wts[i] * Pq[0, nonzero[k], i];
 
         if (a == 0 and d == 0)
         {
           for (std::size_t i = 0; i < integrand.size(); ++i)
-            integrand[i] *= (degree + 1) * pts(i, 1);
+            integrand[i] *= (degree + 1) * pts[i, 1];
         }
         else if (a == 0 and d == 1)
         {
           for (std::size_t i = 0; i < integrand.size(); ++i)
-            integrand[i] *= -pts(i, 0);
+            integrand[i] *= -pts[i, 0];
         }
         else if (a == 1 and d == 0)
         {
           for (std::size_t i = 0; i < integrand.size(); ++i)
-            integrand[i] *= pts(i, 1);
+            integrand[i] *= pts[i, 1];
         }
         else if (a == 1 and d == 1)
         {
           for (std::size_t i = 0; i < integrand.size(); ++i)
-            integrand[i] *= -(degree + 1) * pts(i, 0);
+            integrand[i] *= -(degree + 1) * pts[i, 0];
         }
 
         for (int i = 0; i < degree; ++i)
         {
           for (std::size_t i = 0; i < integrand.size(); ++i)
-            integrand[i] *= pts(i, a);
+            integrand[i] *= pts[i, a];
         }
 
-        wcoeffs(2 * nv + a, psize * d + nonzero[k])
+        wcoeffs[2 * nv + a, psize * d + nonzero[k]]
             = std::reduce(integrand.begin(), integrand.end(), 0.0);
       }
     }
@@ -458,8 +458,8 @@ impl::mdarray_t<T, 2> make_serendipity_curl_space_3d(int degree)
       {
         for (int d = 0; d < 3; ++d)
         {
-          wcoeffs(row_n++, d * psize + i * (degree + 2) * (degree + 2)
-                               + j * (degree + 2) + k)
+          wcoeffs[row_n++, d * psize + i * (degree + 2) * (degree + 2)
+                               + j * (degree + 2) + k]
               = 1;
         }
       }
@@ -490,14 +490,14 @@ impl::mdarray_t<T, 2> make_serendipity_curl_space_3d(int degree)
         for (int index = 0; index <= degree; ++index)
         {
           for (std::size_t i = 0; i < integrand.size(); ++i)
-            integrand[i] = wts[i] * Pq(0, nonzero[k], i);
+            integrand[i] = wts[i] * Pq[0, nonzero[k], i];
 
           if (a == 0)
           {
             if (d == 0)
             {
               for (std::size_t i = 0; i < integrand.size(); ++i)
-                integrand[i] *= pts(i, 1) * pts(i, 2);
+                integrand[i] *= pts[i, 1] * pts[i, 2];
             }
             else if (d == 1)
             {
@@ -507,17 +507,17 @@ impl::mdarray_t<T, 2> make_serendipity_curl_space_3d(int degree)
             else if (d == 2)
             {
               for (std::size_t i = 0; i < integrand.size(); ++i)
-                integrand[i] *= -pts(i, 0) * pts(i, 1);
+                integrand[i] *= -pts[i, 0] * pts[i, 1];
             }
             for (int i = 0; i < index; ++i)
             {
               for (std::size_t i = 0; i < integrand.size(); ++i)
-                integrand[i] *= pts(i, 0);
+                integrand[i] *= pts[i, 0];
             }
             for (int i = 0; i < degree - 1 - index; ++i)
             {
               for (std::size_t i = 0; i < integrand.size(); ++i)
-                integrand[i] *= pts(i, 2);
+                integrand[i] *= pts[i, 2];
             }
           }
           else if (a == 1)
@@ -530,23 +530,23 @@ impl::mdarray_t<T, 2> make_serendipity_curl_space_3d(int degree)
             else if (d == 1)
             {
               for (std::size_t i = 0; i < integrand.size(); ++i)
-                integrand[i] *= pts(i, 0) * pts(i, 2);
+                integrand[i] *= pts[i, 0] * pts[i, 2];
             }
             else if (d == 2)
             {
               for (std::size_t i = 0; i < integrand.size(); ++i)
-                integrand[i] *= -pts(i, 0) * pts(i, 1);
+                integrand[i] *= -pts[i, 0] * pts[i, 1];
             }
 
             for (int i = 0; i < index; ++i)
             {
               for (std::size_t i = 0; i < integrand.size(); ++i)
-                integrand[i] *= pts(i, 1);
+                integrand[i] *= pts[i, 1];
             }
             for (int i = 0; i < degree - 1 - index; ++i)
             {
               for (std::size_t i = 0; i < integrand.size(); ++i)
-                integrand[i] *= pts(i, 2);
+                integrand[i] *= pts[i, 2];
             }
           }
           else if (a == 2)
@@ -554,12 +554,12 @@ impl::mdarray_t<T, 2> make_serendipity_curl_space_3d(int degree)
             if (d == 0)
             {
               for (std::size_t i = 0; i < integrand.size(); ++i)
-                integrand[i] *= pts(i, 1) * pts(i, 2);
+                integrand[i] *= pts[i, 1] * pts[i, 2];
             }
             else if (d == 1)
             {
               for (std::size_t i = 0; i < integrand.size(); ++i)
-                integrand[i] *= -pts(i, 0) * pts(i, 2);
+                integrand[i] *= -pts[i, 0] * pts[i, 2];
             }
             else if (d == 2)
             {
@@ -569,16 +569,16 @@ impl::mdarray_t<T, 2> make_serendipity_curl_space_3d(int degree)
             for (int i = 0; i < index; ++i)
             {
               for (std::size_t i = 0; i < integrand.size(); ++i)
-                integrand[i] *= pts(i, 0);
+                integrand[i] *= pts[i, 0];
             }
             for (int i = 0; i < degree - 1 - index; ++i)
             {
               for (std::size_t i = 0; i < integrand.size(); ++i)
-                integrand[i] *= pts(i, 1);
+                integrand[i] *= pts[i, 1];
             }
           }
 
-          wcoeffs(3 * nv + 3 * index + a, psize * d + nonzero[k])
+          wcoeffs[3 * nv + 3 * index + a, psize * d + nonzero[k]]
               = std::reduce(integrand.begin(), integrand.end(), 0.0);
         }
       }
@@ -604,7 +604,7 @@ impl::mdarray_t<T, 2> make_serendipity_curl_space_3d(int degree)
             for (int d = 0; d < 3; ++d)
             {
               for (std::size_t j = 0; j < integrand.size(); ++j)
-                integrand[j] = wts[j] * Pq(0, nonzero[k], j);
+                integrand[j] = wts[j] * Pq[0, nonzero[k], j];
               for (int d2 = 0; d2 < 3; ++d2)
               {
                 if (d == d2)
@@ -614,7 +614,7 @@ impl::mdarray_t<T, 2> make_serendipity_curl_space_3d(int degree)
                   for (int j = 0; j < i[d2] - 1; ++j)
                   {
                     for (std::size_t j = 0; j < integrand.size(); ++j)
-                      integrand[j] *= pts(j, d2);
+                      integrand[j] *= pts[j, d2];
                   }
                 }
                 else
@@ -622,12 +622,12 @@ impl::mdarray_t<T, 2> make_serendipity_curl_space_3d(int degree)
                   for (int j = 0; j < i[d2]; ++j)
                   {
                     for (std::size_t j = 0; j < integrand.size(); ++j)
-                      integrand[j] *= pts(j, d2);
+                      integrand[j] *= pts[j, d2];
                   }
                 }
               }
 
-              wcoeffs(c, psize * d + nonzero[k])
+              wcoeffs[c, psize * d + nonzero[k]]
                   = std::reduce(integrand.begin(), integrand.end(), 0.0);
             }
           }
@@ -705,8 +705,8 @@ FiniteElement<T> create_legendre_dpc(cell::type celltype, int degree,
       for (int j = 0; j <= degree - i; ++j)
       {
         for (std::size_t k = 0; k < wts.size(); ++k)
-          _M(row_n, 0, k, 0) = phi(i * (degree + 1) + j, k) * wts[k];
-        wcoeffs(row_n, i * (degree + 1) + j) = 1;
+          _M[row_n, 0, k, 0] = phi[i * (degree + 1) + j, k] * wts[k];
+        wcoeffs[row_n, i * (degree + 1) + j] = 1;
         ++row_n;
       }
     }
@@ -722,11 +722,11 @@ FiniteElement<T> create_legendre_dpc(cell::type celltype, int degree,
         {
           for (std::size_t l = 0; l < wts.size(); ++l)
           {
-            _M(row_n, 0, l, 0)
-                = phi(i * (degree + 1) * (degree + 1) + j * (degree + 1) + k, l)
+            _M[row_n, 0, l, 0]
+                = phi[i * (degree + 1) * (degree + 1) + j * (degree + 1) + k, l]
                   * wts[l];
           }
-          wcoeffs(row_n, i * (degree + 1) * (degree + 1) + j * (degree + 1) + k)
+          wcoeffs[row_n, i * (degree + 1) * (degree + 1) + j * (degree + 1) + k]
               = 1;
           ++row_n;
         }
@@ -808,8 +808,8 @@ impl::mdarray_t<T, 2> make_dpc_points(cell::type celltype, int degree,
         auto interval_pts = to_mdspan(data, shape);
         for (int i = 0; i <= degree - j; ++i)
         {
-          pts(n, 0) = interval_pts(i, 0);
-          pts(n, 1) = j % 2 == 0 ? static_cast<T>(j / 2) / degree
+          pts[n, 0] = interval_pts[i, 0];
+          pts[n, 1] = j % 2 == 0 ? static_cast<T>(j / 2) / degree
                                  : 1 - static_cast<T>((j - 1) / 2) / degree;
           ++n;
         }
@@ -830,14 +830,14 @@ impl::mdarray_t<T, 2> make_dpc_points(cell::type celltype, int degree,
           auto interval_pts = to_mdspan(data, shape);
           for (int i = 0; i <= degree - j - k; ++i)
           {
-            pts(n, 0) = interval_pts(i, 0);
-            pts(n, 1)
+            pts[n, 0] = interval_pts[i, 0];
+            pts[n, 1]
                 = degree - k == 0
                       ? 0.5
                       : (j % 2 == 0
                              ? static_cast<T>(j / 2) / (degree - k)
                              : 1 - static_cast<T>((j - 1) / 2) / (degree - k));
-            pts(n, 2) = k % 2 == 0 ? static_cast<T>(k / 2) / degree
+            pts[n, 2] = k % 2 == 0 ? static_cast<T>(k / 2) / degree
                                    : 1 - static_cast<T>((k - 1) / 2) / degree;
             ++n;
           }
@@ -878,9 +878,9 @@ impl::mdarray_t<T, 2> make_dpc_points(cell::type celltype, int degree,
         const T coord1 = y < 1 ? 0 : 1;
         for (int i = 0; i <= j; ++i)
         {
-          const T x = interval_pts(i, 0);
-          pts(n, 0) = coord0 * (1 - x) + coord1 * x;
-          pts(n, 1) = coord1 * (1 - x) + coord0 * x;
+          const T x = interval_pts[i, 0];
+          pts[n, 0] = coord0 * (1 - x) + coord1 * x;
+          pts[n, 1] = coord1 * (1 - x) + coord0 * x;
           ++n;
         }
       }
@@ -904,11 +904,11 @@ impl::mdarray_t<T, 2> make_dpc_points(cell::type celltype, int degree,
         {
           for (std::size_t p = 0; p < triangle_pts.extent(0); ++p)
           {
-            const T coord0 = triangle_pts(p, 0);
-            const T coord1 = triangle_pts(p, 1);
-            pts(n, 0) = coord0 * z;
-            pts(n, 1) = coord1 * z;
-            pts(n, 2) = (1 - coord0 - coord1) * z;
+            const T coord0 = triangle_pts[p, 0];
+            const T coord1 = triangle_pts[p, 1];
+            pts[n, 0] = coord0 * z;
+            pts[n, 1] = coord1 * z;
+            pts[n, 2] = (1 - coord0 - coord1) * z;
             ++n;
           }
         }
@@ -916,11 +916,11 @@ impl::mdarray_t<T, 2> make_dpc_points(cell::type celltype, int degree,
         {
           for (std::size_t p = 0; p < triangle_pts.extent(0); ++p)
           {
-            const T coord0 = triangle_pts(p, 0);
-            const T coord1 = triangle_pts(p, 1);
-            pts(n, 0) = 1 - (3 - z) * coord0;
-            pts(n, 1) = 1 - (3 - z) * coord1;
-            pts(n, 2) = 1 - (3 - z) * (1 - coord0 - coord1);
+            const T coord0 = triangle_pts[p, 0];
+            const T coord1 = triangle_pts[p, 1];
+            pts[n, 0] = 1 - (3 - z) * coord0;
+            pts[n, 1] = 1 - (3 - z) * coord1;
+            pts[n, 2] = 1 - (3 - z) * (1 - coord0 - coord1);
             ++n;
           }
         }
@@ -928,11 +928,11 @@ impl::mdarray_t<T, 2> make_dpc_points(cell::type celltype, int degree,
         {
           for (std::size_t p = 0; p < triangle_pts.extent(0); ++p)
           {
-            const T coord0 = triangle_pts(p, 0);
-            const T coord1 = triangle_pts(p, 1);
-            pts(n, 0) = 1 - (2 - z) * coord0 - coord1;
-            pts(n, 1) = coord0 + (z - 1) * coord1;
-            pts(n, 2) = z - 1 - (z - 1) * coord0 + (2 - z) * coord1;
+            const T coord0 = triangle_pts[p, 0];
+            const T coord1 = triangle_pts[p, 1];
+            pts[n, 0] = 1 - (2 - z) * coord0 - coord1;
+            pts[n, 1] = coord0 + (z - 1) * coord1;
+            pts[n, 2] = z - 1 - (z - 1) * coord0 + (2 - z) * coord1;
             ++n;
           }
         }
@@ -996,10 +996,10 @@ FiniteElement<T> element::create_serendipity(cell::type celltype, int degree,
   {
     auto& _x = x[0].emplace_back(1, geometry.extent(1));
     for (std::size_t j = 0; j < geometry.extent(1); ++j)
-      _x(0, j) = geometry(i, j);
+      _x[0, j] = geometry[i, j];
 
     auto& _M = M[0].emplace_back(1, 1, 1, 1);
-    _M(0, 0, 0, 0) = 1.0;
+    _M[0, 0, 0, 0] = 1.0;
   }
 
   if (degree >= 2)
@@ -1164,7 +1164,7 @@ FiniteElement<T> element::create_dpc(cell::type celltype, int degree,
     int row_n = 0;
     for (int i = 0; i <= degree; ++i)
       for (int j = 0; j <= degree - i; ++j)
-        wcoeffs(row_n++, i * (degree + 1) + j) = 1;
+        wcoeffs[row_n++, i * (degree + 1) + j] = 1;
   }
   else
   {
@@ -1175,8 +1175,8 @@ FiniteElement<T> element::create_dpc(cell::type celltype, int degree,
       {
         for (int k = 0; k <= degree - i - j; ++k)
         {
-          wcoeffs(row_n++,
-                  i * (degree + 1) * (degree + 1) + j * (degree + 1) + k)
+          wcoeffs[row_n++,
+                  i * (degree + 1) * (degree + 1) + j * (degree + 1) + k]
               = 1;
         }
       }
@@ -1197,7 +1197,7 @@ FiniteElement<T> element::create_dpc(cell::type celltype, int degree,
   auto& _M
       = M[tdim].emplace_back(std::array<std::size_t, 4>{ndofs, 1, ndofs, 1}, 0);
   for (std::size_t i = 0; i < _M.extent(0); ++i)
-    _M(i, 0, i, 0) = 1.0;
+    _M[i, 0, i, 0] = 1.0;
 
   impl::mdarray_t<T, 2> pt = make_dpc_points<T>(celltype, degree, variant);
   x[tdim].push_back(pt);

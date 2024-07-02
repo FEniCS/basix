@@ -198,10 +198,10 @@ solve(MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<
       _A(A.extents()), _B(B.extents());
   for (std::size_t i = 0; i < A.extent(0); ++i)
     for (std::size_t j = 0; j < A.extent(1); ++j)
-      _A(i, j) = A(i, j);
+      _A[i, j] = A[i, j];
   for (std::size_t i = 0; i < B.extent(0); ++i)
     for (std::size_t j = 0; j < B.extent(1); ++j)
-      _B(i, j) = B(i, j);
+      _B[i, j] = B[i, j];
 
   int N = _A.extent(0);
   int nrhs = _B.extent(1);
@@ -224,7 +224,7 @@ solve(MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<
       r(rb.data(), _B.extents());
   for (std::size_t i = 0; i < _B.extent(0); ++i)
     for (std::size_t j = 0; j < _B.extent(1); ++j)
-      r(i, j) = _B(i, j);
+      r[i, j] = _B[i, j];
 
   return rb;
 }
@@ -246,7 +246,7 @@ bool is_singular(
       _A(A.extents());
   for (std::size_t i = 0; i < A.extent(0); ++i)
     for (std::size_t j = 0; j < A.extent(1); ++j)
-      _A(i, j) = A(i, j);
+      _A[i, j] = A[i, j];
 
   std::vector<T> B(A.extent(1), 1);
   int N = _A.extent(0);
@@ -324,7 +324,7 @@ void dot(const U& A, const V& B, W&& C)
     for (std::size_t i = 0; i < A.extent(0); ++i)
       for (std::size_t j = 0; j < B.extent(1); ++j)
         for (std::size_t k = 0; k < A.extent(1); ++k)
-          C(i, j) += A(i, k) * B(k, j);
+          C[i, j] += A[i, k] * B[k, j];
   }
   else
   {
@@ -349,7 +349,7 @@ std::vector<T> eye(std::size_t n)
       T, MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 2>>
       Iview(I.data(), n, n);
   for (std::size_t i = 0; i < n; ++i)
-    Iview(i, i) = 1;
+    Iview[i, i] = 1;
   return I;
 }
 
@@ -368,7 +368,7 @@ void orthogonalise(
   {
     T norm = 0;
     for (std::size_t k = 0; k < wcoeffs.extent(1); ++k)
-      norm += wcoeffs(i, k) * wcoeffs(i, k);
+      norm += wcoeffs[i, k] * wcoeffs[i, k];
 
     norm = std::sqrt(norm);
     if (norm < 2 * std::numeric_limits<T>::epsilon())
@@ -378,15 +378,15 @@ void orthogonalise(
     }
 
     for (std::size_t k = 0; k < wcoeffs.extent(1); ++k)
-      wcoeffs(i, k) /= norm;
+      wcoeffs[i, k] /= norm;
 
     for (std::size_t j = i + 1; j < wcoeffs.extent(0); ++j)
     {
       T a = 0;
       for (std::size_t k = 0; k < wcoeffs.extent(1); ++k)
-        a += wcoeffs(i, k) * wcoeffs(j, k);
+        a += wcoeffs[i, k] * wcoeffs[j, k];
       for (std::size_t k = 0; k < wcoeffs.extent(1); ++k)
-        wcoeffs(j, k) -= a * wcoeffs(i, k);
+        wcoeffs[j, k] -= a * wcoeffs[i, k];
     }
   }
 }

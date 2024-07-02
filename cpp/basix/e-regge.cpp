@@ -44,7 +44,7 @@ FiniteElement<T> element::create_regge(cell::type celltype, int degree,
 
       std::size_t s = basis_size;
       for (std::size_t k = 0; k < s; ++k)
-        wcoeffs(yoff * s + k, xoff * s + k) = i == j ? 1.0 : std::sqrt(0.5);
+        wcoeffs[yoff * s + k, xoff * s + k] = i == j ? 1.0 : std::sqrt(0.5);
     }
   }
 
@@ -106,11 +106,11 @@ FiniteElement<T> element::create_regge(cell::type celltype, int degree,
         for (std::size_t p = 0; p < pts.extent(0); ++p)
         {
           for (std::size_t j = 0; j < entity_x.extent(1); ++j)
-            _x(p, j) = entity_x(0, j);
+            _x[p, j] = entity_x[0, j];
 
           for (std::size_t i = 0; i < entity_x.extent(0) - 1; ++i)
             for (std::size_t j = 0; j < entity_x.extent(1); ++j)
-              _x(p, j) += (entity_x(i + 1, j) - entity_x(0, j)) * pts(p, i);
+              _x[p, j] += (entity_x[i + 1, j] - entity_x[0, j]) * pts[p, i];
         }
 
         // Store up outer(t, t) for all tangents
@@ -127,14 +127,14 @@ FiniteElement<T> element::create_regge(cell::type celltype, int degree,
           for (std::size_t r = s + 1; r < d + 1; ++r)
           {
             for (std::size_t p = 0; p < geometry.extent(1); ++p)
-              edge[p] = geometry(vert_ids[r], p) - geometry(vert_ids[s], p);
+              edge[p] = geometry[vert_ids[r], p] - geometry[vert_ids[s], p];
 
             // outer product v.v^T
             auto [buffer, shape] = math::outer(edge, edge);
             impl::mdspan_t<const T, 2> result(buffer.data(), shape);
             for (std::size_t i = 0; i < vvt.extent(1); ++i)
               for (std::size_t j = 0; j < vvt.extent(2); ++j)
-                vvt(c, i, j) = result(i, j);
+                vvt[c, i, j] = result[i, j];
 
             ++c;
           }
@@ -149,13 +149,13 @@ FiniteElement<T> element::create_regge(cell::type celltype, int degree,
             std::vector<T> vvt_flat;
             for (std::size_t i = 0; i < vvt.extent(1); ++i)
               for (std::size_t k = 0; k < vvt.extent(2); ++k)
-                vvt_flat.push_back(vvt(j, i, k));
+                vvt_flat.push_back(vvt[j, i, k]);
             for (std::size_t q = 0; q < pts.extent(0); ++q)
             {
               for (std::size_t i = 0; i < tdim * tdim; ++i)
               {
-                _M(n * ntangents + j, i, q, 0)
-                    = vvt_flat[i] * wts[q] * moment_values(0, q, n, 0);
+                _M[n * ntangents + j, i, q, 0]
+                    = vvt_flat[i] * wts[q] * moment_values[0, q, n, 0];
               }
             }
           }

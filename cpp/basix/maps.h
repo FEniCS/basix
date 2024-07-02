@@ -69,8 +69,8 @@ void covariant_piola(O&& r, const P& U, const Q& /*J*/, double /*detJ*/,
     {
       T acc = 0;
       for (std::size_t k = 0; k < K.extent(0); ++k)
-        acc += static_cast<Z>(K(k, i)) * U(p, k);
-      r(p, i) = acc;
+        acc += static_cast<Z>(K[k, i]) * U[p, k];
+      r[p, i] = acc;
     }
   }
 }
@@ -88,8 +88,8 @@ void contravariant_piola(O&& r, const P& U, const Q& J, double detJ,
     {
       T acc = 0;
       for (std::size_t k = 0; k < J.extent(1); ++k)
-        acc += static_cast<Z>(J(i, k)) * U(p, k);
-      r(p, i) = acc;
+        acc += static_cast<Z>(J[i, k]) * U[p, k];
+      r[p, i] = acc;
     }
   }
 
@@ -122,8 +122,8 @@ void double_covariant_piola(O&& r, const P& U, const Q& J, double /*detJ*/,
         T acc = 0;
         for (std::size_t k = 0; k < K.extent(0); ++k)
           for (std::size_t l = 0; l < _U.extent(1); ++l)
-            acc += static_cast<Z>(K(k, i)) * _U(k, l) * static_cast<Z>(K(l, j));
-        _r(i, j) = acc;
+            acc += static_cast<Z>(K[k, i]) * _U[k, l] * static_cast<Z>(K[l, j]);
+        _r[i, j] = acc;
       }
     }
   }
@@ -155,8 +155,8 @@ void double_contravariant_piola(O&& r, const P& U, const Q& J, double detJ,
         T acc = 0;
         for (std::size_t k = 0; k < J.extent(1); ++k)
           for (std::size_t l = 0; l < _U.extent(1); ++l)
-            acc += static_cast<Z>(J(i, k)) * _U(k, l) * static_cast<Z>(J(j, l));
-        _r(i, j) = acc;
+            acc += static_cast<Z>(J[i, k]) * _U[k, l] * static_cast<Z>(J[j, l]);
+        _r[i, j] = acc;
       }
     }
   }

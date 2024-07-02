@@ -76,14 +76,14 @@ map_points(const cell::type celltype0, const cell::type celltype1,
     // Axes on the cell entity
     for (std::size_t i = 0; i < axes.extent(1); ++i)
       for (std::size_t j = 0; j < axes.extent(2); ++j)
-        axes(e, i, j) = entity_x(axis_pts[i], j) - entity_x(0, j);
+        axes[e, i, j] = entity_x[axis_pts[i], j] - entity_x[0, j];
 
     // Compute x = x0 + \Delta x
     std::vector<T> axes_b(axes.extent(1) * axes.extent(2));
     mdspan_t<T, 2> axes_e(axes_b.data(), axes.extent(1), axes.extent(2));
     for (std::size_t i = 0; i < axes_e.extent(0); ++i)
       for (std::size_t j = 0; j < axes_e.extent(1); ++j)
-        axes_e(i, j) = axes(e, i, j);
+        axes_e[i, j] = axes[e, i, j];
 
     std::vector<T> dxbuffer(x.extent(0) * axes_e.extent(1));
     mdspan_t<T, 2> dx(dxbuffer.data(), x.extent(0), axes_e.extent(1));
@@ -91,7 +91,7 @@ map_points(const cell::type celltype0, const cell::type celltype1,
 
     for (std::size_t i = 0; i < p[e].extent(0); ++i)
       for (std::size_t j = 0; j < p[e].extent(1); ++j)
-        p[e](i, j) = entity_x(0, j) + dx(i, j);
+        p[e][i, j] = entity_x[0, j] + dx[i, j];
   }
 
   return {p, axes};
@@ -154,7 +154,7 @@ moments::make_integral_moments(const FiniteElement<T>& V, cell::type celltype,
       mdspan_t<T, 4>& _D = D.emplace_back(Db[e].data(), Dshape);
       for (std::size_t i = 0; i < phi.extent(2); ++i)
         for (std::size_t j = 0; j < wts.size(); ++j)
-          _D(i, 0, j, 0) = phi(0, j, i, 0) * wts[j];
+          _D[i, 0, j, 0] = phi[0, j, i, 0] * wts[j];
     }
   }
   else
@@ -177,7 +177,7 @@ moments::make_integral_moments(const FiniteElement<T>& V, cell::type celltype,
           const std::size_t dof = i * entity_dim + d;
           for (std::size_t j = 0; j < value_size; ++j)
             for (std::size_t k = 0; k < wts.size(); ++k)
-              _D(dof, j, k, 0) = phi(0, k, i, 0) * wts[k] * axes(e, d, j);
+              _D[dof, j, k, 0] = phi[0, k, i, 0] * wts[k] * axes[e, d, j];
         }
       }
     }
@@ -254,7 +254,7 @@ moments::make_dot_integral_moments(const FiniteElement<T>& V,
         {
           // Add quadrature point on cell entity contributions
           for (std::size_t k = 0; k < wts.size(); ++k)
-            _D(dof, j, k, 0) += wts[k] * phi(0, k, dof, d) * axes(e, d, j);
+            _D[dof, j, k, 0] += wts[k] * phi[0, k, dof, d] * axes[e, d, j];
         }
       }
     }
@@ -319,7 +319,7 @@ moments::make_tangent_integral_moments(const FiniteElement<T>& V,
 
     std::vector<T> tangent(edge_x.extent(1));
     for (std::size_t i = 0; i < edge_x.extent(1); ++i)
-      tangent[i] = edge_x(1, i) - edge_x(0, i);
+      tangent[i] = edge_x[1, i] - edge_x[0, i];
 
     // No need to normalise the tangent, as the size of this is equal to
     // the integral Jacobian
@@ -329,7 +329,7 @@ moments::make_tangent_integral_moments(const FiniteElement<T>& V,
     mdspan_t<T, 2> _p(_pb.data(), pshape);
     for (std::size_t i = 0; i < pts.extent(0); ++i)
       for (std::size_t j = 0; j < _p.extent(1); ++j)
-        _p(i, j) = edge_x(0, j) + pts(i, 0) * tangent[j];
+        _p[i, j] = edge_x[0, j] + pts[i, 0] * tangent[j];
 
     // Compute edge tangent integral moments
     mdspan_t<T, 4>& _D = D.emplace_back(Db[e].data(), Dshape);
@@ -337,7 +337,7 @@ moments::make_tangent_integral_moments(const FiniteElement<T>& V,
     {
       for (std::size_t j = 0; j < value_size; ++j)
         for (std::size_t k = 0; k < wts.size(); ++k)
-          _D(i, j, k, 0) = phi(0, k, i, 0) * wts[k] * tangent[j];
+          _D[i, j, k, 0] = phi[0, k, i, 0] * wts[k] * tangent[j];
     }
   }
 
@@ -405,10 +405,10 @@ moments::make_normal_integral_moments(const FiniteElement<T>& V,
       // No need to normalise the normal, as the size of this is equal
       // to the integral jacobian
       std::array<T, 2> tangent
-          = {facet_x(1, 0) - facet_x(0, 0), facet_x(1, 1) - facet_x(0, 1)};
+          = {facet_x[1, 0] - facet_x[0, 0], facet_x[1, 1] - facet_x[0, 1]};
       for (std::size_t p = 0; p < _p.extent(0); ++p)
         for (std::size_t i = 0; i < _p.extent(1); ++i)
-          _p(p, i) = facet_x(0, i) + pts(p, 0) * tangent[i];
+          _p[p, i] = facet_x[0, i] + pts[p, 0] * tangent[i];
 
       normal = {-tangent[1], tangent[0], 0.0};
     }
@@ -417,14 +417,14 @@ moments::make_normal_integral_moments(const FiniteElement<T>& V,
       // No need to normalise the normal, as the size of this is equal
       // to the integral Jacobian
       std::array<T, 3> t0
-          = {facet_x(1, 0) - facet_x(0, 0), facet_x(1, 1) - facet_x(0, 1),
-             facet_x(1, 2) - facet_x(0, 2)};
+          = {facet_x[1, 0] - facet_x[0, 0], facet_x[1, 1] - facet_x[0, 1],
+             facet_x[1, 2] - facet_x[0, 2]};
       std::array<T, 3> t1
-          = {facet_x(2, 0) - facet_x(0, 0), facet_x(2, 1) - facet_x(0, 1),
-             facet_x(2, 2) - facet_x(0, 2)};
+          = {facet_x[2, 0] - facet_x[0, 0], facet_x[2, 1] - facet_x[0, 1],
+             facet_x[2, 2] - facet_x[0, 2]};
       for (std::size_t p = 0; p < _p.extent(0); ++p)
         for (std::size_t i = 0; i < _p.extent(1); ++i)
-          _p(p, i) = facet_x(0, i) + pts(p, 0) * t0[i] + pts(p, 1) * t1[i];
+          _p[p, i] = facet_x[0, i] + pts[p, 0] * t0[i] + pts[p, 1] * t1[i];
 
       normal = math::cross(t0, t1);
     }
@@ -436,7 +436,7 @@ moments::make_normal_integral_moments(const FiniteElement<T>& V,
     for (std::size_t i = 0; i < phi.extent(2); ++i)
       for (std::size_t j = 0; j < value_size; ++j)
         for (std::size_t k = 0; k < _D.extent(2); ++k)
-          _D(i, j, k, 0) = phi(0, k, i, 0) * wts[k] * normal[j];
+          _D[i, j, k, 0] = phi[0, k, i, 0] * wts[k] * normal[j];
   }
 
   return {pb, pshape, Db, Dshape};

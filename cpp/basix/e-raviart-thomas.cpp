@@ -61,7 +61,7 @@ FiniteElement<T> basix::element::create_rt(cell::type celltype, int degree,
   impl::mdarray_t<T, 2> B(nv * tdim + ns, psize * tdim);
   for (std::size_t i = 0; i < tdim; ++i)
     for (std::size_t j = 0; j < nv; ++j)
-      B(nv * i + j, psize * i + j) = 1.0;
+      B[nv * i + j, psize * i + j] = 1.0;
 
   // Create coefficients for additional polynomials in Raviart-Thomas
   // polynomial basis
@@ -71,11 +71,11 @@ FiniteElement<T> basix::element::create_rt(cell::type celltype, int degree,
     {
       for (std::size_t j = 0; j < tdim; ++j)
       {
-        B(nv * tdim + i, k + psize * j) = 0.0;
+        B[nv * tdim + i, k + psize * j] = 0.0;
         for (std::size_t k1 = 0; k1 < wts.size(); ++k1)
         {
-          B(nv * tdim + i, k + psize * j)
-              += wts[k1] * phi(0, ns0 + i, k1) * pts(k1, j) * phi(0, k, k1);
+          B[nv * tdim + i, k + psize * j]
+              += wts[k1] * phi[0, ns0 + i, k1] * pts[k1, j] * phi[0, k, k1];
         }
       }
     }

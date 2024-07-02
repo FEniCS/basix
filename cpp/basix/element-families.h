@@ -4,6 +4,8 @@
 
 #pragma once
 
+#include <string>
+
 /// Interfaces for creating finite elements
 namespace basix::element
 {
@@ -24,6 +26,16 @@ enum class lagrange_variant
   legendre = 11,
   bernstein = 12,
 };
+
+/// Get the lagrange variant type string for a lagrange variant type
+/// @param[in] type The lagrange variant type
+/// @return The lagrange variant type string
+std::string to_string(lagrange_variant type);
+
+/// Get the lagrange variant type from a lagrange variant string
+/// @param[in] variant lagrange variant string
+/// @return The lagrange variant type
+lagrange_variant to_type(const std::string& variant);
 
 /// Variants of a DPC (discontinuous polynomial cubical) space that can
 /// be created. DPC spaces span the same set of polynomials as Lagrange

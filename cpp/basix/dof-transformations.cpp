@@ -60,7 +60,7 @@ void push_forward(maps::type map_type, Q&& u, const P& U, const R& J,
     assert(U.extent(1) == u.extent(1));
     for (std::size_t i = 0; i < U.extent(0); ++i)
       for (std::size_t j = 0; j < U.extent(1); ++j)
-        u(i, j) = U(i, j);
+        u[i, j] = U[i, j];
     return;
   }
   case maps::type::covariantPiola:
@@ -429,7 +429,7 @@ std::pair<std::vector<T>, std::array<std::size_t, 2>> compute_transformation(
     auto mp = map_point(
         std::span(pts.data_handle() + p * pts.extent(1), pts.extent(1)));
     for (std::size_t k = 0; k < mapped_pts.extent(1); ++k)
-      mapped_pts(p, k) = mp[k];
+      mapped_pts[p, k] = mp[k];
   }
 
   auto [polyset_vals_b, polyset_shape] = polyset::tabulate(
@@ -446,11 +446,11 @@ std::pair<std::vector<T>, std::array<std::size_t, 2>> compute_transformation(
     for (std::size_t k0 = 0; k0 < coeffs.extent(0); ++k0)
       for (std::size_t k1 = 0; k1 < polyset_vals.extent(1); ++k1)
         for (std::size_t k2 = 0; k2 < polyset_vals.extent(0); ++k2)
-          result(k1, k0) += coeffs(k0, k2 + psize * j) * polyset_vals(k2, k1);
+          result[k1, k0] += coeffs[k0, k2 + psize * j] * polyset_vals[k2, k1];
 
     for (std::size_t k0 = 0; k0 < result.extent(0); ++k0)
       for (std::size_t k1 = 0; k1 < result.extent(1); ++k1)
-        tabulated_data(k0, k1, j) = result(k0, k1);
+        tabulated_data[k0, k1, j] = result[k0, k1];
   }
 
   // push forward
@@ -470,7 +470,7 @@ std::pair<std::vector<T>, std::array<std::size_t, 2>> compute_transformation(
 
       for (std::size_t k0 = 0; k0 < temp_data.extent(0); ++k0)
         for (std::size_t k1 = 0; k1 < temp_data.extent(1); ++k1)
-          pushed_data(i, k0, k1) = temp_data(k0, k1);
+          pushed_data[i, k0, k1] = temp_data[k0, k1];
     }
   }
 
@@ -484,8 +484,8 @@ std::pair<std::vector<T>, std::array<std::size_t, 2>> compute_transformation(
       for (std::size_t k0 = 0; k0 < transform.extent(1); ++k0)
         for (std::size_t k1 = 0; k1 < transform.extent(0); ++k1)
           for (std::size_t k2 = 0; k2 < imat.extent(2); ++k2)
-            transform(k1, k0)
-                += imat(k0, i, k2, d) * pushed_data(k2, k1 + dofstart, i);
+            transform[k1, k0]
+                += imat[k0, i, k2, d] * pushed_data[k2, k1 + dofstart, i];
     }
   }
 

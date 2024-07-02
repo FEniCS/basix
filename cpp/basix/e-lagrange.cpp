@@ -145,7 +145,7 @@ FiniteElement<T> create_d_lagrange(cell::type celltype, int degree,
   const std::size_t num_dofs = shape[0];
   auto& _M = M[tdim].emplace_back(num_dofs, 1, num_dofs, 1);
   for (std::size_t i = 0; i < _M.extent(0); ++i)
-    _M(i, 0, i, 0) = 1.0;
+    _M[i, 0, i, 0] = 1.0;
 
   return FiniteElement(
       element::family::P, celltype, polyset::type::standard, degree, {},
@@ -197,7 +197,7 @@ create_d_iso(cell::type celltype, int degree, element::lagrange_variant variant,
   const std::size_t num_dofs = shape[0];
   auto& _M = M[tdim].emplace_back(num_dofs, 1, num_dofs, 1);
   for (std::size_t i = 0; i < _M.extent(0); ++i)
-    _M(i, 0, i, 0) = 1.0;
+    _M[i, 0, i, 0] = 1.0;
 
   return FiniteElement(
       element::family::iso, celltype, polyset::type::macroedge, degree, {},
@@ -246,7 +246,7 @@ FiniteElement<T> create_legendre(cell::type celltype, int degree,
   auto& _M = M[tdim].emplace_back(ndofs, 1, pts.extent(0), 1);
   for (std::size_t i = 0; i < ndofs; ++i)
     for (std::size_t j = 0; j < pts.extent(0); ++j)
-      _M(i, 0, j, 0) = phi(i, j) * wts[j];
+      _M[i, 0, j, 0] = phi[i, j] * wts[j];
 
   sobolev::space space
       = discontinuous ? sobolev::space::L2 : sobolev::space::H1;
@@ -375,7 +375,7 @@ FiniteElement<T> create_bernstein(cell::type celltype, int degree,
       for (std::size_t i = 0; i < nb[d]; ++i)
         for (std::size_t j = 0; j < nb[d]; ++j)
           for (std::size_t k = 0; k < wts.size(); ++k)
-            mat(i, j) += wts[k] * bern(j, k) * phi(i, k);
+            mat[i, j] += wts[k] * bern[j, k] * phi[i, k];
 
       impl::mdarray_t<T, 2> minv(mat.extents());
       {
@@ -398,21 +398,21 @@ FiniteElement<T> create_bernstein(cell::type celltype, int degree,
           auto& _x = x[d].emplace_back(pts.extent(0), shape[1]);
           for (std::size_t i = 0; i < _x.extent(0); ++i)
             for (std::size_t j = 0; j < _x.extent(1); ++j)
-              _x(i, j) = x0[j];
+              _x[i, j] = x0[j];
         }
 
         for (std::size_t j = 0; j < pts.extent(0); ++j)
           for (std::size_t k0 = 0; k0 < pts.extent(1); ++k0)
             for (std::size_t k1 = 0; k1 < shape[1]; ++k1)
-              x[d][e](j, k1) += (entity_x(k0 + 1, k1) - x0[k1]) * pts(j, k0);
+              x[d][e][j, k1] += (entity_x[k0 + 1, k1] - x0[k1]) * pts[j, k0];
         for (std::size_t i = 0; i < bernstein_bubbles[d].size(); ++i)
         {
           for (std::size_t p = 0; p < npts; ++p)
           {
             T tmp = 0.0;
             for (std::size_t k = 0; k < phi.extent(0); ++k)
-              tmp += phi(k, p) * minv(bernstein_bubbles[d][i], k);
-            M[d][e](i, 0, p, 0) = wts[p] * tmp;
+              tmp += phi[k, p] * minv[bernstein_bubbles[d][i], k];
+            M[d][e][i, 0, p, 0] = wts[p] * tmp;
           }
         }
       }
@@ -529,7 +529,7 @@ basix::element::create_lagrange(cell::type celltype, int degree,
     auto& _M = M[tdim].emplace_back(shape[0], 1, shape[0], 1);
     std::fill(_M.data(), _M.data() + _M.size(), 0);
     for (std::size_t i = 0; i < shape[0]; ++i)
-      _M(i, 0, i, 0) = 1;
+      _M[i, 0, i, 0] = 1;
   }
   else
   {
@@ -551,7 +551,7 @@ basix::element::create_lagrange(cell::type celltype, int degree,
               = M[dim].emplace_back(entity_x_shape[0], 1, entity_x_shape[0], 1);
           std::fill(_M.data(), _M.data() + _M.size(), 0);
           for (std::size_t i = 0; i < entity_x_shape[0]; ++i)
-            _M(i, 0, i, 0) = 1;
+            _M[i, 0, i, 0] = 1;
         }
         else if (dim == tdim)
         {
@@ -564,7 +564,7 @@ basix::element::create_lagrange(cell::type celltype, int degree,
           auto& _M = M[dim].emplace_back(shape[0], 1, shape[0], 1);
           std::fill(_M.data(), _M.data() + _M.size(), 0);
           for (std::size_t i = 0; i < shape[0]; ++i)
-            _M(i, 0, i, 0) = 1;
+            _M[i, 0, i, 0] = 1;
         }
         else
         {
@@ -579,17 +579,17 @@ basix::element::create_lagrange(cell::type celltype, int degree,
           auto& _x = x[dim].emplace_back(shape[0], entity_x_shape[1]);
           for (std::size_t i = 0; i < shape[0]; ++i)
             for (std::size_t j = 0; j < entity_x_shape[1]; ++j)
-              _x(i, j) = x0[j];
+              _x[i, j] = x0[j];
 
           for (std::size_t j = 0; j < shape[0]; ++j)
             for (std::size_t k = 0; k < shape[1]; ++k)
               for (std::size_t q = 0; q < tdim; ++q)
-                _x(j, q) += (entity_x_view(k + 1, q) - x0[q]) * lattice(j, k);
+                _x[j, q] += (entity_x_view[k + 1, q] - x0[q]) * lattice[j, k];
 
           auto& _M = M[dim].emplace_back(shape[0], 1, shape[0], 1);
           std::fill(_M.data(), _M.data() + _M.size(), 0);
           for (std::size_t i = 0; i < shape[0]; ++i)
-            _M(i, 0, i, 0) = 1;
+            _M[i, 0, i, 0] = 1;
         }
       }
     }
@@ -688,7 +688,7 @@ FiniteElement<T> basix::element::create_iso(cell::type celltype, int degree,
     auto& _M = M[tdim].emplace_back(
         std::array<std::size_t, 4>{shape[0], 1, shape[0], 1}, 0);
     for (std::size_t i = 0; i < shape[0]; ++i)
-      _M(i, 0, i, 0) = 1;
+      _M[i, 0, i, 0] = 1;
   }
   else
   {
@@ -708,7 +708,7 @@ FiniteElement<T> basix::element::create_iso(cell::type celltype, int degree,
                                          entity_x_shape[0], 1},
               0);
           for (std::size_t i = 0; i < entity_x_shape[0]; ++i)
-            _M(i, 0, i, 0) = 1;
+            _M[i, 0, i, 0] = 1;
         }
         else if (dim == tdim)
         {
@@ -718,7 +718,7 @@ FiniteElement<T> basix::element::create_iso(cell::type celltype, int degree,
           auto& _M = M[dim].emplace_back(
               std::array<std::size_t, 4>{shape[0], 1, shape[0], 1}, 0);
           for (std::size_t i = 0; i < shape[0]; ++i)
-            _M(i, 0, i, 0) = 1;
+            _M[i, 0, i, 0] = 1;
         }
         else
         {
@@ -733,17 +733,17 @@ FiniteElement<T> basix::element::create_iso(cell::type celltype, int degree,
           auto& _x = x[dim].emplace_back(shape[0], entity_x_shape[1]);
           for (std::size_t i = 0; i < shape[0]; ++i)
             for (std::size_t j = 0; j < entity_x_shape[1]; ++j)
-              _x(i, j) = x0[j];
+              _x[i, j] = x0[j];
 
           for (std::size_t j = 0; j < shape[0]; ++j)
             for (std::size_t k = 0; k < shape[1]; ++k)
               for (std::size_t q = 0; q < tdim; ++q)
-                _x(j, q) += (entity_x_view(k + 1, q) - x0[q]) * lattice(j, k);
+                _x[j, q] += (entity_x_view[k + 1, q] - x0[q]) * lattice[j, k];
 
           auto& _M = M[dim].emplace_back(shape[0], 1, shape[0], 1);
           std::fill(_M.data(), _M.data() + _M.size(), 0);
           for (std::size_t i = 0; i < shape[0]; ++i)
-            _M(i, 0, i, 0) = 1;
+            _M[i, 0, i, 0] = 1;
         }
       }
     }

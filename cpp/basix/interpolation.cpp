@@ -57,7 +57,7 @@ basix::compute_interpolation_operator(const FiniteElement<T>& element_from,
         for (std::size_t j = 0; j < dim_to; ++j)
           for (std::size_t k = 0; k < dim_from; ++k)
             for (std::size_t l = 0; l < npts; ++l)
-              out(i + j * vs_from, k) += i_m(j, l) * tab(0, l, k, i);
+              out[i + j * vs_from, k] += i_m[j, l] * tab[0, l, k, i];
 
       return {std::move(outb), std::move(shape)};
     }
@@ -71,7 +71,7 @@ basix::compute_interpolation_operator(const FiniteElement<T>& element_from,
         for (std::size_t j = 0; j < dim_from; ++j)
           for (std::size_t k = 0; k < dim_to; ++k)
             for (std::size_t l = 0; l < npts; ++l)
-              out(k, i + j * vs_to) += i_m(k, i * npts + l) * tab(0, l, j, 0);
+              out[k, i + j * vs_to] += i_m[k, i * npts + l] * tab[0, l, j, 0];
 
       return {std::move(outb), std::move(shape)};
     }
@@ -90,7 +90,7 @@ basix::compute_interpolation_operator(const FiniteElement<T>& element_from,
       for (std::size_t j = 0; j < dim_from; ++j)
         for (std::size_t k = 0; k < vs_from; ++k)
           for (std::size_t l = 0; l < npts; ++l)
-            out(i, j) += i_m(i, k * npts + l) * tab(0, l, j, k);
+            out[i, j] += i_m[i, k * npts + l] * tab[0, l, j, k];
 
     return {std::move(outb), std::move(shape)};
   }

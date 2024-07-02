@@ -80,6 +80,7 @@ set(HEADERS_basix
 target_sources(basix PRIVATE
   ${CMAKE_CURRENT_SOURCE_DIR}/basix/cell.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/basix/dof-transformations.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/basix/element-families.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/basix/finite-element.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/basix/interpolation.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/basix/lattice.cpp

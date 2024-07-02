@@ -22,6 +22,7 @@ include(FeatureSummary)
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
+set(CMAKE_CXX_FLAGS "-Wno-comma-subscript")
 
 # Options
 option(BUILD_SHARED_LIBS "Build Basix with shared libraries." ON)

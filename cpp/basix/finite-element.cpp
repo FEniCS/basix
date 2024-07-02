@@ -17,6 +17,7 @@
 #include "e-serendipity.h"
 #include "math.h"
 #include "polyset.h"
+#include <algorithm>
 #include <basix/version.h>
 #include <cmath>
 #include <concepts>
@@ -651,7 +652,7 @@ FiniteElement<T> basix::create_custom_element(
     if (x[i].size()
         != (i > tdim ? 0
                      : static_cast<std::size_t>(
-                         cell::num_sub_entities(cell_type, i))))
+                           cell::num_sub_entities(cell_type, i))))
     {
       throw std::runtime_error("x has the wrong number of entities");
     }
@@ -669,7 +670,7 @@ FiniteElement<T> basix::create_custom_element(
     if (M[i].size()
         != (i > tdim ? 0
                      : static_cast<std::size_t>(
-                         cell::num_sub_entities(cell_type, i))))
+                           cell::num_sub_entities(cell_type, i))))
       throw std::runtime_error("M has the wrong number of entities");
     for (std::size_t j = 0; j < M[i].size(); ++j)
     {
@@ -940,7 +941,7 @@ FiniteElement<F>::FiniteElement(
         }
       }
 
-      std::sort(_e_closure_dofs[d][e].begin(), _e_closure_dofs[d][e].end());
+      std::ranges::sort(_e_closure_dofs[d][e]);
     }
   }
 
@@ -1020,7 +1021,7 @@ FiniteElement<F>::FiniteElement(
           std::pair<std::vector<F>, std::array<std::size_t, 2>> identity
               = {std::vector<F>(perm.size() * perm.size()),
                  {perm.size(), perm.size()}};
-          std::fill(identity.first.begin(), identity.first.end(), 0.);
+          std::ranges::fill(identity.first, 0.);
           for (std::size_t i = 0; i < perm.size(); ++i)
             identity.first[i * perm.size() + i] = 1;
 
@@ -1457,10 +1458,9 @@ bool FiniteElement<F>::operator==(const FiniteElement& e) const
     bool coeff_equal = false;
     if (_coeffs.first.size() == e.coefficient_matrix().first.size()
         and _coeffs.second == e.coefficient_matrix().second
-        and std::equal(_coeffs.first.begin(), _coeffs.first.end(),
-                       e.coefficient_matrix().first.begin(),
-                       [](auto x, auto y)
-                       { return std::abs(x - y) < 1.0e-10; }))
+        and std::ranges::equal(_coeffs.first, e.coefficient_matrix().first,
+                               [](auto x, auto y)
+                               { return std::abs(x - y) < 1.0e-10; }))
     {
       coeff_equal = true;
     }

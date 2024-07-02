@@ -460,7 +460,7 @@ cell::facet_normals(cell::type cell_type)
   switch (tdim)
   {
   case 1:
-    std::fill(normal.begin(), normal.end(), 1.0);
+    std::ranges::fill(normal, 1.0);
     return {normal, shape};
   case 2:
   {

@@ -383,7 +383,7 @@ FiniteElement<T> create_bernstein(cell::type celltype, int degree,
         impl::mdspan_t<T, 2> _id(id.data(), nb[d], nb[d]);
         impl::mdspan_t<T, 2> _mat(mat.data(), mat.extents());
         std::vector<T> minv_data = math::solve<T>(_mat, _id);
-        std::ranges::copy(minv_data, minv.data());
+        std::copy(minv_data.begin(), minv_data.end(), minv.data());
       }
 
       M[d] = std::vector<impl::mdarray_t<T, 4>>(

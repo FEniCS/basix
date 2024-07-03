@@ -6,6 +6,7 @@
 #include "mdspan.hpp"
 #include "polyset.h"
 #include <concepts>
+#include <stdexcept>
 #include <utility>
 #include <vector>
 

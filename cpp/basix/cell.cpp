@@ -5,6 +5,7 @@
 #include "cell.h"
 #include "math.h"
 #include "mdspan.hpp"
+#include <algorithm>
 #include <cmath>
 #include <concepts>
 

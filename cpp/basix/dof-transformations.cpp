@@ -39,7 +39,7 @@ int find_first_subentity(cell::type cell_type, cell::type entity_type)
 {
   const int edim = cell::topological_dimension(entity_type);
   std::vector<cell::type> entities = cell::subentity_types(cell_type)[edim];
-  if (auto it = std::find(entities.begin(), entities.end(), entity_type);
+  if (auto it = std::ranges::find(entities, entity_type);
       it != entities.end())
   {
     return std::distance(entities.begin(), it);

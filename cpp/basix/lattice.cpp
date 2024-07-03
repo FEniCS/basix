@@ -7,6 +7,7 @@
 #include "math.h"
 #include "polyset.h"
 #include "quadrature.h"
+#include <algorithm>
 #include <cmath>
 #include <concepts>
 #include <math.h>
@@ -403,8 +404,7 @@ std::vector<T> isaac_point(lattice::type lattice_type,
       denominator += x[sub_size];
     }
 
-    std::transform(res.begin(), res.end(), res.begin(),
-                   [denominator](auto x) { return x / denominator; });
+    std::ranges::for_each(res, [denominator](auto& x) { x /= denominator; });
 
     return res;
   }

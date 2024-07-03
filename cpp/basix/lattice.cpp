@@ -10,6 +10,7 @@
 #include <cmath>
 #include <concepts>
 #include <math.h>
+#include <numeric>
 #include <vector>
 
 using namespace basix;

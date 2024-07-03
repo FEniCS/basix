@@ -5,6 +5,7 @@
 #pragma once
 
 #include "mdspan.hpp"
+#include <algorithm>
 #include <stdexcept>
 #include <type_traits>
 

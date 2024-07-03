@@ -5,6 +5,7 @@
 #include "quadrature.h"
 #include "math.h"
 #include "mdspan.hpp"
+#include <numeric>
 #include <algorithm>
 #include <array>
 #include <cmath>

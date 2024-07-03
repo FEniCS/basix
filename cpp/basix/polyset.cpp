@@ -9,6 +9,7 @@
 #include <array>
 #include <cmath>
 #include <stdexcept>
+#include <algorithm>
 
 using namespace basix;
 using namespace basix::indexing;

@@ -1,6 +1,9 @@
 #ifndef _MDSPAN_SINGLE_HEADER_INCLUDE_GUARD_
 #define _MDSPAN_SINGLE_HEADER_INCLUDE_GUARD_
 
+#define MDSPAN_USE_PAREN_OPERATOR 1
+#define MDSPAN_USE_BRACKET_OPERATOR 0
+
 //BEGIN_FILE_INCLUDE: /home/runner/work/mdspan/mdspan/include/experimental/mdarray
 //@HEADER
 // ************************************************************************

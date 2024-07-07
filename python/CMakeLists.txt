@@ -12,6 +12,10 @@ set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
+# TODO: remove after issue https://github.com/FEniCS/basix/issues/842 is resolved
+add_compile_definitions(MDSPAN_USE_BRACKET_OPERATOR=0)
+add_compile_definitions(MDSPAN_USE_PAREN_OPERATOR=1)
+
 if (WIN32)
     # Windows requires all symbols to be manually exported.
     # This flag exports all symbols automatically, as in Unix.

@@ -23,6 +23,13 @@ set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
+if(CMAKE_CXX_COMPILER_ID STREQUAL "Intel")
+  # c++ 23 of intel not yet iso ready, special flag not set in all cmake versions
+  # see PR https://github.com/FEniCS/basix/pull/838
+  # when intels c++ 23 implementation is iso ready, this should be removable
+  cmake_minimum_required(3.26) 
+endif()
+
 # TODO: remove after issue https://github.com/FEniCS/basix/issues/842 is resolved
 add_compile_definitions(MDSPAN_USE_BRACKET_OPERATOR=0)
 add_compile_definitions(MDSPAN_USE_PAREN_OPERATOR=1)

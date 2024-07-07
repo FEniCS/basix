@@ -24,7 +24,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 if(CMAKE_CXX_COMPILER_ID STREQUAL "Intel")
-  # c++ 23 of intel not yet iso ready, special flag not set in all cmake versions
+  # Only newer CMake passes non-standard Intel C++23 flag.
   # see PR https://github.com/FEniCS/basix/pull/838
   # when intels c++ 23 implementation is iso ready, this should be removable
   cmake_minimum_required(3.26) 

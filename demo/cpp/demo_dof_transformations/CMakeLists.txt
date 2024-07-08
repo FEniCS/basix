@@ -5,10 +5,6 @@ set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-# TODO: remove after issue https://github.com/FEniCS/basix/issues/842 is resolved
-add_compile_definitions(MDSPAN_USE_BRACKET_OPERATOR=0)
-add_compile_definitions(MDSPAN_USE_PAREN_OPERATOR=1)
-
 # Use Python for detecting Basix when installed using combined build
 find_package(Python3 COMPONENTS Interpreter)
 if (${Python3_FOUND})
@@ -24,6 +20,11 @@ endif()
 find_package(Basix REQUIRED CONFIG HINTS ${BASIX_PY_DIR})
 
 add_executable(${PROJECT_NAME} main.cpp)
+
+# TODO: remove after issue https://github.com/FEniCS/basix/issues/842 is resolved
+target_compile_definitions(${PROJECT_NAME} PRIVATE MDSPAN_USE_PAREN_OPERATOR=1)
+target_compile_definitions(${PROJECT_NAME} PRIVATE MDSPAN_USE_BRACKET_OPERATOR=0)
+
 if (BASIX_PY_DIR AND IS_DIRECTORY ${BASIX_PY_DIR}/../fenics_basix.libs)
     set_target_properties(${PROJECT_NAME} PROPERTIES BUILD_RPATH ${BASIX_PY_DIR}/../fenics_basix.libs)
     set_target_properties(${PROJECT_NAME} PROPERTIES INSTALL_RPATH ${BASIX_PY_DIR}/../fenics_basix.libs)

@@ -19,10 +19,6 @@ if(CMAKE_CXX_COMPILER_ID STREQUAL "Intel")
   cmake_minimum_required(3.26) 
 endif()
 
-# TODO: remove after issue https://github.com/FEniCS/basix/issues/842 is resolved
-add_compile_definitions(MDSPAN_USE_BRACKET_OPERATOR=0)
-add_compile_definitions(MDSPAN_USE_PAREN_OPERATOR=1)
-
 if (WIN32)
     # Windows requires all symbols to be manually exported.
     # This flag exports all symbols automatically, as in Unix.
@@ -57,6 +53,9 @@ if(HAVE_PEDANTIC)
   target_compile_options(_basixcpp PRIVATE -Wall;-Wextra;-Werror;-Wno-comment)
 endif()
 
+# TODO: remove after issue https://github.com/FEniCS/basix/issues/842 is resolved
+target_compile_definitions(_basixcpp PRIVATE MDSPAN_USE_PAREN_OPERATOR=1)
+target_compile_definitions(_basixcpp PRIVATE MDSPAN_USE_BRACKET_OPERATOR=0)
 
 # Add relative rpath so _basixcpp can find the Basix::basix library
 # when the build is relocated

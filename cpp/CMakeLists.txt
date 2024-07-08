@@ -19,9 +19,16 @@ endif()
 include(FeatureSummary)
 
 # Set the C++ standard
-set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
+
+if(CMAKE_CXX_COMPILER_ID STREQUAL "Intel")
+  # Only newer CMake passes non-standard Intel C++23 flag.
+  # see https://github.com/FEniCS/basix/pull/838
+  # When Intel C++23 support meets ISO standard this can be removed.
+  cmake_minimum_required(3.26) 
+endif()
 
 # Options
 option(BUILD_SHARED_LIBS "Build Basix with shared libraries." ON)
@@ -107,6 +114,10 @@ set_target_properties(basix PROPERTIES PRIVATE_HEADER "${HEADERS_basix}")
 target_include_directories(basix PUBLIC
   $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
   "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR};${CMAKE_CURRENT_SOURCE_DIR}>")
+
+# TODO: remove after issue https://github.com/FEniCS/basix/issues/842 is resolved
+target_compile_definitions(basix PRIVATE MDSPAN_USE_PAREN_OPERATOR=1)
+target_compile_definitions(basix PRIVATE MDSPAN_USE_BRACKET_OPERATOR=0)
 
 target_link_libraries(basix PRIVATE BLAS::BLAS)
 target_link_libraries(basix PRIVATE LAPACK::LAPACK)

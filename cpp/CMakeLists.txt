@@ -18,11 +18,6 @@ endif()
 
 include(FeatureSummary)
 
-# Set the C++ standard
-set(CMAKE_CXX_STANDARD 23)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_CXX_EXTENSIONS OFF)
-
 if(CMAKE_CXX_COMPILER_ID STREQUAL "Intel")
   # Only newer CMake passes non-standard Intel C++23 flag.
   # see https://github.com/FEniCS/basix/pull/838
@@ -50,6 +45,9 @@ endif()
 
 # Source files
 add_library(basix)
+
+# Set the C++ standard
+target_compile_features(basix PUBLIC cxx_std_23)
 
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/basix/version.h.in basix/version.h)
 include_directories(${CMAKE_CURRENT_BINARY_DIR})

@@ -7,11 +7,6 @@ endif()
 
 project(basix_nanobind VERSION "0.9.0.0" LANGUAGES CXX)
 
-# Set C++ standard
-set(CMAKE_CXX_STANDARD 20)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_CXX_EXTENSIONS OFF)
-
 if (WIN32)
     # Windows requires all symbols to be manually exported.
     # This flag exports all symbols automatically, as in Unix.
@@ -36,6 +31,7 @@ find_package(nanobind CONFIG REQUIRED)
 
 # Create the binding library
 nanobind_add_module(_basixcpp wrapper.cpp)
+target_compile_definitions(_basixcpp PRIVATE cxx_std_20)
 target_link_libraries(_basixcpp PRIVATE Basix::basix)
 
 # Add strict compiler flags

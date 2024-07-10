@@ -8,16 +8,9 @@ endif()
 project(basix_nanobind VERSION "0.9.0.0" LANGUAGES CXX)
 
 # Set C++ standard
-set(CMAKE_CXX_STANDARD 23)
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
-
-if(CMAKE_CXX_COMPILER_ID STREQUAL "Intel")
-  # Only newer CMake passes non-standard Intel C++23 flag.
-  # see https://github.com/FEniCS/basix/pull/838
-  # When Intel C++23 support meets ISO standard this can be removed.
-  cmake_minimum_required(3.26) 
-endif()
 
 if (WIN32)
     # Windows requires all symbols to be manually exported.

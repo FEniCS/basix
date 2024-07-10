@@ -18,13 +18,6 @@ endif()
 
 include(FeatureSummary)
 
-if(CMAKE_CXX_COMPILER_ID STREQUAL "Intel")
-  # Only newer CMake passes non-standard Intel C++23 flag.
-  # see https://github.com/FEniCS/basix/pull/838
-  # When Intel C++23 support meets ISO standard this can be removed.
-  cmake_minimum_required(3.26) 
-endif()
-
 # Options
 option(BUILD_SHARED_LIBS "Build Basix with shared libraries." ON)
 add_feature_info(BUILD_SHARED_LIBS BUILD_SHARED_LIBS "Build Basix with shared libraries.")
@@ -47,10 +40,10 @@ endif()
 add_library(basix)
 
 # Set the C++ standard
-target_compile_features(basix PUBLIC cxx_std_23)
+target_compile_features(basix PUBLIC cxx_std_20)
 
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/basix/version.h.in basix/version.h)
-include_directories(${CMAKE_CURRENT_BINARY_DIR})
+target_include_directories(basix PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
 
 set(HEADERS_basix
   ${CMAKE_CURRENT_SOURCE_DIR}/basix/cell.h
@@ -113,10 +106,6 @@ target_include_directories(basix PUBLIC
   $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
   "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR};${CMAKE_CURRENT_SOURCE_DIR}>")
 
-# TODO: remove after issue https://github.com/FEniCS/basix/issues/842 is resolved
-target_compile_definitions(basix PUBLIC MDSPAN_USE_PAREN_OPERATOR=1)
-target_compile_definitions(basix PUBLIC MDSPAN_USE_BRACKET_OPERATOR=0)
-
 target_link_libraries(basix PRIVATE BLAS::BLAS)
 target_link_libraries(basix PRIVATE LAPACK::LAPACK)
 
@@ -129,7 +118,7 @@ endif()
 
 if (MSVC)
     # M_PI etc. are not not in the standard-compliant MSVC headers.
-    add_compile_definitions(_USE_MATH_DEFINES)
+    target_compile_definitions(basix PUBLIC _USE_MATH_DEFINES)
 endif()
 
 

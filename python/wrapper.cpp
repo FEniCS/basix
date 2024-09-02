@@ -432,7 +432,7 @@ NB_MODULE(_basixcpp, m)
           return as_nbarrayp(
               cell::sub_entity_geometry<double>(celltype, dim, index));
         });
-
+  m.def("subentity_types", &cell::subentity_types);
   m.def("sobolev_space_intersection", &sobolev::space_intersection);
 
   nb::enum_<lattice::type>(m, "LatticeType", nb::is_arithmetic(),

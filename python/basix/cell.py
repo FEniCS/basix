@@ -15,11 +15,13 @@ from basix._basixcpp import cell_facet_outward_normals as _fon
 from basix._basixcpp import cell_facet_reference_volumes as _frv
 from basix._basixcpp import cell_volume as _v
 from basix._basixcpp import geometry as _geometry
+from basix._basixcpp import subentity_types as _sut
 from basix._basixcpp import sub_entity_connectivity as _sec
 from basix._basixcpp import topology as _topology
 
 __all__ = [
     "sub_entity_connectivity",
+    "subentity_types",
     "volume",
     "facet_jacobians",
     "facet_normals",
@@ -143,3 +145,15 @@ def topology(celltype: CellType) -> list[list[list[int]]]:
         Vertex indices for each sub-entity of the cell.
     """
     return _topology(celltype)
+
+
+def subentity_types(celltype: CellType) -> list[list[CellType]]:
+    """Get the types of the subentities of a reference cell.
+
+    Args:
+        celltype: Cell type.
+
+    Returns:
+        Cell types for each sub-entity of the cell. Indices are (tdim, entity).
+    """
+    return _sut(celltype)

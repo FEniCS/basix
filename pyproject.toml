@@ -37,10 +37,7 @@ wheel.packages = ["python/basix"]
 
 [tool.cibuildwheel]
 build = [
-    "cp{39,310,311,312}-manylinux_x86_64",
-    "cp{39,310,311,312}-manylinux_aarch64",
-    "cp{39,310,311,312}-macosx_x86_64",
-    "cp{39,310,311,312}-macosx_arm64",
+    "cp39-win_amd64",
 ]
 test-command = [
     "cmake -G Ninja -DPython3_EXECUTABLE=$(which python) -B build-dir -S {project}/test/test_cmake",
@@ -52,6 +49,10 @@ test-requires = ["pytest-xdist"]
 test-extras = ["test"]
 test-skip = "*-macosx_arm64 *-*linux_aarch64"
 manylinux-x86_64-image = "quay.io/pypa/manylinux_2_28_x86_64:2024-04-08-4c11606"
+
+[tool.cibuildwheel.windows]
+before-build = "pip install scikit-build-core[pyproject] git+https://github.com/jhale/nanobind.git@jhale/msvc2022-workaround setuptools wheel"
+build-frontend = { name = "pip", args = ["--no-build-isolation", "--config-settings=cmake.args=-DINSTALL_RUNTIME_DEPENDENCIES=ON", "--config-settings=cmake.args=-DCMAKE_TOOLCHAIN_FILE=C:/vcpkg/scripts/buildsystems/vcpkg.cmake"] }
 
 [tool.cibuildwheel.linux]
 archs = [

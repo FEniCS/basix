@@ -76,7 +76,7 @@ test-command = [
 ]
 
 [tool.cibuildwheel.macos]
-environment = { "MACOSX_DEPLOYMENT_TARGET", "10.14" }
+environment = { "MACOSX_DEPLOYMENT_TARGET" = "10.14" }
 archs = [
     "x86_64",
     "arm64",

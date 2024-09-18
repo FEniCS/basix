@@ -41,6 +41,7 @@ build = [
     "cp{39,310,311,312}-manylinux_aarch64",
     "cp{39,310,311,312}-macosx_x86_64",
     "cp{39,310,311,312}-macosx_arm64",
+    "cp{39,310,311,312}-win_amd64",
 ]
 test-command = [
     "cmake -G Ninja -DPython3_EXECUTABLE=$(which python) -B build-dir -S {project}/test/test_cmake",
@@ -51,7 +52,15 @@ test-command = [
 test-requires = ["pytest-xdist"]
 test-extras = ["test"]
 test-skip = "*-macosx_arm64 *-*linux_aarch64"
-manylinux-x86_64-image = "quay.io/pypa/manylinux_2_28_x86_64:2024-04-08-4c11606"
+manylinux-x86_64-image = "quay.io/pypa/manylinux_2_28_x86_64:2024-09-16-ab73a4b"
+manylinux-aarch64-image = "quay.io/pypa/manylinux_2_28_aarch64:2024-09-16-ab73a4b"
+
+[tool.cibuildwheel.windows]
+before-build = "pip install scikit-build-core[pyproject] git+https://github.com/jhale/nanobind.git@jhale/msvc2022-workaround setuptools wheel"
+build-frontend = {name = "pip", args = ["--no-build-isolation", "--config-settings=cmake.args=-DINSTALL_RUNTIME_DEPENDENCIES=ON", "--config-settings=cmake.args=-DCMAKE_TOOLCHAIN_FILE=C:/vcpkg/scripts/buildsystems/vcpkg.cmake"] }
+test-command = [
+    "python -m pytest -v -n auto --durations 20 {project}/test/",
+]
 
 [tool.cibuildwheel.linux]
 archs = [
@@ -59,13 +68,26 @@ archs = [
     "aarch64",
 ] # Forces arm64 build on x86_64 runner using emulation.
 before-build = "yum -y update && yum install -y epel-release && yum install -y openblas-devel ninja-build"
+test-command = [
+    "cmake -G Ninja -DPython3_EXECUTABLE=$(which python) -B build-dir -S {project}/test/test_cmake",
+    "cmake --build build-dir/",
+    "build-dir/a.out",
+    "python -m pytest -v -n auto --durations 20 {project}/test/",
+]
 
 [tool.cibuildwheel.macos]
+environment = { "MACOSX_DEPLOYMENT_TARGET" = "10.14" }
 archs = [
     "x86_64",
     "arm64",
 ] # Forces arm64 build on x86_64 runner using cross-compilation.
 before-build = "export HOMEBREW_AUTO_UPDATING=0 && brew update && brew install ninja"
+test-command = [
+    "cmake -G Ninja -DPython3_EXECUTABLE=$(which python) -B build-dir -S {project}/test/test_cmake",
+    "cmake --build build-dir/",
+    "build-dir/a.out",
+    "python -m pytest -v -n auto --durations 20 {project}/test/",
+]
 
 [tool.mypy]
 ignore_missing_imports = true

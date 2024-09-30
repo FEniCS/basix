@@ -13,6 +13,8 @@
 #include <span>
 #include <vector>
 
+#include <iostream>
+
 using namespace basix;
 
 namespace stdex
@@ -89,12 +91,17 @@ std::array<std::vector<T>, 2> gauss(std::span<const T> alpha,
   std::vector<T> Abuffer(alpha.size() * alpha.size(), 0);
   mdspan_t<T, 2> A(Abuffer.data(), alpha.size(), alpha.size());
   for (std::size_t i = 0; i < alpha.size(); ++i)
+    std::cout << alpha[i] << " ";
+  std::cout << "\n";
+  for (std::size_t i = 0; i < alpha.size(); ++i)
     A(i, i) = alpha[i];
   for (std::size_t i = 0; i < alpha.size() - 1; ++i)
   {
     A(i + 1, i) = std::sqrt(beta[i + 1]);
     A(i, i + 1) = std::sqrt(beta[i + 1]);
+    std::cout << std::sqrt(beta[i + 1]) << " ";
   }
+  std::cout << "\n";
 
   auto [evals, evecs] = math::eigh<T>(Abuffer, alpha.size());
 

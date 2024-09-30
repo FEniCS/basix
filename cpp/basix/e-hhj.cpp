@@ -184,7 +184,7 @@ FiniteElement<T> basix::element::create_hhj(cell::type celltype, int degree,
       element::family::HHJ, celltype, polyset::type::standard, degree,
       {tdim, tdim}, impl::mdspan_t<T, 2>(wcoeffs.data(), wcoeffs.extents()),
       xview, Mview, 0, maps::type::doubleContravariantPiola, space,
-      discontinuous, -1, degree, element::lagrange_variant::unset,
+      discontinuous, degree, degree, element::lagrange_variant::unset,
       element::dpc_variant::unset);
 }
 //-----------------------------------------------------------------------------

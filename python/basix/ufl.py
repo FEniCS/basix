@@ -103,6 +103,8 @@ class _ElementBase(_AbstractFiniteElement):
     ):
         """Initialise the element."""
         self._repr = repr
+        if cellname == "point":
+            cellname = "vertex"
         self._cellname = cellname
         self._reference_value_shape = reference_value_shape
         self._degree = degree

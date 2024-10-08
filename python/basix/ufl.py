@@ -1552,7 +1552,7 @@ class _QuadratureElement(_ElementBase):
     @property
     def basix_sobolev_space(self):
         """Underlying Sobolev space."""
-        return _basix.sobolev_spaces.L2
+        return _basix.SobolevSpace.L2
 
     def __eq__(self, other) -> bool:
         """Check if two elements are equal."""

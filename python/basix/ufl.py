@@ -291,7 +291,7 @@ class _ElementBase(_AbstractFiniteElement):
         """The polyset type of the element."""
 
     @_abstractproperty
-    def basix_sobolev_space(self):
+    def basix_sobolev_space(self) -> _basix.SobolevSpace:
         """Return a Basix enum representing the underlying Sobolev space."""
 
     @_abstractproperty
@@ -480,7 +480,7 @@ class _BasixElement(_ElementBase):
         return self._element.dtype
 
     @property
-    def basix_sobolev_space(self):
+    def basix_sobolev_space(self) -> _basix.SobolevSpace:
         """Return a Basix enum representing the underlying Sobolev space."""
         return self._element.sobolev_space
 
@@ -723,7 +723,7 @@ class _ComponentElement(_ElementBase):
         return self._element.dtype
 
     @property
-    def basix_sobolev_space(self):
+    def basix_sobolev_space(self) -> _basix.SobolevSpace:
         """Return a Basix enum representing the underlying Sobolev space."""
         return self._element.basix_sobolev_space
 
@@ -1000,7 +1000,7 @@ class _MixedElement(_ElementBase):
         raise NotImplementedError()
 
     @property
-    def basix_sobolev_space(self):
+    def basix_sobolev_space(self) -> _basix.SobolevSpace:
         """Basix Sobolev space that the element belongs to."""
         return _basix.sobolev_spaces.intersection(
             [e.basix_sobolev_space for e in self._sub_elements]
@@ -1310,7 +1310,7 @@ class _BlockedElement(_ElementBase):
         return self._reference_value_shape
 
     @property
-    def basix_sobolev_space(self):
+    def basix_sobolev_space(self) -> _basix.SobolevSpace:
         """Basix enum representing the underlying Sobolev space."""
         return self._sub_element.basix_sobolev_space
 
@@ -1931,7 +1931,7 @@ class _RealElement(_ElementBase):
         return False
 
     @property
-    def basix_sobolev_space(self):
+    def basix_sobolev_space(self) -> _basix.SobolevSpace:
         """Underlying Sobolev space."""
         return _basix.SobolevSpace.Hinf
 

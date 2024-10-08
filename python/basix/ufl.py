@@ -1550,7 +1550,7 @@ class _QuadratureElement(_ElementBase):
         raise NotImplementedError()
 
     @property
-    def basix_sobolev_space(self):
+    def basix_sobolev_space(self) -> _basix.SobolevSpace:
         """Underlying Sobolev space."""
         return _basix.SobolevSpace.L2
 

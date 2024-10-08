@@ -1933,7 +1933,7 @@ class _RealElement(_ElementBase):
     @property
     def basix_sobolev_space(self) -> _basix.SobolevSpace:
         """Underlying Sobolev space."""
-        return _basix.SobolevSpace.Hinf
+        return _basix.SobolevSpace.HInf
 
     @property
     def map_type(self) -> _basix.MapType:

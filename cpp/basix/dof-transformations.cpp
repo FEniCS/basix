@@ -39,7 +39,7 @@ int find_first_subentity(cell::type cell_type, cell::type entity_type)
 {
   const int edim = cell::topological_dimension(entity_type);
   std::vector<cell::type> entities = cell::subentity_types(cell_type)[edim];
-  if (auto it = std::find(entities.begin(), entities.end(), entity_type);
+  if (auto it = std::ranges::find(entities, entity_type);
       it != entities.end())
   {
     return std::distance(entities.begin(), it);
@@ -49,8 +49,8 @@ int find_first_subentity(cell::type cell_type, cell::type entity_type)
 }
 //-----------------------------------------------------------------------------
 template <typename Q, typename P, typename R, typename S>
-void pull_back(maps::type map_type, Q&& u, const P& U, const R& J, double detJ,
-               const S& K)
+void push_forward(maps::type map_type, Q&& u, const P& U, const R& J,
+                  double detJ, const S& K)
 {
   switch (map_type)
   {
@@ -64,16 +64,16 @@ void pull_back(maps::type map_type, Q&& u, const P& U, const R& J, double detJ,
     return;
   }
   case maps::type::covariantPiola:
-    maps::covariant_piola(u, U, K, 1.0 / detJ, J);
+    maps::covariant_piola(u, U, J, detJ, K);
     return;
   case maps::type::contravariantPiola:
-    maps::contravariant_piola(u, U, K, 1.0 / detJ, J);
+    maps::contravariant_piola(u, U, J, detJ, K);
     return;
   case maps::type::doubleCovariantPiola:
-    maps::double_covariant_piola(u, U, K, 1.0 / detJ, J);
+    maps::double_covariant_piola(u, U, J, detJ, K);
     return;
   case maps::type::doubleContravariantPiola:
-    maps::double_contravariant_piola(u, U, K, 1.0 / detJ, J);
+    maps::double_contravariant_piola(u, U, J, detJ, K);
     return;
   default:
     throw std::runtime_error("Map not implemented");
@@ -148,12 +148,12 @@ mapinfo_t<T> get_mapinfo(cell::type cell_type)
         };
         stdex::mdarray<T, stdex::extents<std::size_t, 3, 3>> J(
             stdex::extents<std::size_t, 3, 3>{},
-            {0., 0., 1., 1., 0., 0., 0., 1., 0.});
+            {0., 1., 0., 0., 0., 1., 1., 0., 0.});
 
         T detJ = 1.0;
         stdex::mdarray<T, stdex::extents<std::size_t, 3, 3>> K(
             stdex::extents<std::size_t, 3, 3>{},
-            {0., 1., 0., 0., 0., 1., 1., 0., 0.});
+            {0., 0., 1., 1., 0., 0., 0., 1., 0.});
         data.push_back(std::tuple(map, J, detJ, K));
       }
       {
@@ -201,12 +201,12 @@ mapinfo_t<T> get_mapinfo(cell::type cell_type)
         };
         stdex::mdarray<T, stdex::extents<std::size_t, 3, 3>> J(
             stdex::extents<std::size_t, 3, 3>{},
-            {0., -1., 0., 1., 0., 0., 0., 0., 1.});
+            {0., 1., 0., -1., 0., 0., 0., 0., 1.});
 
         T detJ = 1.0;
         stdex::mdarray<T, stdex::extents<std::size_t, 3, 3>> K(
             stdex::extents<std::size_t, 3, 3>{},
-            {0., 1., 0., -1., 0., 0., 0., 0., 1.});
+            {0., -1., 0., 1., 0., 0., 0., 0., 1.});
         data.push_back(std::tuple(map, J, detJ, K));
       }
       {
@@ -251,11 +251,11 @@ mapinfo_t<T> get_mapinfo(cell::type cell_type)
         };
         stdex::mdarray<T, stdex::extents<std::size_t, 3, 3>> J(
             stdex::extents<std::size_t, 3, 3>{},
-            {-1., -1., 0., 1., 0., 0., 0., 0., 1.});
+            {0., 1., 0., -1., -1., 0., 0., 0., 1.});
         T detJ = 1.0;
         stdex::mdarray<T, stdex::extents<std::size_t, 3, 3>> K(
             stdex::extents<std::size_t, 3, 3>{},
-            {0., 1., 0., -1., -1., 0., 0., 0., 1.});
+            {-1., -1., 0., 1., 0., 0., 0., 0., 1.});
         data.push_back(std::tuple(map, J, detJ, K));
       }
       {
@@ -280,11 +280,11 @@ mapinfo_t<T> get_mapinfo(cell::type cell_type)
         };
         stdex::mdarray<T, stdex::extents<std::size_t, 3, 3>> J(
             stdex::extents<std::size_t, 3, 3>{},
-            {0., 0., -1., 0., 1., 0., 1., 0., 0.});
+            {0., 0., 1., 0., 1., 0., -1., 0., 0.});
         T detJ = 1.0;
         stdex::mdarray<T, stdex::extents<std::size_t, 3, 3>> K(
             stdex::extents<std::size_t, 3, 3>{},
-            {0., 0., 1., 0., 1., 0., -1., 0., 0.});
+            {0., 0., -1., 0., 1., 0., 1., 0., 0.});
         data.push_back(std::tuple(map, J, detJ, K));
       }
       { // scope
@@ -330,11 +330,11 @@ mapinfo_t<T> get_mapinfo(cell::type cell_type)
         };
         stdex::mdarray<T, stdex::extents<std::size_t, 3, 3>> J(
             stdex::extents<std::size_t, 3, 3>{},
-            {0., -1., 0., 1., 0., 0., 0., 0., 1.});
+            {0., 1., 0., -1., 0., 0., 0., 0., 1.});
         T detJ = 1.;
         stdex::mdarray<T, stdex::extents<std::size_t, 3, 3>> K(
             stdex::extents<std::size_t, 3, 3>{},
-            {0., 1., 0., -1., 0., 0., 0., 0., 1.});
+            {0., -1., 0., 1., 0., 0., 0., 0., 1.});
         data.push_back(std::tuple(map, J, detJ, K));
       }
       {
@@ -360,11 +360,11 @@ mapinfo_t<T> get_mapinfo(cell::type cell_type)
         };
         stdex::mdarray<T, stdex::extents<std::size_t, 3, 3>> J(
             stdex::extents<std::size_t, 3, 3>{},
-            {-1., 0., -1., 0., 1., 0., 1., 0., 0.});
+            {0., 0., 1., 0., 1., 0., -1., 0., -1.});
         T detJ = 1.;
         stdex::mdarray<T, stdex::extents<std::size_t, 3, 3>> K(
             stdex::extents<std::size_t, 3, 3>{},
-            {0., 0., 1., 0., 1., 0., -1., 0., -1.});
+            {-1., 0., -1., 0., 1., 0., 1., 0., 0.});
         data.push_back(std::tuple(map, J, detJ, K));
       }
       {
@@ -453,10 +453,10 @@ std::pair<std::vector<T>, std::array<std::size_t, 2>> compute_transformation(
         tabulated_data(k0, k1, j) = result(k0, k1);
   }
 
-  // Pull back
-  mdarray_t<T, 3> pulled_data(tabulated_data.extents());
+  // push forward
+  mdarray_t<T, 3> pushed_data(tabulated_data.extents());
   {
-    mdarray_t<T, 2> temp_data(pulled_data.extent(1), pulled_data.extent(2));
+    mdarray_t<T, 2> temp_data(pushed_data.extent(1), pushed_data.extent(2));
     for (std::size_t i = 0; i < npts; ++i)
     {
       mdspan_t<const T, 2> tab(
@@ -464,12 +464,13 @@ std::pair<std::vector<T>, std::array<std::size_t, 2>> compute_transformation(
               + i * tabulated_data.extent(1) * tabulated_data.extent(2),
           tabulated_data.extent(1), tabulated_data.extent(2));
 
-      pull_back(map_type, mdspan_t<T, 2>(temp_data.data(), temp_data.extents()),
-                tab, J, detJ, K);
+      push_forward(map_type,
+                   mdspan_t<T, 2>(temp_data.data(), temp_data.extents()), tab,
+                   J, detJ, K);
 
       for (std::size_t k0 = 0; k0 < temp_data.extent(0); ++k0)
         for (std::size_t k1 = 0; k1 < temp_data.extent(1); ++k1)
-          pulled_data(i, k0, k1) = temp_data(k0, k1);
+          pushed_data(i, k0, k1) = temp_data(k0, k1);
     }
   }
 
@@ -484,7 +485,7 @@ std::pair<std::vector<T>, std::array<std::size_t, 2>> compute_transformation(
         for (std::size_t k1 = 0; k1 < transform.extent(0); ++k1)
           for (std::size_t k2 = 0; k2 < imat.extent(2); ++k2)
             transform(k1, k0)
-                += imat(k0, i, k2, d) * pulled_data(k2, k1 + dofstart, i);
+                += imat(k0, i, k2, d) * pushed_data(k2, k1 + dofstart, i);
     }
   }
 

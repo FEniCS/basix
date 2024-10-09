@@ -7,7 +7,9 @@
 
 import numpy.typing as npt
 
-from basix._basixcpp import compute_interpolation_operator as _compute_interpolation_operator
+from basix._basixcpp import (
+    compute_interpolation_operator as _compute_interpolation_operator,
+)
 from basix.finite_element import FiniteElement
 
 
@@ -49,4 +51,4 @@ def compute_interpolation_operator(
         the 'to' degrees-of-freedom. Shape is (ndofs(element_to),
         ndofs(element_from))
     """
-    return _compute_interpolation_operator(e0._e, e1._e)
+    return _compute_interpolation_operator(e0._e, e1._e)  # type: ignore

@@ -2,10 +2,11 @@
 # FEniCS Project
 # SPDX-License-Identifier: MIT
 
-import basix
-import basix.ufl
 import numpy as np
 import pytest
+
+import basix
+import basix.ufl
 
 
 @pytest.mark.parametrize(

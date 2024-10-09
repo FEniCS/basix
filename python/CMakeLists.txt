@@ -1,16 +1,17 @@
-cmake_minimum_required(VERSION 3.19)
+cmake_minimum_required(VERSION 3.21)
 
 # nanobind uses aligned deallocators only present on macOS > 10.14
 if(APPLE)
   set(CMAKE_OSX_DEPLOYMENT_TARGET "10.14")
 endif()
 
-project(basix_nanobind VERSION "0.8.0" LANGUAGES CXX)
+project(basix_nanobind VERSION "0.9.0.0" LANGUAGES CXX)
 
-# Set C++ standard
-set(CMAKE_CXX_STANDARD 20)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_CXX_EXTENSIONS OFF)
+if (WIN32)
+    # Windows requires all symbols to be manually exported.
+    # This flag exports all symbols automatically, as in Unix.
+    set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS TRUE)
+endif(WIN32)
 
 # See https://gitlab.kitware.com/cmake/cmake/-/issues/16414
 if(TARGET basix)
@@ -30,6 +31,7 @@ find_package(nanobind CONFIG REQUIRED)
 
 # Create the binding library
 nanobind_add_module(_basixcpp wrapper.cpp)
+target_compile_definitions(_basixcpp PRIVATE cxx_std_20)
 target_link_libraries(_basixcpp PRIVATE Basix::basix)
 
 # Add strict compiler flags
@@ -38,16 +40,18 @@ CHECK_CXX_COMPILER_FLAG("-Wall -Werror -Wextra -Wno-comment -pedantic" HAVE_PEDA
 
 if(HAVE_PEDANTIC)
   target_compile_options(_basixcpp PRIVATE -Wall;-Wextra;-Werror;-Wno-comment)
-
-  # target_compile_options(_basixcpp PRIVATE -Wall;-Wextra;-Werror;-Wno-comment;-pedantic)
 endif()
+
+# TODO: remove after issue https://github.com/FEniCS/basix/issues/842 is resolved
+target_compile_definitions(_basixcpp PRIVATE MDSPAN_USE_PAREN_OPERATOR=1)
+target_compile_definitions(_basixcpp PRIVATE MDSPAN_USE_BRACKET_OPERATOR=0)
 
 # Add relative rpath so _basixcpp can find the Basix::basix library
 # when the build is relocated
 if(BASIX_FULL_SKBUILD)
   if(APPLE)
     set_target_properties(_basixcpp PROPERTIES INSTALL_RPATH "@loader_path/lib")
-  else()
+  elseif(UNIX)
     set_target_properties(_basixcpp PROPERTIES INSTALL_RPATH "$ORIGIN/lib")
   endif()
 else()

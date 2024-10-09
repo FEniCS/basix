@@ -5,25 +5,14 @@
 # SPDX-License-Identifier:    MIT
 """Functions to manipulate quadrature types."""
 
-import numpy as np
 import numpy.typing as _npt
 
-from basix._basixcpp import QuadratureType as _QT
+from basix._basixcpp import QuadratureType
 from basix._basixcpp import make_quadrature as _mq
 from basix.cell import CellType
 from basix.polynomials import PolysetType
-from basix.utils import Enum
 
 __all__ = ["string_to_type", "make_quadrature"]
-
-
-class QuadratureType(Enum):
-    """Quadrature type."""
-
-    Default = _QT.Default
-    gauss_jacobi = _QT.gauss_jacobi
-    gll = _QT.gll
-    xiao_gimbutas = _QT.xiao_gimbutas
 
 
 def string_to_type(rule: str) -> QuadratureType:
@@ -36,7 +25,7 @@ def string_to_type(rule: str) -> QuadratureType:
         The quadrature type.
     """
     if rule == "default":
-        return QuadratureType.Default
+        return QuadratureType.default
     elif rule in ["Gauss-Lobatto-Legendre", "GLL"]:
         return QuadratureType.gll
     elif rule in ["Gauss-Legendre", "GL", "Gauss-Jacobi"]:
@@ -44,17 +33,15 @@ def string_to_type(rule: str) -> QuadratureType:
     elif rule == "Xiao-Gimbutas":
         return QuadratureType.xiao_gimbutas
 
-    if not hasattr(QuadratureType, rule):
-        raise ValueError(f"Unknown quadrature rule: {rule}")
-    return getattr(QuadratureType, rule)
+    return QuadratureType[rule]
 
 
 def make_quadrature(
     cell: CellType,
     degree: int,
-    rule: QuadratureType = QuadratureType.Default,
+    rule: QuadratureType = QuadratureType.default,
     polyset_type: PolysetType = PolysetType.standard,
-) -> tuple[_npt.NDArray[np.float64], _npt.NDArray[np.float64]]:
+) -> tuple[_npt.ArrayLike, _npt.ArrayLike]:
     """Create a quadrature rule.
 
     Args:
@@ -68,4 +55,4 @@ def make_quadrature(
     Returns:
         Quadrature points and weights.
     """
-    return _mq(rule.value, cell.value, polyset_type.value, degree)
+    return _mq(rule, cell, polyset_type, degree)

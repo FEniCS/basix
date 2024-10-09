@@ -6,14 +6,16 @@
 
 #pragma once
 
-#include "mdspan.hpp"
 #include <array>
 #include <cmath>
 #include <concepts>
 #include <span>
+#include <stdexcept>
 #include <string>
 #include <utility>
 #include <vector>
+
+#include "mdspan.hpp"
 
 extern "C"
 {

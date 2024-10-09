@@ -17,6 +17,7 @@
 #include "e-serendipity.h"
 #include "math.h"
 #include "polyset.h"
+#include <algorithm>
 #include <basix/version.h>
 #include <cmath>
 #include <concepts>
@@ -230,7 +231,7 @@ basix::create_element(element::family family, cell::type cell, int degree,
       throw std::runtime_error("Cannot pass a DPC variant to this element.");
   }
 
-  if (dof_ordering.size() > 0 and family != element::family::P)
+  if (!dof_ordering.empty() and family != element::family::P)
   {
     throw std::runtime_error("DOF ordering only supported for Lagrange");
   }
@@ -353,7 +354,7 @@ basix::tp_factors(element::family family, cell::type cell, int degree,
 {
   std::vector<int> tp_dofs = tp_dof_ordering(family, cell, degree, lvariant,
                                              dvariant, discontinuous);
-  if (tp_dofs.size() > 0 && tp_dofs == dof_ordering)
+  if (!tp_dofs.empty() && tp_dofs == dof_ordering)
   {
     switch (family)
     {
@@ -651,7 +652,7 @@ FiniteElement<T> basix::create_custom_element(
     if (x[i].size()
         != (i > tdim ? 0
                      : static_cast<std::size_t>(
-                         cell::num_sub_entities(cell_type, i))))
+                           cell::num_sub_entities(cell_type, i))))
     {
       throw std::runtime_error("x has the wrong number of entities");
     }
@@ -669,7 +670,7 @@ FiniteElement<T> basix::create_custom_element(
     if (M[i].size()
         != (i > tdim ? 0
                      : static_cast<std::size_t>(
-                         cell::num_sub_entities(cell_type, i))))
+                           cell::num_sub_entities(cell_type, i))))
       throw std::runtime_error("M has the wrong number of entities");
     for (std::size_t j = 0; j < M[i].size(); ++j)
     {
@@ -940,7 +941,7 @@ FiniteElement<F>::FiniteElement(
         }
       }
 
-      std::sort(_e_closure_dofs[d][e].begin(), _e_closure_dofs[d][e].end());
+      std::ranges::sort(_e_closure_dofs[d][e]);
     }
   }
 
@@ -992,7 +993,7 @@ FiniteElement<F>::FiniteElement(
         for (std::size_t i = 0; i < trans.extent(0); ++i)
         {
           std::vector<std::size_t> perm(trans.extent(1));
-          std::vector<std::size_t> rev_perm(trans.extent(1));
+          std::vector<std::size_t> inv_perm(trans.extent(1));
           for (std::size_t row = 0; row < trans.extent(1); ++row)
           {
             for (std::size_t col = 0; col < trans.extent(1); ++col)
@@ -1000,7 +1001,7 @@ FiniteElement<F>::FiniteElement(
               if (trans(i, row, col) > 0.5)
               {
                 perm[row] = col;
-                rev_perm[col] = row;
+                inv_perm[col] = row;
                 break;
               }
             }
@@ -1008,19 +1009,19 @@ FiniteElement<F>::FiniteElement(
 
           // Factorise the permutations
           precompute::prepare_permutation(perm);
-          precompute::prepare_permutation(rev_perm);
+          precompute::prepare_permutation(inv_perm);
 
           // Store the permutations
           auto& eperm = _eperm.try_emplace(ctype).first->second;
-          auto& eperm_rev = _eperm_rev.try_emplace(ctype).first->second;
+          auto& eperm_inv = _eperm_inv.try_emplace(ctype).first->second;
           eperm.push_back(perm);
-          eperm_rev.push_back(rev_perm);
+          eperm_inv.push_back(inv_perm);
 
           // Generate the entity transformations from the permutations
           std::pair<std::vector<F>, std::array<std::size_t, 2>> identity
               = {std::vector<F>(perm.size() * perm.size()),
                  {perm.size(), perm.size()}};
-          std::fill(identity.first.begin(), identity.first.end(), 0.);
+          std::ranges::fill(identity.first, 0.);
           for (std::size_t i = 0; i < perm.size(); ++i)
             identity.first[i * perm.size() + i] = 1;
 
@@ -1030,8 +1031,8 @@ FiniteElement<F>::FiniteElement(
           auto& etrans_inv = _etrans_inv.try_emplace(ctype).first->second;
           etrans.push_back({perm, identity});
           etrans_invT.push_back({perm, identity});
-          etransT.push_back({rev_perm, identity});
-          etrans_inv.push_back({rev_perm, identity});
+          etransT.push_back({inv_perm, identity});
+          etrans_inv.push_back({inv_perm, identity});
         }
       }
     }
@@ -1133,6 +1134,299 @@ FiniteElement<F>::FiniteElement(
     }
   }
 
+  // If DOF transformations are permutations, compute the subentity closure
+  // permutations
+  if (_dof_transformations_are_permutations)
+  {
+    if (_cell_tdim > 1)
+    {
+      // interval
+      int dof_n = 0;
+      const auto conn = cell::sub_entity_connectivity(_cell_type)[1][0];
+      std::vector<std::vector<std::vector<int>>> dofs;
+      dofs.resize(2);
+      for (int dim = 0; dim <= 1; ++dim)
+      {
+        dofs[dim].resize(conn[dim].size());
+        for (std::size_t i = 0; i < conn[dim].size(); ++i)
+        {
+          const int e = conn[dim][i];
+          for (std::size_t j = 0; j < _edofs[dim][e].size(); ++j)
+          {
+            dofs[dim][i].push_back(dof_n++);
+          }
+        }
+      }
+
+      std::vector<std::size_t> ref;
+      ref.insert(ref.end(), dofs[0][1].begin(), dofs[0][1].end());
+      ref.insert(ref.end(), dofs[0][0].begin(), dofs[0][0].end());
+      // Edges
+      ref.insert(ref.end(), dofs[1][0].begin(), dofs[1][0].end());
+
+      if (!_dof_transformations_are_identity)
+      {
+        auto& trans1 = _eperm.at(cell::type::interval)[0];
+        if (!dofs[1][0].empty())
+        {
+          precompute::apply_permutation(trans1, std::span(ref), dofs[1][0][0]);
+        }
+      }
+
+      precompute::prepare_permutation(ref);
+
+      auto& secp = _subentity_closure_perm.try_emplace(cell::type::interval)
+                       .first->second;
+      secp.push_back(ref);
+      auto& secpi
+          = _subentity_closure_perm_inv.try_emplace(cell::type::interval)
+                .first->second;
+      secpi.push_back(ref);
+    }
+    if (_cell_type == cell::type::tetrahedron || cell_type == cell::type::prism
+        || cell_type == cell::type::pyramid)
+    {
+      // triangle
+      const int face_n = cell_type == cell::type::pyramid ? 1 : 0;
+
+      int dof_n = 0;
+      const auto conn = cell::sub_entity_connectivity(_cell_type)[2][face_n];
+      std::vector<std::vector<std::vector<int>>> dofs;
+      dofs.resize(3);
+      for (int dim = 0; dim <= 2; ++dim)
+      {
+        dofs[dim].resize(conn[dim].size());
+        for (std::size_t i = 0; i < conn[dim].size(); ++i)
+        {
+          const int e = conn[dim][i];
+          for (int j : _edofs[dim][e])
+          {
+            std::ignore = j;
+            dofs[dim][i].push_back(dof_n++);
+          }
+        }
+      }
+
+      std::vector<std::size_t> rot;
+      // Vertices
+      rot.insert(rot.end(), dofs[0][1].begin(), dofs[0][1].end());
+      rot.insert(rot.end(), dofs[0][2].begin(), dofs[0][2].end());
+      rot.insert(rot.end(), dofs[0][0].begin(), dofs[0][0].end());
+      // Edges
+      rot.insert(rot.end(), dofs[1][1].begin(), dofs[1][1].end());
+      rot.insert(rot.end(), dofs[1][2].begin(), dofs[1][2].end());
+      rot.insert(rot.end(), dofs[1][0].begin(), dofs[1][0].end());
+      // Face
+      rot.insert(rot.end(), dofs[2][0].begin(), dofs[2][0].end());
+
+      std::vector<std::size_t> rot_inv;
+      // Vertices
+      rot_inv.insert(rot_inv.end(), dofs[0][2].begin(), dofs[0][2].end());
+      rot_inv.insert(rot_inv.end(), dofs[0][0].begin(), dofs[0][0].end());
+      rot_inv.insert(rot_inv.end(), dofs[0][1].begin(), dofs[0][1].end());
+      // Edges
+      rot_inv.insert(rot_inv.end(), dofs[1][2].begin(), dofs[1][2].end());
+      rot_inv.insert(rot_inv.end(), dofs[1][0].begin(), dofs[1][0].end());
+      rot_inv.insert(rot_inv.end(), dofs[1][1].begin(), dofs[1][1].end());
+      // Face
+      rot_inv.insert(rot_inv.end(), dofs[2][0].begin(), dofs[2][0].end());
+
+      std::vector<std::size_t> ref;
+      // Vertices
+      ref.insert(ref.end(), dofs[0][0].begin(), dofs[0][0].end());
+      ref.insert(ref.end(), dofs[0][2].begin(), dofs[0][2].end());
+      ref.insert(ref.end(), dofs[0][1].begin(), dofs[0][1].end());
+      // Edges
+      ref.insert(ref.end(), dofs[1][0].begin(), dofs[1][0].end());
+      ref.insert(ref.end(), dofs[1][2].begin(), dofs[1][2].end());
+      ref.insert(ref.end(), dofs[1][1].begin(), dofs[1][1].end());
+      // Face
+      ref.insert(ref.end(), dofs[2][0].begin(), dofs[2][0].end());
+
+      if (!_dof_transformations_are_identity)
+      {
+        auto& trans1 = _eperm.at(cell::type::interval)[0];
+        auto& trans2 = _eperm.at(cell::type::triangle);
+        auto& trans3 = _eperm_inv.at(cell::type::triangle);
+
+        if (!dofs[1][0].empty())
+        {
+          precompute::apply_permutation(trans1, std::span(rot), dofs[1][0][0]);
+        }
+        if (!dofs[1][1].empty())
+        {
+          precompute::apply_permutation(trans1, std::span(rot), dofs[1][1][0]);
+        }
+        if (!dofs[2][0].empty())
+        {
+          precompute::apply_permutation(trans2[0], std::span(rot),
+                                        dofs[2][0][0]);
+        }
+        if (!dofs[1][0].empty())
+        {
+          precompute::apply_permutation(trans1, std::span(ref), dofs[1][0][0]);
+        }
+        if (!dofs[2][0].empty())
+        {
+          precompute::apply_permutation(trans2[1], std::span(ref),
+                                        dofs[2][0][0]);
+        }
+        if (!dofs[1][1].empty())
+        {
+          precompute::apply_permutation(trans1, std::span(rot_inv),
+                                        dofs[1][1][0]);
+        }
+        if (!dofs[1][2].empty())
+        {
+          precompute::apply_permutation(trans1, std::span(rot_inv),
+                                        dofs[1][2][0]);
+        }
+        if (!dofs[2][0].empty())
+        {
+          precompute::apply_permutation(trans3[0], std::span(rot_inv),
+                                        dofs[2][0][0]);
+        }
+      }
+
+      precompute::prepare_permutation(rot);
+      precompute::prepare_permutation(rot_inv);
+      precompute::prepare_permutation(ref);
+
+      auto& secp = _subentity_closure_perm.try_emplace(cell::type::triangle)
+                       .first->second;
+      secp.push_back(rot);
+      secp.push_back(ref);
+      auto& secpi
+          = _subentity_closure_perm_inv.try_emplace(cell::type::triangle)
+                .first->second;
+      secpi.push_back(rot_inv);
+      secpi.push_back(ref);
+    }
+    if (_cell_type == cell::type::hexahedron || cell_type == cell::type::prism
+        || cell_type == cell::type::pyramid)
+    {
+      // quadrilateral
+      const int face_n = cell_type == cell::type::prism ? 1 : 0;
+
+      int dof_n = 0;
+      const auto conn = cell::sub_entity_connectivity(_cell_type)[2][face_n];
+      std::vector<std::vector<std::vector<int>>> dofs;
+      dofs.resize(3);
+      for (int dim = 0; dim <= 2; ++dim)
+      {
+        dofs[dim].resize(conn[dim].size());
+        for (std::size_t i = 0; i < conn[dim].size(); ++i)
+        {
+          const int e = conn[dim][i];
+          for (int j : _edofs[dim][e])
+          {
+            std::ignore = j;
+            dofs[dim][i].push_back(dof_n++);
+          }
+        }
+      }
+
+      std::vector<std::size_t> rot;
+      // Vertices
+      rot.insert(rot.end(), dofs[0][1].begin(), dofs[0][1].end());
+      rot.insert(rot.end(), dofs[0][3].begin(), dofs[0][3].end());
+      rot.insert(rot.end(), dofs[0][0].begin(), dofs[0][0].end());
+      rot.insert(rot.end(), dofs[0][2].begin(), dofs[0][2].end());
+      // Edges
+      rot.insert(rot.end(), dofs[1][2].begin(), dofs[1][2].end());
+      rot.insert(rot.end(), dofs[1][0].begin(), dofs[1][0].end());
+      rot.insert(rot.end(), dofs[1][3].begin(), dofs[1][3].end());
+      rot.insert(rot.end(), dofs[1][1].begin(), dofs[1][1].end());
+      // Face
+      rot.insert(rot.end(), dofs[2][0].begin(), dofs[2][0].end());
+
+      std::vector<std::size_t> rot_inv;
+      // Vertices
+      rot_inv.insert(rot_inv.end(), dofs[0][2].begin(), dofs[0][2].end());
+      rot_inv.insert(rot_inv.end(), dofs[0][0].begin(), dofs[0][0].end());
+      rot_inv.insert(rot_inv.end(), dofs[0][3].begin(), dofs[0][3].end());
+      rot_inv.insert(rot_inv.end(), dofs[0][1].begin(), dofs[0][1].end());
+      // Edges
+      rot_inv.insert(rot_inv.end(), dofs[1][1].begin(), dofs[1][1].end());
+      rot_inv.insert(rot_inv.end(), dofs[1][3].begin(), dofs[1][3].end());
+      rot_inv.insert(rot_inv.end(), dofs[1][0].begin(), dofs[1][0].end());
+      rot_inv.insert(rot_inv.end(), dofs[1][2].begin(), dofs[1][2].end());
+      // Face
+      rot_inv.insert(rot_inv.end(), dofs[2][0].begin(), dofs[2][0].end());
+
+      std::vector<std::size_t> ref;
+      ref.insert(ref.end(), dofs[0][0].begin(), dofs[0][0].end());
+      ref.insert(ref.end(), dofs[0][2].begin(), dofs[0][2].end());
+      ref.insert(ref.end(), dofs[0][1].begin(), dofs[0][1].end());
+      ref.insert(ref.end(), dofs[0][3].begin(), dofs[0][3].end());
+      // Edges
+      ref.insert(ref.end(), dofs[1][1].begin(), dofs[1][1].end());
+      ref.insert(ref.end(), dofs[1][0].begin(), dofs[1][0].end());
+      ref.insert(ref.end(), dofs[1][3].begin(), dofs[1][3].end());
+      ref.insert(ref.end(), dofs[1][2].begin(), dofs[1][2].end());
+      // Face
+      ref.insert(ref.end(), dofs[2][0].begin(), dofs[2][0].end());
+
+      if (!_dof_transformations_are_identity)
+      {
+        auto& trans1 = _eperm.at(cell::type::interval)[0];
+        auto& trans2 = _eperm.at(cell::type::quadrilateral);
+        auto& trans3 = _eperm_inv.at(cell::type::quadrilateral);
+
+        if (!dofs[1][1].empty())
+        {
+          precompute::apply_permutation(trans1, std::span(rot), dofs[1][1][0]);
+        }
+        if (!dofs[1][2].empty())
+        {
+          precompute::apply_permutation(trans1, std::span(rot), dofs[1][2][0]);
+        }
+        if (!dofs[2][0].empty())
+        {
+          precompute::apply_permutation(trans2[0], std::span(rot),
+                                        dofs[2][0][0]);
+        }
+
+        if (!dofs[2][0].empty())
+        {
+          precompute::apply_permutation(trans2[1], std::span(ref),
+                                        dofs[2][0][0]);
+        }
+
+        if (!dofs[1][1].empty())
+        {
+          precompute::apply_permutation(trans1, std::span(rot_inv),
+                                        dofs[1][1][0]);
+        }
+        if (!dofs[1][2].empty())
+        {
+          precompute::apply_permutation(trans1, std::span(rot_inv),
+                                        dofs[1][2][0]);
+        }
+        if (!dofs[2][0].empty())
+        {
+          precompute::apply_permutation(trans3[0], std::span(rot_inv),
+                                        dofs[2][0][0]);
+        }
+      }
+
+      precompute::prepare_permutation(rot);
+      precompute::prepare_permutation(rot_inv);
+      precompute::prepare_permutation(ref);
+
+      auto& secp
+          = _subentity_closure_perm.try_emplace(cell::type::quadrilateral)
+                .first->second;
+      secp.push_back(rot);
+      secp.push_back(ref);
+      auto& secpi
+          = _subentity_closure_perm_inv.try_emplace(cell::type::quadrilateral)
+                .first->second;
+      secpi.push_back(rot_inv);
+      secpi.push_back(ref);
+    }
+  }
+
   // Check if interpolation matrix is the identity
   mdspan_t<const F, 2> matM(_matM.first.data(), _matM.second);
   _interpolation_is_identity = matM.extent(0) == matM.extent(1);
@@ -1164,10 +1458,9 @@ bool FiniteElement<F>::operator==(const FiniteElement& e) const
     bool coeff_equal = false;
     if (_coeffs.first.size() == e.coefficient_matrix().first.size()
         and _coeffs.second == e.coefficient_matrix().second
-        and std::equal(_coeffs.first.begin(), _coeffs.first.end(),
-                       e.coefficient_matrix().first.begin(),
-                       [](auto x, auto y)
-                       { return std::abs(x - y) < 1.0e-10; }))
+        and std::ranges::equal(_coeffs.first, e.coefficient_matrix().first,
+                               [](auto x, auto y)
+                               { return std::abs(x - y) < 1.0e-10; }))
     {
       coeff_equal = true;
     }

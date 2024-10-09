@@ -7,9 +7,11 @@
 #include "math.h"
 #include "polyset.h"
 #include "quadrature.h"
+#include <algorithm>
 #include <cmath>
 #include <concepts>
 #include <math.h>
+#include <numeric>
 #include <vector>
 
 using namespace basix;
@@ -402,8 +404,7 @@ std::vector<T> isaac_point(lattice::type lattice_type,
       denominator += x[sub_size];
     }
 
-    std::transform(res.begin(), res.end(), res.begin(),
-                   [denominator](auto x) { return x / denominator; });
+    std::ranges::for_each(res, [denominator](auto& x) { x /= denominator; });
 
     return res;
   }
@@ -804,7 +805,7 @@ create_pyramid(int n, lattice::type lattice_type, bool exterior,
 {
   if (n == 0)
     return {{0.4, 0.4, 0.2}, {1, 3}};
-  else if (lattice_type == lattice::type::equispaced)
+  else if (n <= 2 || lattice_type == lattice::type::equispaced)
     return create_pyramid_equispaced<T>(n, exterior);
   else
   {

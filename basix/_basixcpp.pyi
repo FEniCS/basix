@@ -6,8 +6,6 @@ from numpy.typing import ArrayLike
 
 
 class CellType(enum.IntEnum):
-    """Cell type."""
-
     point = 0
 
     interval = 1
@@ -25,8 +23,6 @@ class CellType(enum.IntEnum):
     pyramid = 7
 
 class DPCVariant(enum.IntEnum):
-    """DPC variant."""
-
     unset = 0
 
     simplex_equispaced = 1
@@ -44,8 +40,6 @@ class DPCVariant(enum.IntEnum):
     legendre = 7
 
 class ElementFamily(enum.IntEnum):
-    """Finite element family."""
-
     custom = 0
 
     P = 1
@@ -323,8 +317,6 @@ class FiniteElement_float64:
     def dtype(self) -> str: ...
 
 class LagrangeVariant(enum.IntEnum):
-    """Lagrange element variant."""
-
     unset = 0
 
     equispaced = 1
@@ -352,8 +344,6 @@ class LagrangeVariant(enum.IntEnum):
     bernstein = 12
 
 class LatticeSimplexMethod(enum.IntEnum):
-    """Lattice simplex method."""
-
     none = 0
 
     warp = 1
@@ -363,8 +353,6 @@ class LatticeSimplexMethod(enum.IntEnum):
     centroid = 3
 
 class LatticeType(enum.IntEnum):
-    """Lattice type."""
-
     equispaced = 0
 
     gll = 1
@@ -374,8 +362,6 @@ class LatticeType(enum.IntEnum):
     gl = 4
 
 class MapType(enum.IntEnum):
-    """Element map type."""
-
     identity = 0
 
     L2Piola = 1
@@ -389,23 +375,17 @@ class MapType(enum.IntEnum):
     doubleContravariantPiola = 5
 
 class PolynomialType(enum.IntEnum):
-    """Polynomial type."""
-
     legendre = 0
 
     bernstein = 1
 
 class PolysetType(enum.IntEnum):
-    """Polyset type."""
-
     standard = 0
 
     macroedge = 1
 
 class QuadratureType(enum.IntEnum):
-    """Quadrature type."""
-
-    default = 0
+    Default = 0
 
     gauss_jacobi = 1
 
@@ -414,8 +394,6 @@ class QuadratureType(enum.IntEnum):
     xiao_gimbutas = 3
 
 class SobolevSpace(enum.IntEnum):
-    """Sobolev space."""
-
     L2 = 0
 
     H1 = 1
@@ -481,14 +459,16 @@ def restriction(arg0: PolysetType, arg1: CellType, arg2: CellType, /) -> Polyset
 
 def sobolev_space_intersection(arg0: SobolevSpace, arg1: SobolevSpace, /) -> SobolevSpace: ...
 
-def subentity_types(arg: CellType, /) -> list[list[CellType]]: ...
-
 def sub_entity_connectivity(arg: CellType, /) -> list[list[list[list[int]]]]: ...
 
 def sub_entity_geometry(arg0: CellType, arg1: int, arg2: int, /) -> Annotated[ArrayLike, dict(dtype='float64', )]: ...
 
 def superset(arg0: CellType, arg1: PolysetType, arg2: PolysetType, /) -> PolysetType: ...
 
+@overload
+def tabulate_polynomial_set(celltype: CellType, polytype: PolysetType, d: int, n: int, x: Annotated[ArrayLike, dict(dtype='float32', writable=False, shape=(None, None), order='C')]) -> Annotated[ArrayLike, dict(dtype='float32', )]: ...
+
+@overload
 def tabulate_polynomial_set(celltype: CellType, polytype: PolysetType, d: int, n: int, x: Annotated[ArrayLike, dict(dtype='float64', writable=False, shape=(None, None), order='C')]) -> Annotated[ArrayLike, dict(dtype='float64', )]: ...
 
 def tabulate_polynomials(arg0: PolynomialType, arg1: CellType, arg2: int, arg3: Annotated[ArrayLike, dict(dtype='float64', writable=False, shape=(None, None), order='C')], /) -> Annotated[ArrayLike, dict(dtype='float64', )]: ...

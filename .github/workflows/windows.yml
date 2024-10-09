@@ -1,0 +1,100 @@
+name: Basix CI on Windows
+
+on:
+   pull_request:
+     branches:
+       - main
+   push:
+     tags:
+       - "v*"
+     branches:
+       - main
+   merge_group:
+     branches:
+       - main
+   workflow_dispatch:
+
+jobs:
+  build-combined:
+    name: Combined build and test
+    runs-on: windows-2022
+    env:
+      VCPKG_BINARY_SOURCES: "clear;x-gha,readwrite"
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Export GitHub Actions cache environment variables
+        uses: actions/github-script@v6
+        with:
+          script: |
+            core.exportVariable('ACTIONS_CACHE_URL', process.env.ACTIONS_CACHE_URL || '');
+            core.exportVariable('ACTIONS_RUNTIME_TOKEN', process.env.ACTIONS_RUNTIME_TOKEN || '');
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install build dependencies (workaround)
+        run: |
+          python -m pip install scikit-build-core[pyproject] git+https://github.com/jhale/nanobind.git@jhale/msvc2022-workaround setuptools wheel
+      - name: Install Basix (combined)
+        run: |
+          python -m pip -v install --no-build-isolation --no-cache-dir .[ci] --config-settings=cmake.args=-DINSTALL_RUNTIME_DEPENDENCIES=ON --config-settings=cmake.args=-DCMAKE_TOOLCHAIN_FILE=C:/vcpkg/scripts/buildsystems/vcpkg.cmake
+
+      - name: Run units tests
+        run: |
+          python -m pytest -n auto --durations 20 test/
+      # C++ development is not supported against combined install on Windows
+      - name: Run python demos
+        run: python -m pytest demo/python/test.py
+
+  build-split:
+    name: Split build and test
+    runs-on: windows-2022
+    env:
+      VCPKG_BINARY_SOURCES: "clear;x-gha,readwrite"
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Insert add_dll_directory calls
+        working-directory: python/basix
+        run: |
+          (Get-Content __init__.py).Replace('# WINDOWSDLL', 'import os; os.add_dll_directory("D:/a/basix/install/bin")') | Set-Content __init__.py
+          Get-Content __init__.py
+
+      - name: Export GitHub Actions cache environment variables
+        uses: actions/github-script@v6
+        with:
+          script: |
+            core.exportVariable('ACTIONS_CACHE_URL', process.env.ACTIONS_CACHE_URL || '');
+            core.exportVariable('ACTIONS_RUNTIME_TOKEN', process.env.ACTIONS_RUNTIME_TOKEN || '');
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Basix (C++)
+        run: |
+          cd cpp
+          cmake -DINSTALL_RUNTIME_DEPENDENCIES=ON -DCMAKE_TOOLCHAIN_FILE=C:/vcpkg/scripts/buildsystems/vcpkg.cmake -B build-dir -S .
+          cmake --build build-dir --config Release
+          cmake --install build-dir --config Release --prefix D:/a/basix/install
+          echo "D:/a/basix/install/bin" | Out-File -Append -FilePath $env:GITHUB_PATH -Encoding utf8
+
+      - name: Install build dependencies (workaround)
+        run: |
+          python -m pip install scikit-build-core[pyproject] git+https://github.com/jhale/nanobind.git@jhale/msvc2022-workaround setuptools wheel
+      - name: Install Basix (Python)
+        run: |
+          cd python
+          python -m pip -v install --no-build-isolation --no-cache-dir .[ci] --config-settings=cmake.args=-DBasix_DIR=D:/a/basix/install/lib/cmake/basix
+          cd ../
+      
+      - name: Run units tests
+        run: |
+          python -m pytest -n auto --durations 20 test/
+      - name: Run C++ demos
+        run: python -m pytest demo/cpp/test.py --cmake-args="-DBasix_DIR=D:/a/basix/install/lib/cmake/basix"

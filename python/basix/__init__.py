@@ -9,8 +9,12 @@ The core of the library is written in C++, but the majority of Basix's
 functionality can be used via this Python interface.
 """
 
+# Template placeholder for injecting Windows dll directories in CI
+# WINDOWSDLL
+
+from basix._basixcpp import MapType
+from basix._basixcpp import __version__  # type: ignore
 from basix import cell, finite_element, lattice, polynomials, quadrature, sobolev_spaces
-from basix._basixcpp import __version__
 from basix.cell import CellType, geometry, topology
 from basix.finite_element import (
     DPCVariant,
@@ -22,7 +26,6 @@ from basix.finite_element import (
 )
 from basix.interpolation import compute_interpolation_operator
 from basix.lattice import LatticeSimplexMethod, LatticeType, create_lattice
-from basix.maps import MapType
 from basix.polynomials import PolynomialType, PolysetType, tabulate_polynomials
 from basix.polynomials import restriction as polyset_restriction
 from basix.polynomials import superset as polyset_superset

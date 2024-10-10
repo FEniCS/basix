@@ -1,10 +1,10 @@
 [build-system]
-requires = ["scikit-build-core[pyproject]>=0.5.0", "nanobind>=1.6.0"]
+requires = ["scikit-build-core[pyproject]>=0.10.0", "nanobind>=2.0.0"]
 build-backend = "scikit_build_core.build"
 
 [project]
 name = "fenics-basix"
-version = "0.9.0.dev0"
+version = "0.10.0.dev0"
 description = "Basix Python interface"
 readme = "../README.md"
 requires-python = ">=3.9"
@@ -31,7 +31,5 @@ indent-width = 4
 extend-exclude = ["_basixcpp.pyi"]
 
 [tool.scikit-build]
-minimum-version = "0.5"
-cmake.minimum-version = "3.19.0"
 wheel.packages = ["basix"]
 wheel.license-files = ["../LICENSE"]

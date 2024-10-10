@@ -93,10 +93,17 @@ jobs:
           name: src-artifact
           path: dist/*
 
-  upload_pypi:
-    name: Upload to PyPI (optional)
+  upload_test_pypi:
+    name: Upload to test PyPI (optional)
+    if: ${{ github.event.inputs.test_pypi_publish == 'true' }}
     needs: [build_wheels, build_sdist]
     runs-on: ubuntu-latest
+    environment:
+      name: testpypi
+      url: https://test.pypi.org/p/fenics-basix
+    permissions:
+      id-token: write
+
     steps:
       - uses: actions/download-artifact@v4
         with:
@@ -104,16 +111,28 @@ jobs:
           path: dist/
           merge-multiple: true
 
-      - uses: pypa/gh-action-pypi-publish@release/v1
-        if: ${{ github.event.inputs.pypi_publish == 'true' }}
+      - name: Push to test PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
         with:
-          user: __token__
-          password: ${{ secrets.PYPI_TOKEN }}
-          repository-url: https://upload.pypi.org/legacy/
-
-      - uses: pypa/gh-action-pypi-publish@release/v1
-        if: ${{ github.event.inputs.test_pypi_publish == 'true' }}
-        with:
-          user: __token__
-          password: ${{ secrets.PYPI_TEST_TOKEN }}
           repository-url: https://test.pypi.org/legacy/
+
+  upload_pypi:
+    name: Upload to PyPI (optional)
+    if: ${{ github.event.inputs.pypi_publish == 'true' }}
+    needs: [build_wheels, build_sdist]
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi
+      url: https://pypi.org/p/fenics-basix
+    permissions:
+      id-token: write
+
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: '*-artifact'
+          path: dist/
+          merge-multiple: true
+
+      - name: Push to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1

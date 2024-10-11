@@ -30,8 +30,12 @@ jobs:
           python-version: "3.12"
       - name: Install dependencies (non-Python)
         run: brew install ninja
+      - name: Pip list (A)
+        run: pip -v list
       - name: Install Basix
         run: pip -v install .[test]
+      - name: Pip list (B)
+        run: pip -v list
       - name: Run units tests
         run: |
           pip install pytest-xdist

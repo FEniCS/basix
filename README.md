@@ -30,7 +30,8 @@ To install Basix:
 ```console
 pip install fenics-basix
 ```
-We currently build binary wheels for Linux and macOS x86-64 architectures.
+We currently build binary wheels for Python 3.8 to 3.12 for Linux 
+(x86-64, aarch64), macOS (x86-64, arm64) and Windows (x86-64).
 
 For advanced and developer installation instructions see the more
 detailed [install instructions](INSTALL.md)

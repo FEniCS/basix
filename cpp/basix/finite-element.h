@@ -142,6 +142,9 @@ class FiniteElement
       T, MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, d>>;
 
 public:
+  /// Scalar type.
+  using scalar_type = F;
+
   /// @brief Construct a finite element.
   ///
   /// Initialising a finite element calculates the basis functions of

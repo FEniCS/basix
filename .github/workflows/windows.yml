@@ -43,8 +43,14 @@ jobs:
           python-version: "3.11"
 
       - name: Install Basix (combined)
-        run: |
-          python -m pip -v install --no-cache-dir .[ci] --config-settings=cmake.args=-DCMAKE_C_COMPILER=clang-cl.exe --config-settings=cmake.args=-DCMAKE_CXX_COMPILER=clang-cl.exe  --config-settings=cmake.args=-DINSTALL_RUNTIME_DEPENDENCIES=ON --config-settings=cmake.args=-DCMAKE_TOOLCHAIN_FILE=C:/vcpkg/scripts/buildsystems/vcpkg.cmake --config-settings=cmake.args=-DVCPKG_OVERLAY_TRIPLETS=vcpkg-triplets/ --config-settings=cmake.args=-DVCPKG_HOST_TRIPLET=x64-win-llvm
+        run: >
+          python -m pip -v install --no-cache-dir .[ci]
+            --config-settings=cmake.args=-DCMAKE_C_COMPILER="C:/Program Files/LLVM/bin/clang-cl.exe"
+            --config-settings=cmake.args=-DCMAKE_CXX_COMPILER="C:/Program Files/LLVM/bin/clang-cl.exe"
+            --config-settings=cmake.args=-DINSTALL_RUNTIME_DEPENDENCIES=ON
+            --config-settings=cmake.args=-DCMAKE_TOOLCHAIN_FILE=C:/vcpkg/scripts/buildsystems/vcpkg.cmake
+            --config-settings=cmake.args=-DVCPKG_OVERLAY_TRIPLETS=vcpkg-triplets/
+            --config-settings=cmake.args=-DVCPKG_HOST_TRIPLET=x64-win-llvm
 
       - name: Run units tests
         run: |

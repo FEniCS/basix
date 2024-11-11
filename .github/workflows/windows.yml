@@ -51,6 +51,7 @@ jobs:
           --config-settings=cmake.args=-DCMAKE_TOOLCHAIN_FILE=C:/vcpkg/scripts/buildsystems/vcpkg.cmake
           --config-settings=cmake.args=-DVCPKG_OVERLAY_TRIPLETS=vcpkg-triplets/
           --config-settings=cmake.args=-DVCPKG_HOST_TRIPLET=x64-win-llvm
+          --config-settings=cmake.args=-DVCPKG_TARGET_TRIPLET=x64-win-llvm
 
       - name: Run units tests
         run: |

@@ -9,6 +9,7 @@ on:
        - "v*"
      branches:
        - main
+       - "**" # To remove 
    merge_group:
      branches:
        - main

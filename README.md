@@ -2,6 +2,7 @@
 
 [![Basix CI](https://github.com/FEniCS/basix/actions/workflows/pythonapp.yml/badge.svg)](https://github.com/FEniCS/basix/actions/workflows/pythonapp.yml)
 [![Spack install](https://github.com/FEniCS/basix/actions/workflows/spack.yml/badge.svg)](https://github.com/FEniCS/basix/actions/workflows/spack.yml)
+[![DefElement verification](https://defelement.com/badges/basix.ufl.svg)](https://defelement.com/verification.html)
 
 Basix is a finite element definition and tabulation runtime library.
 Basix allows users to:

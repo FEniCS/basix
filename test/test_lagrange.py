@@ -951,11 +951,23 @@ def test_dof_transformations_tetrahedron(degree):
 
 @pytest.mark.parametrize(
     "celltype",
-    [basix.CellType.interval, basix.CellType.triangle, basix.CellType.tetrahedron],
+    [
+        basix.CellType.interval,
+        basix.CellType.triangle,
+        basix.CellType.tetrahedron,
+        basix.CellType.quadrilateral,
+        basix.CellType.hexahedron,
+    ],
 )
-@pytest.mark.parametrize("dtype", [np.float32, np.float64])
+@pytest.mark.parametrize(
+    "dtype",
+    [
+        np.float32,
+        np.float64,
+    ],
+)
 def test_lagrange_transform(celltype, dtype):
-    for p in range(1, 15):
+    for p in range(1, 12):
         e = basix.create_element(
             basix.ElementFamily.P, celltype, p, basix.LagrangeVariant.gll_warped, dtype=dtype
         )

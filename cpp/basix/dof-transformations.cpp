@@ -423,21 +423,9 @@ std::pair<std::vector<T>, std::array<std::size_t, 2>> compute_transformation(
 
   std::vector<T> tabulated_data_b(npts * total_ndofs * vs);
   mdspan_t<T, 3> tabulated_data(tabulated_data_b.data(), npts, total_ndofs, vs);
-  // mdarray_t<T, 3> tabulated_data(npts, total_ndofs, vs);
-
-  // std::vector<T> result_b(polyset_vals.extent(1) * coeffs.extent(0));
-  // mdspan_t<T, 2> result(result_b.data(), polyset_vals.extent(1),
-  //                       coeffs.extent(0));
-
-  std::vector<T> resultT_b(polyset_vals.extent(1) * coeffs.extent(0));
-  mdspan_t<T, 2> resultT(resultT_b.data(), coeffs.extent(0),
-                         polyset_vals.extent(1));
-  // mdarray_t<T, 2> result(polyset_vals.extent(1), coeffs.extent(0));
-
-  // std::cout << "3: transform: " << vs << ", " << coeffs.extent(0) << ", "
-  //           << polyset_vals.extent(1) << ", " << polyset_vals.extent(0)
-  //           << std::endl;
-
+  std::vector<T> result_b(polyset_vals.extent(1) * coeffs.extent(0));
+  mdspan_t<T, 2> result(result_b.data(), coeffs.extent(0),
+                        polyset_vals.extent(1));
   std::vector<T> coeffs_b(coeffs.extent(0) * polyset_vals.extent(0));
   mdspan_t<T, 2> _coeffs(coeffs_b.data(), coeffs.extent(0),
                          polyset_vals.extent(0));
@@ -460,13 +448,13 @@ std::pair<std::vector<T>, std::array<std::size_t, 2>> compute_transformation(
     // c: coeffs.extent(1) x polyset_vals.extent(0)   [k0, k2]
     // p: polyset_vals.extent(0) x polyset_vals.extent(1)  [k2, k1]
 
-    math::dot(_coeffs, polyset_vals, resultT);
+    math::dot(_coeffs, polyset_vals, result);
 
     // std::cout << "4: transform" << std::endl;
 
-    for (std::size_t k0 = 0; k0 < resultT.extent(1); ++k0)
-      for (std::size_t k1 = 0; k1 < resultT.extent(0); ++k1)
-        tabulated_data(k0, k1, j) = resultT(k1, k0);
+    for (std::size_t k0 = 0; k0 < result.extent(1); ++k0)
+      for (std::size_t k1 = 0; k1 < result.extent(0); ++k1)
+        tabulated_data(k0, k1, j) = result(k1, k0);
 
     // for (std::size_t k0 = 0; k0 < result.extent(0); ++k0)
     //   for (std::size_t k1 = 0; k1 < result.extent(1); ++k1)
@@ -502,10 +490,16 @@ std::pair<std::vector<T>, std::array<std::size_t, 2>> compute_transformation(
     for (std::size_t i = 0; i < vs; ++i)
     {
       for (std::size_t k0 = 0; k0 < transform.extent(1); ++k0)
+      {
         for (std::size_t k1 = 0; k1 < transform.extent(0); ++k1)
+        {
           for (std::size_t k2 = 0; k2 < imat.extent(2); ++k2)
+          {
             transform(k1, k0)
                 += imat(k0, i, k2, d) * pushed_data(k2, k1 + dofstart, i);
+          }
+        }
+      }
     }
   }
 

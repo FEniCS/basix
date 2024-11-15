@@ -330,6 +330,12 @@ void dot(const U& A, const V& B, W&& C)
   }
   else
   {
+    static_assert(std::is_same_v<typename U::layout_type, std::layout_right>);
+    static_assert(std::is_same_v<typename V::layout_type, std::layout_right>);
+    // static_assert(
+    //     std::is_same_v<typename std::remove_cv<typename W::layout_type>,
+    //                    std::layout_right>);
+
     using T = typename std::decay_t<U>::value_type;
     impl::dot_blas<T>(
         std::span(A.data_handle(), A.size()), {A.extent(0), A.extent(1)},

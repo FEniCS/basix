@@ -965,7 +965,7 @@ FiniteElement<F>::FiniteElement(
           rtot += r;
         }
 
-        constexpr F eps = 10.0 * std::numeric_limits<float>::epsilon();
+        const F eps = 10 * degree * degree * std::numeric_limits<F>::epsilon();
         if ((trans.extent(2) != 1 and std::abs(rmin) > eps)
             or std::abs(rmax - 1.0) > eps or std::abs(rtot - 1.0) > eps)
         {

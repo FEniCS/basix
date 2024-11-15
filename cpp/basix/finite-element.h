@@ -26,7 +26,6 @@
 /// Basix: FEniCS runtime basis evaluation library
 namespace basix
 {
-
 namespace impl
 {
 template <typename T, std::size_t d>

@@ -1436,7 +1436,7 @@ FiniteElement<F>::FiniteElement(
     for (std::size_t col = 0; col < matM.extent(1); ++col)
     {
       F v = col == row ? 1.0 : 0.0;
-      constexpr F eps = 100 * std::numeric_limits<F>::epsilon();
+      const F eps = 10 * degree * degree * std::numeric_limits<F>::epsilon();
       if (std::abs(matM(row, col) - v) > eps)
       {
         _interpolation_is_identity = false;

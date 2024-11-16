@@ -2,6 +2,7 @@
 
 [![Basix CI](https://github.com/FEniCS/basix/actions/workflows/pythonapp.yml/badge.svg)](https://github.com/FEniCS/basix/actions/workflows/pythonapp.yml)
 [![Spack install](https://github.com/FEniCS/basix/actions/workflows/spack.yml/badge.svg)](https://github.com/FEniCS/basix/actions/workflows/spack.yml)
+[![DefElement verification](https://defelement.org/badges/basix.ufl.svg)](https://defelement.org/verification.html)
 
 Basix is a finite element definition and tabulation runtime library.
 Basix allows users to:
@@ -68,11 +69,11 @@ follows:
 
 The following elements are supported on an interval:
 
-  - [Lagrange](https://defelement.com/elements/lagrange.html)
-  - [Bubble](https://defelement.com/elements/bubble.html)
-  - [Serendipity](https://defelement.com/elements/serendipity.html)
-  - [Hermite](https://defelement.com/elements/hermite.html)
-  - [iso](https://defelement.com/elements/p1-iso-p2.html)
+  - [Lagrange](https://defelement.org/elements/lagrange.html)
+  - [Bubble](https://defelement.org/elements/bubble.html)
+  - [Serendipity](https://defelement.org/elements/serendipity.html)
+  - [Hermite](https://defelement.org/elements/hermite.html)
+  - [iso](https://defelement.org/elements/p1-iso-p2.html)
 
 
 ### Triangle
@@ -84,17 +85,17 @@ follows:
 
 The following elements are supported on a triangle:
 
-  - [Lagrange](https://defelement.com/elements/lagrange.html)
-  - [Nédélec first kind](https://defelement.com/elements/nedelec1.html)
-  - [Raviart-Thomas](https://defelement.com/elements/raviart-thomas.html)
-  - [Nédélec second kind](https://defelement.com/elements/nedelec2.html)
-  - [Brezzi-Douglas-Marini](https://defelement.com/elements/brezzi-douglas-marini.html)
-  - [Regge](https://defelement.com/elements/regge.html)
-  - [Hellan-Herrmann-Johnson](https://defelement.com/elements/hellan-hermann-johnson.html)
-  - [Crouzeix-Raviart](https://defelement.com/elements/crouzeix-raviart.html)
-  - [Bubble](https://defelement.com/elements/bubble.html)
-  - [Hermite](https://defelement.com/elements/hermite.html)
-  - [iso](https://defelement.com/elements/p1-iso-p2.html)
+  - [Lagrange](https://defelement.org/elements/lagrange.html)
+  - [Nédélec first kind](https://defelement.org/elements/nedelec1.html)
+  - [Raviart-Thomas](https://defelement.org/elements/raviart-thomas.html)
+  - [Nédélec second kind](https://defelement.org/elements/nedelec2.html)
+  - [Brezzi-Douglas-Marini](https://defelement.org/elements/brezzi-douglas-marini.html)
+  - [Regge](https://defelement.org/elements/regge.html)
+  - [Hellan-Herrmann-Johnson](https://defelement.org/elements/hellan-hermann-johnson.html)
+  - [Crouzeix-Raviart](https://defelement.org/elements/crouzeix-raviart.html)
+  - [Bubble](https://defelement.org/elements/bubble.html)
+  - [Hermite](https://defelement.org/elements/hermite.html)
+  - [iso](https://defelement.org/elements/p1-iso-p2.html)
 
 
 ### Quadrilateral
@@ -106,15 +107,15 @@ as follows:
 
 The following elements are supported on a quadrilateral:
 
-  - [Lagrange](https://defelement.com/elements/lagrange.html)
-  - [Nédélec first kind](https://defelement.com/elements/nedelec1.html)
-  - [Raviart-Thomas](https://defelement.com/elements/qdiv.html)
-  - [Nédélec second kind](https://defelement.com/elements/scurl.html)
-  - [Brezzi-Douglas-Marini](https://defelement.com/elements/sdiv.html)
-  - [Bubble](https://defelement.com/elements/bubble.html)
-  - [DPC](https://defelement.com/elements/dpc.html)
-  - [Serendipity](https://defelement.com/elements/serendipity.html)
-  - [iso](https://defelement.com/elements/p1-iso-p2.html)
+  - [Lagrange](https://defelement.org/elements/lagrange.html)
+  - [Nédélec first kind](https://defelement.org/elements/nedelec1.html)
+  - [Raviart-Thomas](https://defelement.org/elements/qdiv.html)
+  - [Nédélec second kind](https://defelement.org/elements/scurl.html)
+  - [Brezzi-Douglas-Marini](https://defelement.org/elements/sdiv.html)
+  - [Bubble](https://defelement.org/elements/bubble.html)
+  - [DPC](https://defelement.org/elements/dpc.html)
+  - [Serendipity](https://defelement.org/elements/serendipity.html)
+  - [iso](https://defelement.org/elements/p1-iso-p2.html)
 
 
 ### Tetrahedron
@@ -126,16 +127,16 @@ follows:
 
 The following elements are supported on a tetrahedron:
 
-  - [Lagrange](https://defelement.com/elements/lagrange.html)
-  - [Nédélec first kind](https://defelement.com/elements/nedelec1.html)
-  - [Raviart-Thomas](https://defelement.com/elements/raviart-thomas.html)
-  - [Nédélec second kind](https://defelement.com/elements/nedelec2.html)
-  - [Brezzi-Douglas-Marini](https://defelement.com/elements/brezzi-douglas-marini.html)
-  - [Regge](https://defelement.com/elements/regge.html)
-  - [Crouzeix-Raviart](https://defelement.com/elements/crouzeix-raviart.html)
-  - [Bubble](https://defelement.com/elements/bubble.html)
-  - [Hermite](https://defelement.com/elements/hermite.html)
-  - [iso](https://defelement.com/elements/p1-iso-p2.html)
+  - [Lagrange](https://defelement.org/elements/lagrange.html)
+  - [Nédélec first kind](https://defelement.org/elements/nedelec1.html)
+  - [Raviart-Thomas](https://defelement.org/elements/raviart-thomas.html)
+  - [Nédélec second kind](https://defelement.org/elements/nedelec2.html)
+  - [Brezzi-Douglas-Marini](https://defelement.org/elements/brezzi-douglas-marini.html)
+  - [Regge](https://defelement.org/elements/regge.html)
+  - [Crouzeix-Raviart](https://defelement.org/elements/crouzeix-raviart.html)
+  - [Bubble](https://defelement.org/elements/bubble.html)
+  - [Hermite](https://defelement.org/elements/hermite.html)
+  - [iso](https://defelement.org/elements/p1-iso-p2.html)
 
 
 ### Hexahedron
@@ -147,15 +148,15 @@ follows:
 
 The following elements are supported on a hexahedron:
 
-  - [Lagrange](https://defelement.com/elements/lagrange.html)
-  - [Nédélec first kind](https://defelement.com/elements/nedelec1.html)
-  - [Raviart-Thomas](https://defelement.com/elements/qdiv.html)
-  - [Nédélec second kind](https://defelement.com/elements/scurl.html)
-  - [Brezzi-Douglas-Marini](https://defelement.com/elements/sdiv.html)
-  - [Bubble](https://defelement.com/elements/bubble.html)
-  - [DPC](https://defelement.com/elements/dpc.html)
-  - [Serendipity](https://defelement.com/elements/serendipity.html)
-  - [iso](https://defelement.com/elements/p1-iso-p2.html)
+  - [Lagrange](https://defelement.org/elements/lagrange.html)
+  - [Nédélec first kind](https://defelement.org/elements/nedelec1.html)
+  - [Raviart-Thomas](https://defelement.org/elements/qdiv.html)
+  - [Nédélec second kind](https://defelement.org/elements/scurl.html)
+  - [Brezzi-Douglas-Marini](https://defelement.org/elements/sdiv.html)
+  - [Bubble](https://defelement.org/elements/bubble.html)
+  - [DPC](https://defelement.org/elements/dpc.html)
+  - [Serendipity](https://defelement.org/elements/serendipity.html)
+  - [iso](https://defelement.org/elements/p1-iso-p2.html)
 
 
 ### Prism
@@ -167,7 +168,7 @@ follows:
 
 The following elements are supported on a prism:
 
-  - [Lagrange](https://defelement.com/elements/lagrange.html)
+  - [Lagrange](https://defelement.org/elements/lagrange.html)
 
 
 ### Pyramid
@@ -179,4 +180,4 @@ follows:
 
 The following elements are supported on a pyramid:
 
-  - [Lagrange](https://defelement.com/elements/lagrange.html)
+  - [Lagrange](https://defelement.org/elements/lagrange.html)

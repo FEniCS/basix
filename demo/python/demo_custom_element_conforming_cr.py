@@ -20,7 +20,7 @@ from basix import CellType, LatticeType, MapType, PolynomialType, PolysetType, S
 # We begin by implementing this element on a triangle. The following function
 # implements this element for an arbitrary degree. Details of the definition of
 # this element can be found at
-# https://defelement.com/elements/conforming-crouzeix-raviart.html.
+# https://defelement.org/elements/conforming-crouzeix-raviart.html.
 #
 # As the input to this function, we use the degree of the element as shown on
 # DefElement. For most degrees, the highest degree polynomial in this elements

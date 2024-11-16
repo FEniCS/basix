@@ -1,4 +1,4 @@
-// Copyright (c) 2020 Chris Richardson & Matthew Scroggs
+// Copyright (c) 2020-2024 Chris Richardson, Matthew Scroggs and Garth N. Wells
 // FEniCS Project
 // SPDX-License-Identifier:    MIT
 
@@ -13,10 +13,10 @@
 #include <span>
 #include <tuple>
 
-#include <iostream>
-
 using namespace basix;
 
+namespace
+{
 namespace stdex
     = MDSPAN_IMPL_STANDARD_NAMESPACE::MDSPAN_IMPL_PROPOSED_NAMESPACE;
 template <typename T, std::size_t d>
@@ -34,17 +34,13 @@ using map_data_t
 template <typename T>
 using mapinfo_t = std::map<cell::type, std::vector<map_data_t<T>>>;
 
-namespace
-{
 //-----------------------------------------------------------------------------
 int find_first_subentity(cell::type cell_type, cell::type entity_type)
 {
   const int edim = cell::topological_dimension(entity_type);
   std::vector<cell::type> entities = cell::subentity_types(cell_type)[edim];
   if (auto it = std::ranges::find(entities, entity_type); it != entities.end())
-  {
     return std::distance(entities.begin(), it);
-  }
   else
     throw std::runtime_error("Entity not found");
 }
@@ -373,13 +369,12 @@ mapinfo_t<T> get_mapinfo(cell::type cell_type)
 //-----------------------------------------------------------------------------
 template <std::floating_point T>
 std::pair<std::vector<T>, std::array<std::size_t, 2>> compute_transformation(
-    cell::type cell_type,
-    const std::array<std::vector<mdspan_t<const T, 2>>, 4>& x,
-    const std::array<std::vector<mdspan_t<const T, 4>>, 4>& M,
+    cell::type cell_type, std::array<std::vector<mdspan_t<const T, 2>>, 4> x,
+    std::array<std::vector<mdspan_t<const T, 4>>, 4> M,
     mdspan_t<const T, 2> coeffs, const mdarray_t<T, 2>& J, T detJ,
     const mdarray_t<T, 2>& K,
-    const std::function<std::array<T, 3>(std::span<const T>)> map_point,
-    int degree, int tdim, int entity, std::size_t vs, const maps::type map_type,
+    std::function<std::array<T, 3>(std::span<const T>)> map_point, int degree,
+    int tdim, int entity, std::size_t vs, const maps::type map_type,
     const polyset::type ptype)
 {
   if (x[tdim].size() == 0 or x[tdim][entity].extent(0) == 0)
@@ -431,34 +426,17 @@ std::pair<std::vector<T>, std::array<std::size_t, 2>> compute_transformation(
                          polyset_vals.extent(0));
   for (std::size_t j = 0; j < vs; ++j)
   {
-    // std::fill(result_b.begin(), result_b.end(), 0);
-
     for (std::size_t k0 = 0; k0 < coeffs.extent(0); ++k0)
       for (std::size_t k2 = 0; k2 < polyset_vals.extent(0); ++k2)
         _coeffs(k0, k2) = coeffs(k0, k2 + psize * j);
 
-    // R^T = coeffs * polyset_vals
-    // for (std::size_t k0 = 0; k0 < coeffs.extent(0); ++k0) // big
-    //   for (std::size_t k1 = 0; k1 < polyset_vals.extent(1); ++k1)
-    //     for (std::size_t k2 = 0; k2 < polyset_vals.extent(0); ++k2) // big
-    //       result(k1, k0) += _coeffs(k0, k2) * polyset_vals(k2, k1);
-    // result(k1, k0) += coeffs(k0, k2 + psize * j) * polyset_vals(k2, k1);
-
     // r^t: coeffs.extent(0) x polyset_vals.extent(1) [k0, k1]
     // c: coeffs.extent(1) x polyset_vals.extent(0)   [k0, k2]
     // p: polyset_vals.extent(0) x polyset_vals.extent(1)  [k2, k1]
-
     math::dot(_coeffs, polyset_vals, result);
-
-    // std::cout << "4: transform" << std::endl;
-
     for (std::size_t k0 = 0; k0 < result.extent(1); ++k0)
       for (std::size_t k1 = 0; k1 < result.extent(0); ++k1)
         tabulated_data(k0, k1, j) = result(k1, k0);
-
-    // for (std::size_t k0 = 0; k0 < result.extent(0); ++k0)
-    //   for (std::size_t k1 = 0; k1 < result.extent(1); ++k1)
-    //     tabulated_data(k0, k1, j) = result(k0, k1);
   }
 
   // push forward
@@ -471,11 +449,9 @@ std::pair<std::vector<T>, std::array<std::size_t, 2>> compute_transformation(
           tabulated_data_b.data()
               + i * tabulated_data.extent(1) * tabulated_data.extent(2),
           tabulated_data.extent(1), tabulated_data.extent(2));
-
       push_forward(map_type,
                    mdspan_t<T, 2>(temp_data.data(), temp_data.extents()), tab,
                    J, detJ, K);
-
       for (std::size_t k0 = 0; k0 < temp_data.extent(0); ++k0)
         for (std::size_t k1 = 0; k1 < temp_data.extent(1); ++k1)
           pushed_data(i, k0, k1) = temp_data(k0, k1);
@@ -529,14 +505,16 @@ template <std::floating_point T>
 std::map<cell::type, std::pair<std::vector<T>, std::array<std::size_t, 3>>>
 doftransforms::compute_entity_transformations(
     cell::type cell_type,
-    const std::array<
+    std::array<
         std::vector<MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<
             const T, MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 2>>>,
-        4>& x,
-    const std::array<
+        4>
+        x,
+    std::array<
         std::vector<MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<
             const T, MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 4>>>,
-        4>& M,
+        4>
+        M,
     MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<
         const T, MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 2>>
         coeffs,
@@ -550,7 +528,6 @@ doftransforms::compute_entity_transformations(
     const int tdim = cell::topological_dimension(entity_type);
     const int entity = find_first_subentity(cell_type, entity_type);
     std::size_t ndofs = M[tdim].size() == 0 ? 0 : M[tdim][entity].extent(0);
-
     std::vector<T> transform;
     transform.reserve(emap_data.size() * ndofs * ndofs);
     for (auto& [mapfn, J, detJ, K] : emap_data)
@@ -574,14 +551,14 @@ template std::map<cell::type,
                   std::pair<std::vector<float>, std::array<std::size_t, 3>>>
 doftransforms::compute_entity_transformations(
     cell::type,
-    const std::array<std::vector<MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<
-                         const float, MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<
-                                          std::size_t, 2>>>,
-                     4>&,
-    const std::array<std::vector<MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<
-                         const float, MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<
-                                          std::size_t, 4>>>,
-                     4>&,
+    std::array<std::vector<MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<
+                   const float,
+                   MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 2>>>,
+               4>,
+    std::array<std::vector<MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<
+                   const float,
+                   MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 4>>>,
+               4>,
     MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<
         const float, MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 2>>,
     int, std::size_t, maps::type, polyset::type);
@@ -590,14 +567,14 @@ template std::map<cell::type,
                   std::pair<std::vector<double>, std::array<std::size_t, 3>>>
 doftransforms::compute_entity_transformations(
     cell::type,
-    const std::array<std::vector<MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<
-                         const double, MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<
-                                           std::size_t, 2>>>,
-                     4>&,
-    const std::array<std::vector<MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<
-                         const double, MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<
-                                           std::size_t, 4>>>,
-                     4>&,
+    std::array<std::vector<MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<
+                   const double,
+                   MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 2>>>,
+               4>,
+    std::array<std::vector<MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<
+                   const double,
+                   MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 4>>>,
+               4>,
     MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<
         const double, MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 2>>,
     int, std::size_t, maps::type, polyset::type);

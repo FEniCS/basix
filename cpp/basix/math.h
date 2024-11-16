@@ -1,4 +1,4 @@
-// Copyright (C) 2021 Igor Baratta
+// Copyright (C) 2021-2024 Igor Baratta and Garth N. Wells
 //
 // This file is part of DOLFINx (https://www.fenicsproject.org)
 //
@@ -6,6 +6,7 @@
 
 #pragma once
 
+#include "mdspan.hpp"
 #include <algorithm>
 #include <array>
 #include <cmath>
@@ -15,8 +16,6 @@
 #include <string>
 #include <utility>
 #include <vector>
-
-#include "mdspan.hpp"
 
 extern "C"
 {
@@ -45,15 +44,15 @@ extern "C"
 
 /// @brief Mathematical functions.
 ///
-/// @note The functions in this namespace are designed to be called
-/// multiple times at runtime, so their performance is critical.
+/// @note Functions in this namespace are designed to be called multiple
+/// times at runtime, so their performance is critical.
 namespace basix::math
 {
 namespace impl
 {
 /// @brief Compute C = alpha A * B  + \beta C using BLAS (GEMM).
-/// @param[in] A Input matrix
-/// @param[in] B Input matrix
+/// @param[in] A Input matrix.
+/// @param[in] B Input matrix.
 /// @param[in] alpha
 /// @param[in] beta
 template <std::floating_point T>
@@ -89,8 +88,8 @@ void dot_blas(std::span<const T> A, std::array<std::size_t, 2> Ashape,
 } // namespace impl
 
 /// @brief Compute the outer product of vectors u and v.
-/// @param u The first vector
-/// @param v The second vector
+/// @param u The first vector.
+/// @param v The second vector.
 /// @return The outer product. The type will be the same as `u`.
 template <typename U, typename V>
 std::pair<std::vector<typename U::value_type>, std::array<std::size_t, 2>>
@@ -103,7 +102,7 @@ outer(const U& u, const V& v)
   return {std::move(result), {u.size(), v.size()}};
 }
 
-/// Compute the cross product u x v
+/// @brief Compute the cross product u x v.
 /// @param u The first vector. It must has size 3.
 /// @param v The second vector. It must has size 3.
 /// @return The cross product `u x v`. The type will be the same as `u`.
@@ -116,12 +115,13 @@ std::array<typename U::value_type, 3> cross(const U& u, const V& v)
           u[0] * v[1] - u[1] * v[0]};
 }
 
-/// Compute the eigenvalues and eigenvectors of a square Hermitian matrix A
-/// @param[in] A Input matrix, row-major storage
-/// @param[in] n Number of rows
+/// @brief Compute the eigenvalues and eigenvectors of a square
+/// Hermitian matrix A.
+/// @param[in] A Input matrix, row-major storage.
+/// @param[in] n Number of rows.
 /// @return Eigenvalues (0) and eigenvectors (1). The eigenvector array
 /// uses column-major storage, which each column being an eigenvector.
-/// @pre The matrix `A` must be symmetric
+/// @pre The matrix `A` must be symmetric.
 template <std::floating_point T>
 std::pair<std::vector<T>, std::vector<T>> eigh(std::span<const T> A,
                                                std::size_t n)
@@ -179,9 +179,9 @@ std::pair<std::vector<T>, std::vector<T>> eigh(std::span<const T> A,
 }
 
 /// @brief Solve A X = B.
-/// @param[in] A The matrix
-/// @param[in] B Right-hand side matrix/vector
-/// @return A^{-1} B
+/// @param[in] A The matrix.
+/// @param[in] B Right-hand side matrix/vector.@brief
+/// @return A^{-1} B.
 template <std::floating_point T>
 std::vector<T>
 solve(MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<
@@ -209,6 +209,7 @@ solve(MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<
   int nrhs = _B.extent(1);
   int lda = _A.extent(0);
   int ldb = _B.extent(0);
+
   // Pivot indices that define the permutation matrix for the LU solver
   std::vector<int> piv(N);
   int info;
@@ -231,9 +232,9 @@ solve(MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<
   return rb;
 }
 
-/// @brief Check if A is a singular matrix,
-/// @param[in] A The matrix
-/// @return A bool indicating if the matrix is singular
+/// @brief Check if A is a singular matrix.
+/// @param[in] A The matrix.
+/// @return A bool indicating if the matrix is singular.
 template <std::floating_point T>
 bool is_singular(
     MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<
@@ -277,9 +278,9 @@ bool is_singular(
 
 /// @brief Compute the LU decomposition of the transpose of a square
 /// matrix A.
-/// @param[in,out] A The matrix
+/// @param[in,out] A The matrix.
 /// @return The LU permutation, in prepared format (see
-/// precompute::prepare_permutation)
+/// precompute::prepare_permutation).
 template <std::floating_point T>
 std::vector<std::size_t>
 transpose_lu(std::pair<std::vector<T>, std::array<std::size_t, 2>>& A)
@@ -326,7 +327,7 @@ void dot(const U& A, const V& B, W&& C,
   assert(A.extent(1) == B.extent(0));
   assert(C.extent(0) == A.extent(0));
   assert(C.extent(1) == B.extent(1));
-  if (A.extent(0) * B.extent(1) * A.extent(1) < 512)
+  if (A.extent(0) * B.extent(1) * A.extent(1) < 256)
   {
     for (std::size_t i = 0; i < A.extent(0); ++i)
     {
@@ -336,7 +337,7 @@ void dot(const U& A, const V& B, W&& C,
         C(i, j) = 0;
         T& _C = C(i, j);
         for (std::size_t k = 0; k < A.extent(1); ++k)
-          _C += alpha * A(i, k) * B(k, j);
+          _C += A(i, k) * B(k, j);
         _C = alpha * _C + beta * C0;
       }
     }
@@ -359,8 +360,8 @@ void dot(const U& A, const V& B, W&& C,
 }
 
 /// @brief Build an identity matrix.
-/// @param[in] n The number of rows/columns
-/// @return Identity matrix using row-major storage
+/// @param[in] n The number of rows/columns.
+/// @return Identity matrix using row-major storage.
 template <std::floating_point T>
 std::vector<T> eye(std::size_t n)
 {
@@ -376,7 +377,7 @@ std::vector<T> eye(std::size_t n)
 }
 
 /// @brief Orthogonalise the rows of a matrix (in place).
-/// @param[in] wcoeffs The matrix
+/// @param[in] wcoeffs The matrix.
 /// @param[in] start The row to start from. The rows before this should
 /// already be orthogonal.
 template <std::floating_point T>

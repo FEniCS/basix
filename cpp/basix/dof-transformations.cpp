@@ -94,11 +94,11 @@ mapinfo_t<T> get_mapinfo(cell::type cell_type)
   {
     mapinfo_t<T> mapinfo;
     auto& data = mapinfo.try_emplace(cell::type::interval).first->second;
-    auto map = [](auto pt) -> std::array<T, 3> { return {pt[1], pt[0], 0.0}; };
+    auto map = [](auto pt) -> std::array<T, 3> { return {pt[1], pt[0], 0}; };
     stdex::mdarray<T, stdex::extents<std::size_t, 2, 2>> J(
         stdex::extents<std::size_t, 2, 2>{}, {0., 1., 1., 0.});
 
-    T detJ = -1.0;
+    T detJ = -1;
     stdex::mdarray<T, stdex::extents<std::size_t, 2, 2>> K(
         stdex::extents<std::size_t, 2, 2>{}, {0., 1., 1., 0.});
     data.push_back(std::tuple(map, J, detJ, K));
@@ -485,23 +485,41 @@ std::pair<std::vector<T>, std::array<std::size_t, 2>> compute_transformation(
   // Interpolate to calculate coefficients
   std::vector<T> transformb(ndofs * ndofs);
   mdspan_t<T, 2> transform(transformb.data(), ndofs, ndofs);
-  for (std::size_t d = 0; d < imat.extent(3); ++d)
+
+  std::vector<T> imat_b(transform.extent(1) * imat.extent(2));
+  mdspan_t<T, 2> imat_id(imat_b.data(), transform.extent(1), imat.extent(2));
+
+  std::vector<T> pushed_datai_b(imat.extent(2) * transform.extent(0));
+  mdspan_t<T, 2> pushed_data_i(pushed_datai_b.data(), imat.extent(2),
+                               transform.extent(0));
+
+  std::vector<T> transformT_b(transform.extent(1) * transform.extent(0));
+  mdspan_t<T, 2> transformT(transformT_b.data(), transform.extent(1),
+                            transform.extent(0));
+  for (std::size_t i = 0; i < vs; ++i)
   {
-    for (std::size_t i = 0; i < vs; ++i)
+    // Pack pushed_data
+    for (std::size_t k2 = 0; k2 < imat.extent(2); ++k2)
+      for (std::size_t k1 = 0; k1 < transform.extent(0); ++k1)
+        pushed_data_i(k2, k1) = pushed_data(k2, k1 + dofstart, i);
+
+    for (std::size_t d = 0; d < imat.extent(3); ++d)
     {
+      // Pack imat
       for (std::size_t k0 = 0; k0 < transform.extent(1); ++k0)
-      {
-        for (std::size_t k1 = 0; k1 < transform.extent(0); ++k1)
-        {
-          for (std::size_t k2 = 0; k2 < imat.extent(2); ++k2)
-          {
-            transform(k1, k0)
-                += imat(k0, i, k2, d) * pushed_data(k2, k1 + dofstart, i);
-          }
-        }
-      }
+        for (std::size_t k2 = 0; k2 < imat.extent(2); ++k2)
+          imat_id(k0, k2) = imat(k0, i, k2, d);
+
+      // transformT_(k0, k1) = imat_id_(k0, k2) pushed_data_i(k2, k1) +
+      // transformT_(k0, k1)
+      math::dot(imat_id, pushed_data_i, transformT, 1, 1);
     }
   }
+
+  // Transpose 'transformT' -> 'transform'
+  for (std::size_t k0 = 0; k0 < transform.extent(1); ++k0)
+    for (std::size_t k1 = 0; k1 < transform.extent(0); ++k1)
+      transform(k1, k0) = transformT(k0, k1);
 
   return {std::move(transformb), {transform.extent(0), transform.extent(1)}};
 }

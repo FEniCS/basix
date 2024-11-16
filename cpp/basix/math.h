@@ -51,14 +51,15 @@ namespace basix::math
 {
 namespace impl
 {
-/// @brief Compute C = A * B using BLAS.
+/// @brief Compute C = alpha A * B  + \beta C using BLAS (GEMM).
 /// @param[in] A Input matrix
 /// @param[in] B Input matrix
-/// @return A * B
+/// @param[in] alpha
+/// @param[in] beta
 template <std::floating_point T>
 void dot_blas(std::span<const T> A, std::array<std::size_t, 2> Ashape,
               std::span<const T> B, std::array<std::size_t, 2> Bshape,
-              std::span<T> C)
+              std::span<T> C, T alpha = 1, T beta = 0)
 {
   static_assert(std::is_same_v<T, float> or std::is_same_v<T, double>);
 
@@ -69,8 +70,6 @@ void dot_blas(std::span<const T> A, std::array<std::size_t, 2> Ashape,
   int N = Bshape[1];
   int K = Ashape[1];
 
-  T alpha = 1;
-  T beta = 0;
   int lda = K;
   int ldb = N;
   int ldc = N;
@@ -310,42 +309,52 @@ transpose_lu(std::pair<std::vector<T>, std::array<std::size_t, 2>>& A)
   return perm;
 }
 
-/// @brief Compute C = A * B.
+/// @brief Compute C = \alpha A * B + \beta C
 /// @param[in] A Input matrix
 /// @param[in] B Input matrix
 /// @param[out] C Output matrix. Must be sized correctly before calling
 /// this function.
+/// @param[in] alpha
+/// @param[in] beta
 template <typename U, typename V, typename W>
-void dot(const U& A, const V& B, W&& C)
+void dot(const U& A, const V& B, W&& C,
+         typename std::decay_t<U>::value_type alpha = 1,
+         typename std::decay_t<U>::value_type beta = 0)
 {
+  using T = typename std::decay_t<U>::value_type;
+
   assert(A.extent(1) == B.extent(0));
   assert(C.extent(0) == A.extent(0));
   assert(C.extent(1) == B.extent(1));
   if (A.extent(0) * B.extent(1) * A.extent(1) < 512)
   {
-    std::fill_n(C.data_handle(), C.extent(0) * C.extent(1), 0);
     for (std::size_t i = 0; i < A.extent(0); ++i)
+    {
       for (std::size_t j = 0; j < B.extent(1); ++j)
+      {
+        T C0 = C(i, j);
+        C(i, j) = 0;
+        T& _C = C(i, j);
         for (std::size_t k = 0; k < A.extent(1); ++k)
-          C(i, j) += A(i, k) * B(k, j);
+          _C += alpha * A(i, k) * B(k, j);
+        _C = alpha * _C + beta * C0;
+      }
+    }
   }
   else
   {
-#ifndef _MSVC_LANG
     static_assert(std::is_same_v<typename std::decay_t<U>::layout_type,
                                  MDSPAN_IMPL_STANDARD_NAMESPACE::layout_right>);
     static_assert(std::is_same_v<typename std::decay_t<V>::layout_type,
                                  MDSPAN_IMPL_STANDARD_NAMESPACE::layout_right>);
     static_assert(std::is_same_v<typename std::decay_t<W>::layout_type,
                                  MDSPAN_IMPL_STANDARD_NAMESPACE::layout_right>);
-#endif
-    using T = typename std::decay_t<U>::value_type;
     static_assert(std::is_same_v<typename std::decay_t<V>::value_type, T>);
     static_assert(std::is_same_v<typename std::decay_t<W>::value_type, T>);
     impl::dot_blas<T>(
         std::span(A.data_handle(), A.size()), {A.extent(0), A.extent(1)},
         std::span(B.data_handle(), B.size()), {B.extent(0), B.extent(1)},
-        std::span(C.data_handle(), C.size()));
+        std::span(C.data_handle(), C.size()), alpha, beta);
   }
 }
 
@@ -386,8 +395,8 @@ void orthogonalise(
     norm = std::sqrt(norm);
     if (norm < 2 * std::numeric_limits<T>::epsilon())
     {
-      throw std::runtime_error(
-          "Cannot orthogonalise the rows of a matrix with incomplete row rank");
+      throw std::runtime_error("Cannot orthogonalise the rows of a matrix "
+                               "with incomplete row rank");
     }
 
     for (std::size_t k = 0; k < wcoeffs.extent(1); ++k)

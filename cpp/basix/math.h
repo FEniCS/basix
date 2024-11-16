@@ -331,12 +331,14 @@ void dot(const U& A, const V& B, W&& C)
   }
   else
   {
+    // #if defined(_MSC_VER) && !defined(__clang__)
     static_assert(std::is_same_v<typename std::decay_t<U>::layout_type,
-                                 std::layout_right>);
+                                 MDSPAN_IMPL_STANDARD_NAMESPACE::layout_left>);
     static_assert(std::is_same_v<typename std::decay_t<V>::layout_type,
-                                 std::layout_right>);
+                                 MDSPAN_IMPL_STANDARD_NAMESPACE::layout_left>);
     static_assert(std::is_same_v<typename std::decay_t<W>::layout_type,
-                                 std::layout_right>);
+                                 MDSPAN_IMPL_STANDARD_NAMESPACE::layout_left>);
+    // #endif
 
     // static_assert(std::is_same_v<typename U::layout_type,
     // std::layout_right>); static_assert(std::is_same_v<typename

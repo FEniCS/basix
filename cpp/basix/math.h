@@ -331,7 +331,7 @@ void dot(const U& A, const V& B, W&& C)
   }
   else
   {
-#if defined(_MSC_VER) && !defined(__clang__)
+#ifndef _MSVC_LANG
     static_assert(std::is_same_v<typename std::decay_t<U>::layout_type,
                                  MDSPAN_IMPL_STANDARD_NAMESPACE::layout_right>);
     static_assert(std::is_same_v<typename std::decay_t<V>::layout_type,

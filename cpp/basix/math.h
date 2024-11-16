@@ -50,7 +50,7 @@ namespace basix::math
 {
 namespace impl
 {
-/// @brief Compute C = alpha A * B  + \beta C using BLAS (GEMM).
+/// @brief Compute C = alpha A * B  + beta C using BLAS (GEMM).
 /// @param[in] A Input matrix.
 /// @param[in] B Input matrix.
 /// @param[in] alpha
@@ -310,7 +310,7 @@ transpose_lu(std::pair<std::vector<T>, std::array<std::size_t, 2>>& A)
   return perm;
 }
 
-/// @brief Compute C = \alpha A * B + \beta C
+/// @brief Compute C = alpha A * B + beta C
 /// @param[in] A Input matrix
 /// @param[in] B Input matrix
 /// @param[out] C Output matrix. Must be sized correctly before calling

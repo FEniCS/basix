@@ -6,6 +6,7 @@
 
 #pragma once
 
+#include <algorithm>
 #include <array>
 #include <cmath>
 #include <concepts>
@@ -330,13 +331,22 @@ void dot(const U& A, const V& B, W&& C)
   }
   else
   {
-    static_assert(std::is_same_v<typename U::layout_type, std::layout_right>);
-    static_assert(std::is_same_v<typename V::layout_type, std::layout_right>);
-    // static_assert(
+    static_assert(std::is_same_v<typename std::decay_t<U>::layout_type,
+                                 std::layout_right>);
+    static_assert(std::is_same_v<typename std::decay_t<V>::layout_type,
+                                 std::layout_right>);
+    static_assert(std::is_same_v<typename std::decay_t<W>::layout_type,
+                                 std::layout_right>);
+
+    // static_assert(std::is_same_v<typename U::layout_type,
+    // std::layout_right>); static_assert(std::is_same_v<typename
+    // V::layout_type, std::layout_right>); static_assert(
     //     std::is_same_v<typename std::remove_cv<typename W::layout_type>,
     //                    std::layout_right>);
 
     using T = typename std::decay_t<U>::value_type;
+    // static_assert(std::is_same_v<typename std::decay_t<V>::value_type, T>);
+    // static_assert(std::is_same_v<typename std::decay_t<W>::value_type, T>);
     impl::dot_blas<T>(
         std::span(A.data_handle(), A.size()), {A.extent(0), A.extent(1)},
         std::span(B.data_handle(), B.size()), {B.extent(0), B.extent(1)},

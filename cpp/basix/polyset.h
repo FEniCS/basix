@@ -203,7 +203,6 @@ tabulate(cell::type celltype, polyset::type ptype, int d, int n,
 /// @param[in,out] P Polynomial sets, for each derivative, tabulated at
 /// points. The shape is `(number of derivatives computed, number of
 /// points, basis index)`.
-///
 /// - The first index is the derivative. The first entry is the basis
 /// itself. Derivatives are stored in triangular (2D) or tetrahedral
 /// (3D) ordering, eg if `(p, q)` denotes `p` order derivative with
@@ -212,10 +211,8 @@ tabulate(cell::type celltype, polyset::type ptype, int d, int n,
 /// [5] -> (0, 2), [6] -> (3, 0),...
 /// The function basix::indexing::idx maps tuples `(p, q, r)` to the array
 /// index.
-///
 /// - The second index is the point, with index `i` corresponding to the
 /// point in row `i` of `x`.
-///
 /// - The third index is the basis function index.
 /// @todo Does the order for the third index need to be documented?
 /// @param[in] celltype Cell type

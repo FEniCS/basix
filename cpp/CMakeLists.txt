@@ -125,8 +125,8 @@ endif()
 # TODO: This if can be removed once all platforms have CMake 3.21.
 if (WIN32)
   if (INSTALL_RUNTIME_DEPENDENCIES)
-    LIST(APPEND PRE_EXCLUDE_REGEXES "api-ms-.+")
-    LIST(APPEND PRE_EXCLUDE_REGEXES "ext-ms-.+")
+    LIST(APPEND PRE_EXCLUDE_REGEXES "api-ms-")
+    LIST(APPEND PRE_EXCLUDE_REGEXES "ext-ms-")
     install(RUNTIME_DEPENDENCY_SET dependencies DESTINATION ${CMAKE_INSTALL_BINDIR} PRE_EXCLUDE_REGEXES ${PRE_EXCLUDE_REGEXES} POST_EXCLUDE_REGEXES ".*system32/.*\\.dll" )
   endif()
   install(TARGETS basix

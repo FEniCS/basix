@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.21...3.30)
+cmake_minimum_required(VERSION 3.21)
 
 # Set the version
 project(Basix VERSION "0.10.0.0" LANGUAGES CXX)

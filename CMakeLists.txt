@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.21...3.30)
+cmake_minimum_required(VERSION 3.21)
 
 project(BasixFull VERSION "0.10.0.0" LANGUAGES CXX)
 set(BASIX_FULL_SKBUILD TRUE)

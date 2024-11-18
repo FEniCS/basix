@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.21)
+cmake_minimum_required(VERSION 3.21...3.30)
 
 # Set the version
 project(Basix VERSION "0.10.0.0" LANGUAGES CXX)
@@ -121,10 +121,7 @@ if (MSVC)
     target_compile_definitions(basix PUBLIC _USE_MATH_DEFINES)
 endif()
 
-
-# TODO: This if can be removed once all platforms have CMake 3.21.
-if (WIN32)
-  install(TARGETS basix
+install(TARGETS basix
   EXPORT BasixTargets
   RUNTIME_DEPENDENCY_SET dependencies
   PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
@@ -132,21 +129,10 @@ if (WIN32)
   RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT RuntimeExecutables
   LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT RuntimeLibraries
   ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Development
-  )
-  if (INSTALL_RUNTIME_DEPENDENCIES)
-    LIST(APPEND PRE_EXCLUDE_REGEXES "api-ms-.*")
-    LIST(APPEND PRE_EXCLUDE_REGEXES "ext-ms-.*")
-    install(RUNTIME_DEPENDENCY_SET dependencies DESTINATION ${CMAKE_INSTALL_BINDIR} PRE_EXCLUDE_REGEXES ${PRE_EXCLUDE_REGEXES} POST_EXCLUDE_REGEXES ".*system32/.*\\.dll" )
-  endif()
-else()
-  install(TARGETS basix
-  EXPORT BasixTargets
-  PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
-  PRIVATE_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/basix
-  RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT RuntimeExecutables
-  LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT RuntimeLibraries
-  ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Development
-  )
+)
+if (INSTALL_RUNTIME_DEPENDENCIES AND WIN32)
+  # https://discourse.cmake.org/t/migration-experiences-comparison-runtime-dependency-set-vs-fixup-bundle-bundleutilities
+  install(RUNTIME_DEPENDENCY_SET dependencies DESTINATION ${CMAKE_INSTALL_BINDIR} PRE_EXCLUDE_REGEXES [[api-ms-win-.*]] [[ext-ms-.*]] POST_EXCLUDE_REGEXES [[.*(\\|/)system32(\\|/).*\.dll]])
 endif()
 
 # Configure CMake helpers

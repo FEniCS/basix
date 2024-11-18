@@ -856,7 +856,7 @@ def test_tet(degree):
         (basix.CellType.tetrahedron, basix.CellType.tetrahedron),
     ],
 )
-@pytest.mark.parametrize("degree", [1, 2, 3, 4])
+@pytest.mark.parametrize("degree", [1, 2, 3, 4, 12])
 def test_lagrange(celltype, degree):
     lagrange = basix.create_element(
         basix.ElementFamily.P, celltype[1], degree, basix.LagrangeVariant.equispaced
@@ -866,7 +866,7 @@ def test_lagrange(celltype, degree):
     assert np.isclose(np.sum(w, axis=1), 1.0).all()
 
 
-@pytest.mark.parametrize("degree", [1, 2, 3, 4])
+@pytest.mark.parametrize("degree", [1, 2, 3, 4, 12])
 def test_dof_transformations_interval(degree):
     lagrange = basix.create_element(
         basix.ElementFamily.P, basix.CellType.interval, degree, basix.LagrangeVariant.equispaced
@@ -947,6 +947,31 @@ def test_dof_transformations_tetrahedron(degree):
             else:
                 actual[j, j] = 1
         assert np.allclose(t, actual)
+
+
+@pytest.mark.parametrize(
+    "celltype",
+    [
+        basix.CellType.interval,
+        basix.CellType.triangle,
+        basix.CellType.tetrahedron,
+        basix.CellType.quadrilateral,
+        basix.CellType.hexahedron,
+    ],
+)
+@pytest.mark.parametrize(
+    "dtype",
+    [
+        np.float32,
+        np.float64,
+    ],
+)
+def test_lagrange_transform(celltype, dtype):
+    for p in range(1, 12):
+        e = basix.create_element(
+            basix.ElementFamily.P, celltype, p, basix.LagrangeVariant.gll_warped, dtype=dtype
+        )
+        assert e.dof_transformations_are_permutations
 
 
 @pytest.mark.parametrize("degree", [1, 2, 3, 4])

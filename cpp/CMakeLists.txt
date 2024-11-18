@@ -58,7 +58,7 @@ set(HEADERS_basix
   ${CMAKE_CURRENT_SOURCE_DIR}/basix/moments.h
   ${CMAKE_CURRENT_SOURCE_DIR}/basix/polynomials.h
   ${CMAKE_CURRENT_SOURCE_DIR}/basix/polyset.h
-
+  ${CMAKE_CURRENT_SOURCE_DIR}/basix/precompute.h
   ${CMAKE_CURRENT_SOURCE_DIR}/basix/quadrature.h
   ${CMAKE_CURRENT_SOURCE_DIR}/basix/sobolev-spaces.h
   ${CMAKE_CURRENT_SOURCE_DIR}/basix/e-lagrange.h

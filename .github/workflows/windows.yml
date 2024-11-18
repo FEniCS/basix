@@ -73,6 +73,9 @@ jobs:
         with:
           python-version: "3.12"
 
+      - name: CMake version
+        run: cmake --version
+
       - name: Install Basix (C++)
         run: |
           cd cpp

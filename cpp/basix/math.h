@@ -180,7 +180,7 @@ std::pair<std::vector<T>, std::vector<T>> eigh(std::span<const T> A,
 
 /// @brief Solve A X = B.
 /// @param[in] A The matrix.
-/// @param[in] B Right-hand side matrix/vector.@brief
+/// @param[in] B Right-hand side matrix/vector.
 /// @return A^{-1} B.
 template <std::floating_point T>
 std::vector<T>

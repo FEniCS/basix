@@ -131,10 +131,8 @@ install(TARGETS basix
   ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Development
 )
 if (INSTALL_RUNTIME_DEPENDENCIES AND WIN32)
-  LIST(APPEND PRE_EXCLUDE_REGEXES "api-ms-")
-  LIST(APPEND PRE_EXCLUDE_REGEXES "ext-ms-")
-  LIST(APPEND PRE_EXCLUDE_REGEXES "api-ms-win-appmodel-identity-l1-2-0.dll")
-  install(RUNTIME_DEPENDENCY_SET dependencies DESTINATION ${CMAKE_INSTALL_BINDIR} PRE_EXCLUDE_REGEXES ${PRE_EXCLUDE_REGEXES} POST_EXCLUDE_REGEXES ".*system32/.*\\.dll" )
+  # https://discourse.cmake.org/t/migration-experiences-comparison-runtime-dependency-set-vs-fixup-bundle-bundleutilities
+  install(RUNTIME_DEPENDENCY_SET dependencies DESTINATION ${CMAKE_INSTALL_BINDIR} PRE_EXCLUDE_REGEXES ${PRE_EXCLUDE_REGEXES [[api-ms-win-.*]] [[ext-ms-.*]] POST_EXCLUDE_REGEXES [[.*(\\|/)system32(\\|/).*\.dll]])
 endif()
 
 # Configure CMake helpers

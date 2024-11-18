@@ -33,6 +33,10 @@ testpaths = ["test"]
 [tool.scikit-build]
 wheel.packages = ["python/basix"]
 
+[[tool.scikit-build.overrides]]
+if.platform-system = "^win32"
+wheel.cmake = false
+
 [tool.cibuildwheel]
 build = [
     "cp{39,310,311,312}-manylinux_x86_64",

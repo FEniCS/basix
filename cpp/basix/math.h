@@ -1,4 +1,4 @@
-// Copyright (C) 2021 Igor Baratta
+// Copyright (C) 2021-2024 Igor Baratta and Garth N. Wells
 //
 // This file is part of DOLFINx (https://www.fenicsproject.org)
 //
@@ -6,6 +6,8 @@
 
 #pragma once
 
+#include "mdspan.hpp"
+#include <algorithm>
 #include <array>
 #include <cmath>
 #include <concepts>
@@ -14,8 +16,6 @@
 #include <string>
 #include <utility>
 #include <vector>
-
-#include "mdspan.hpp"
 
 extern "C"
 {
@@ -44,20 +44,21 @@ extern "C"
 
 /// @brief Mathematical functions.
 ///
-/// @note The functions in this namespace are designed to be called
-/// multiple times at runtime, so their performance is critical.
+/// @note Functions in this namespace are designed to be called multiple
+/// times at runtime, so their performance is critical.
 namespace basix::math
 {
 namespace impl
 {
-/// @brief Compute C = A * B using BLAS.
-/// @param[in] A Input matrix
-/// @param[in] B Input matrix
-/// @return A * B
+/// @brief Compute C = alpha A * B  + beta C using BLAS (GEMM).
+/// @param[in] A Input matrix.
+/// @param[in] B Input matrix.
+/// @param[in] alpha
+/// @param[in] beta
 template <std::floating_point T>
 void dot_blas(std::span<const T> A, std::array<std::size_t, 2> Ashape,
               std::span<const T> B, std::array<std::size_t, 2> Bshape,
-              std::span<T> C)
+              std::span<T> C, T alpha = 1, T beta = 0)
 {
   static_assert(std::is_same_v<T, float> or std::is_same_v<T, double>);
 
@@ -68,8 +69,6 @@ void dot_blas(std::span<const T> A, std::array<std::size_t, 2> Ashape,
   int N = Bshape[1];
   int K = Ashape[1];
 
-  T alpha = 1;
-  T beta = 0;
   int lda = K;
   int ldb = N;
   int ldc = N;
@@ -89,8 +88,8 @@ void dot_blas(std::span<const T> A, std::array<std::size_t, 2> Ashape,
 } // namespace impl
 
 /// @brief Compute the outer product of vectors u and v.
-/// @param u The first vector
-/// @param v The second vector
+/// @param u The first vector.
+/// @param v The second vector.
 /// @return The outer product. The type will be the same as `u`.
 template <typename U, typename V>
 std::pair<std::vector<typename U::value_type>, std::array<std::size_t, 2>>
@@ -103,7 +102,7 @@ outer(const U& u, const V& v)
   return {std::move(result), {u.size(), v.size()}};
 }
 
-/// Compute the cross product u x v
+/// @brief Compute the cross product u x v.
 /// @param u The first vector. It must has size 3.
 /// @param v The second vector. It must has size 3.
 /// @return The cross product `u x v`. The type will be the same as `u`.
@@ -116,12 +115,13 @@ std::array<typename U::value_type, 3> cross(const U& u, const V& v)
           u[0] * v[1] - u[1] * v[0]};
 }
 
-/// Compute the eigenvalues and eigenvectors of a square Hermitian matrix A
-/// @param[in] A Input matrix, row-major storage
-/// @param[in] n Number of rows
+/// @brief Compute the eigenvalues and eigenvectors of a square
+/// Hermitian matrix A.
+/// @param[in] A Input matrix, row-major storage.
+/// @param[in] n Number of rows.
 /// @return Eigenvalues (0) and eigenvectors (1). The eigenvector array
 /// uses column-major storage, which each column being an eigenvector.
-/// @pre The matrix `A` must be symmetric
+/// @pre The matrix `A` must be symmetric.
 template <std::floating_point T>
 std::pair<std::vector<T>, std::vector<T>> eigh(std::span<const T> A,
                                                std::size_t n)
@@ -179,9 +179,9 @@ std::pair<std::vector<T>, std::vector<T>> eigh(std::span<const T> A,
 }
 
 /// @brief Solve A X = B.
-/// @param[in] A The matrix
-/// @param[in] B Right-hand side matrix/vector
-/// @return A^{-1} B
+/// @param[in] A The matrix.
+/// @param[in] B Right-hand side matrix/vector.
+/// @return A^{-1} B.
 template <std::floating_point T>
 std::vector<T>
 solve(MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<
@@ -209,6 +209,7 @@ solve(MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<
   int nrhs = _B.extent(1);
   int lda = _A.extent(0);
   int ldb = _B.extent(0);
+
   // Pivot indices that define the permutation matrix for the LU solver
   std::vector<int> piv(N);
   int info;
@@ -231,9 +232,9 @@ solve(MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<
   return rb;
 }
 
-/// @brief Check if A is a singular matrix,
-/// @param[in] A The matrix
-/// @return A bool indicating if the matrix is singular
+/// @brief Check if A is a singular matrix.
+/// @param[in] A The matrix.
+/// @return A bool indicating if the matrix is singular.
 template <std::floating_point T>
 bool is_singular(
     MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<
@@ -277,9 +278,9 @@ bool is_singular(
 
 /// @brief Compute the LU decomposition of the transpose of a square
 /// matrix A.
-/// @param[in,out] A The matrix
+/// @param[in,out] A The matrix.
 /// @return The LU permutation, in prepared format (see
-/// precompute::prepare_permutation)
+/// precompute::prepare_permutation).
 template <std::floating_point T>
 std::vector<std::size_t>
 transpose_lu(std::pair<std::vector<T>, std::array<std::size_t, 2>>& A)
@@ -309,38 +310,58 @@ transpose_lu(std::pair<std::vector<T>, std::array<std::size_t, 2>>& A)
   return perm;
 }
 
-/// @brief Compute C = A * B.
+/// @brief Compute C = alpha A * B + beta C
 /// @param[in] A Input matrix
 /// @param[in] B Input matrix
 /// @param[out] C Output matrix. Must be sized correctly before calling
 /// this function.
+/// @param[in] alpha
+/// @param[in] beta
 template <typename U, typename V, typename W>
-void dot(const U& A, const V& B, W&& C)
+void dot(const U& A, const V& B, W&& C,
+         typename std::decay_t<U>::value_type alpha = 1,
+         typename std::decay_t<U>::value_type beta = 0)
 {
+  using T = typename std::decay_t<U>::value_type;
+
   assert(A.extent(1) == B.extent(0));
   assert(C.extent(0) == A.extent(0));
   assert(C.extent(1) == B.extent(1));
-  if (A.extent(0) * B.extent(1) * A.extent(1) < 512)
+  if (A.extent(0) * B.extent(1) * A.extent(1) < 256)
   {
-    std::fill_n(C.data_handle(), C.extent(0) * C.extent(1), 0);
     for (std::size_t i = 0; i < A.extent(0); ++i)
+    {
       for (std::size_t j = 0; j < B.extent(1); ++j)
+      {
+        T C0 = C(i, j);
+        C(i, j) = 0;
+        T& _C = C(i, j);
         for (std::size_t k = 0; k < A.extent(1); ++k)
-          C(i, j) += A(i, k) * B(k, j);
+          _C += A(i, k) * B(k, j);
+        _C = alpha * _C + beta * C0;
+      }
+    }
   }
   else
   {
-    using T = typename std::decay_t<U>::value_type;
+    static_assert(std::is_same_v<typename std::decay_t<U>::layout_type,
+                                 MDSPAN_IMPL_STANDARD_NAMESPACE::layout_right>);
+    static_assert(std::is_same_v<typename std::decay_t<V>::layout_type,
+                                 MDSPAN_IMPL_STANDARD_NAMESPACE::layout_right>);
+    static_assert(std::is_same_v<typename std::decay_t<W>::layout_type,
+                                 MDSPAN_IMPL_STANDARD_NAMESPACE::layout_right>);
+    static_assert(std::is_same_v<typename std::decay_t<V>::value_type, T>);
+    static_assert(std::is_same_v<typename std::decay_t<W>::value_type, T>);
     impl::dot_blas<T>(
         std::span(A.data_handle(), A.size()), {A.extent(0), A.extent(1)},
         std::span(B.data_handle(), B.size()), {B.extent(0), B.extent(1)},
-        std::span(C.data_handle(), C.size()));
+        std::span(C.data_handle(), C.size()), alpha, beta);
   }
 }
 
 /// @brief Build an identity matrix.
-/// @param[in] n The number of rows/columns
-/// @return Identity matrix using row-major storage
+/// @param[in] n The number of rows/columns.
+/// @return Identity matrix using row-major storage.
 template <std::floating_point T>
 std::vector<T> eye(std::size_t n)
 {
@@ -356,7 +377,7 @@ std::vector<T> eye(std::size_t n)
 }
 
 /// @brief Orthogonalise the rows of a matrix (in place).
-/// @param[in] wcoeffs The matrix
+/// @param[in] wcoeffs The matrix.
 /// @param[in] start The row to start from. The rows before this should
 /// already be orthogonal.
 template <std::floating_point T>
@@ -375,8 +396,8 @@ void orthogonalise(
     norm = std::sqrt(norm);
     if (norm < 2 * std::numeric_limits<T>::epsilon())
     {
-      throw std::runtime_error(
-          "Cannot orthogonalise the rows of a matrix with incomplete row rank");
+      throw std::runtime_error("Cannot orthogonalise the rows of a matrix "
+                               "with incomplete row rank");
     }
 
     for (std::size_t k = 0; k < wcoeffs.extent(1); ++k)

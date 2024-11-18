@@ -83,9 +83,6 @@ jobs:
         with:
           cmakeVersion: "~3.30.0"
 
-      - name: CMake version
-        run: cmake --version
-
       - name: Install Basix (C++)
         run: |
           cd cpp

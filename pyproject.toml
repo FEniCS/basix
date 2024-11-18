@@ -35,7 +35,7 @@ wheel.packages = ["python/basix"]
 
 [[tool.scikit-build.overrides]]
 if.platform-system = "^win32"
-wheel.cmake = false
+cmake.version = ""
 
 [tool.cibuildwheel]
 build = [

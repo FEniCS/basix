@@ -23,6 +23,7 @@
 #include <concepts>
 #include <limits>
 #include <numeric>
+
 #define str_macro(X) #X
 #define str(X) str_macro(X)
 
@@ -965,7 +966,7 @@ FiniteElement<F>::FiniteElement(
           rtot += r;
         }
 
-        constexpr F eps = 10.0 * std::numeric_limits<float>::epsilon();
+        const F eps = 10 * degree * degree * std::numeric_limits<F>::epsilon();
         if ((trans.extent(2) != 1 and std::abs(rmin) > eps)
             or std::abs(rmax - 1.0) > eps or std::abs(rtot - 1.0) > eps)
         {
@@ -1436,7 +1437,7 @@ FiniteElement<F>::FiniteElement(
     for (std::size_t col = 0; col < matM.extent(1); ++col)
     {
       F v = col == row ? 1.0 : 0.0;
-      constexpr F eps = 100 * std::numeric_limits<F>::epsilon();
+      const F eps = 10 * degree * degree * std::numeric_limits<F>::epsilon();
       if (std::abs(matM(row, col) - v) > eps)
       {
         _interpolation_is_identity = false;

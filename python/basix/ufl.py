@@ -2237,7 +2237,7 @@ def mixed_element(elements: list[_ElementBase]) -> _ElementBase:
     if len(elements) > 1:
         return _MixedElement(elements)
     else:
-        return elements
+        return elements[0]
 
 
 def quadrature_element(

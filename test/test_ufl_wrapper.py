@@ -99,7 +99,19 @@ def test_enriched_element(elements):
     [
         (basix.ufl.element("Lagrange", basix.CellType.triangle, 2), "H1", basix.SobolevSpace.H1),
         (
+            basix.ufl.mixed_element([basix.ufl.element("Lagrange", basix.CellType.triangle, 2)]),
+            "H1",
+            basix.SobolevSpace.H1,
+        ),
+        (
             basix.ufl.element("Discontinuous Lagrange", basix.CellType.triangle, 0),
+            "L2",
+            basix.SobolevSpace.L2,
+        ),
+        (
+            basix.ufl.mixed_elementelement(
+                [basix.ufl.element("Discontinuous Lagrange", basix.CellType.triangle, 0)]
+            ),
             "L2",
             basix.SobolevSpace.L2,
         ),

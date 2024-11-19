@@ -109,7 +109,7 @@ def test_enriched_element(elements):
             basix.SobolevSpace.L2,
         ),
         (
-            basix.ufl.mixed_elementelement(
+            basix.ufl.mixed_element(
                 [basix.ufl.element("Discontinuous Lagrange", basix.CellType.triangle, 0)]
             ),
             "L2",

@@ -1985,7 +1985,7 @@ def _compute_signature(element: _basix.finite_element.FiniteElement) -> str:
     return signature
 
 
-@functools.singledisptach
+@functools.singledispatch
 def element(
     family: _typing.Union[_basix.ElementFamily, str],
     cell: _typing.Union[_basix.CellType, str],

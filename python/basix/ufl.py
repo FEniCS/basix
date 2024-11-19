@@ -2070,7 +2070,7 @@ def element(
 
 
 @element.register(collections.Sequence)
-def _(elements: list[_ElementBase]) -> _ElementBase:
+def _(elements: _typing.Union[_ElementBase, list[_ElementBase]]) -> _ElementBase:
     """Create a UFL compatible mixed element from a list of elements.
 
     Args:

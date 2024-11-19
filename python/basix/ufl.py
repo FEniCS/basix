@@ -5,12 +5,14 @@
 # SPDX-License-Identifier:    MIT
 """Functions to directly wrap Basix elements in UFL."""
 
+import collections
 import hashlib as _hashlib
 import itertools as _itertools
 import typing as _typing
 from abc import abstractmethod as _abstractmethod
 from abc import abstractproperty as _abstractproperty
 from warnings import warn as _warn
+import functools
 
 import numpy as np
 import numpy.typing as _npt
@@ -1983,6 +1985,7 @@ def _compute_signature(element: _basix.finite_element.FiniteElement) -> str:
     return signature
 
 
+@functools.singledisptach
 def element(
     family: _typing.Union[_basix.ElementFamily, str],
     cell: _typing.Union[_basix.CellType, str],
@@ -2064,6 +2067,22 @@ def element(
         return ufl_e
     else:
         return blocked_element(ufl_e, shape=shape, symmetry=symmetry)
+
+
+@element.register(collections.Sequence)
+def _(elements: list[_ElementBase]) -> _ElementBase:
+    """Create a UFL compatible mixed element from a list of elements.
+
+    Args:
+        elements: List of elements.
+
+    Returns:
+        A mixed finite element.
+    """
+    if len(elements) > 1:
+        return _MixedElement(elements)
+    else:
+        return elements
 
 
 def enriched_element(
@@ -2229,12 +2248,16 @@ def mixed_element(elements: list[_ElementBase]) -> _ElementBase:
     """Create a UFL compatible mixed element from a list of elements.
 
     Args:
-        elements: The list of elements
+        elements: List of elements.
 
     Returns:
         A mixed finite element.
     """
-    return _MixedElement(elements)
+    return element(elements)
+    # if len(elements) > 1:
+    #     return _MixedElement(elements)
+    # else:
+    #     return elements
 
 
 def quadrature_element(

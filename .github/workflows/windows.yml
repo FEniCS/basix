@@ -36,6 +36,11 @@ jobs:
         with:
           python-version: "3.11"
 
+      - name: Set up CMake
+        uses: lukka/get-cmake@latest
+        with:
+          cmakeVersion: "~3.30.0"
+
       - name: Install Basix (combined)
         run: |
           python -m pip -v install --no-cache-dir .[ci] --config-settings=cmake.args=-DINSTALL_RUNTIME_DEPENDENCIES=ON --config-settings=cmake.args=-DCMAKE_TOOLCHAIN_FILE=C:/vcpkg/scripts/buildsystems/vcpkg.cmake
@@ -54,7 +59,7 @@ jobs:
       VCPKG_BINARY_SOURCES: "clear;x-gha,readwrite"
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Insert add_dll_directory calls
         working-directory: python/basix
         run: |
@@ -72,6 +77,11 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"
+
+      - name: Set up CMake
+        uses: lukka/get-cmake@latest
+        with:
+          cmakeVersion: "~3.30.0"
 
       - name: Install Basix (C++)
         run: |

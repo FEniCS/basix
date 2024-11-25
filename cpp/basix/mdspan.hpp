@@ -358,7 +358,13 @@ static_assert(_MDSPAN_CPLUSPLUS >= MDSPAN_CXX_STD_14, "mdspan requires C++14 or 
 
 #ifndef MDSPAN_USE_BRACKET_OPERATOR
 #  if defined(__cpp_multidimensional_subscript)
-#    define MDSPAN_USE_BRACKET_OPERATOR 1
+// The following if/else is necessary to workaround a clang issue
+// relative to using a parameter pack inside a bracket operator in C++2b/C++23 mode
+#    if defined(_MDSPAN_COMPILER_CLANG) && ((__clang_major__ == 15) || (__clang_major__ == 16))
+#      define MDSPAN_USE_BRACKET_OPERATOR 0
+#    else
+#      define MDSPAN_USE_BRACKET_OPERATOR 1
+#    endif
 #  else
 #    define MDSPAN_USE_BRACKET_OPERATOR 0
 #  endif
@@ -1367,6 +1373,8 @@ _MDSPAN_INLINE_VARIABLE constexpr auto dynamic_extent = std::numeric_limits<size
 
 #include <cstddef>
 #include <type_traits>
+#include <array>
+#include <utility>
 
 namespace MDSPAN_IMPL_STANDARD_NAMESPACE {
 namespace detail {
@@ -1429,6 +1437,104 @@ constexpr struct
   }
 } stride;
 
+// same as std::integral_constant but with __host__ __device__ annotations on
+// the implicit conversion function and the call operator
+template <class T, T v>
+struct integral_constant {
+  using value_type         = T;
+  using type               = integral_constant<T, v>;
+
+  static constexpr T value = v;
+
+  MDSPAN_INLINE_FUNCTION_DEFAULTED
+  constexpr integral_constant() = default;
+ 
+  // These interop functions work, because other than the value_type operator
+  // everything of std::integral_constant works on device (defaulted functions)  
+  MDSPAN_FUNCTION
+  constexpr integral_constant(std::integral_constant<T,v>) {};
+  
+  MDSPAN_FUNCTION constexpr operator std::integral_constant<T,v>() const noexcept {
+    return std::integral_constant<T,v>{};
+  }
+
+  MDSPAN_FUNCTION constexpr operator value_type() const noexcept {
+    return value;
+  }
+
+  MDSPAN_FUNCTION constexpr value_type operator()() const noexcept {
+    return value;
+  }
+};
+
+// The tuple implementation only comes in play when using capabilities
+// such as submdspan which require C++17 anyway
+#if MDSPAN_HAS_CXX_17
+template<class T, size_t Idx>
+struct tuple_member {
+  using type = T;
+  static constexpr size_t idx = Idx;
+  T val;
+  MDSPAN_FUNCTION constexpr T& get() { return val; }
+  MDSPAN_FUNCTION constexpr const T& get() const { return val; }
+};
+
+// A helper class which will be used via a fold expression to
+// select the type with the correct Idx in a pack of tuple_member
+template<size_t SearchIdx, size_t Idx, class T>
+struct tuple_idx_matcher {
+  using type = tuple_member<T, Idx>;
+  template<class Other>
+  MDSPAN_FUNCTION
+  constexpr auto operator | (Other v) const {
+    if constexpr (Idx == SearchIdx) { return *this; }
+    else { return v; }
+  }
+};
+
+template<class IdxSeq, class ... Elements>
+struct tuple_impl;
+
+template<size_t ... Idx, class ... Elements>
+struct tuple_impl<std::index_sequence<Idx...>, Elements...>: public tuple_member<Elements, Idx> ... {
+
+  MDSPAN_FUNCTION
+  constexpr tuple_impl(Elements ... vals):tuple_member<Elements, Idx>{vals}... {}
+
+  template<size_t N>
+  MDSPAN_FUNCTION
+  constexpr auto& get() {
+    using base_t = decltype((tuple_idx_matcher<N, Idx, Elements>() | ...) );
+    return base_t::type::get();
+  }
+  template<size_t N>
+  MDSPAN_FUNCTION
+  constexpr const auto& get() const {
+    using base_t = decltype((tuple_idx_matcher<N, Idx, Elements>() | ...) );
+    return base_t::type::get();
+  }
+};
+
+// A simple tuple-like class for representing slices internally and is compatible with device code
+// This doesn't support type access since we don't need it
+// This is not meant as an external API
+template<class ... Elements>
+struct tuple: public tuple_impl<decltype(std::make_index_sequence<sizeof...(Elements)>()), Elements...> {
+  MDSPAN_FUNCTION
+  constexpr tuple(Elements ... vals):tuple_impl<decltype(std::make_index_sequence<sizeof...(Elements)>()), Elements ...>(vals ...) {}
+};
+
+template<size_t Idx, class ... Args>
+MDSPAN_FUNCTION
+constexpr auto& get(tuple<Args...>& vals) { return vals.template get<Idx>(); }
+
+template<size_t Idx, class ... Args>
+MDSPAN_FUNCTION
+constexpr const auto& get(const tuple<Args...>& vals) { return vals.template get<Idx>(); }
+
+template<class ... Elements>
+tuple(Elements ...) -> tuple<Elements...>;
+#endif
 } // namespace detail
 
 constexpr struct mdspan_non_standard_tag {
@@ -2593,28 +2699,22 @@ struct layout_stride {
       }
 
       template<class IntegralType>
-      MDSPAN_INLINE_FUNCTION
       static constexpr const __strides_storage_t fill_strides(const std::array<IntegralType,extents_type::rank()>& s) {
         return __strides_storage_t{static_cast<index_type>(s[Idxs])...};
       }
 
       MDSPAN_TEMPLATE_REQUIRES(
         class IntegralType,
-        // The is_convertible condition is added to make sfinae valid
-        // the extents_type::rank() > 0 is added to avoid use of non-standard zero length c-array
-        (std::is_convertible<IntegralType, typename extents_type::index_type>::value && (extents_type::rank() > 0))
+        (std::is_convertible<IntegralType, typename extents_type::index_type>::value)
       )
       MDSPAN_INLINE_FUNCTION
-      // despite the requirement some compilers still complain about zero length array during parsing
-      // making it length 1 now, but since the thing can't be instantiated due to requirement the actual
-      // instantiation of strides_storage will not fail despite mismatching length
+      // Need to avoid zero length c-array
       static constexpr const __strides_storage_t fill_strides(mdspan_non_standard_tag, const IntegralType (&s)[extents_type::rank()>0?extents_type::rank():1]) {
         return __strides_storage_t{static_cast<index_type>(s[Idxs])...};
       }
 
 #ifdef __cpp_lib_span
       template<class IntegralType>
-      MDSPAN_INLINE_FUNCTION
       static constexpr const __strides_storage_t fill_strides(const std::span<IntegralType,extents_type::rank()>& s) {
         return __strides_storage_t{static_cast<index_type>(s[Idxs])...};
       }
@@ -2638,10 +2738,13 @@ struct layout_stride {
     // Can't use defaulted parameter in the __deduction_workaround template because of a bug in MSVC warning C4348.
     using __impl = __deduction_workaround<std::make_index_sequence<Extents::rank()>>;
 
+    MDSPAN_FUNCTION
     static constexpr __strides_storage_t strides_storage(detail::with_rank<0>) {
       return {};
     }
+
     template <std::size_t N>
+    MDSPAN_FUNCTION
     static constexpr __strides_storage_t strides_storage(detail::with_rank<N>) {
       __strides_storage_t s{};
 
@@ -2669,7 +2772,7 @@ struct layout_stride {
 
     //--------------------------------------------------------------------------------
 
-    MDSPAN_INLINE_FUNCTION_DEFAULTED constexpr mapping() noexcept
+    MDSPAN_INLINE_FUNCTION constexpr mapping() noexcept
 #if defined(_MDSPAN_USE_ATTRIBUTE_NO_UNIQUE_ADDRESS)
       : __members{
 #else
@@ -2695,7 +2798,6 @@ struct layout_stride {
         _MDSPAN_TRAIT(std::is_nothrow_constructible, typename Extents::index_type, const std::remove_const_t<IntegralTypes>&)
       )
     )
-    MDSPAN_INLINE_FUNCTION
     constexpr
     mapping(
       extents_type const& e,
@@ -2729,8 +2831,7 @@ struct layout_stride {
         // MSVC 19.32 does not like using index_type here, requires the typename Extents::index_type
         // error C2641: cannot deduce template arguments for 'MDSPAN_IMPL_STANDARD_NAMESPACE::layout_stride::mapping'
         _MDSPAN_TRAIT(std::is_convertible, const std::remove_const_t<IntegralTypes>&, typename Extents::index_type) &&
-        _MDSPAN_TRAIT(std::is_nothrow_constructible, typename Extents::index_type, const std::remove_const_t<IntegralTypes>&) &&
-        (Extents::rank() > 0)
+        _MDSPAN_TRAIT(std::is_nothrow_constructible, typename Extents::index_type, const std::remove_const_t<IntegralTypes>&)
       )
     )
     MDSPAN_INLINE_FUNCTION
@@ -2738,10 +2839,8 @@ struct layout_stride {
     mapping(
       mdspan_non_standard_tag,
       extents_type const& e,
-      // despite the requirement some compilers still complain about zero length array during parsing
-      // making it length 1 now, but since the thing can't be instantiated due to requirement the actual
-      // instantiation of strides_storage will not fail despite mismatching length
-      IntegralTypes (&s)[extents_type::rank()>0?extents_type::rank():1]
+      // Need to avoid zero-length c-array
+      const IntegralTypes (&s)[extents_type::rank()>0?extents_type::rank():1]
     ) noexcept
 #if defined(_MDSPAN_USE_ATTRIBUTE_NO_UNIQUE_ADDRESS)
       : __members{
@@ -2775,7 +2874,6 @@ struct layout_stride {
         _MDSPAN_TRAIT(std::is_nothrow_constructible, typename Extents::index_type, const std::remove_const_t<IntegralTypes>&)
       )
     )
-    MDSPAN_INLINE_FUNCTION
     constexpr
     mapping(
       extents_type const& e,
@@ -2872,7 +2970,8 @@ struct layout_stride {
     MDSPAN_INLINE_FUNCTION
     constexpr index_type required_span_size() const noexcept {
       index_type span_size = 1;
-      for(unsigned r = 0; r < extents_type::rank(); r++) {
+      // using int here to avoid warning about pointless comparison to 0
+      for(int r = 0; r < static_cast<int>(extents_type::rank()); r++) {
         // Return early if any of the extents are zero
         if(extents().extent(r)==0) return 0;
         span_size += ( static_cast<index_type>(extents().extent(r) - 1 ) * __strides_storage()[r]);
@@ -2905,15 +3004,18 @@ struct layout_stride {
     MDSPAN_INLINE_FUNCTION static constexpr bool is_unique() noexcept { return true; }
 
   private:
+    MDSPAN_INLINE_FUNCTION
     constexpr bool exhaustive_for_nonzero_span_size() const
     {
       return required_span_size() == __get_size(extents(), std::make_index_sequence<extents_type::rank()>());
     }
 
+    MDSPAN_INLINE_FUNCTION
     constexpr bool is_exhaustive_impl(detail::with_rank<0>) const
     {
       return true;
     }
+    MDSPAN_INLINE_FUNCTION
     constexpr bool is_exhaustive_impl(detail::with_rank<1>) const
     {
       if (required_span_size() != static_cast<index_type>(0)) {
@@ -2922,6 +3024,7 @@ struct layout_stride {
       return stride(0) == 1;
     }
     template <std::size_t N>
+    MDSPAN_INLINE_FUNCTION
     constexpr bool is_exhaustive_impl(detail::with_rank<N>) const
     {
       if (required_span_size() != static_cast<index_type>(0)) {
@@ -3023,6 +3126,7 @@ struct layout_stride {
        SliceSpecifiers... slices) const;
 
    template<class... SliceSpecifiers>
+    MDSPAN_INLINE_FUNCTION
      friend constexpr auto submdspan_mapping(
        const mapping& src, SliceSpecifiers... slices) {
       return src.submdspan_mapping_impl(slices...);
@@ -3033,10 +3137,12 @@ struct layout_stride {
 namespace detail {
 
 template <class Layout, class Extents, class Mapping>
+MDSPAN_INLINE_FUNCTION
 constexpr void validate_strides(with_rank<0>, Layout, const Extents&, const Mapping&)
 {}
 
 template <std::size_t N, class Layout, class Extents, class Mapping>
+MDSPAN_INLINE_FUNCTION
 constexpr void validate_strides(with_rank<N>, Layout, const Extents& ext, const Mapping& other)
 {
   static_assert(std::is_same<typename Mapping::layout_type, layout_stride>::value &&
@@ -3148,12 +3254,15 @@ struct is_layout_right_padded_mapping<_Mapping,
 
 
 template <class _LayoutExtentsType, class _PaddedLayoutMappingType>
+MDSPAN_INLINE_FUNCTION
 constexpr void check_padded_layout_converting_constructor_mandates(MDSPAN_IMPL_STANDARD_NAMESPACE::detail::with_rank<0>) {}
 
 template <class _LayoutExtentsType, class _PaddedLayoutMappingType>
+MDSPAN_INLINE_FUNCTION
 constexpr void check_padded_layout_converting_constructor_mandates(MDSPAN_IMPL_STANDARD_NAMESPACE::detail::with_rank<1>) {}
 
 template <class _LayoutExtentsType, class _PaddedLayoutMappingType, std::size_t N>
+MDSPAN_INLINE_FUNCTION
 constexpr void check_padded_layout_converting_constructor_mandates(MDSPAN_IMPL_STANDARD_NAMESPACE::detail::with_rank<N>)
 {
   using extents_type = typename _PaddedLayoutMappingType::extents_type;
@@ -3173,12 +3282,15 @@ constexpr void check_padded_layout_converting_constructor_mandates(MDSPAN_IMPL_S
 }
 
 template <typename _ExtentsType, typename _OtherMapping>
+MDSPAN_INLINE_FUNCTION
 constexpr void check_padded_layout_converting_constructor_preconditions(MDSPAN_IMPL_STANDARD_NAMESPACE::detail::with_rank<0>,
                                                                         const _OtherMapping&) {}
 template <typename _ExtentsType, typename _OtherMapping>
+MDSPAN_INLINE_FUNCTION
 constexpr void check_padded_layout_converting_constructor_preconditions(MDSPAN_IMPL_STANDARD_NAMESPACE::detail::with_rank<1>,
                                                                         const _OtherMapping&) {}
 template <typename _ExtentsType, typename _OtherMapping, std::size_t N>
+MDSPAN_INLINE_FUNCTION
 constexpr void check_padded_layout_converting_constructor_preconditions(MDSPAN_IMPL_STANDARD_NAMESPACE::detail::with_rank<N>,
                                                                         const _OtherMapping &other_mapping) {
   constexpr auto padded_stride_idx =
@@ -3405,10 +3517,12 @@ class layout_right::mapping {
 
     // Not really public, but currently needed to implement fully constexpr useable submdspan:
     template<size_t N, class SizeType, size_t ... E, size_t ... Idx>
+    MDSPAN_INLINE_FUNCTION
     constexpr index_type __get_stride(MDSPAN_IMPL_STANDARD_NAMESPACE::extents<SizeType, E...>,std::integer_sequence<size_t, Idx...>) const {
       return _MDSPAN_FOLD_TIMES_RIGHT((Idx>N? __extents.template __extent<Idx>():1),1);
     }
     template<size_t N>
+    MDSPAN_INLINE_FUNCTION
     constexpr index_type __stride() const noexcept {
       return __get_stride<N>(__extents, std::make_index_sequence<extents_type::rank()>());
     }
@@ -3423,6 +3537,7 @@ private:
        SliceSpecifiers... slices) const;
 
    template<class... SliceSpecifiers>
+     MDSPAN_INLINE_FUNCTION
      friend constexpr auto submdspan_mapping(
        const mapping& src, SliceSpecifiers... slices) {
          return src.submdspan_mapping_impl(slices...);
@@ -4075,10 +4190,12 @@ class layout_left::mapping {
 
     // Not really public, but currently needed to implement fully constexpr useable submdspan:
     template<size_t N, class SizeType, size_t ... E, size_t ... Idx>
+    MDSPAN_INLINE_FUNCTION
     constexpr index_type __get_stride(MDSPAN_IMPL_STANDARD_NAMESPACE::extents<SizeType, E...>,std::integer_sequence<size_t, Idx...>) const {
       return _MDSPAN_FOLD_TIMES_RIGHT((Idx<N? __extents.template __extent<Idx>():1),1);
     }
     template<size_t N>
+    MDSPAN_INLINE_FUNCTION
     constexpr index_type __stride() const noexcept {
       return __get_stride<N>(__extents, std::make_index_sequence<extents_type::rank()>());
     }
@@ -4093,6 +4210,7 @@ private:
        SliceSpecifiers... slices) const;
 
    template<class... SliceSpecifiers>
+     MDSPAN_INLINE_FUNCTION
      friend constexpr auto submdspan_mapping(
        const mapping& src, SliceSpecifiers... slices) {
          return src.submdspan_mapping_impl(slices...);
@@ -4159,7 +4277,7 @@ MDSPAN_INLINE_FUNCTION constexpr size_t get_actual_static_padding_value() {
     return dynamic_extent;
   }
   // Missing return statement warning from NVCC and ICC
-#if defined(__NVCC__) || defined(__INTEL_COMPILER)
+#if (defined(__NVCC__) || defined(__INTEL_COMPILER)) && !defined(__NVCOMPILER)
   return 0;
 #endif
 }
@@ -4194,6 +4312,7 @@ struct padded_extent {
   using static_array_type = typename static_array_type_for_padded_extent<
       padding_value, _Extents, _ExtentToPadIdx, _Extents::rank()>::type;
 
+  MDSPAN_INLINE_FUNCTION
   static constexpr auto static_value() { return static_array_type::static_value(0); }
 
   MDSPAN_INLINE_FUNCTION
@@ -4205,7 +4324,7 @@ struct padded_extent {
       return init_padding(exts, padding_value);
     }
     // Missing return statement warning from NVCC and ICC
-#if defined(__NVCC__) || defined(__INTEL_COMPILER)
+#if (defined(__NVCC__) || defined(__INTEL_COMPILER)) && !defined(__NVCOMPILER)
     return {};
 #endif
   }
@@ -4220,7 +4339,7 @@ struct padded_extent {
       return {};
     }
     // Missing return statement warning from NVCC and ICC
-#if defined(__NVCC__) || defined(__INTEL_COMPILER)
+#if (defined(__NVCC__) || defined(__INTEL_COMPILER)) && !defined(__NVCOMPILER)
     return {};
 #endif
   }
@@ -4235,7 +4354,7 @@ struct padded_extent {
       return {};
     }
     // Missing return statement warning from NVCC and ICC
-#if defined(__NVCC__) || defined(__INTEL_COMPILER)
+#if (defined(__NVCC__) || defined(__INTEL_COMPILER)) && !defined(__NVCOMPILER)
     return {};
 #endif
   }
@@ -4302,8 +4421,8 @@ private:
   }
 
 public:
-#if !MDSPAN_HAS_CXX_20
-  MDSPAN_INLINE_FUNCTION_DEFAULTED
+#if !MDSPAN_HAS_CXX_20 || defined(__NVCC__)
+  MDSPAN_INLINE_FUNCTION
   constexpr mapping()
       : mapping(extents_type{})
   {}
@@ -4446,7 +4565,7 @@ public:
   MDSPAN_INLINE_FUNCTION
   constexpr mapping(const _Mapping &other_mapping) noexcept
       : padded_stride(padded_stride_type::init_padding(
-            other_mapping.extents(),
+            static_cast<extents_type>(other_mapping.extents()),
             other_mapping.extents().extent(extent_to_pad_idx))),
         exts(other_mapping.extents()) {}
 
@@ -4455,7 +4574,7 @@ public:
     return exts;
   }
 
-  MDSPAN_INLINE_FUNCTION constexpr std::array<index_type, extents_type::rank()>
+  constexpr std::array<index_type, extents_type::rank()>
   strides() const noexcept {
     if constexpr (extents_type::rank() == 0) {
       return {};
@@ -4665,8 +4784,8 @@ public:
   }
 
 public:
-#if !MDSPAN_HAS_CXX_20
-  MDSPAN_INLINE_FUNCTION_DEFAULTED
+#if !MDSPAN_HAS_CXX_20 || defined(__NVCC__)
+  MDSPAN_INLINE_FUNCTION
       constexpr mapping()
       : mapping(extents_type{})
   {}
@@ -4806,7 +4925,7 @@ public:
   MDSPAN_INLINE_FUNCTION
   constexpr mapping(const _Mapping &other_mapping) noexcept
       : padded_stride(padded_stride_type::init_padding(
-            other_mapping.extents(),
+            static_cast<extents_type>(other_mapping.extents()),
             other_mapping.extents().extent(extent_to_pad_idx))),
         exts(other_mapping.extents()) {}
 
@@ -4815,7 +4934,7 @@ public:
     return exts;
   }
 
-  MDSPAN_INLINE_FUNCTION constexpr std::array<index_type, extents_type::rank()>
+  constexpr std::array<index_type, extents_type::rank()>
   strides() const noexcept {
     if constexpr (extents_type::rank() == 0) {
       return {};
@@ -5001,7 +5120,7 @@ public:
 //@HEADER
 
 
-#include <tuple>
+#include <complex>
 
 //BEGIN_FILE_INCLUDE: /home/runner/work/mdspan/mdspan/include/experimental/__p2630_bits/strided_slice.hpp
 
@@ -5052,6 +5171,7 @@ struct strided_slice {
 
 } // MDSPAN_IMPL_STANDARD_NAMESPACE
 //END_FILE_INCLUDE: /home/runner/work/mdspan/mdspan/include/experimental/__p2630_bits/strided_slice.hpp
+
 namespace MDSPAN_IMPL_STANDARD_NAMESPACE {
 namespace detail {
 
@@ -5085,6 +5205,37 @@ template <class OffsetType, class ExtentType, class StrideType>
 struct is_strided_slice<
     strided_slice<OffsetType, ExtentType, StrideType>> : std::true_type {};
 
+// Helper for identifying valid pair like things
+template <class T, class IndexType> struct index_pair_like : std::false_type {};
+
+template <class IdxT1, class IdxT2, class IndexType>
+struct index_pair_like<std::pair<IdxT1, IdxT2>, IndexType> {
+  static constexpr bool value = std::is_convertible_v<IdxT1, IndexType> &&
+                                std::is_convertible_v<IdxT2, IndexType>;
+};
+
+template <class IdxT1, class IdxT2, class IndexType>
+struct index_pair_like<std::tuple<IdxT1, IdxT2>, IndexType> {
+  static constexpr bool value = std::is_convertible_v<IdxT1, IndexType> &&
+                                std::is_convertible_v<IdxT2, IndexType>;
+};
+
+template <class IdxT1, class IdxT2, class IndexType>
+struct index_pair_like<tuple<IdxT1, IdxT2>, IndexType> {
+  static constexpr bool value = std::is_convertible_v<IdxT1, IndexType> &&
+                                std::is_convertible_v<IdxT2, IndexType>;
+};
+
+template <class IdxT, class IndexType>
+struct index_pair_like<std::complex<IdxT>, IndexType> {
+  static constexpr bool value = std::is_convertible_v<IdxT, IndexType>;
+};
+
+template <class IdxT, class IndexType>
+struct index_pair_like<std::array<IdxT, 2>, IndexType> {
+  static constexpr bool value = std::is_convertible_v<IdxT, IndexType>;
+};
+
 // first_of(slice): getting begin of slice specifier range
 MDSPAN_TEMPLATE_REQUIRES(
   class Integral,
@@ -5095,19 +5246,48 @@ constexpr Integral first_of(const Integral &i) {
   return i;
 }
 
+template<class Integral, Integral v>
 MDSPAN_INLINE_FUNCTION
-constexpr std::integral_constant<size_t, 0>
+constexpr Integral first_of(const std::integral_constant<Integral, v>&) {
+  return integral_constant<Integral, v>();
+}
+
+MDSPAN_INLINE_FUNCTION
+constexpr integral_constant<size_t, 0>
 first_of(const ::MDSPAN_IMPL_STANDARD_NAMESPACE::full_extent_t &) {
-  return std::integral_constant<size_t, 0>();
+  return integral_constant<size_t, 0>();
 }
 
 MDSPAN_TEMPLATE_REQUIRES(
   class Slice,
-  /* requires */(std::is_convertible_v<Slice, std::tuple<size_t, size_t>>)
+  /* requires */(index_pair_like<Slice, size_t>::value)
 )
 MDSPAN_INLINE_FUNCTION
 constexpr auto first_of(const Slice &i) {
-  return std::get<0>(i);
+  return get<0>(i);
+}
+
+MDSPAN_TEMPLATE_REQUIRES(
+  class IdxT1, class IdxT2,
+  /* requires */ (index_pair_like<std::tuple<IdxT1, IdxT2>, size_t>::value)
+  )
+constexpr auto first_of(const std::tuple<IdxT1, IdxT2>& i) {
+  return get<0>(i);
+}
+
+MDSPAN_TEMPLATE_REQUIRES(
+  class IdxT1, class IdxT2,
+  /* requires */ (index_pair_like<std::pair<IdxT1, IdxT2>, size_t>::value)
+  )
+MDSPAN_INLINE_FUNCTION
+constexpr auto first_of(const std::pair<IdxT1, IdxT2>& i) {
+  return i.first;
+}
+
+template<class T>
+MDSPAN_INLINE_FUNCTION
+constexpr auto first_of(const std::complex<T> &i) {
+  return i.real();
 }
 
 template <class OffsetType, class ExtentType, class StrideType>
@@ -5133,12 +5313,35 @@ constexpr Integral
 
 MDSPAN_TEMPLATE_REQUIRES(
   size_t k, class Extents, class Slice,
-  /* requires */(std::is_convertible_v<Slice, std::tuple<size_t, size_t>>)
+  /* requires */(index_pair_like<Slice, size_t>::value)
 )
 MDSPAN_INLINE_FUNCTION
 constexpr auto last_of(std::integral_constant<size_t, k>, const Extents &,
                        const Slice &i) {
-  return std::get<1>(i);
+  return get<1>(i);
+}
+
+MDSPAN_TEMPLATE_REQUIRES(
+  size_t k, class Extents, class IdxT1, class IdxT2,
+  /* requires */ (index_pair_like<std::tuple<IdxT1, IdxT2>, size_t>::value)
+  )
+constexpr auto last_of(std::integral_constant<size_t, k>, const Extents &, const std::tuple<IdxT1, IdxT2>& i) {
+  return get<1>(i);
+}
+
+MDSPAN_TEMPLATE_REQUIRES(
+  size_t k, class Extents, class IdxT1, class IdxT2,
+  /* requires */ (index_pair_like<std::pair<IdxT1, IdxT2>, size_t>::value)
+  )
+MDSPAN_INLINE_FUNCTION
+constexpr auto last_of(std::integral_constant<size_t, k>, const Extents &, const std::pair<IdxT1, IdxT2>& i) {
+  return i.second;
+}
+
+template<size_t k, class Extents, class T>
+MDSPAN_INLINE_FUNCTION
+constexpr auto last_of(std::integral_constant<size_t, k>, const Extents &, const std::complex<T> &i) {
+  return i.imag();
 }
 
 // Suppress spurious warning with NVCC about no return statement.
@@ -5167,7 +5370,7 @@ constexpr auto last_of(std::integral_constant<size_t, k>, const Extents &ext,
   if constexpr (Extents::static_extent(k) == dynamic_extent) {
     return ext.extent(k);
   } else {
-    return std::integral_constant<size_t, Extents::static_extent(k)>();
+    return integral_constant<size_t, Extents::static_extent(k)>();
   }
 #if defined(__NVCC__) && !defined(__CUDA_ARCH__) && defined(__GNUC__)
   // Even with CUDA_ARCH protection this thing warns about calling host function
@@ -5199,7 +5402,7 @@ last_of(std::integral_constant<size_t, k>, const Extents &,
 template <class T>
 MDSPAN_INLINE_FUNCTION
 constexpr auto stride_of(const T &) {
-  return std::integral_constant<size_t, 1>();
+  return integral_constant<size_t, 1>();
 }
 
 template <class OffsetType, class ExtentType, class StrideType>
@@ -5222,7 +5425,7 @@ constexpr auto divide(const std::integral_constant<T0, v0> &,
                       const std::integral_constant<T1, v1> &) {
   // cutting short division by zero
   // this is used for strided_slice with zero extent/stride
-  return std::integral_constant<IndexT, v0 == 0 ? 0 : v0 / v1>();
+  return integral_constant<IndexT, v0 == 0 ? 0 : v0 / v1>();
 }
 
 // multiply which can deal with integral constant preservation
@@ -5236,7 +5439,7 @@ template <class IndexT, class T0, T0 v0, class T1, T1 v1>
 MDSPAN_INLINE_FUNCTION
 constexpr auto multiply(const std::integral_constant<T0, v0> &,
                         const std::integral_constant<T1, v1> &) {
-  return std::integral_constant<IndexT, v0 * v1>();
+  return integral_constant<IndexT, v0 * v1>();
 }
 
 // compute new static extent from range, preserving static knowledge
@@ -5250,6 +5453,12 @@ struct StaticExtentFromRange<std::integral_constant<Integral0, val0>,
   constexpr static size_t value = val1 - val0;
 };
 
+template <class Integral0, Integral0 val0, class Integral1, Integral1 val1>
+struct StaticExtentFromRange<integral_constant<Integral0, val0>,
+                             integral_constant<Integral1, val1>> {
+  constexpr static size_t value = val1 - val0;
+};
+
 // compute new static extent from strided_slice, preserving static
 // knowledge
 template <class Arg0, class Arg1> struct StaticExtentFromStridedRange {
@@ -5259,6 +5468,12 @@ template <class Arg0, class Arg1> struct StaticExtentFromStridedRange {
 template <class Integral0, Integral0 val0, class Integral1, Integral1 val1>
 struct StaticExtentFromStridedRange<std::integral_constant<Integral0, val0>,
                                     std::integral_constant<Integral1, val1>> {
+  constexpr static size_t value = val0 > 0 ? 1 + (val0 - 1) / val1 : 0;
+};
+
+template <class Integral0, Integral0 val0, class Integral1, Integral1 val1>
+struct StaticExtentFromStridedRange<integral_constant<Integral0, val0>,
+                                    integral_constant<Integral1, val1>> {
   constexpr static size_t value = val0 > 0 ? 1 + (val0 - 1) / val1 : 0;
 };
 
@@ -5372,7 +5587,6 @@ constexpr auto submdspan_extents(const extents<IndexType, Extents...> &src_exts,
 
 
 #include <array>
-#include <tuple>
 #include <type_traits>
 #include <utility> // index_sequence
 
@@ -5406,6 +5620,7 @@ template <class LayoutMapping> struct submdspan_mapping_result {
 };
 
 namespace detail {
+
 // We use const Slice& and not Slice&& because the various
 // submdspan_mapping_impl overloads use their slices arguments
 // multiple times.  This makes perfect forwarding not useful, but we
@@ -5439,22 +5654,27 @@ any_slice_out_of_bounds(const extents<IndexType, Exts...> &exts,
 }
 
 // constructs sub strides
+template<class T, size_t N>
+struct sub_strides
+{
+  T values[N > 0 ? N : 1];
+};
+
 template <class SrcMapping, class... slice_strides, size_t... InvMapIdxs>
 MDSPAN_INLINE_FUNCTION constexpr auto construct_sub_strides(
     const SrcMapping &src_mapping, std::index_sequence<InvMapIdxs...>,
-    const std::tuple<slice_strides...> &slices_stride_factor) {
+    const MDSPAN_IMPL_STANDARD_NAMESPACE::detail::tuple<slice_strides...> &slices_stride_factor) {
   using index_type = typename SrcMapping::index_type;
-  return std::array<typename SrcMapping::index_type, sizeof...(InvMapIdxs)>{
+  return sub_strides<typename SrcMapping::index_type, sizeof...(InvMapIdxs)>{{
       (static_cast<index_type>(src_mapping.stride(InvMapIdxs)) *
-       static_cast<index_type>(std::get<InvMapIdxs>(slices_stride_factor)))...};
+       static_cast<index_type>(get<InvMapIdxs>(slices_stride_factor)))...}};
 }
 
 template<class SliceSpecifier, class IndexType>
 struct is_range_slice {
   constexpr static bool value =
     std::is_same_v<SliceSpecifier, full_extent_t> ||
-    std::is_convertible_v<SliceSpecifier,
-                          std::tuple<IndexType, IndexType>>;
+    index_pair_like<SliceSpecifier, IndexType>::value;
 };
 
 template<class SliceSpecifier, class IndexType>
@@ -5486,7 +5706,7 @@ struct deduce_layout_left_submapping<
     IndexType, SubRank, std::index_sequence<Idx...>, SliceSpecifiers...> {
 
   using count_range = index_sequence_scan_impl<
-      0, (is_index_slice_v<SliceSpecifiers, IndexType> ? 0 : 1)...>;
+      0u, (is_index_slice_v<SliceSpecifiers, IndexType> ? 0u : 1u)...>;
 
   constexpr static int gap_len =
       (((Idx > 0 && count_range::get(Idx) == 1 &&
@@ -5596,7 +5816,7 @@ layout_left::mapping<Extents>::submdspan_mapping_impl(
     auto inv_map = detail::inv_map_rank(std::integral_constant<size_t, 0>(),
                                         std::index_sequence<>(), slices...);
     return submdspan_mapping_result<dst_mapping_t> {
-      dst_mapping_t(dst_ext,
+      dst_mapping_t(mdspan_non_standard, dst_ext,
                     detail::construct_sub_strides(
                         *this, inv_map,
 // HIP needs deduction guides to have markups so we need to be explicit
@@ -5604,10 +5824,10 @@ layout_left::mapping<Extents>::submdspan_mapping_impl(
 // the issue But Clang-CUDA also doesn't accept the use of deduction guide so
 // disable it for CUDA altogether
 #if defined(_MDSPAN_HAS_HIP) || defined(_MDSPAN_HAS_CUDA)
-                        std::tuple<decltype(detail::stride_of(slices))...>{
-                            detail::stride_of(slices)...})),
+                        detail::tuple<decltype(detail::stride_of(slices))...>{
+                            detail::stride_of(slices)...}).values),
 #else
-                        std::tuple{detail::stride_of(slices)...})),
+                        detail::tuple{detail::stride_of(slices)...}).values),
 #endif
           offset
     };
@@ -5674,7 +5894,7 @@ MDSPAN_IMPL_PROPOSED_NAMESPACE::layout_left_padded<PaddingValue>::mapping<Extent
                                         std::index_sequence<>(), slices...);
       using dst_mapping_t = typename layout_stride::template mapping<dst_ext_t>;
     return submdspan_mapping_result<dst_mapping_t> {
-      dst_mapping_t(dst_ext,
+      dst_mapping_t(mdspan_non_standard, dst_ext,
                     MDSPAN_IMPL_STANDARD_NAMESPACE::detail::construct_sub_strides(
                         *this, inv_map,
 // HIP needs deduction guides to have markups so we need to be explicit
@@ -5682,10 +5902,10 @@ MDSPAN_IMPL_PROPOSED_NAMESPACE::layout_left_padded<PaddingValue>::mapping<Extent
 // the issue But Clang-CUDA also doesn't accept the use of deduction guide so
 // disable it for CUDA alltogether
 #if defined(_MDSPAN_HAS_HIP) || defined(_MDSPAN_HAS_CUDA)
-                        std::tuple<decltype(MDSPAN_IMPL_STANDARD_NAMESPACE::detail::stride_of(slices))...>{
-                            MDSPAN_IMPL_STANDARD_NAMESPACE::detail::stride_of(slices)...})),
+                        MDSPAN_IMPL_STANDARD_NAMESPACE::detail::tuple<decltype(MDSPAN_IMPL_STANDARD_NAMESPACE::detail::stride_of(slices))...>{
+                            MDSPAN_IMPL_STANDARD_NAMESPACE::detail::stride_of(slices)...}).values),
 #else
-                        std::tuple{MDSPAN_IMPL_STANDARD_NAMESPACE::detail::stride_of(slices)...})),
+                        MDSPAN_IMPL_STANDARD_NAMESPACE::detail::tuple{MDSPAN_IMPL_STANDARD_NAMESPACE::detail::stride_of(slices)...}).values),
 #endif
           offset
     };
@@ -5716,7 +5936,7 @@ struct deduce_layout_right_submapping<
 
   static constexpr size_t Rank = sizeof...(Idx);
   using count_range = index_sequence_scan_impl<
-      0, (std::is_convertible_v<SliceSpecifiers, IndexType> ? 0 : 1)...>;
+      0u, (std::is_convertible_v<SliceSpecifiers, IndexType> ? 0u : 1u)...>;
   //__static_partial_sums<!std::is_convertible_v<SliceSpecifiers,
   // IndexType>...>;
   constexpr static int gap_len =
@@ -5829,7 +6049,7 @@ layout_right::mapping<Extents>::submdspan_mapping_impl(
     auto inv_map = detail::inv_map_rank(std::integral_constant<size_t, 0>(),
                                         std::index_sequence<>(), slices...);
     return submdspan_mapping_result<dst_mapping_t> {
-      dst_mapping_t(dst_ext,
+      dst_mapping_t(mdspan_non_standard, dst_ext,
                     detail::construct_sub_strides(
                         *this, inv_map,
 // HIP needs deduction guides to have markups so we need to be explicit
@@ -5837,10 +6057,10 @@ layout_right::mapping<Extents>::submdspan_mapping_impl(
 // the issue But Clang-CUDA also doesn't accept the use of deduction guide so
 // disable it for CUDA altogether
 #if defined(_MDSPAN_HAS_HIP) || defined(_MDSPAN_HAS_CUDA)
-                        std::tuple<decltype(detail::stride_of(slices))...>{
-                            detail::stride_of(slices)...})),
+                        MDSPAN_IMPL_STANDARD_NAMESPACE::detail::tuple<decltype(detail::stride_of(slices))...>{
+                            detail::stride_of(slices)...}).values),
 #else
-                        std::tuple{detail::stride_of(slices)...})),
+                        MDSPAN_IMPL_STANDARD_NAMESPACE::detail::tuple{detail::stride_of(slices)...}).values),
 #endif
           offset
     };
@@ -5899,7 +6119,7 @@ MDSPAN_IMPL_PROPOSED_NAMESPACE::layout_right_padded<PaddingValue>::mapping<Exten
                                         std::index_sequence<>(), slices...);
       using dst_mapping_t = typename layout_stride::template mapping<dst_ext_t>;
     return submdspan_mapping_result<dst_mapping_t> {
-      dst_mapping_t(dst_ext,
+      dst_mapping_t(mdspan_non_standard, dst_ext,
                     MDSPAN_IMPL_STANDARD_NAMESPACE::detail::construct_sub_strides(
                         *this, inv_map,
 // HIP needs deduction guides to have markups so we need to be explicit
@@ -5907,10 +6127,10 @@ MDSPAN_IMPL_PROPOSED_NAMESPACE::layout_right_padded<PaddingValue>::mapping<Exten
 // the issue But Clang-CUDA also doesn't accept the use of deduction guide so
 // disable it for CUDA alltogether
 #if defined(_MDSPAN_HAS_HIP) || defined(_MDSPAN_HAS_CUDA)
-                        std::tuple<decltype(MDSPAN_IMPL_STANDARD_NAMESPACE::detail::stride_of(slices))...>{
-                            MDSPAN_IMPL_STANDARD_NAMESPACE::detail::stride_of(slices)...})),
+                        MDSPAN_IMPL_STANDARD_NAMESPACE::detail::tuple<decltype(MDSPAN_IMPL_STANDARD_NAMESPACE::detail::stride_of(slices))...>{
+                            MDSPAN_IMPL_STANDARD_NAMESPACE::detail::stride_of(slices)...}).values),
 #else
-                        std::tuple{MDSPAN_IMPL_STANDARD_NAMESPACE::detail::stride_of(slices)...})),
+                        MDSPAN_IMPL_STANDARD_NAMESPACE::detail::tuple{MDSPAN_IMPL_STANDARD_NAMESPACE::detail::stride_of(slices)...}).values),
 #endif
           offset
     };
@@ -5947,7 +6167,7 @@ layout_stride::mapping<Extents>::submdspan_mapping_impl(
                     : this->operator()(detail::first_of(slices)...));
 
   return submdspan_mapping_result<dst_mapping_t> {
-    dst_mapping_t(dst_ext,
+    dst_mapping_t(mdspan_non_standard, dst_ext,
                   detail::construct_sub_strides(
                       *this, inv_map,
 // HIP needs deduction guides to have markups so we need to be explicit
@@ -5956,10 +6176,10 @@ layout_stride::mapping<Extents>::submdspan_mapping_impl(
 #if defined(_MDSPAN_HAS_HIP) ||                                                \
     (defined(__NVCC__) &&                                                      \
      (__CUDACC_VER_MAJOR__ * 100 + __CUDACC_VER_MINOR__ * 10) < 1120)
-                      std::tuple<decltype(detail::stride_of(slices))...>(
-                          detail::stride_of(slices)...))),
+                      MDSPAN_IMPL_STANDARD_NAMESPACE::detail::tuple<decltype(detail::stride_of(slices))...>(
+                          detail::stride_of(slices)...).values)),
 #else
-                      std::tuple(detail::stride_of(slices)...))),
+                      MDSPAN_IMPL_STANDARD_NAMESPACE::detail::tuple(detail::stride_of(slices)...)).values),
 #endif
         offset
   };
@@ -6539,3 +6759,4 @@ private:
 //END_FILE_INCLUDE: /home/runner/work/mdspan/mdspan/include/mdspan/mdarray.hpp
 //END_FILE_INCLUDE: /home/runner/work/mdspan/mdspan/include/experimental/mdarray
 #endif // _MDSPAN_SINGLE_HEADER_INCLUDE_GUARD_
+

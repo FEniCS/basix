@@ -16,7 +16,7 @@ authors = [
 dependencies = ["numpy>=1.21"]
 
 [project.optional-dependencies]
-docs = ["markdown", "pylit3", "pyyaml", "sphinx==5.0.2", "sphinx_rtd_theme"]
+docs = ["markdown", "pylit3", "pyyaml", "sphinx", "sphinx_rtd_theme"]
 lint = ["ruff"]
 optional = ["numba", "fenics-ufl@git+https://github.com/fenics/ufl"]
 test = ["pytest", "sympy", "scipy", "matplotlib", "fenics-basix[optional]"]

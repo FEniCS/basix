@@ -1304,9 +1304,6 @@ class _BlockedElement(_ElementBase):
     @property
     def reference_value_shape(self) -> tuple[int, ...]:
         """Reference value shape of the element basis function."""
-        if self._has_symmetry:
-            assert len(self._block_shape) == 2 and self._block_shape[0] == self._block_shape[1]
-            return (self._block_shape[0] * (self._block_shape[0] + 1) // 2,)
         return self._reference_value_shape
 
     @property

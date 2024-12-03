@@ -235,3 +235,19 @@ def test_real_element_eq_hash(cell_type, value_shape):
 def test_wrap_element():
     e = basix.create_element(basix.ElementFamily.P, basix.CellType.triangle, 1)
     basix.ufl.wrap_element(e)
+
+
+def test_dof_ordering():
+    e = basix.ufl.element(basix.ElementFamily.P, basix.CellType.triangle, 1)
+
+    e_reordered = basix.ufl.element(
+        basix.ElementFamily.P, basix.CellType.triangle, 1, dof_ordering=[1, 2, 0]
+    )
+
+    points = np.array([[0.0, 0.0], [0.0, 1.0], [1.0, 0.0], [0.5, 0.5]])
+
+    table = e.tabulate(0, points)[0]
+    table2 = e_reordered.tabulate(0, points)[0]
+
+    for i, j in enumerate([1, 2, 0]):
+        assert np.allclose(table[:, i], table2[:, j])

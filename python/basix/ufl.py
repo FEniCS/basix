@@ -1989,6 +1989,7 @@ def element(
     discontinuous: bool = False,
     shape: _typing.Optional[tuple[int, ...]] = None,
     symmetry: _typing.Optional[bool] = None,
+    dof_ordering: _typing.Optional[list[int]] = None,
     dtype: _typing.Optional[_npt.DTypeLike] = None,
 ) -> _ElementBase:
     """Create a UFL compatible element using Basix.
@@ -2005,6 +2006,7 @@ def element(
             this can be used to create vector and tensor elements.
         symmetry: Set to ``True`` if the tensor is symmetric. Valid for
             rank 2 elements only.
+        dof_ordering: Ordering of dofs for ``ElementDofLayout``.
         dtype: Floating point data type.
 
     Returns:
@@ -2051,7 +2053,14 @@ def element(
             dpc_variant = _basix.DPCVariant.diagonal_gll
 
     e = _basix.create_element(
-        family, cell, degree, lagrange_variant, dpc_variant, discontinuous, dtype=dtype
+        family,
+        cell,
+        degree,
+        lagrange_variant,
+        dpc_variant,
+        discontinuous,
+        dof_ordering=dof_ordering,
+        dtype=dtype,
     )
     ufl_e = _BasixElement(e)
 

@@ -78,3 +78,14 @@ def test_sub_entity_connectivity(cell):
                     else:
                         for i in topology[dim][n]:
                             assert i in topology[dim2][n2]
+
+
+def test_sub_entity_type():
+    cell_type = basix.CellType.tetrahedron
+    for i in range(4):
+        assert basix.cell.sub_entity_type(cell_type, 0, i) == basix.CellType.point
+    for i in range(6):
+        assert basix.cell.sub_entity_type(cell_type, 1, i) == basix.CellType.interval
+    for i in range(4):
+        assert basix.cell.sub_entity_type(cell_type, 2, i) == basix.CellType.triangle
+    assert basix.cell.sub_entity_type(cell_type, 3, 0) == basix.CellType.tetrahedron

@@ -79,10 +79,10 @@ class FiniteElement:
 
             * The second index is the point index
 
-            * The fourth index is the basis function component. Its has size
+            * The third index is the basis function index
 
-            * The third index is the basis function index one for scalar
-                basis functions.
+            * The fourth index is the basis function component. It has size
+                one for scalar basis functions.
         """
         return self._e.tabulate(n, x)
 

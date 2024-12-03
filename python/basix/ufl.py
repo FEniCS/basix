@@ -438,9 +438,8 @@ class _BasixElement(_ElementBase):
             Tabulated basis functions
 
         """
-        tab = self._element.tabulate(nderivs, points)
-        # TODO: update FFCx to remove the need for transposing here
-        return tab.transpose((0, 1, 3, 2)).reshape((tab.shape[0], tab.shape[1], -1))  # type: ignore
+        print("E", self._element.tabulate(nderivs, points).shape)
+        return self._element.tabulate(nderivs, points)
 
     def get_component_element(self, flat_component: int) -> tuple[_ElementBase, int, int]:
         """Get element that represents a component.
@@ -644,7 +643,6 @@ class _ComponentElement(_ElementBase):
 
     This element type is used when UFL's ``get_component_element``
     function is called.
-
     """
 
     _element: _ElementBase
@@ -680,25 +678,8 @@ class _ComponentElement(_ElementBase):
         Returns:
             Tabulated basis functions.
         """
-        tables = self._element.tabulate(nderivs, points)
-        output = []
-        for tbl in tables:  # type: ignore
-            shape = (points.shape[0], *self._element._reference_value_shape, -1)
-            tbl = tbl.reshape(shape)  # type: ignore
-            if len(self._element._reference_value_shape) == 0:
-                output.append(tbl)
-            elif len(self._element._reference_value_shape) == 1:
-                output.append(tbl[:, self._component, :])
-            elif len(self._element._reference_value_shape) == 2:
-                if isinstance(self._element, _BlockedElement) and self._element._has_symmetry:
-                    # FIXME: check that this behaves as expected
-                    output.append(tbl[:, self._component, :])
-                else:
-                    vs0 = self._element._reference_value_shape[0]
-                    output.append(tbl[:, self._component // vs0, self._component % vs0, :])
-            else:
-                raise NotImplementedError()
-        return np.asarray(output, dtype=np.float64)
+        print("F", self._element.tabulate(nderivs, points)[:, :, :, self._component:self._component + 1].shape)
+        return self._element.tabulate(nderivs, points)[:, :, :, self._component:self._component + 1]
 
     def get_component_element(self, flat_component: int) -> tuple[_ElementBase, int, int]:
         """Get element that represents a component.
@@ -916,19 +897,8 @@ class _MixedElement(_ElementBase):
         Returns:
             Tabulated basis functions
         """
-        tables = []
-        results = [e.tabulate(nderivs, points) for e in self._sub_elements]
-        for deriv_tables in zip(*results):
-            new_table = np.zeros((len(points), self.reference_value_size * self.dim))
-            start = 0
-            for e, t in zip(self._sub_elements, deriv_tables):
-                for i in range(0, e.dim, e.reference_value_size):
-                    new_table[:, start : start + e.reference_value_size] = t[
-                        :, i : i + e.reference_value_size
-                    ]
-                    start += self.reference_value_size
-            tables.append(new_table)
-        return np.asarray(tables, dtype=np.float64)
+        print("A", _np.stack([e.tabulate(nderivs, points) for e in self._sub_elements], axis=3).shape)
+        return _np.stack([e.tabulate(nderivs, points) for e in self._sub_elements], axis=3)
 
     def get_component_element(self, flat_component: int) -> tuple[_ElementBase, int, int]:
         """Get element that represents a component.
@@ -1258,22 +1228,18 @@ class _BlockedElement(_ElementBase):
         """
         assert len(self._block_shape) == 1  # TODO: block shape
         assert self.reference_value_size == self._block_size  # TODO: remove this assumption
-        output = []
-        for table in self._sub_element.tabulate(nderivs, points):  # type: ignore
-            # Repeat sub element horizontally
-            assert len(table.shape) == 2  # type: ignore
-            new_table = np.zeros(
-                (table.shape[0], *self._block_shape, self._block_size * table.shape[1])  # type: ignore
-            )
-            for i, j in enumerate(_itertools.product(*[range(s) for s in self._block_shape])):
-                if len(j) == 1:
-                    new_table[:, j[0], i :: self._block_size] = table
-                elif len(j) == 2:
-                    new_table[:, j[0], j[1], i :: self._block_size] = table
-                else:
-                    raise NotImplementedError()
-            output.append(new_table)
-        return np.asarray(output, dtype=np.float64)
+        sub_table = self._sub_element.tabulate(nderivs, points)
+
+        assert sub_table.shape[3] == 1
+
+        table = np.zeros((
+            sub_table.shape[0], sub_table.shape[1], sub_table.shape[2], self._block_size
+        ))
+
+        for i in range(self._block_size):
+            table[:, :, :, i] = sub_table
+        print("B", table.shape)
+        return table
 
     def get_component_element(self, flat_component: int) -> tuple[_ElementBase, int, int]:
         """Get element that represents a component.
@@ -1581,8 +1547,8 @@ class _QuadratureElement(_ElementBase):
 
         if points.shape != self._points.shape:
             raise ValueError("Mismatch of tabulation points and element points.")
-        tables = np.asarray([np.eye(points.shape[0], points.shape[0])])
-        return tables
+        print("C", np.eye(points.shape[0], points.shape[0]).reshape([1, points.shape[0], points.shape[0], 1]).shape)
+        return np.eye(points.shape[0], points.shape[0]).reshape([1, points.shape[0], points.shape[0], 1])
 
     def get_component_element(self, flat_component: int) -> tuple[_ElementBase, int, int]:
         """Get element that represents a component.
@@ -1789,9 +1755,10 @@ class _RealElement(_ElementBase):
             Tabulated basis functions
 
         """
-        out = np.zeros((nderivs + 1, len(points), self.reference_value_size**2))
+        out = np.zeros((nderivs + 1, len(points), self.reference_value_size, self.reference_value_size))
         for v in range(self.reference_value_size):
-            out[0, :, self.reference_value_size * v + v] = 1.0
+            out[0, :, v, v] = 1.0
+        print("D", out.shape)
         return out
 
     def get_component_element(self, flat_component: int) -> tuple[_ElementBase, int, int]:

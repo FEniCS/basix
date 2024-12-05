@@ -528,6 +528,9 @@ NB_MODULE(_basixcpp, m)
   m.def("cell_facet_jacobians", [](cell::type cell_type)
         { return as_nbarrayp(cell::facet_jacobians<double>(cell_type)); });
 
+  m.def("cell_edge_jacobians", [](cell::type cell_type)
+        { return as_nbarrayp(cell::edge_jacobians<double>(cell_type)); });
+
   nb::enum_<element::family>(m, "ElementFamily", nb::is_arithmetic(),
                              "Finite element family.")
       .value("custom", element::family::custom)

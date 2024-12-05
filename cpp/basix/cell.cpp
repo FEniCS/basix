@@ -608,6 +608,37 @@ std::vector<std::vector<cell::type>> cell::subentity_types(cell::type cell_type)
 //-----------------------------------------------------------------------------
 template <std::floating_point T>
 std::pair<std::vector<T>, std::array<std::size_t, 3>>
+cell::entity_jacobians(cell::type cell_type, std::size_t e_dim)
+{
+  std::size_t tdim = cell::topological_dimension(cell_type);
+  if ((e_dim > tdim))
+  {
+    throw std::runtime_error(
+        "Entity jacobians supported for entity of dimension "
+        + std::to_string(e_dim) + "for cell of dimension "
+        + std::to_string(tdim));
+  }
+
+  const auto [_x, xshape] = cell::geometry<T>(cell_type);
+  mdspan_t<const T, 2> x(_x.data(), xshape);
+  std::vector<std::vector<int>> entities = topology(cell_type)[e_dim];
+
+  std::array<std::size_t, 3> shape = {entities.size(), tdim, e_dim};
+  std::vector<T> jacobians(shape[0] * shape[1] * shape[2]);
+  mdspan_t<T, 3> J(jacobians.data(), shape);
+  for (std::size_t e = 0; e < entities.size(); ++e)
+  {
+    const std::vector<int>& entity = entities[e];
+    for (std::size_t j = 0; j < e_dim; ++j)
+      for (std::size_t k = 0; k < J.extent(1); ++k)
+        J(e, k, j) = x(entity[1 + j], k) - x(entity[0], k);
+  }
+
+  return {std::move(jacobians), std::move(shape)};
+}
+//-----------------------------------------------------------------------------
+template <std::floating_point T>
+std::pair<std::vector<T>, std::array<std::size_t, 3>>
 cell::facet_jacobians(cell::type cell_type)
 {
   std::size_t tdim = cell::topological_dimension(cell_type);
@@ -617,22 +648,20 @@ cell::facet_jacobians(cell::type cell_type)
         "Facet jacobians not supported for this cell type.");
   }
 
-  const auto [_x, xshape] = cell::geometry<T>(cell_type);
-  mdspan_t<const T, 2> x(_x.data(), xshape);
-  std::vector<std::vector<int>> facets = topology(cell_type)[tdim - 1];
-
-  std::array<std::size_t, 3> shape = {facets.size(), tdim, tdim - 1};
-  std::vector<T> jacobians(shape[0] * shape[1] * shape[2]);
-  mdspan_t<T, 3> J(jacobians.data(), shape);
-  for (std::size_t f = 0; f < facets.size(); ++f)
+  return entity_jacobians<T>(cell_type, tdim - 1);
+}
+//-----------------------------------------------------------------------------
+template <std::floating_point T>
+std::pair<std::vector<T>, std::array<std::size_t, 3>>
+cell::edge_jacobians(cell::type cell_type)
+{
+  std::size_t tdim = cell::topological_dimension(cell_type);
+  if (tdim != 3)
   {
-    const std::vector<int>& facet = facets[f];
-    for (std::size_t j = 0; j < tdim - 1; ++j)
-      for (std::size_t k = 0; k < J.extent(1); ++k)
-        J(f, k, j) = x(facet[1 + j], k) - x(facet[0], k);
+    throw std::runtime_error(
+        "Edge jacobians not supported for this cell type.");
   }
-
-  return {std::move(jacobians), std::move(shape)};
+  return entity_jacobians<T>(cell_type, 1);
 }
 //-----------------------------------------------------------------------------
 
@@ -668,6 +697,10 @@ template std::pair<std::vector<float>, std::array<std::size_t, 3>>
     cell::facet_jacobians(cell::type);
 template std::pair<std::vector<double>, std::array<std::size_t, 3>>
     cell::facet_jacobians(cell::type);
+template std::pair<std::vector<float>, std::array<std::size_t, 3>>
+    cell::edge_jacobians(cell::type);
+template std::pair<std::vector<double>, std::array<std::size_t, 3>>
+    cell::edge_jacobians(cell::type);
 /// @endcond
 
 //-----------------------------------------------------------------------------

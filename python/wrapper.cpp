@@ -510,14 +510,12 @@ NB_MODULE(_basixcpp, m)
         { return cell::volume<double>(cell_type); });
   m.def("cell_facet_normals", [](cell::type cell_type)
         { return as_nbarrayp(cell::facet_normals<double>(cell_type)); });
-  m.def("cell_facet_reference_volumes",
-        [](cell::type cell_type) {
-          return as_nbarray(cell::facet_reference_volumes<double>(cell_type));
-        });
-  m.def("cell_facet_outward_normals",
-        [](cell::type cell_type) {
-          return as_nbarrayp(cell::facet_outward_normals<double>(cell_type));
-        });
+  m.def(
+      "cell_facet_reference_volumes", [](cell::type cell_type)
+      { return as_nbarray(cell::facet_reference_volumes<double>(cell_type)); });
+  m.def(
+      "cell_facet_outward_normals", [](cell::type cell_type)
+      { return as_nbarrayp(cell::facet_outward_normals<double>(cell_type)); });
   m.def("cell_facet_orientations",
         [](cell::type cell_type)
         {

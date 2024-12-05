@@ -34,8 +34,8 @@ points, weights = basix.make_quadrature(CellType.triangle, 3)
 # `geometry` to get the coordinates of the vertices of the tetrahedron, and
 # we use `sub_entity_connectivity` to see which vertices are adjacent to
 # our facet. We get the sub-entity connectivity using the indices 2 (facets
-# of 3D cells have dimension 2), 0 (vertices have dimension 0), and 0 (the
-# index of the facet we chose to use).
+# of 3D cells have dimension 2), 0 (the index of the facet we chose),
+# and 0 (vertices have dimension 0).
 #
 # Using this information, we can map the quadrature points to the facet.
 

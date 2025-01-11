@@ -99,13 +99,13 @@
 /// \f$z\f$s.
 ///
 /// ### Pyramid
-/// Orthogonal polynomials on the pyramid element are best calculated in
+/// Orthogonal rational functions on the pyramid element are best calculated in
 /// the same way as the tetrahedron, using recurrence relations on each
 /// axis. Let \f$\zeta_x = 2\frac{1+x}{1-z} - 1\f$, \f$\zeta_y =
-/// 2\frac{1+y}{1-z} - 1\f$. The recurrence relation is then
+/// 2\frac{1+y}{1-z} - 1\f$. The functions are then constituted as
 ///
 /// \f[Q_{p, q, r} = P^{0,0}_p(\zeta_x) P^{0,0}_q(\zeta_y)
-/// \left(\frac{1-z}{2}\right)^{(p+q)} P_r^{2(p+q+1), 0}(z).\f]
+/// \left(1-z\right)^{max(p,q)} P_r^{2(max(p,q)+1), 0}(2z-1).\f]
 ///
 /// ### Normalisation
 /// For each cell type, we obtain an orthonormal set of polynomials by

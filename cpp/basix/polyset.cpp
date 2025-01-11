@@ -2333,7 +2333,7 @@ void tabulate_polyset_pyramid_derivs(
                 }
               }
 
-              if (kz > 1 and q > p)
+              if (kz > 1 and q > p + 1)
               {
                 auto _p = MDSPAN_IMPL_STANDARD_NAMESPACE::submdspan(
                     P, idx(kx, ky, kz - 2), pyr_idx(p, q - 2, 0),

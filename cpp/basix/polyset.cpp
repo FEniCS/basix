@@ -2267,7 +2267,6 @@ void tabulate_polyset_pyramid_derivs(
             {
               r_pq[i] = (0.5 + (x1[i] * 2.0 - 1.0) + (x2[i] * 2.0 - 1.0) * 0.5)
                         * _p[i] * (a + 1.0);
-              if (q <= p) r_pq[i] /= (1 - x2[i]);
             }
 
             if (ky > 0)
@@ -2286,7 +2285,20 @@ void tabulate_polyset_pyramid_derivs(
                   MDSPAN_IMPL_STANDARD_NAMESPACE::full_extent);
               for (std::size_t i = 0; i < r_pq.size(); ++i)
                 r_pq[i] += kz * _p[i] * (a + 1.0);
+                
+              if (q <= p)
+              {
+                auto _p = MDSPAN_IMPL_STANDARD_NAMESPACE::submdspan(
+                    P, idx(kx, ky, kz - 1), pyr_idx(p, q, 0),
+                    MDSPAN_IMPL_STANDARD_NAMESPACE::full_extent);
+                for (std::size_t i = 0; i < r_pq.size(); ++i)
+                  r_pq[i] += kz * _p[i];
+              }
             }
+            
+            if (q <= p) 
+                for (std::size_t i = 0; i < r_pq.size(); ++i)
+                  r_pq[i] /= (1 - x2[i]);
 
             if (q > 1)
             {
@@ -2297,9 +2309,9 @@ void tabulate_polyset_pyramid_derivs(
               {
                 const T f2 = 1.0 - x2[i];
                 if (q <= p)
-                    r_pq[i] -=_p[i] * a;
+                  r_pq[i] -=_p[i] * a;
                 else if (q <= p + 1)
-                    r_pq[i] -= f2 * _p[i] * a;
+                  r_pq[i] -= f2 * _p[i] * a;
                 else
                   r_pq[i] -= f2 * f2 * _p[i] * a;
               }
@@ -2310,10 +2322,18 @@ void tabulate_polyset_pyramid_derivs(
                     P, idx(kx, ky, kz - 1), pyr_idx(p, q - 2, 0),
                     MDSPAN_IMPL_STANDARD_NAMESPACE::full_extent);
                 for (std::size_t i = 0; i < r_pq.size(); ++i)
-                  r_pq[i] += kz * (1.0 - (x2[i] * 2.0 - 1.0)) * _p[i] * a;
+                {
+                  const T f2 = 1.0 - x2[i];
+                  if (q <= p)
+                    r_pq[i] += 0.5 * kz * (1.0 - (x2[i] * 2.0 - 1.0)) * _p[i] * a /f2 /f2;
+                  else if (q <= p + 1)
+                    r_pq[i] += 0.5 * kz * (1.0 - (x2[i] * 2.0 - 1.0)) * _p[i] * a /f2;
+                  else
+                    r_pq[i] +=       kz * (1.0 - (x2[i] * 2.0 - 1.0)) * _p[i] * a;
+                }
               }
 
-              if (kz > 1)
+              if (kz > 1 and q > p)
               {
                 auto _p = MDSPAN_IMPL_STANDARD_NAMESPACE::submdspan(
                     P, idx(kx, ky, kz - 2), pyr_idx(p, q - 2, 0),

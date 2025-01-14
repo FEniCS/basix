@@ -18,6 +18,7 @@ from basix._basixcpp import cell_volume as _v
 from basix._basixcpp import geometry as _geometry
 from basix._basixcpp import subentity_types as _sut
 from basix._basixcpp import sub_entity_connectivity as _sec
+from basix._basixcpp import sub_entity_type as _set
 from basix._basixcpp import topology as _topology
 
 __all__ = [
@@ -31,6 +32,20 @@ __all__ = [
     "facet_outward_normals",
     "facet_reference_volumes",
 ]
+
+
+def sub_entity_type(celltype: CellType, dim: int, index: int) -> CellType:
+    """Cell type of a sub-entity.
+
+    Args:
+        celltype: cell type.
+        dim: dimension of the sub-entity.
+        index: index of the sub-entity
+
+    Returns:
+        The cell type of the sub-entity.
+    """
+    return _set(celltype, dim, index)
 
 
 def sub_entity_connectivity(celltype: CellType) -> list[list[list[list[int]]]]:

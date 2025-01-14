@@ -425,6 +425,8 @@ NB_MODULE(_basixcpp, m)
   m.def("topology", &cell::topology);
   m.def("geometry", [](cell::type celltype)
         { return as_nbarrayp(cell::geometry<double>(celltype)); });
+  m.def("sub_entity_type", [](cell::type celltype, int dim, int index)
+        { return cell::sub_entity_type(celltype, dim, index); });
   m.def("sub_entity_connectivity", &cell::sub_entity_connectivity);
   m.def("sub_entity_geometry",
         [](cell::type celltype, int dim, int index)

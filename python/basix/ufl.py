@@ -194,7 +194,7 @@ class _ElementBase(_AbstractFiniteElement):
 
     # Basix specific functions
     @_abstractmethod
-    def tabulate(self, nderivs: int, points: _npt.NDArray[np.float64]) -> _npt.ArrayLike:
+    def tabulate(self, nderivs: int, points: _npt.NDArray[np.floating]) -> _npt.ArrayLike:
         """Tabulate the basis functions of the element.
 
         Args:
@@ -309,7 +309,7 @@ class _ElementBase(_AbstractFiniteElement):
 
     def custom_quadrature(
         self,
-    ) -> tuple[_npt.NDArray[np.float64], _npt.NDArray[np.float64]]:
+    ) -> tuple[_npt.NDArray[np.floating], _npt.NDArray[np.floating]]:
         """Return custom quadrature rule or raise a ValueError."""
         raise ValueError("Element does not have a custom quadrature rule.")
 
@@ -427,7 +427,7 @@ class _BasixElement(_ElementBase):
         """Return the hash of the Basix element if this is a standard Basix element."""
         return self._element.hash()
 
-    def tabulate(self, nderivs: int, points: _npt.NDArray[np.float64]) -> _npt.ArrayLike:
+    def tabulate(self, nderivs: int, points: _npt.NDArray[np.floating]) -> _npt.ArrayLike:
         """Tabulate the basis functions of the element.
 
         Args:
@@ -670,7 +670,7 @@ class _ComponentElement(_ElementBase):
         """Return a hash."""
         return super().__hash__()
 
-    def tabulate(self, nderivs: int, points: _npt.NDArray[np.float64]) -> _npt.ArrayLike:
+    def tabulate(self, nderivs: int, points: _npt.NDArray[np.floating]) -> _npt.ArrayLike:
         """Tabulate the basis functions of the element.
 
         Args:
@@ -906,7 +906,7 @@ class _MixedElement(_ElementBase):
         """Degree of the element."""
         return max((e.degree for e in self._sub_elements), default=-1)
 
-    def tabulate(self, nderivs: int, points: _npt.NDArray[np.float64]) -> _npt.ArrayLike:
+    def tabulate(self, nderivs: int, points: _npt.NDArray[np.floating]) -> _npt.ArrayLike:
         """Tabulate the basis functions of the element.
 
         Args:
@@ -1121,7 +1121,7 @@ class _MixedElement(_ElementBase):
 
     def custom_quadrature(
         self,
-    ) -> tuple[_npt.NDArray[np.float64], _npt.NDArray[np.float64]]:
+    ) -> tuple[_npt.NDArray[np.floating], _npt.NDArray[np.floating]]:
         """Return custom quadrature rule or raise a ValueError."""
         custom_q = None
         for e in self._sub_elements:
@@ -1245,7 +1245,7 @@ class _BlockedElement(_ElementBase):
         """Is this a quadrature element?"""
         return self._sub_element.is_quadrature
 
-    def tabulate(self, nderivs: int, points: _npt.NDArray[np.float64]) -> _npt.ArrayLike:
+    def tabulate(self, nderivs: int, points: _npt.NDArray[np.floating]) -> _npt.ArrayLike:
         """Tabulate the basis functions of the element.
 
         Args:
@@ -1501,7 +1501,7 @@ class _BlockedElement(_ElementBase):
 
     def custom_quadrature(
         self,
-    ) -> tuple[_npt.NDArray[np.float64], _npt.NDArray[np.float64]]:
+    ) -> tuple[_npt.NDArray[np.floating], _npt.NDArray[np.floating]]:
         """Return custom quadrature rule or raise a ValueError."""
         return self._sub_element.custom_quadrature()
 
@@ -1522,14 +1522,15 @@ class _QuadratureElement(_ElementBase):
     def __init__(
         self,
         cell: _basix.CellType,
-        points: _npt.NDArray[np.float64],
-        weights: _npt.NDArray[np.float64],
+        points: _npt.NDArray[np.floating],
+        weights: _npt.NDArray[np.floating],
         pullback: _AbstractPullback,
         degree: _typing.Optional[int] = None,
+        dtype: _typing.Optional[_npt.DTypeLike] = np.float64,
     ):
         """Initialise the element."""
-        self._points = points
-        self._weights = weights
+        self._points = points.astype(dtype)
+        self._weights = weights.astype(dtype)
         repr = f"QuadratureElement({cell.name}, {points!r}, {weights!r}, {pullback})".replace(
             "\n", ""
         )
@@ -1544,7 +1545,7 @@ class _QuadratureElement(_ElementBase):
     @property
     def dtype(self) -> _npt.DTypeLike:
         """Element float type."""
-        raise NotImplementedError()
+        raise self.points.dtype
 
     @property
     def basix_sobolev_space(self) -> _basix.SobolevSpace:
@@ -1566,7 +1567,7 @@ class _QuadratureElement(_ElementBase):
         """Return a hash."""
         return super().__hash__()
 
-    def tabulate(self, nderivs: int, points: _npt.NDArray[np.float64]) -> _npt.ArrayLike:
+    def tabulate(self, nderivs: int, points: _npt.NDArray[np.floating]) -> _npt.ArrayLike:
         """Tabulate the basis functions of the element.
 
         Args:
@@ -1581,7 +1582,7 @@ class _QuadratureElement(_ElementBase):
 
         if points.shape != self._points.shape:
             raise ValueError("Mismatch of tabulation points and element points.")
-        tables = np.asarray([np.eye(points.shape[0], points.shape[0])])
+        tables = np.asarray([np.eye(points.shape[0], points.shape[0])], dtype=points.dtype)
         return tables
 
     def get_component_element(self, flat_component: int) -> tuple[_ElementBase, int, int]:
@@ -1600,7 +1601,7 @@ class _QuadratureElement(_ElementBase):
 
     def custom_quadrature(
         self,
-    ) -> tuple[_npt.NDArray[np.float64], _npt.NDArray[np.float64]]:
+    ) -> tuple[_npt.NDArray[np.floating], _npt.NDArray[np.floating]]:
         """Return custom quadrature rule or raise a ValueError."""
         return self._points, self._weights
 
@@ -1778,7 +1779,7 @@ class _RealElement(_ElementBase):
         """Element float type."""
         raise NotImplementedError()
 
-    def tabulate(self, nderivs: int, points: _npt.NDArray[np.float64]) -> _npt.ArrayLike:
+    def tabulate(self, nderivs: int, points: _npt.NDArray[np.floating]) -> _npt.ArrayLike:
         """Tabulate the basis functions of the element.
 
         Args:
@@ -2252,6 +2253,7 @@ def quadrature_element(
     weights: _typing.Optional[_npt.NDArray[np.floating]] = None,
     pullback: _AbstractPullback = _ufl.identity_pullback,
     symmetry: _typing.Optional[bool] = None,
+    dtype: _typing.Optional[_npt.DTypeLike] = None,
 ) -> _ElementBase:
     """Create a quadrature element.
 
@@ -2268,6 +2270,7 @@ def quadrature_element(
         pullback: Map name.
         symmetry: Set to ``True`` if the tensor is symmetric. Valid for
             rank 2 elements only.
+        dtype: Data type of quadrature points and weights
 
     Returns:
         A 'quadrature' finite element.
@@ -2288,7 +2291,7 @@ def quadrature_element(
     assert points is not None
     assert weights is not None
 
-    e = _QuadratureElement(cell, points, weights, pullback, degree)
+    e = _QuadratureElement(cell, points, weights, pullback, degree, dtype=dtype)
     if value_shape == ():
         if symmetry is not None:
             raise ValueError("Cannot pass a symmetry argument to this element.")

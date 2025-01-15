@@ -194,7 +194,9 @@ class _ElementBase(_AbstractFiniteElement):
 
     # Basix specific functions
     @_abstractmethod
-    def tabulate(self, nderivs: int, points: _npt.NDArray[np.float64]) -> _npt.ArrayLike:
+    def tabulate(
+        self, nderivs: int, points: _npt.NDArray[np.floating]
+    ) -> _npt.ArrayLike:
         """Tabulate the basis functions of the element.
 
         Args:
@@ -206,7 +208,9 @@ class _ElementBase(_AbstractFiniteElement):
         """
 
     @_abstractmethod
-    def get_component_element(self, flat_component: int) -> tuple[_typing.Any, int, int]:
+    def get_component_element(
+        self, flat_component: int
+    ) -> tuple[_typing.Any, int, int]:
         """Get element that represents a component, and the offset and stride of the component.
 
         For example, for a mixed element, this will return the
@@ -309,7 +313,7 @@ class _ElementBase(_AbstractFiniteElement):
 
     def custom_quadrature(
         self,
-    ) -> tuple[_npt.NDArray[np.float64], _npt.NDArray[np.float64]]:
+    ) -> tuple[_npt.NDArray[np.floating], _npt.NDArray[np.floating]]:
         """Return custom quadrature rule or raise a ValueError."""
         raise ValueError("Element does not have a custom quadrature rule.")
 
@@ -427,7 +431,9 @@ class _BasixElement(_ElementBase):
         """Return the hash of the Basix element if this is a standard Basix element."""
         return self._element.hash()
 
-    def tabulate(self, nderivs: int, points: _npt.NDArray[np.float64]) -> _npt.ArrayLike:
+    def tabulate(
+        self, nderivs: int, points: _npt.NDArray[np.floating]
+    ) -> _npt.ArrayLike:
         """Tabulate the basis functions of the element.
 
         Args:
@@ -442,7 +448,9 @@ class _BasixElement(_ElementBase):
         # TODO: update FFCx to remove the need for transposing here
         return tab.transpose((0, 1, 3, 2)).reshape((tab.shape[0], tab.shape[1], -1))  # type: ignore
 
-    def get_component_element(self, flat_component: int) -> tuple[_ElementBase, int, int]:
+    def get_component_element(
+        self, flat_component: int
+    ) -> tuple[_ElementBase, int, int]:
         """Get element that represents a component.
 
         Element that represents a component of the element, and the
@@ -670,7 +678,9 @@ class _ComponentElement(_ElementBase):
         """Return a hash."""
         return super().__hash__()
 
-    def tabulate(self, nderivs: int, points: _npt.NDArray[np.float64]) -> _npt.ArrayLike:
+    def tabulate(
+        self, nderivs: int, points: _npt.NDArray[np.floating]
+    ) -> _npt.ArrayLike:
         """Tabulate the basis functions of the element.
 
         Args:
@@ -690,17 +700,24 @@ class _ComponentElement(_ElementBase):
             elif len(self._element._reference_value_shape) == 1:
                 output.append(tbl[:, self._component, :])
             elif len(self._element._reference_value_shape) == 2:
-                if isinstance(self._element, _BlockedElement) and self._element._has_symmetry:
+                if (
+                    isinstance(self._element, _BlockedElement)
+                    and self._element._has_symmetry
+                ):
                     # FIXME: check that this behaves as expected
                     output.append(tbl[:, self._component, :])
                 else:
                     vs0 = self._element._reference_value_shape[0]
-                    output.append(tbl[:, self._component // vs0, self._component % vs0, :])
+                    output.append(
+                        tbl[:, self._component // vs0, self._component % vs0, :]
+                    )
             else:
                 raise NotImplementedError()
         return np.asarray(output, dtype=np.float64)
 
-    def get_component_element(self, flat_component: int) -> tuple[_ElementBase, int, int]:
+    def get_component_element(
+        self, flat_component: int
+    ) -> tuple[_ElementBase, int, int]:
         """Get element that represents a component.
 
         Element that represents a component of the element, and the
@@ -880,7 +897,9 @@ class _MixedElement(_ElementBase):
 
     def __eq__(self, other) -> bool:
         """Check if two elements are equal."""
-        if isinstance(other, _MixedElement) and len(self._sub_elements) == len(other._sub_elements):
+        if isinstance(other, _MixedElement) and len(self._sub_elements) == len(
+            other._sub_elements
+        ):
             for i, j in zip(self._sub_elements, other._sub_elements):
                 if i != j:
                     return False
@@ -906,7 +925,9 @@ class _MixedElement(_ElementBase):
         """Degree of the element."""
         return max((e.degree for e in self._sub_elements), default=-1)
 
-    def tabulate(self, nderivs: int, points: _npt.NDArray[np.float64]) -> _npt.ArrayLike:
+    def tabulate(
+        self, nderivs: int, points: _npt.NDArray[np.floating]
+    ) -> _npt.ArrayLike:
         """Tabulate the basis functions of the element.
 
         Args:
@@ -930,7 +951,9 @@ class _MixedElement(_ElementBase):
             tables.append(new_table)
         return np.asarray(tables, dtype=np.float64)
 
-    def get_component_element(self, flat_component: int) -> tuple[_ElementBase, int, int]:
+    def get_component_element(
+        self, flat_component: int
+    ) -> tuple[_ElementBase, int, int]:
         """Get element that represents a component.
 
         Element that represents a component of the element, and the
@@ -1021,7 +1044,10 @@ class _MixedElement(_ElementBase):
         """Number of DOFs associated with each entity."""
         data = [e.num_entity_dofs for e in self._sub_elements]
         return [
-            [sum(d[tdim][entity_n] for d in data) for entity_n, _ in enumerate(entities)]
+            [
+                sum(d[tdim][entity_n] for d in data)
+                for entity_n, _ in enumerate(entities)
+            ]
             for tdim, entities in enumerate(data[0])
         ]
 
@@ -1044,7 +1070,10 @@ class _MixedElement(_ElementBase):
         """Number of DOFs associated with the closure of each entity."""
         data = [e.num_entity_closure_dofs for e in self._sub_elements]
         return [
-            [sum(d[tdim][entity_n] for d in data) for entity_n, _ in enumerate(entities)]
+            [
+                sum(d[tdim][entity_n] for d in data)
+                for entity_n, _ in enumerate(entities)
+            ]
             for tdim, entities in enumerate(data[0])
         ]
 
@@ -1052,7 +1081,8 @@ class _MixedElement(_ElementBase):
     def entity_closure_dofs(self) -> list[list[list[int]]]:
         """DOF numbers associated with the closure of each entity."""
         dofs: list[list[list[int]]] = [
-            [[] for i in entities] for entities in self._sub_elements[0].entity_closure_dofs
+            [[] for i in entities]
+            for entities in self._sub_elements[0].entity_closure_dofs
         ]
         start_dof = 0
         for e in self._sub_elements:
@@ -1121,7 +1151,7 @@ class _MixedElement(_ElementBase):
 
     def custom_quadrature(
         self,
-    ) -> tuple[_npt.NDArray[np.float64], _npt.NDArray[np.float64]]:
+    ) -> tuple[_npt.NDArray[np.floating], _npt.NDArray[np.floating]]:
         """Return custom quadrature rule or raise a ValueError."""
         custom_q = None
         for e in self._sub_elements:
@@ -1130,7 +1160,9 @@ class _MixedElement(_ElementBase):
                     custom_q = e.custom_quadrature()
                 else:
                     p, w = e.custom_quadrature()
-                    if not np.allclose(p, custom_q[0]) or not np.allclose(w, custom_q[1]):
+                    if not np.allclose(p, custom_q[0]) or not np.allclose(
+                        w, custom_q[1]
+                    ):
                         raise ValueError(
                             "Subelements of mixed element use different quadrature rules"
                         )
@@ -1175,9 +1207,13 @@ class _BlockedElement(_ElementBase):
             )
         if symmetry is not None:
             if len(shape) != 2:
-                raise ValueError("symmetry argument can only be passed to elements of rank 2.")
+                raise ValueError(
+                    "symmetry argument can only be passed to elements of rank 2."
+                )
             if shape[0] != shape[1]:
-                raise ValueError("symmetry argument can only be passed to square shaped elements.")
+                raise ValueError(
+                    "symmetry argument can only be passed to square shaped elements."
+                )
 
         if symmetry:
             block_size = shape[0] * (shape[0] + 1) // 2
@@ -1245,7 +1281,9 @@ class _BlockedElement(_ElementBase):
         """Is this a quadrature element?"""
         return self._sub_element.is_quadrature
 
-    def tabulate(self, nderivs: int, points: _npt.NDArray[np.float64]) -> _npt.ArrayLike:
+    def tabulate(
+        self, nderivs: int, points: _npt.NDArray[np.floating]
+    ) -> _npt.ArrayLike:
         """Tabulate the basis functions of the element.
 
         Args:
@@ -1257,7 +1295,9 @@ class _BlockedElement(_ElementBase):
 
         """
         assert len(self._block_shape) == 1  # TODO: block shape
-        assert self.reference_value_size == self._block_size  # TODO: remove this assumption
+        assert (
+            self.reference_value_size == self._block_size
+        )  # TODO: remove this assumption
         output = []
         for table in self._sub_element.tabulate(nderivs, points):  # type: ignore
             # Repeat sub element horizontally
@@ -1265,7 +1305,9 @@ class _BlockedElement(_ElementBase):
             new_table = np.zeros(
                 (table.shape[0], *self._block_shape, self._block_size * table.shape[1])  # type: ignore
             )
-            for i, j in enumerate(_itertools.product(*[range(s) for s in self._block_shape])):
+            for i, j in enumerate(
+                _itertools.product(*[range(s) for s in self._block_shape])
+            ):
                 if len(j) == 1:
                     new_table[:, j[0], i :: self._block_size] = table
                 elif len(j) == 2:
@@ -1275,7 +1317,9 @@ class _BlockedElement(_ElementBase):
             output.append(new_table)
         return np.asarray(output, dtype=np.float64)
 
-    def get_component_element(self, flat_component: int) -> tuple[_ElementBase, int, int]:
+    def get_component_element(
+        self, flat_component: int
+    ) -> tuple[_ElementBase, int, int]:
         """Get element that represents a component.
 
         Element that represents a component of the element, and the
@@ -1324,7 +1368,9 @@ class _BlockedElement(_ElementBase):
     @property
     def num_entity_dofs(self) -> list[list[int]]:
         """Number of DOFs associated with each entity."""
-        return [[j * self._block_size for j in i] for i in self._sub_element.num_entity_dofs]
+        return [
+            [j * self._block_size for j in i] for i in self._sub_element.num_entity_dofs
+        ]
 
     @property
     def entity_dofs(self) -> list[list[list[int]]]:
@@ -1332,7 +1378,10 @@ class _BlockedElement(_ElementBase):
         # TODO: should this return this, or should it take blocks into
         # account?
         return [
-            [[k * self._block_size + b for k in j for b in range(self._block_size)] for j in i]
+            [
+                [k * self._block_size + b for k in j for b in range(self._block_size)]
+                for j in i
+            ]
             for i in self._sub_element.entity_dofs
         ]
 
@@ -1340,7 +1389,8 @@ class _BlockedElement(_ElementBase):
     def num_entity_closure_dofs(self) -> list[list[int]]:
         """Number of DOFs associated with the closure of each entity."""
         return [
-            [j * self._block_size for j in i] for i in self._sub_element.num_entity_closure_dofs
+            [j * self._block_size for j in i]
+            for i in self._sub_element.num_entity_closure_dofs
         ]
 
     @property
@@ -1349,7 +1399,10 @@ class _BlockedElement(_ElementBase):
         # TODO: should this return this, or should it take blocks into
         # account?
         return [
-            [[k * self._block_size + b for k in j for b in range(self._block_size)] for j in i]
+            [
+                [k * self._block_size + b for k in j for b in range(self._block_size)]
+                for j in i
+            ]
             for i in self._sub_element.entity_closure_dofs
         ]
 
@@ -1501,7 +1554,7 @@ class _BlockedElement(_ElementBase):
 
     def custom_quadrature(
         self,
-    ) -> tuple[_npt.NDArray[np.float64], _npt.NDArray[np.float64]]:
+    ) -> tuple[_npt.NDArray[np.floating], _npt.NDArray[np.floating]]:
         """Return custom quadrature rule or raise a ValueError."""
         return self._sub_element.custom_quadrature()
 
@@ -1522,14 +1575,15 @@ class _QuadratureElement(_ElementBase):
     def __init__(
         self,
         cell: _basix.CellType,
-        points: _npt.NDArray[np.float64],
-        weights: _npt.NDArray[np.float64],
+        points: _npt.NDArray[np.floating],
+        weights: _npt.NDArray[np.floating],
         pullback: _AbstractPullback,
         degree: _typing.Optional[int] = None,
+        dtype: _typing.Optional[_npt.DTypeLike] = np.float64,
     ):
         """Initialise the element."""
-        self._points = points
-        self._weights = weights
+        self._points = points.astype(dtype)
+        self._weights = weights.astype(dtype)
         repr = f"QuadratureElement({cell.name}, {points!r}, {weights!r}, {pullback})".replace(
             "\n", ""
         )
@@ -1544,7 +1598,7 @@ class _QuadratureElement(_ElementBase):
     @property
     def dtype(self) -> _npt.DTypeLike:
         """Element float type."""
-        raise NotImplementedError()
+        raise self.points.dtype
 
     @property
     def basix_sobolev_space(self) -> _basix.SobolevSpace:
@@ -1566,7 +1620,9 @@ class _QuadratureElement(_ElementBase):
         """Return a hash."""
         return super().__hash__()
 
-    def tabulate(self, nderivs: int, points: _npt.NDArray[np.float64]) -> _npt.ArrayLike:
+    def tabulate(
+        self, nderivs: int, points: _npt.NDArray[np.floating]
+    ) -> _npt.ArrayLike:
         """Tabulate the basis functions of the element.
 
         Args:
@@ -1581,10 +1637,14 @@ class _QuadratureElement(_ElementBase):
 
         if points.shape != self._points.shape:
             raise ValueError("Mismatch of tabulation points and element points.")
-        tables = np.asarray([np.eye(points.shape[0], points.shape[0])])
+        tables = np.asarray(
+            [np.eye(points.shape[0], points.shape[0])], dtype=points.dtype
+        )
         return tables
 
-    def get_component_element(self, flat_component: int) -> tuple[_ElementBase, int, int]:
+    def get_component_element(
+        self, flat_component: int
+    ) -> tuple[_ElementBase, int, int]:
         """Get element that represents a component.
 
         Element that represents a component of the element, and the
@@ -1600,7 +1660,7 @@ class _QuadratureElement(_ElementBase):
 
     def custom_quadrature(
         self,
-    ) -> tuple[_npt.NDArray[np.float64], _npt.NDArray[np.float64]]:
+    ) -> tuple[_npt.NDArray[np.floating], _npt.NDArray[np.floating]]:
         """Return custom quadrature rule or raise a ValueError."""
         return self._points, self._weights
 
@@ -1750,7 +1810,9 @@ class _RealElement(_ElementBase):
         self._cell_type = cell
         tdim = len(_basix.topology(cell)) - 1
 
-        super().__init__(f"RealElement({cell.name}, {value_shape})", cell.name, value_shape, 0)
+        super().__init__(
+            f"RealElement({cell.name}, {value_shape})", cell.name, value_shape, 0
+        )
 
         self._entity_counts = []
         if tdim >= 1:
@@ -1778,7 +1840,9 @@ class _RealElement(_ElementBase):
         """Element float type."""
         raise NotImplementedError()
 
-    def tabulate(self, nderivs: int, points: _npt.NDArray[np.float64]) -> _npt.ArrayLike:
+    def tabulate(
+        self, nderivs: int, points: _npt.NDArray[np.floating]
+    ) -> _npt.ArrayLike:
         """Tabulate the basis functions of the element.
 
         Args:
@@ -1794,7 +1858,9 @@ class _RealElement(_ElementBase):
             out[0, :, self.reference_value_size * v + v] = 1.0
         return out
 
-    def get_component_element(self, flat_component: int) -> tuple[_ElementBase, int, int]:
+    def get_component_element(
+        self, flat_component: int
+    ) -> tuple[_ElementBase, int, int]:
         """Get element that represents a component.
 
         Element that represents a component of the element, and the
@@ -2094,7 +2160,9 @@ def enriched_element(
         map_type = elements[0].map_type
         for e in elements:
             if e.map_type != map_type:
-                raise ValueError("Enriched elements on different map types not supported.")
+                raise ValueError(
+                    "Enriched elements on different map types not supported."
+                )
 
     dtype = e.dtype
     hcd = min(e.embedded_subdegree for e in elements)
@@ -2107,9 +2175,13 @@ def enriched_element(
         if e.cell_type != ct:
             raise ValueError("Enriched elements on different cell types not supported.")
         if e.polyset_type != ptype:
-            raise ValueError("Enriched elements on different polyset types not supported.")
+            raise ValueError(
+                "Enriched elements on different polyset types not supported."
+            )
         if e.reference_value_shape != vshape or e.reference_value_size != vsize:
-            raise ValueError("Enriched elements on different value shapes not supported.")
+            raise ValueError(
+                "Enriched elements on different value shapes not supported."
+            )
         if e.dtype != dtype:
             raise ValueError("Enriched elements with different dtypes no supported.")
     nderivs = max(e.interpolation_nderivs for e in elements)
@@ -2128,7 +2200,9 @@ def enriched_element(
             pt = 0
             dof = 0
             for mat in M_parts:
-                new_M[dof : dof + mat.shape[0], :, pt : pt + mat.shape[2], : mat.shape[3]] = mat
+                new_M[
+                    dof : dof + mat.shape[0], :, pt : pt + mat.shape[2], : mat.shape[3]
+                ] = mat
                 dof += mat.shape[0]
                 pt += mat.shape[2]
             M_row.append(new_M)
@@ -2252,6 +2326,7 @@ def quadrature_element(
     weights: _typing.Optional[_npt.NDArray[np.floating]] = None,
     pullback: _AbstractPullback = _ufl.identity_pullback,
     symmetry: _typing.Optional[bool] = None,
+    dtype: _typing.Optional[_npt.DTypeLike] = None,
 ) -> _ElementBase:
     """Create a quadrature element.
 
@@ -2268,6 +2343,7 @@ def quadrature_element(
         pullback: Map name.
         symmetry: Set to ``True`` if the tensor is symmetric. Valid for
             rank 2 elements only.
+        dtype: Data type of quadrature points and weights
 
     Returns:
         A 'quadrature' finite element.
@@ -2288,7 +2364,7 @@ def quadrature_element(
     assert points is not None
     assert weights is not None
 
-    e = _QuadratureElement(cell, points, weights, pullback, degree)
+    e = _QuadratureElement(cell, points, weights, pullback, degree, dtype=dtype)
     if value_shape == ():
         if symmetry is not None:
             raise ValueError("Cannot pass a symmetry argument to this element.")
@@ -2334,7 +2410,9 @@ def blocked_element(
         A blocked finite element.
     """
     if len(sub_element.reference_value_shape) != 0:
-        raise ValueError("Cannot create a blocked element containing a non-scalar element.")
+        raise ValueError(
+            "Cannot create a blocked element containing a non-scalar element."
+        )
 
     return _BlockedElement(sub_element, shape=shape, symmetry=symmetry)
 

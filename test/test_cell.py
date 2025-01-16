@@ -89,3 +89,47 @@ def test_sub_entity_type():
     for i in range(4):
         assert basix.cell.sub_entity_type(cell_type, 2, i) == basix.CellType.triangle
     assert basix.cell.sub_entity_type(cell_type, 3, 0) == basix.CellType.tetrahedron
+
+
+def test_facet_jacobians_2D_simplex():
+    cell = basix.cell.CellType.triangle
+    facet_jacobian = basix.cell.facet_jacobians(cell)
+
+    reference_vertices = np.array([[0.0, 0.0], [1.0, 0.0], [0.0, 1.0]])
+    mask = np.zeros(3, dtype=np.bool_)
+    for i in range(3):
+        mask[:] = True
+        mask[i] = False
+        facet = reference_vertices[mask]
+
+        reference_facet_jacobian = -facet[0:1, :].T + facet[1:2, :].T
+        np.testing.assert_allclose(reference_facet_jacobian, facet_jacobian[i])
+
+
+def test_facet_jacobians_3D_simplex():
+    cell = basix.cell.CellType.tetrahedron
+    facet_jacobian = basix.cell.facet_jacobians(cell)
+
+    reference_vertices = np.array(
+        [[0.0, 0.0, 0.0], [1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]]
+    )
+    mask = np.zeros(4, dtype=np.bool_)
+    for i in range(4):
+        mask[:] = True
+        mask[i] = False
+        facet = reference_vertices[mask]
+        reference_facet_jacobian = np.array([-facet[0] + facet[1], -facet[0] + facet[2]]).T
+        np.testing.assert_allclose(reference_facet_jacobian, facet_jacobian[i])
+
+
+@pytest.mark.parametrize("cell", [basix.cell.CellType.hexahedron, basix.cell.CellType.tetrahedron])
+def test_edge_jacobian_3D_simplex(cell):
+    edge_jacobian = basix.cell.edge_jacobians(cell)
+    geom = basix.geometry(cell)
+    topology = basix.topology(cell)
+    edges = topology[1]
+
+    for i, edge in enumerate(edges):
+        points = geom[edge]
+        reference_edge_jacobian = (points[1:2, :] - points[0:1, :]).T
+        np.testing.assert_allclose(reference_edge_jacobian, edge_jacobian[i])

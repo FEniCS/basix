@@ -611,7 +611,7 @@ std::pair<std::vector<T>, std::array<std::size_t, 3>>
 cell::entity_jacobians(cell::type cell_type, std::size_t e_dim)
 {
   std::size_t tdim = cell::topological_dimension(cell_type);
-  if ((e_dim > tdim))
+  if ((e_dim >= tdim))
   {
     throw std::runtime_error(
         "Entity jacobians supported for entity of dimension "

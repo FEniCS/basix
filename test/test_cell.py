@@ -1,4 +1,4 @@
-# Copyright (c) 2021 Matthew Scroggs
+# Copyright (c) 2021-2025 Matthew Scroggs, Jørgen S. Dokken
 # FEniCS Project
 # SPDX-License-Identifier: MIT
 

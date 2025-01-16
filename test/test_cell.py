@@ -122,7 +122,8 @@ def test_facet_jacobians_3D_simplex():
         np.testing.assert_allclose(reference_facet_jacobian, facet_jacobian[i])
 
 
-@pytest.mark.parametrize("cell", [basix.cell.CellType.hexahedron, basix.cell.CellType.tetrahedron])
+@pytest.mark.parametrize("cell", [basix.cell.CellType.hexahedron, basix.cell.CellType.tetrahedron,
+                                  basix.cell.CellType.prism, basix.cell.CellType.pyramid])
 def test_edge_jacobian_3D_simplex(cell):
     edge_jacobian = basix.cell.edge_jacobians(cell)
     geom = basix.geometry(cell)

@@ -2285,8 +2285,23 @@ void tabulate_polyset_pyramid_derivs(
                   MDSPAN_IMPL_STANDARD_NAMESPACE::full_extent);
               for (std::size_t i = 0; i < r_pq.size(); ++i)
                 r_pq[i] += kz * _p[i] * (a + 1.0);
+                
+              if (q <= p)
+              {
+                auto _p = MDSPAN_IMPL_STANDARD_NAMESPACE::submdspan(
+                    P, idx(kx, ky, kz - 1), pyr_idx(p, q, 0),
+                    MDSPAN_IMPL_STANDARD_NAMESPACE::full_extent);
+                for (std::size_t i = 0; i < r_pq.size(); ++i)
+                  r_pq[i] += kz * _p[i];
+              }
             }
-
+            
+            if (q <= p) 
+              for (std::size_t i = 0; i < r_pq.size(); ++i)
+                if (x2[i] != 1.0) 
+                {
+                  r_pq[i] /= (1 - x2[i]);
+                }
             if (q > 1)
             {
               auto _p = MDSPAN_IMPL_STANDARD_NAMESPACE::submdspan(
@@ -2295,7 +2310,18 @@ void tabulate_polyset_pyramid_derivs(
               for (std::size_t i = 0; i < r_pq.size(); ++i)
               {
                 const T f2 = 1.0 - x2[i];
-                r_pq[i] -= f2 * f2 * _p[i] * a;
+                if (q <= p)
+                {
+                  r_pq[i] -=_p[i] * a;
+                }
+                else if (q <= p + 1)
+                {
+                  r_pq[i] -= f2 * _p[i] * a;
+                }
+                else
+                {
+                  r_pq[i] -= f2 * f2 * _p[i] * a;
+                }
               }
 
               if (kz > 0)
@@ -2304,10 +2330,30 @@ void tabulate_polyset_pyramid_derivs(
                     P, idx(kx, ky, kz - 1), pyr_idx(p, q - 2, 0),
                     MDSPAN_IMPL_STANDARD_NAMESPACE::full_extent);
                 for (std::size_t i = 0; i < r_pq.size(); ++i)
-                  r_pq[i] += kz * (1.0 - (x2[i] * 2.0 - 1.0)) * _p[i] * a;
+                {
+                  const T f2 = 1.0 - x2[i];
+                  if (q <= p)
+                  {
+                    if (x2[i] != 1.0) 
+                    {
+                      r_pq[i] += 0.5 * kz * (1.0 - (x2[i] * 2.0 - 1.0)) * _p[i] * a /f2 /f2;
+                    }
+                  }
+                  else if (q <= p + 1)
+                  {
+                    if (x2[i] != 1.0)
+                    {
+                      r_pq[i] += 0.5 * kz * (1.0 - (x2[i] * 2.0 - 1.0)) * _p[i] * a /f2;
+                    }
+                  }
+                  else
+                  {
+                    r_pq[i] +=       kz * (1.0 - (x2[i] * 2.0 - 1.0)) * _p[i] * a;
+                  }
+                }
               }
 
-              if (kz > 1)
+              if (kz > 1 and q > p + 1)
               {
                 auto _p = MDSPAN_IMPL_STANDARD_NAMESPACE::submdspan(
                     P, idx(kx, ky, kz - 2), pyr_idx(p, q - 2, 0),
@@ -2335,7 +2381,7 @@ void tabulate_polyset_pyramid_derivs(
             {
               r_pq1[i]
                   = r_pq0[i]
-                    * ((1.0 + p + q) + (x2[i] * 2.0 - 1.0) * (2.0 + p + q));
+                    * ((1.0 + std::max(p, q)) + (x2[i] * 2.0 - 1.0) * (2.0 + std::max(p, q)));
             }
 
             if (kz > 0)
@@ -2344,7 +2390,7 @@ void tabulate_polyset_pyramid_derivs(
                   P, idx(kx, ky, kz - 1), pyr_idx(p, q, 0),
                   MDSPAN_IMPL_STANDARD_NAMESPACE::full_extent);
               for (std::size_t i = 0; i < r_pq1.size(); ++i)
-                r_pq1[i] += 2 * kz * r_pq[i] * (2.0 + p + q);
+                r_pq1[i] += 2 * kz * r_pq[i] * (2.0 + std::max(p, q));
             }
           }
         }
@@ -2355,7 +2401,7 @@ void tabulate_polyset_pyramid_derivs(
           {
             for (std::size_t q = 0; q < n - r; ++q)
             {
-              auto [ar, br, cr] = jrc<T>(2 * p + 2 * q + 2, r);
+              auto [ar, br, cr] = jrc<T>(2 * std::max(p, q) + 2, r);
               auto r_pqr = MDSPAN_IMPL_STANDARD_NAMESPACE::submdspan(
                   P, idx(kx, ky, kz), pyr_idx(p, q, r + 1),
                   MDSPAN_IMPL_STANDARD_NAMESPACE::full_extent);
@@ -2398,7 +2444,7 @@ void tabulate_polyset_pyramid_derivs(
         for (std::size_t i = 0; i < pqr.extent(0); ++i)
           for (std::size_t j = 0; j < pqr.extent(1); ++j)
             pqr(i, j)
-                *= std::sqrt(2 * (q + 0.5) * (p + 0.5) * (p + q + r + 1.5)) * 2;
+                *= std::sqrt(2 * (q + 0.5) * (p + 0.5) * (std::max(p, q) + r + 1.5)) * 2;
       }
     }
   }

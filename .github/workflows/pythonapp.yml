@@ -17,7 +17,9 @@ on:
     branches:
       - main
   workflow_dispatch:
-
+  # Weekly build on Mondays at 8 am
+  schedule:
+    - cron: "0 8 * * 1"
 jobs:
   lint:
     name: Lint code
@@ -26,7 +28,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.12'
+          python-version: "3.12"
       - uses: actions/checkout@v4
       - name: Ruff check
         run: |
@@ -144,7 +146,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.12'
+          python-version: "3.12"
       - name: Install dependencies
         run: sudo apt-get install -y libopenblas-dev liblapack-dev ninja-build
       - name: Install Python dependencies
@@ -160,7 +162,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.12'
+          python-version: "3.12"
       - name: Install dependencies
         run: sudo apt-get install -y libopenblas-dev liblapack-dev
       - name: Install Basix C++ library

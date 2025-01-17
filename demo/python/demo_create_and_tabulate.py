@@ -46,7 +46,7 @@ print(tab.shape)
 # is 1 as we are only tabulating the function values; it would be higher if we
 # had asked for derivatives too. The second dimension (5) is the number of points.
 # The third dimension (25) is the number of DOFs. The fourth dimension (1) is the
-# value size of the element: this will be greater than 1 for vector-values elements.
+# value size of the element: this will be greater than 1 for vector-valued elements.
 #
 # C++ demo
 # ========

@@ -101,11 +101,19 @@
 /// ### Pyramid
 /// Orthogonal rational functions on the pyramid element are best calculated in
 /// the same way as the tetrahedron, using recurrence relations on each
-/// axis. Let \f$\zeta_x = 2\frac{x}{1-z} - 1\f$, \f$\zeta_y =
-/// 2\frac{y}{1-z} - 1\f$. The functions are then constituted as
+/// axis. Let \f$\zeta_x = 2\frac{1+x}{1-z} - 1\f$, \f$\zeta_y =
+/// 2\frac{1+y}{1-z} - 1\f$. The functions are then constituted as
 ///
 /// \f[Q_{p, q, r} = P^{0,0}_p(\zeta_x) P^{0,0}_q(\zeta_y)
-/// \left(1-z\right)^{max(p,q)} P_r^{2(max(p,q)+1), 0}(2z-1).\f]
+/// \left(1-z\right)^{max(p,q)-1} P_r^{2(max(p,q)+1), 0}(2z-1).\f]
+///
+/// Some nuance: An extra 1/(1-z) factor is included. To get the polynomials to span
+/// the Lagrange spaces (0-Form), a factor of (1-z) need to be applied.
+/// The orthogonal polynomials as defined here then include the derivatives of those polynomials, 
+/// as required to span the 1-Forms (Curl-spaces).
+/// The derivatives provided are actually D[(1-z)Q, z]/(1-z), 
+/// which are the to be used anyway, after multiplication by (1-z), 
+/// so this was purposefully/lazily not corrected. 
 ///
 /// ### Normalisation
 /// For each cell type, we obtain an orthonormal set of polynomials by

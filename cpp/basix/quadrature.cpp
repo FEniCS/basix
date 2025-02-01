@@ -419,9 +419,11 @@ std::array<std::vector<T>, 2> make_gauss_jacobi_quadrature(cell::type celltype,
     for (std::size_t i = 0; i < x.extent(0); ++i)
     {
       const auto z = x(i, 2);
-      x(i, 0) *= (1 - z);
-      x(i, 1) *= (1 - z);
-      wts[i] *= (1 - z) * (1 - z);
+      x(i, 0) -= 0.5;
+      x(i, 1) -= 0.5;
+      x(i, 0) *= 2.0*(1 - z);
+      x(i, 1) *= 2.0*(1 - z);
+      wts[i] *= 4.0*(1 - z) * (1 - z);
     }
     return {std::move(pts), std::move(wts)};
   }

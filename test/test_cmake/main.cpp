@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: MIT
 
 #include <basix/finite-element.h>
+#include <basix/indexing.h>
 #include <memory>
 
 int main()
@@ -16,6 +17,8 @@ int main()
       basix::element::family::P, basix::cell::type::triangle, 1,
       basix::element::lagrange_variant::equispaced,
       basix::element::dpc_variant::unset, false);
+
+  basix::indexing::idxn({1, 2, 1});
 
   return 0;
 }

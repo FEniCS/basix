@@ -512,14 +512,12 @@ NB_MODULE(_basixcpp, m)
         { return cell::volume<double>(cell_type); });
   m.def("cell_facet_normals", [](cell::type cell_type)
         { return as_nbarrayp(cell::facet_normals<double>(cell_type)); });
-  m.def("cell_facet_reference_volumes",
-        [](cell::type cell_type) {
-          return as_nbarray(cell::facet_reference_volumes<double>(cell_type));
-        });
-  m.def("cell_facet_outward_normals",
-        [](cell::type cell_type) {
-          return as_nbarrayp(cell::facet_outward_normals<double>(cell_type));
-        });
+  m.def(
+      "cell_facet_reference_volumes", [](cell::type cell_type)
+      { return as_nbarray(cell::facet_reference_volumes<double>(cell_type)); });
+  m.def(
+      "cell_facet_outward_normals", [](cell::type cell_type)
+      { return as_nbarrayp(cell::facet_outward_normals<double>(cell_type)); });
   m.def("cell_facet_orientations",
         [](cell::type cell_type)
         {
@@ -684,6 +682,9 @@ NB_MODULE(_basixcpp, m)
   m.def("index", nb::overload_cast<int>(&basix::indexing::idx));
   m.def("index", nb::overload_cast<int, int>(&basix::indexing::idx));
   m.def("index", nb::overload_cast<int, int, int>(&basix::indexing::idx));
+  // m.def("index", [](nb::ndarray<const int, nb::ndim<1>, nb::c_contig>) {
+  //   if
+  // });
 
   declare_float<float>(m, "float32");
   declare_float<double>(m, "float64");

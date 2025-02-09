@@ -441,9 +441,9 @@ public:
   /// value_size)`. The function tabulate_shape() can be used to get the
   /// required shape.
   /// - The first index is the derivative, with higher derivatives are
-  /// stored in triangular (2D) or tetrahedral (3D) ordering, ie for
-  /// the (x,y) derivatives in 2D: (0,0), (1,0), (0,1), (2,0), (1,1),
-  /// (0,2), (3,0)... The function indexing::idx can be used to
+  /// stored in triangular (2D) or tetrahedral (3D) ordering, i.e. for
+  /// the (x, y) derivatives in 2D: (0, 0), (1, 0), (0, 1), (2, 0), (1,
+  /// 1), (0, 2), (3, 0), ... The function indexing::idx can be used to
   /// find the appropriate derivative.
   /// - The second index is the point index
   /// - The third index is the basis function index
@@ -472,9 +472,9 @@ public:
   /// value_size)`. The function tabulate_shape() can be used to get the
   /// required shape.
   /// - The first index is the derivative, with higher derivatives are
-  /// stored in triangular (2D) or tetrahedral (3D) ordering, ie for the
-  /// (x,y) derivatives in 2D: (0,0), (1,0), (0,1), (2,0), (1,1), (0,2),
-  /// (3,0)... The function indexing::idx can be used to find the
+  /// stored in triangular (2D) or tetrahedral (3D) ordering, i.e. for
+  /// the (x,y) derivatives in 2D: (0,0), (1,0), (0,1), (2,0), (1,1),
+  /// (0,2), (3,0)... The function indexing::idx can be used to find the
   /// appropriate derivative.
   /// - The second index is the point index
   /// - The third index is the basis function index
@@ -615,10 +615,10 @@ public:
   /// flattened with row-major layout, shape=(num_points, ref
   /// value_size)
   /// - `u` [in] The data on the physical cell that should be pulled
-  /// back , flattened with row-major layout, shape=(num_points,
+  /// back, flattened with row-major layout, shape=(num_points,
   /// value_size)
-  /// - `K` [in] The inverse of the Jacobian matrix of the map
-  /// ,shape=(tdim, gdim)
+  /// - `K` [in] The inverse of the Jacobian matrix of the map,
+  /// shape=(tdim, gdim)
   /// - `detJ_inv` [in] 1/det(J)
   /// - `J` [in] The Jacobian matrix, shape=(gdim, tdim)
   template <typename O, typename P, typename Q, typename R>

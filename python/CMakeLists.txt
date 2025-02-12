@@ -39,6 +39,10 @@ include(CheckCXXCompilerFlag)
 check_cxx_compiler_flag("-Wall -Werror -Wextra -pedantic" HAVE_PEDANTIC)
 if(HAVE_PEDANTIC)
   target_compile_options(_basixcpp PRIVATE -Wall;-Werror;-Wextra;-Wno-comment;-pedantic)
+  # Intel's complex header uses #include_next which is not allowed with -Wall
+  if (CMAKE_CXX_COMPILER_ID STREQUAL "IntelLLVM")
+    target_compile_options(_basixcpp PRIVATE -Wno-gnu-include-next)
+  endif()
 endif()
 
 # TODO: remove after issue https://github.com/FEniCS/basix/issues/842 is resolved

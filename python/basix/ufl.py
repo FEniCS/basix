@@ -124,7 +124,12 @@ class _ElementBase(_AbstractFiniteElement):
         return hash("basix" + self._repr)
 
     def basix_hash(self) -> _typing.Optional[int]:
-        """Return the hash of the Basix element if this is a standard Basix element."""
+        """Hash of the Basix element (if this is a standard Basix element).
+
+        Returns:
+            Hash of the Basix element if this is a Basix element,
+            otherwise `None`.
+        """
         return None
 
     @_abstractmethod
@@ -319,7 +324,7 @@ class _ElementBase(_AbstractFiniteElement):
 
         If this value is true, this element's basis functions can be
         computed as a tensor product of the basis elements of the
-        elements in the factoriaation.
+        elements in the factorisation.
         """
         return False
 
@@ -384,7 +389,7 @@ class _BasixElement(_ElementBase):
 
     This class allows elements created with `basix.create_element` to be
     wrapped as UFL compatible elements. Users should not directly call
-    this class's initiliser, but should use the `element` function
+    this class's initialiser, but should use the `element` function
     instead.
     """
 
@@ -1229,6 +1234,10 @@ class _BlockedElement(_ElementBase):
     def __hash__(self) -> int:
         """Return a hash."""
         return super().__hash__()
+
+    def basix_hash(self) -> _typing.Optional[int]:
+        """Return the hash of the Basix element."""
+        return self._sub_element.basix_hash()
 
     @property
     def dtype(self) -> _npt.DTypeLike:

@@ -13,8 +13,8 @@
 #include <cmath>
 
 using namespace basix;
-namespace stdex
-    = MDSPAN_IMPL_STANDARD_NAMESPACE::MDSPAN_IMPL_PROPOSED_NAMESPACE;
+namespace md = MDSPAN_IMPL_STANDARD_NAMESPACE;
+namespace stdex = md::MDSPAN_IMPL_PROPOSED_NAMESPACE;
 
 //-----------------------------------------------------------------------------
 template <std::floating_point T>
@@ -116,9 +116,8 @@ FiniteElement<T> element::create_regge(cell::type celltype, int degree,
         // Store up outer(t, t) for all tangents
         const std::vector<int>& vert_ids = topology[d][e];
         const std::size_t ntangents = d * (d + 1) / 2;
-        stdex::mdarray<T,
-                       MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 3>>
-            vvt(ntangents, geometry.extent(1), geometry.extent(1));
+        stdex::mdarray<T, md::dextents<std::size_t, 3>> vvt(
+            ntangents, geometry.extent(1), geometry.extent(1));
         std::vector<T> edge(geometry.extent(1));
 
         int c = 0;

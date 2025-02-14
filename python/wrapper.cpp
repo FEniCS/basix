@@ -413,6 +413,12 @@ void declare_float(nb::module_& m, std::string type)
         return as_nbarrayp(polyset::tabulate(celltype, polytype, d, n, _x));
       },
       "celltype"_a, "polytype"_a, "d"_a, "n"_a, "x"_a.noconvert());
+
+  m.def(
+      "compatible",
+      [](const FiniteElement<T>& e0, const FiniteElement<T>& e1)
+      { return basix::element::compatible(e0, e1); },
+      "e0"_a, "e1"_a);
 }
 
 } // namespace

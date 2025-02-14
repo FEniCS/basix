@@ -608,6 +608,20 @@ element::make_discontinuous(
 /// @endcond
 //-----------------------------------------------------------------------------
 template <std::floating_point T>
+bool element::compatible(const basix::FiniteElement<T>& e0, const basix::FiniteElement<T>& e1) {
+  // TODO
+  return false;
+  if (e0.value_shape() != e1.value_shape())
+    return false;
+  return true;
+}
+//-----------------------------------------------------------------------------
+/// @cond
+template bool element::compatible(const basix::FiniteElement<float>& e0, const basix::FiniteElement<float>& e1);
+template bool element::compatible(const basix::FiniteElement<double>& e0, const basix::FiniteElement<double>& e1);
+/// @endcond
+//-----------------------------------------------------------------------------
+template <std::floating_point T>
 FiniteElement<T> basix::create_custom_element(
     cell::type cell_type, const std::vector<std::size_t>& value_shape,
     impl::mdspan_t<const T, 2> wcoeffs,

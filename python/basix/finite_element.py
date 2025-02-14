@@ -23,6 +23,7 @@ from basix._basixcpp import create_element as _create_element
 from basix._basixcpp import create_tp_element as _create_tp_element
 from basix._basixcpp import tp_dof_ordering as _tp_dof_ordering
 from basix._basixcpp import tp_factors as _tp_factors
+from basix._basixcpp import compatible as _compatible
 from basix.cell import CellType
 from basix import MapType
 from basix.polynomials import PolysetType
@@ -870,3 +871,18 @@ def string_to_family(family: str, cell: str) -> ElementFamily:
         return families[family]
     except KeyError:
         raise ValueError(f"Unknown element family: {family} with cell type {cell}")
+
+
+def compatible(element0: FiniteElement, element1: FiniteElement) -> bool:
+    """Check if two elements are compatible.
+
+    Two elements are compatible if their DOFs on and shared sub-entities are the same.
+
+    Args:
+        element0: The first element.
+        element1: The second element.
+
+    Returns:
+        True or false.
+    """
+    return _compatible(element0._e, element1._e)

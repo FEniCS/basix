@@ -229,3 +229,86 @@ def test_hash():
     for i, d0 in enumerate(different_elements):
         for d1 in different_elements[:i]:
             assert hash(d0) != hash(d1)
+
+
+@pytest.mark.parametrize("family", [
+    basix.ElementFamily.P,
+    basix.ElementFamily.RT,
+    basix.ElementFamily.N1E,
+    basix.ElementFamily.HHJ,
+])
+@pytest.mark.parametrize("degree", [1, 2])
+@pytest.mark.parametrize("cell0", [
+    basix.CellType.quadrilateral, basix.CellType.triangle,
+    basix.CellType.tetrahedron,
+    basix.CellType.hexahedron,
+])
+@pytest.mark.parametrize("cell1", [
+    basix.CellType.quadrilateral, basix.CellType.triangle,
+    basix.CellType.tetrahedron,
+    basix.CellType.hexahedron,
+])
+def test_compatible_same_type(family, degree, cell0, cell1):
+    assert basix.finite_element.compatible(
+        basix.create_element(family, cell0, degree),
+        basix.create_element(family, cell1, degree),
+    )
+
+
+@pytest.mark.parametrize("family", [
+    basix.ElementFamily.P,
+    basix.ElementFamily.RT,
+    basix.ElementFamily.N1E,
+    basix.ElementFamily.HHJ,
+])
+@pytest.mark.parametrize("cell0", [basix.CellType.quadrilateral, basix.CellType.triangle])
+@pytest.mark.parametrize("cell1", [basix.CellType.quadrilateral, basix.CellType.triangle])
+@pytest.mark.parametrize("degree0,degree1", [(1, 2), (2, 1)])
+def test_compatible_different_degree(family, cell0, cell1, degree0, degree1):
+    assert not basix.finite_element.compatible(
+        basix.create_element(basix.ElementFamily.P, cell0, degree0),
+        basix.create_element(basix.ElementFamily.P, cell1, degree1),
+    )
+
+
+@pytest.mark.parametrize("cell0", [
+    basix.CellType.quadrilateral,
+    basix.CellType.hexahedron,
+])
+@pytest.mark.parametrize("cell1", [
+    basix.CellType.quadrilateral, basix.CellType.triangle,
+    basix.CellType.tetrahedron,
+    basix.CellType.hexahedron,
+])
+def test_compatible_lagrange_serendipity(cell0, cell1):
+    assert not basix.finite_element.compatible(
+        basix.create_element(basix.ElementFamily.serendipity, cell0, 1),
+        basix.create_element(basix.ElementFamily.P, cell1, 1),
+    )
+
+@pytest.mark.parametrize("degree", range(1, 5))
+@pytest.mark.parametrize("cell0", [
+    basix.CellType.quadrilateral, basix.CellType.triangle,
+    basix.CellType.tetrahedron,
+    basix.CellType.hexahedron,
+])
+@pytest.mark.parametrize("cell1", [
+    basix.CellType.quadrilateral, basix.CellType.triangle,
+    basix.CellType.tetrahedron,
+    basix.CellType.hexahedron,
+])
+@pytest.mark.parametrize("variant0", [
+    basix.LagrangeVariant.equispaced,
+    basix.LagrangeVariant.gll_isaac,
+    basix.LagrangeVariant.gll_centroid,
+])
+@pytest.mark.parametrize("variant1", [
+    basix.LagrangeVariant.equispaced,
+    basix.LagrangeVariant.gll_isaac,
+    basix.LagrangeVariant.gll_centroid,
+])
+def test_compatible_variants(degree, cell0, cell1, variant0, variant1):
+    assert basix.finite_element.compatible(
+        basix.create_element(basix.ElementFamily.P, cell0, degree, lagrange_variant=variant0),
+        basix.create_element(basix.ElementFamily.P, cell1, degree, lagrange_variant=variant1),
+    ) == (variant0 == variant1)

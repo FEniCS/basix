@@ -111,9 +111,11 @@ tabulate_bernstein(cell::type celltype, int d, mdspan_t<const T, 2> x)
 
 //-----------------------------------------------------------------------------
 template <std::floating_point T>
-std::pair<std::vector<T>, std::array<std::size_t, 2>>
-polynomials::tabulate(polynomials::type polytype, cell::type celltype, int d,
-                      md::mdspan<const T, md::dextents<std::size_t, 2>> x)
+std::pair<std::vector<T>, std::array<std::size_t, 2>> polynomials::tabulate(
+    polynomials::type polytype, cell::type celltype, int d,
+    MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<
+        const T, MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 2>>
+        x)
 {
   switch (polytype)
   {

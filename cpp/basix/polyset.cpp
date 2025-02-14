@@ -2934,9 +2934,14 @@ void tabulate_polyset_prism_derivs(
 } // namespace
 //-----------------------------------------------------------------------------
 template <std::floating_point T>
-void polyset::tabulate(md::mdspan<T, md::dextents<std::size_t, 3>> P,
-                       cell::type celltype, polyset::type ptype, int d, int n,
-                       md::mdspan<const T, md::dextents<std::size_t, 2>> x)
+void polyset::tabulate(
+    MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<
+        T, MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 3>>
+        P,
+    cell::type celltype, polyset::type ptype, int d, int n,
+    MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<
+        const T, MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 2>>
+        x)
 {
   switch (ptype)
   {
@@ -3000,9 +3005,11 @@ void polyset::tabulate(md::mdspan<T, md::dextents<std::size_t, 3>> P,
 }
 //-----------------------------------------------------------------------------
 template <std::floating_point T>
-std::pair<std::vector<T>, std::array<std::size_t, 3>>
-polyset::tabulate(cell::type celltype, polyset::type ptype, int d, int n,
-                  md::mdspan<const T, md::dextents<std::size_t, 2>> x)
+std::pair<std::vector<T>, std::array<std::size_t, 3>> polyset::tabulate(
+    cell::type celltype, polyset::type ptype, int d, int n,
+    MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<
+        const T, MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 2>>
+        x)
 {
   std::array<std::size_t, 3> shape
       = {(std::size_t)polyset::nderivs(celltype, n),

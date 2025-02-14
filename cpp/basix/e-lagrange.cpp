@@ -15,8 +15,8 @@
 #include <concepts>
 
 using namespace basix;
-namespace stdex
-    = MDSPAN_IMPL_STANDARD_NAMESPACE::MDSPAN_IMPL_PROPOSED_NAMESPACE;
+namespace md = MDSPAN_IMPL_STANDARD_NAMESPACE;
+namespace stdex = md::MDSPAN_IMPL_PROPOSED_NAMESPACE;
 
 namespace
 {
@@ -448,9 +448,7 @@ basix::element::create_lagrange(cell::type celltype, int degree,
     std::array<std::vector<impl::mdarray_t<T, 2>>, 4> x;
     std::array<std::vector<impl::mdarray_t<T, 4>>, 4> M;
     x[0].emplace_back(1, 0);
-    M[0].emplace_back(
-        MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 4>{1, 1, 1, 1},
-        1);
+    M[0].emplace_back(md::dextents<std::size_t, 4>{1, 1, 1, 1}, 1);
     return FiniteElement<T>(
         family::P, cell::type::point, polyset::type::standard, 0, {},
         impl::mdspan_t<T, 2>(math::eye<T>(1).data(), 1, 1), impl::to_mdspan(x),
@@ -522,10 +520,7 @@ basix::element::create_lagrange(cell::type celltype, int degree,
 
     const auto [pt, shape]
         = lattice::create<T>(celltype, 0, lattice_type, true, simplex_method);
-    x[tdim].emplace_back(
-        MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 2>{shape[0],
-                                                                 shape[1]},
-        pt);
+    x[tdim].emplace_back(md::dextents<std::size_t, 2>{shape[0], shape[1]}, pt);
     auto& _M = M[tdim].emplace_back(shape[0], 1, shape[0], 1);
     std::fill(_M.data(), _M.data() + _M.size(), 0);
     for (std::size_t i = 0; i < shape[0]; ++i)
@@ -543,10 +538,9 @@ basix::element::create_lagrange(cell::type celltype, int degree,
             = cell::sub_entity_geometry<T>(celltype, dim, e);
         if (dim == 0)
         {
-          x[dim].emplace_back(
-              MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 2>{
-                  entity_x_shape[0], entity_x_shape[1]},
-              entity_x);
+          x[dim].emplace_back(md::dextents<std::size_t, 2>{entity_x_shape[0],
+                                                           entity_x_shape[1]},
+                              entity_x);
           auto& _M
               = M[dim].emplace_back(entity_x_shape[0], 1, entity_x_shape[0], 1);
           std::fill(_M.data(), _M.data() + _M.size(), 0);
@@ -557,10 +551,8 @@ basix::element::create_lagrange(cell::type celltype, int degree,
         {
           const auto [pt, shape] = lattice::create<T>(
               celltype, degree, lattice_type, false, simplex_method);
-          x[dim].emplace_back(
-              MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 2>{
-                  shape[0], shape[1]},
-              pt);
+          x[dim].emplace_back(md::dextents<std::size_t, 2>{shape[0], shape[1]},
+                              pt);
           auto& _M = M[dim].emplace_back(shape[0], 1, shape[0], 1);
           std::fill(_M.data(), _M.data() + _M.size(), 0);
           for (std::size_t i = 0; i < shape[0]; ++i)

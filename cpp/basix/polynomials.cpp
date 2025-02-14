@@ -11,18 +11,15 @@
 #include <vector>
 
 using namespace basix;
-namespace stdex
-    = MDSPAN_IMPL_STANDARD_NAMESPACE::MDSPAN_IMPL_PROPOSED_NAMESPACE;
+namespace md = MDSPAN_IMPL_STANDARD_NAMESPACE;
+namespace stdex = md::MDSPAN_IMPL_PROPOSED_NAMESPACE;
 
 namespace
 {
 template <typename T, std::size_t d>
-using mdarray_t
-    = stdex::mdarray<T,
-                     MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, d>>;
+using mdarray_t = stdex::mdarray<T, md::dextents<std::size_t, d>>;
 template <typename T, std::size_t d>
-using mdspan_t = MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<
-    T, MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, d>>;
+using mdspan_t = md::mdspan<T, md::dextents<std::size_t, d>>;
 
 //-----------------------------------------------------------------------------
 constexpr int single_choose(int n, int k)
@@ -146,15 +143,10 @@ int polynomials::dim(polynomials::type, cell::type cell, int d)
 //-----------------------------------------------------------------------------
 /// @cond
 template std::pair<std::vector<float>, std::array<std::size_t, 2>>
-polynomials::tabulate(
-    polynomials::type, cell::type, int,
-    MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<
-        const float, MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 2>>);
+polynomials::tabulate(polynomials::type, cell::type, int,
+                      md::mdspan<const float, md::dextents<std::size_t, 2>>);
 template std::pair<std::vector<double>, std::array<std::size_t, 2>>
-polynomials::tabulate(
-    polynomials::type, cell::type, int,
-    MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<
-        const double,
-        MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 2>>);
+polynomials::tabulate(polynomials::type, cell::type, int,
+                      md::mdspan<const double, md::dextents<std::size_t, 2>>);
 /// @endcond
 //-----------------------------------------------------------------------------

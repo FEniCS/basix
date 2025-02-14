@@ -9,6 +9,7 @@ import numpy.typing as npt
 
 from basix._basixcpp import CellType
 from basix._basixcpp import cell_facet_jacobians as _fj
+from basix._basixcpp import cell_edge_jacobians as _ej
 from basix._basixcpp import cell_facet_normals as _fn
 from basix._basixcpp import cell_facet_orientations as _fo
 from basix._basixcpp import cell_facet_outward_normals as _fon
@@ -24,6 +25,7 @@ __all__ = [
     "sub_entity_connectivity",
     "subentity_types",
     "volume",
+    "edge_jacobians",
     "facet_jacobians",
     "facet_normals",
     "facet_orientations",
@@ -80,6 +82,18 @@ def facet_jacobians(celltype: CellType) -> npt.ArrayLike:
         Jacobians of the facets.
     """
     return _fj(celltype)
+
+
+def edge_jacobians(celltype: CellType) -> npt.ArrayLike:
+    """Jacobians of the edges of a reference cell.
+
+    Args:
+        celltype: cell type.
+
+    Returns:
+        Jacobians of the edges.
+    """
+    return _ej(celltype)
 
 
 def facet_normals(celltype: CellType) -> npt.ArrayLike:

@@ -121,11 +121,29 @@ std::vector<T> facet_reference_volumes(cell::type cell_type);
 /// @return The subentity types. Indices are (tdim, entity)
 std::vector<std::vector<cell::type>> subentity_types(cell::type cell_type);
 
+/// Get the jacobians of a set of entities of a reference cell
+/// @param cell_type Type of cell
+/// @param e_dim Dimension of entities
+/// @return The jacobians of the facets (flattened) and the shape (nfacets,
+/// tdim, tdim - 1).
+template <std::floating_point T>
+std::pair<std::vector<T>, std::array<std::size_t, 3>>
+entity_jacobians(cell::type cell_type, std::size_t e_dim);
+
 /// Get the jacobians of the facets of a reference cell
 /// @param cell_type Type of cell
-/// @return The jacobians of the facets. Shape is (nfacets, gdim, gdim - 1)
+/// @return The jacobians of the facets (flattened) and the shape (nfacets,
+/// tdim, tdim - 1).
 template <std::floating_point T>
 std::pair<std::vector<T>, std::array<std::size_t, 3>>
 facet_jacobians(cell::type cell_type);
+
+/// Get the jacobians of the edegs of a reference cell
+/// @param cell_type Type of cell
+/// @return The jacobians of the edges (flattened) and the shape (nedges, tdim,
+/// tdim-2).
+template <std::floating_point T>
+std::pair<std::vector<T>, std::array<std::size_t, 3>>
+edge_jacobians(cell::type cell_type);
 
 } // namespace basix::cell

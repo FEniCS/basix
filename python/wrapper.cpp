@@ -512,14 +512,12 @@ NB_MODULE(_basixcpp, m)
         { return cell::volume<double>(cell_type); });
   m.def("cell_facet_normals", [](cell::type cell_type)
         { return as_nbarrayp(cell::facet_normals<double>(cell_type)); });
-  m.def("cell_facet_reference_volumes",
-        [](cell::type cell_type) {
-          return as_nbarray(cell::facet_reference_volumes<double>(cell_type));
-        });
-  m.def("cell_facet_outward_normals",
-        [](cell::type cell_type) {
-          return as_nbarrayp(cell::facet_outward_normals<double>(cell_type));
-        });
+  m.def(
+      "cell_facet_reference_volumes", [](cell::type cell_type)
+      { return as_nbarray(cell::facet_reference_volumes<double>(cell_type)); });
+  m.def(
+      "cell_facet_outward_normals", [](cell::type cell_type)
+      { return as_nbarrayp(cell::facet_outward_normals<double>(cell_type)); });
   m.def("cell_facet_orientations",
         [](cell::type cell_type)
         {
@@ -529,6 +527,9 @@ NB_MODULE(_basixcpp, m)
         });
   m.def("cell_facet_jacobians", [](cell::type cell_type)
         { return as_nbarrayp(cell::facet_jacobians<double>(cell_type)); });
+
+  m.def("cell_edge_jacobians", [](cell::type cell_type)
+        { return as_nbarrayp(cell::edge_jacobians<double>(cell_type)); });
 
   nb::enum_<element::family>(m, "ElementFamily", nb::is_arithmetic(),
                              "Finite element family.")

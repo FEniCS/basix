@@ -1497,7 +1497,8 @@ std::size_t FiniteElement<F>::hash() const
   combine_hashes(h, dof_ordering_hash);
   combine_hashes(h, dof_ordering_hash);
   combine_hashes(h, std::hash<int>{}(static_cast<int>(cell_type())));
-  combine_hashes(h, std::hash<int>{}(static_cast<int>(lagrange_variant())));
+  if (degree() > 2)
+    combine_hashes(h, std::hash<int>{}(static_cast<int>(lagrange_variant())));
   combine_hashes(h, std::hash<int>{}(static_cast<int>(dpc_variant())));
   combine_hashes(h, std::hash<int>{}(static_cast<int>(sobolev_space())));
   combine_hashes(h, std::hash<int>{}(static_cast<int>(map_type())));

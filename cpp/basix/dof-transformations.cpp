@@ -17,15 +17,10 @@ using namespace basix;
 
 namespace
 {
-namespace stdex
-    = MDSPAN_IMPL_STANDARD_NAMESPACE::MDSPAN_IMPL_PROPOSED_NAMESPACE;
 template <typename T, std::size_t d>
-using mdarray_t
-    = stdex::mdarray<T,
-                     MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, d>>;
+using mdarray_t = mdex::mdarray<T, md::dextents<std::size_t, d>>;
 template <typename T, std::size_t d>
-using mdspan_t = MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<
-    T, MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, d>>;
+using mdspan_t = md::mdspan<T, md::dextents<std::size_t, d>>;
 
 template <typename T>
 using map_data_t
@@ -91,12 +86,12 @@ mapinfo_t<T> get_mapinfo(cell::type cell_type)
     mapinfo_t<T> mapinfo;
     auto& data = mapinfo.try_emplace(cell::type::interval).first->second;
     auto map = [](auto pt) -> std::array<T, 3> { return {pt[1], pt[0], 0}; };
-    stdex::mdarray<T, stdex::extents<std::size_t, 2, 2>> J(
-        stdex::extents<std::size_t, 2, 2>{}, {0., 1., 1., 0.});
+    mdex::mdarray<T, md::extents<std::size_t, 2, 2>> J(
+        md::extents<std::size_t, 2, 2>{}, {0., 1., 1., 0.});
 
     T detJ = -1;
-    stdex::mdarray<T, stdex::extents<std::size_t, 2, 2>> K(
-        stdex::extents<std::size_t, 2, 2>{}, {0., 1., 1., 0.});
+    mdex::mdarray<T, md::extents<std::size_t, 2, 2>> K(
+        md::extents<std::size_t, 2, 2>{}, {0., 1., 1., 0.});
     data.push_back(std::tuple(map, J, detJ, K));
     return mapinfo;
   }
@@ -106,12 +101,12 @@ mapinfo_t<T> get_mapinfo(cell::type cell_type)
     auto& data = mapinfo.try_emplace(cell::type::interval).first->second;
     auto map
         = [](auto pt) -> std::array<T, 3> { return {1 - pt[0], pt[1], 0}; };
-    stdex::mdarray<T, stdex::extents<std::size_t, 2, 2>> J(
-        stdex::extents<std::size_t, 2, 2>{}, {-1., 0., 0., 1.});
+    mdex::mdarray<T, md::extents<std::size_t, 2, 2>> J(
+        md::extents<std::size_t, 2, 2>{}, {-1., 0., 0., 1.});
 
     T detJ = -1.0;
-    stdex::mdarray<T, stdex::extents<std::size_t, 2, 2>> K(
-        stdex::extents<std::size_t, 2, 2>{}, {-1., 0., 0., 1.});
+    mdex::mdarray<T, md::extents<std::size_t, 2, 2>> K(
+        md::extents<std::size_t, 2, 2>{}, {-1., 0., 0., 1.});
     data.push_back(std::tuple(map, J, detJ, K));
     return mapinfo;
   }
@@ -122,13 +117,13 @@ mapinfo_t<T> get_mapinfo(cell::type cell_type)
       auto& data = mapinfo.try_emplace(cell::type::interval).first->second;
       auto map
           = [](auto pt) -> std::array<T, 3> { return {pt[0], pt[2], pt[1]}; };
-      stdex::mdarray<T, stdex::extents<std::size_t, 3, 3>> J(
-          stdex::extents<std::size_t, 3, 3>{},
+      mdex::mdarray<T, md::extents<std::size_t, 3, 3>> J(
+          md::extents<std::size_t, 3, 3>{},
           {1., 0., 0., 0., 0., 1., 0., 1., 0.});
 
       T detJ = -1.0;
-      stdex::mdarray<T, stdex::extents<std::size_t, 3, 3>> K(
-          stdex::extents<std::size_t, 3, 3>{},
+      mdex::mdarray<T, md::extents<std::size_t, 3, 3>> K(
+          md::extents<std::size_t, 3, 3>{},
           {1., 0., 0., 0., 0., 1., 0., 1., 0.});
       data.push_back(std::tuple(map, J, detJ, K));
     }
@@ -138,26 +133,26 @@ mapinfo_t<T> get_mapinfo(cell::type cell_type)
       {
         auto map
             = [](auto pt) -> std::array<T, 3> { return {pt[2], pt[0], pt[1]}; };
-        stdex::mdarray<T, stdex::extents<std::size_t, 3, 3>> J(
-            stdex::extents<std::size_t, 3, 3>{},
+        mdex::mdarray<T, md::extents<std::size_t, 3, 3>> J(
+            md::extents<std::size_t, 3, 3>{},
             {0., 1., 0., 0., 0., 1., 1., 0., 0.});
 
         T detJ = 1.0;
-        stdex::mdarray<T, stdex::extents<std::size_t, 3, 3>> K(
-            stdex::extents<std::size_t, 3, 3>{},
+        mdex::mdarray<T, md::extents<std::size_t, 3, 3>> K(
+            md::extents<std::size_t, 3, 3>{},
             {0., 0., 1., 1., 0., 0., 0., 1., 0.});
         data.push_back(std::tuple(map, J, detJ, K));
       }
       {
         auto map
             = [](auto pt) -> std::array<T, 3> { return {pt[0], pt[2], pt[1]}; };
-        stdex::mdarray<T, stdex::extents<std::size_t, 3, 3>> J(
-            stdex::extents<std::size_t, 3, 3>{},
+        mdex::mdarray<T, md::extents<std::size_t, 3, 3>> J(
+            md::extents<std::size_t, 3, 3>{},
             {1., 0., 0., 0., 0., 1., 0., 1., 0.});
 
         T detJ = -1.0;
-        stdex::mdarray<T, stdex::extents<std::size_t, 3, 3>> K(
-            stdex::extents<std::size_t, 3, 3>{},
+        mdex::mdarray<T, md::extents<std::size_t, 3, 3>> K(
+            md::extents<std::size_t, 3, 3>{},
             {1., 0., 0., 0., 0., 1., 0., 1., 0.});
         data.push_back(std::tuple(map, J, detJ, K));
       }
@@ -172,13 +167,13 @@ mapinfo_t<T> get_mapinfo(cell::type cell_type)
       auto& data = mapinfo.try_emplace(cell::type::interval).first->second;
       auto map = [](auto pt) -> std::array<T, 3>
       { return {1 - pt[0], pt[1], pt[2]}; };
-      stdex::mdarray<T, stdex::extents<std::size_t, 3, 3>> J(
-          stdex::extents<std::size_t, 3, 3>{},
+      mdex::mdarray<T, md::extents<std::size_t, 3, 3>> J(
+          md::extents<std::size_t, 3, 3>{},
           {-1., 0., 0., 0., 1., 0., 0., 0., 1.});
 
       T detJ = -1.0;
-      stdex::mdarray<T, stdex::extents<std::size_t, 3, 3>> K(
-          stdex::extents<std::size_t, 3, 3>{},
+      mdex::mdarray<T, md::extents<std::size_t, 3, 3>> K(
+          md::extents<std::size_t, 3, 3>{},
           {-1., 0., 0., 0., 1., 0., 0., 0., 1.});
       data.push_back(std::tuple(map, J, detJ, K));
     }
@@ -188,26 +183,26 @@ mapinfo_t<T> get_mapinfo(cell::type cell_type)
       {
         auto map = [](auto pt) -> std::array<T, 3>
         { return {1 - pt[1], pt[0], pt[2]}; };
-        stdex::mdarray<T, stdex::extents<std::size_t, 3, 3>> J(
-            stdex::extents<std::size_t, 3, 3>{},
+        mdex::mdarray<T, md::extents<std::size_t, 3, 3>> J(
+            md::extents<std::size_t, 3, 3>{},
             {0., 1., 0., -1., 0., 0., 0., 0., 1.});
 
         T detJ = 1.0;
-        stdex::mdarray<T, stdex::extents<std::size_t, 3, 3>> K(
-            stdex::extents<std::size_t, 3, 3>{},
+        mdex::mdarray<T, md::extents<std::size_t, 3, 3>> K(
+            md::extents<std::size_t, 3, 3>{},
             {0., -1., 0., 1., 0., 0., 0., 0., 1.});
         data.push_back(std::tuple(map, J, detJ, K));
       }
       {
         auto map
             = [](auto pt) -> std::array<T, 3> { return {pt[1], pt[0], pt[2]}; };
-        stdex::mdarray<T, stdex::extents<std::size_t, 3, 3>> J(
-            stdex::extents<std::size_t, 3, 3>{},
+        mdex::mdarray<T, md::extents<std::size_t, 3, 3>> J(
+            md::extents<std::size_t, 3, 3>{},
             {0., 1., 0., 1., 0., 0., 0., 0., 1.});
 
         T detJ = -1.0;
-        stdex::mdarray<T, stdex::extents<std::size_t, 3, 3>> K(
-            stdex::extents<std::size_t, 3, 3>{},
+        mdex::mdarray<T, md::extents<std::size_t, 3, 3>> K(
+            md::extents<std::size_t, 3, 3>{},
             {0., 1., 0., 1., 0., 0., 0., 0., 1.});
         data.push_back(std::tuple(map, J, detJ, K));
       }
@@ -221,12 +216,12 @@ mapinfo_t<T> get_mapinfo(cell::type cell_type)
       auto& data = mapinfo.try_emplace(cell::type::interval).first->second;
       auto map = [](auto pt) -> std::array<T, 3>
       { return {1 - pt[0], pt[1], pt[2]}; };
-      stdex::mdarray<T, stdex::extents<std::size_t, 3, 3>> J(
-          stdex::extents<std::size_t, 3, 3>{},
+      mdex::mdarray<T, md::extents<std::size_t, 3, 3>> J(
+          md::extents<std::size_t, 3, 3>{},
           {-1., 0., 0., 0., 1., 0., 0., 0., 1.});
       T detJ = -1.0;
-      stdex::mdarray<T, stdex::extents<std::size_t, 3, 3>> K(
-          stdex::extents<std::size_t, 3, 3>{},
+      mdex::mdarray<T, md::extents<std::size_t, 3, 3>> K(
+          md::extents<std::size_t, 3, 3>{},
           {-1., 0., 0., 0., 1., 0., 0., 0., 1.});
       data.push_back(std::tuple(map, J, detJ, K));
     }
@@ -235,24 +230,24 @@ mapinfo_t<T> get_mapinfo(cell::type cell_type)
       {
         auto map = [](auto pt) -> std::array<T, 3>
         { return {1 - pt[1] - pt[0], pt[0], pt[2]}; };
-        stdex::mdarray<T, stdex::extents<std::size_t, 3, 3>> J(
-            stdex::extents<std::size_t, 3, 3>{},
+        mdex::mdarray<T, md::extents<std::size_t, 3, 3>> J(
+            md::extents<std::size_t, 3, 3>{},
             {0., 1., 0., -1., -1., 0., 0., 0., 1.});
         T detJ = 1.0;
-        stdex::mdarray<T, stdex::extents<std::size_t, 3, 3>> K(
-            stdex::extents<std::size_t, 3, 3>{},
+        mdex::mdarray<T, md::extents<std::size_t, 3, 3>> K(
+            md::extents<std::size_t, 3, 3>{},
             {-1., -1., 0., 1., 0., 0., 0., 0., 1.});
         data.push_back(std::tuple(map, J, detJ, K));
       }
       {
         auto map
             = [](auto pt) -> std::array<T, 3> { return {pt[1], pt[0], pt[2]}; };
-        stdex::mdarray<T, stdex::extents<std::size_t, 3, 3>> J(
-            stdex::extents<std::size_t, 3, 3>{},
+        mdex::mdarray<T, md::extents<std::size_t, 3, 3>> J(
+            md::extents<std::size_t, 3, 3>{},
             {0., 1., 0., 1., 0., 0., 0., 0., 1.});
         T detJ = -1.;
-        stdex::mdarray<T, stdex::extents<std::size_t, 3, 3>> K(
-            stdex::extents<std::size_t, 3, 3>{},
+        mdex::mdarray<T, md::extents<std::size_t, 3, 3>> K(
+            md::extents<std::size_t, 3, 3>{},
             {0., 1., 0., 1., 0., 0., 0., 0., 1.});
         data.push_back(std::tuple(map, J, detJ, K));
       }
@@ -262,24 +257,24 @@ mapinfo_t<T> get_mapinfo(cell::type cell_type)
       {
         auto map = [](auto pt) -> std::array<T, 3>
         { return {1 - pt[2], pt[1], pt[0]}; };
-        stdex::mdarray<T, stdex::extents<std::size_t, 3, 3>> J(
-            stdex::extents<std::size_t, 3, 3>{},
+        mdex::mdarray<T, md::extents<std::size_t, 3, 3>> J(
+            md::extents<std::size_t, 3, 3>{},
             {0., 0., 1., 0., 1., 0., -1., 0., 0.});
         T detJ = 1.0;
-        stdex::mdarray<T, stdex::extents<std::size_t, 3, 3>> K(
-            stdex::extents<std::size_t, 3, 3>{},
+        mdex::mdarray<T, md::extents<std::size_t, 3, 3>> K(
+            md::extents<std::size_t, 3, 3>{},
             {0., 0., -1., 0., 1., 0., 1., 0., 0.});
         data.push_back(std::tuple(map, J, detJ, K));
       }
       { // scope
         auto map
             = [](auto pt) -> std::array<T, 3> { return {pt[2], pt[1], pt[0]}; };
-        stdex::mdarray<T, stdex::extents<std::size_t, 3, 3>> J(
-            stdex::extents<std::size_t, 3, 3>{},
+        mdex::mdarray<T, md::extents<std::size_t, 3, 3>> J(
+            md::extents<std::size_t, 3, 3>{},
             {0., 0., 1., 0., 1., 0., 1., 0., 0.});
         T detJ = -1.;
-        stdex::mdarray<T, stdex::extents<std::size_t, 3, 3>> K(
-            stdex::extents<std::size_t, 3, 3>{},
+        mdex::mdarray<T, md::extents<std::size_t, 3, 3>> K(
+            md::extents<std::size_t, 3, 3>{},
             {0., 0., 1., 0., 1., 0., 1., 0., 0.});
         data.push_back(std::tuple(map, J, detJ, K));
       }
@@ -294,12 +289,12 @@ mapinfo_t<T> get_mapinfo(cell::type cell_type)
       auto& data = mapinfo.try_emplace(cell::type::interval).first->second;
       auto map = [](auto pt) -> std::array<T, 3>
       { return {1 - pt[0], pt[1], pt[2]}; };
-      stdex::mdarray<T, stdex::extents<std::size_t, 3, 3>> J(
-          stdex::extents<std::size_t, 3, 3>{},
+      mdex::mdarray<T, md::extents<std::size_t, 3, 3>> J(
+          md::extents<std::size_t, 3, 3>{},
           {-1., 0., 0., 0., 1., 0., 0., 0., 1.});
       T detJ = -1.;
-      stdex::mdarray<T, stdex::extents<std::size_t, 3, 3>> K(
-          stdex::extents<std::size_t, 3, 3>{},
+      mdex::mdarray<T, md::extents<std::size_t, 3, 3>> K(
+          md::extents<std::size_t, 3, 3>{},
           {-1., 0., 0., 0., 1., 0., 0., 0., 1.});
       data.push_back(std::tuple(map, J, detJ, K));
     }
@@ -309,24 +304,24 @@ mapinfo_t<T> get_mapinfo(cell::type cell_type)
       {
         auto map = [](auto pt) -> std::array<T, 3>
         { return {1 - pt[1], pt[0], pt[2]}; };
-        stdex::mdarray<T, stdex::extents<std::size_t, 3, 3>> J(
-            stdex::extents<std::size_t, 3, 3>{},
+        mdex::mdarray<T, md::extents<std::size_t, 3, 3>> J(
+            md::extents<std::size_t, 3, 3>{},
             {0., 1., 0., -1., 0., 0., 0., 0., 1.});
         T detJ = 1.;
-        stdex::mdarray<T, stdex::extents<std::size_t, 3, 3>> K(
-            stdex::extents<std::size_t, 3, 3>{},
+        mdex::mdarray<T, md::extents<std::size_t, 3, 3>> K(
+            md::extents<std::size_t, 3, 3>{},
             {0., -1., 0., 1., 0., 0., 0., 0., 1.});
         data.push_back(std::tuple(map, J, detJ, K));
       }
       {
         auto map
             = [](auto pt) -> std::array<T, 3> { return {pt[1], pt[0], pt[2]}; };
-        stdex::mdarray<T, stdex::extents<std::size_t, 3, 3>> J(
-            stdex::extents<std::size_t, 3, 3>{},
+        mdex::mdarray<T, md::extents<std::size_t, 3, 3>> J(
+            md::extents<std::size_t, 3, 3>{},
             {0., 1., 0., 1., 0., 0., 0., 0., 1.});
         T detJ = -1.;
-        stdex::mdarray<T, stdex::extents<std::size_t, 3, 3>> K(
-            stdex::extents<std::size_t, 3, 3>{},
+        mdex::mdarray<T, md::extents<std::size_t, 3, 3>> K(
+            md::extents<std::size_t, 3, 3>{},
             {0., 1., 0., 1., 0., 0., 0., 0., 1.});
         data.push_back(std::tuple(map, J, detJ, K));
       }
@@ -337,24 +332,24 @@ mapinfo_t<T> get_mapinfo(cell::type cell_type)
       {
         auto map = [](auto pt) -> std::array<T, 3>
         { return {1 - pt[2] - pt[0], pt[1], pt[0]}; };
-        stdex::mdarray<T, stdex::extents<std::size_t, 3, 3>> J(
-            stdex::extents<std::size_t, 3, 3>{},
+        mdex::mdarray<T, md::extents<std::size_t, 3, 3>> J(
+            md::extents<std::size_t, 3, 3>{},
             {0., 0., 1., 0., 1., 0., -1., 0., -1.});
         T detJ = 1.;
-        stdex::mdarray<T, stdex::extents<std::size_t, 3, 3>> K(
-            stdex::extents<std::size_t, 3, 3>{},
+        mdex::mdarray<T, md::extents<std::size_t, 3, 3>> K(
+            md::extents<std::size_t, 3, 3>{},
             {-1., 0., -1., 0., 1., 0., 1., 0., 0.});
         data.push_back(std::tuple(map, J, detJ, K));
       }
       {
         auto map
             = [](auto pt) -> std::array<T, 3> { return {pt[2], pt[1], pt[0]}; };
-        stdex::mdarray<T, stdex::extents<std::size_t, 3, 3>> J(
-            stdex::extents<std::size_t, 3, 3>{},
+        mdex::mdarray<T, md::extents<std::size_t, 3, 3>> J(
+            md::extents<std::size_t, 3, 3>{},
             {0., 0., 1., 0., 1., 0., 1., 0., 0.});
         T detJ = -1.;
-        stdex::mdarray<T, stdex::extents<std::size_t, 3, 3>> K(
-            stdex::extents<std::size_t, 3, 3>{},
+        mdex::mdarray<T, md::extents<std::size_t, 3, 3>> K(
+            md::extents<std::size_t, 3, 3>{},
             {0., 0., 1., 0., 1., 0., 1., 0., 0.});
         data.push_back(std::tuple(map, J, detJ, K));
       }
@@ -505,20 +500,14 @@ template <std::floating_point T>
 std::map<cell::type, std::pair<std::vector<T>, std::array<std::size_t, 3>>>
 doftransforms::compute_entity_transformations(
     cell::type cell_type,
-    std::array<
-        std::vector<MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<
-            const T, MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 2>>>,
-        4>
+    std::array<std::vector<md::mdspan<const T, md::dextents<std::size_t, 2>>>,
+               4>
         x,
-    std::array<
-        std::vector<MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<
-            const T, MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 4>>>,
-        4>
+    std::array<std::vector<md::mdspan<const T, md::dextents<std::size_t, 4>>>,
+               4>
         M,
-    MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<
-        const T, MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 2>>
-        coeffs,
-    int degree, std::size_t vs, maps::type map_type, polyset::type ptype)
+    md::mdspan<const T, md::dextents<std::size_t, 2>> coeffs, int degree,
+    std::size_t vs, maps::type map_type, polyset::type ptype)
 {
   std::map<cell::type, std::pair<std::vector<T>, std::array<std::size_t, 3>>>
       out;
@@ -551,32 +540,22 @@ template std::map<cell::type,
                   std::pair<std::vector<float>, std::array<std::size_t, 3>>>
 doftransforms::compute_entity_transformations(
     cell::type,
-    std::array<std::vector<MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<
-                   const float,
-                   MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 2>>>,
-               4>,
-    std::array<std::vector<MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<
-                   const float,
-                   MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 4>>>,
-               4>,
-    MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<
-        const float, MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 2>>,
-    int, std::size_t, maps::type, polyset::type);
+    std::array<
+        std::vector<md::mdspan<const float, md::dextents<std::size_t, 2>>>, 4>,
+    std::array<
+        std::vector<md::mdspan<const float, md::dextents<std::size_t, 4>>>, 4>,
+    md::mdspan<const float, md::dextents<std::size_t, 2>>, int, std::size_t,
+    maps::type, polyset::type);
 
 template std::map<cell::type,
                   std::pair<std::vector<double>, std::array<std::size_t, 3>>>
 doftransforms::compute_entity_transformations(
     cell::type,
-    std::array<std::vector<MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<
-                   const double,
-                   MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 2>>>,
-               4>,
-    std::array<std::vector<MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<
-                   const double,
-                   MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 4>>>,
-               4>,
-    MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<
-        const double, MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 2>>,
-    int, std::size_t, maps::type, polyset::type);
+    std::array<
+        std::vector<md::mdspan<const double, md::dextents<std::size_t, 2>>>, 4>,
+    std::array<
+        std::vector<md::mdspan<const double, md::dextents<std::size_t, 4>>>, 4>,
+    md::mdspan<const double, md::dextents<std::size_t, 2>>, int, std::size_t,
+    maps::type, polyset::type);
 /// @endcond
 //-----------------------------------------------------------------------------

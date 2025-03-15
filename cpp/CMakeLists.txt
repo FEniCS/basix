@@ -107,6 +107,9 @@ target_include_directories(basix PUBLIC
   $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
   "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR};${CMAKE_CURRENT_SOURCE_DIR}>")
 
+target_compile_definitions(basix PUBLIC MDSPAN_USE_PAREN_OPERATOR=1)
+target_compile_definitions(basix PUBLIC MDSPAN_USE_BRACKET_OPERATOR=0)
+
 target_link_libraries(basix PRIVATE BLAS::BLAS)
 target_link_libraries(basix PRIVATE LAPACK::LAPACK)
 

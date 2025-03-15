@@ -233,12 +233,9 @@ prepare_matrix(std::pair<std::vector<T>, std::array<std::size_t, 2>>& A)
 /// permutation
 /// @param[in] n The block size of the data
 template <typename T, typename E>
-void apply_matrix(
-    std::span<const std::size_t> v_size_t,
-    MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<
-        const T, MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 2>>
-        M,
-    std::span<E> data, std::size_t offset = 0, std::size_t n = 1)
+void apply_matrix(std::span<const std::size_t> v_size_t,
+                  md::mdspan<const T, md::dextents<std::size_t, 2>> M,
+                  std::span<E> data, std::size_t offset = 0, std::size_t n = 1)
 {
   using U = typename impl::scalar_value_type_t<E>;
 
@@ -278,10 +275,8 @@ void apply_matrix(
 template <typename T, typename E>
 void apply_tranpose_matrix_right(
     std::span<const std::size_t> v_size_t,
-    MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<
-        const T, MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 2>>
-        M,
-    std::span<E> data, std::size_t offset = 0, std::size_t n = 1)
+    md::mdspan<const T, md::dextents<std::size_t, 2>> M, std::span<E> data,
+    std::size_t offset = 0, std::size_t n = 1)
 {
   using U = typename impl::scalar_value_type_t<E>;
 

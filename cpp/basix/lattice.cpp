@@ -15,8 +15,6 @@
 #include <vector>
 
 using namespace basix;
-namespace md = MDSPAN_IMPL_STANDARD_NAMESPACE;
-namespace stdex = md::MDSPAN_IMPL_PROPOSED_NAMESPACE;
 
 namespace
 {
@@ -167,7 +165,7 @@ std::vector<T> create_interval(std::size_t n, lattice::type lattice_type,
 }
 //-----------------------------------------------------------------------------
 template <std::floating_point T>
-stdex::mdarray<T, md::dextents<std::size_t, 2>>
+mdex::mdarray<T, md::dextents<std::size_t, 2>>
 tabulate_dlagrange(std::size_t n, std::span<const T> x)
 {
   std::vector<T> equi_pts(n + 1);
@@ -207,8 +205,8 @@ tabulate_dlagrange(std::size_t n, std::span<const T> x)
       tabulated(i, j) = tabulated_values(0, i, j);
 
   std::vector<T> c = math::solve<T>(dualmat, tabulated);
-  return stdex::mdarray<T, md::dextents<std::size_t, 2>>(tabulated.extents(),
-                                                         std::move(c));
+  return mdex::mdarray<T, md::dextents<std::size_t, 2>>(tabulated.extents(),
+                                                        std::move(c));
 }
 //-----------------------------------------------------------------------------
 template <std::floating_point T>
@@ -219,7 +217,7 @@ std::vector<T> warp_function(lattice::type lattice_type, int n,
   for (int i = 0; i < n + 1; ++i)
     pts[i] -= static_cast<T>(i) / static_cast<T>(n);
 
-  stdex::mdarray<T, md::dextents<std::size_t, 2>> v = tabulate_dlagrange(n, x);
+  mdex::mdarray<T, md::dextents<std::size_t, 2>> v = tabulate_dlagrange(n, x);
   std::vector<T> w(v.extent(1), 0);
   for (std::size_t i = 0; i < v.extent(0); ++i)
     for (std::size_t j = 0; j < v.extent(1); ++j)

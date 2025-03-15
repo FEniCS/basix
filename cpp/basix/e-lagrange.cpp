@@ -15,8 +15,7 @@
 #include <concepts>
 
 using namespace basix;
-namespace md = MDSPAN_IMPL_STANDARD_NAMESPACE;
-namespace stdex = md::MDSPAN_IMPL_PROPOSED_NAMESPACE;
+namespace md = md::MDSPAN_IMPL_PROPOSED_NAMESPACE;
 
 namespace
 {

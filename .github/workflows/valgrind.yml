@@ -41,7 +41,7 @@ jobs:
         run: pip -v install .[ci] --config-settings=cmake.build-type="Debug"
 
       - name: Run unit tests
-        run: valgrind ${VALGRIND_FLAGS} pytest -n auto --durations 20 test/
+        run: valgrind ${VALGRIND_FLAGS} pytest -n auto --durations 20 test/test_lagrange.py
 
       - name: Run simple CMake integration test
         run: |

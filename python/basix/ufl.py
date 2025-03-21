@@ -9,7 +9,6 @@ import hashlib as _hashlib
 import itertools as _itertools
 import typing as _typing
 from abc import abstractmethod as _abstractmethod
-from abc import abstractproperty as _abstractproperty
 from warnings import warn as _warn
 
 import numpy as np
@@ -146,7 +145,8 @@ class _ElementBase(_AbstractFiniteElement):
         """Pullback for this element."""
         return self._pullback
 
-    @_abstractproperty
+    @property
+    @_abstractmethod
     def embedded_superdegree(self) -> int:
         """Degree of the minimum degree Lagrange space that spans this element.
 
@@ -162,7 +162,8 @@ class _ElementBase(_AbstractFiniteElement):
         Lagrange space includes the degree 2 polynomial xy.
         """
 
-    @_abstractproperty
+    @property
+    @_abstractmethod
     def embedded_subdegree(self) -> int:
         """Degree of the maximum degree Lagrange space that is spanned by this element.
 
@@ -231,75 +232,93 @@ class _ElementBase(_AbstractFiniteElement):
             component element, offset of the component, stride of the component
         """
 
-    @_abstractproperty
+    @property
+    @_abstractmethod
     def dim(self) -> int:
         """Number of DOFs the element has."""
 
-    @_abstractproperty
+    @property
+    @_abstractmethod
     def num_entity_dofs(self) -> list[list[int]]:
         """Number of DOFs associated with each entity."""
 
-    @_abstractproperty
+    @property
+    @_abstractmethod
     def entity_dofs(self) -> list[list[list[int]]]:
         """DOF numbers associated with each entity."""
 
-    @_abstractproperty
+    @property
+    @_abstractmethod
     def num_entity_closure_dofs(self) -> list[list[int]]:
         """Number of DOFs associated with the closure of each entity."""
 
-    @_abstractproperty
+    @property
+    @_abstractmethod
     def entity_closure_dofs(self) -> list[list[list[int]]]:
         """DOF numbers associated with the closure of each entity."""
 
-    @_abstractproperty
+    @property
+    @_abstractmethod
     def num_global_support_dofs(self) -> int:
         """Get the number of global support DOFs."""
 
-    @_abstractproperty
+    @property
+    @_abstractmethod
     def reference_topology(self) -> list[list[list[int]]]:
         """Topology of the reference element."""
 
-    @_abstractproperty
+    @property
+    @_abstractmethod
     def reference_geometry(self) -> _npt.ArrayLike:
         """Geometry of the reference element."""
 
-    @_abstractproperty
+    @property
+    @_abstractmethod
     def family_name(self) -> str:
         """Family name of the element."""
 
-    @_abstractproperty
+    @property
+    @_abstractmethod
     def element_family(self) -> _typing.Union[_basix.ElementFamily, None]:
         """Basix element family used to initialise the element."""
 
-    @_abstractproperty
+    @property
+    @_abstractmethod
     def lagrange_variant(self) -> _typing.Union[_basix.LagrangeVariant, None]:
         """Basix Lagrange variant used to initialise the element."""
 
-    @_abstractproperty
+    @property
+    @_abstractmethod
     def dpc_variant(self) -> _typing.Union[_basix.DPCVariant, None]:
         """Basix DPC variant used to initialise the element."""
 
-    @_abstractproperty
+    @property
+    @_abstractmethod
     def cell_type(self) -> _basix.CellType:
         """Basix cell type used to initialise the element."""
 
-    @_abstractproperty
+    @property
+    @_abstractmethod
     def discontinuous(self) -> bool:
         """True if the discontinuous version of the element is used."""
 
-    @_abstractproperty
+    @property
+    @_abstractmethod
     def map_type(self) -> _basix.MapType:
         """The Basix map type."""
 
-    @_abstractproperty
+    @property
+    @_abstractmethod
     def polyset_type(self) -> _basix.PolysetType:
         """The polyset type of the element."""
 
-    @_abstractproperty
+    @property
+    @_abstractmethod
     def basix_sobolev_space(self) -> _basix.SobolevSpace:
         """Return a Basix enum representing the underlying Sobolev space."""
 
-    @_abstractproperty
+    @property
+    @_abstractmethod
     def dtype(self) -> _npt.DTypeLike:
         """Element float type."""
 

@@ -62,4 +62,4 @@ jobs:
       - name: Run FFCx tests
         run: |
           cd ffcx
-          pytest -n auto --ignore=ffcx/test/test_lnodes.py test
+          pytest -n auto --ignore=test/test_lnodes.py test

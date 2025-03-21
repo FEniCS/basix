@@ -51,7 +51,7 @@ jobs:
           valgrind ${VALGRIND_FLAGS} build-dir/a.out
 
       - name: Run Python demos
-        run: valrgrind ${VALGRIND_FLAGS} pytest demo/python/test.py
+        run: valgrind ${VALGRIND_FLAGS} pytest demo/python/test.py
 
       - name: Run C++ demos
         run: valgrind ${VALGRIND_FLAGS} pytest demo/cpp/test.py

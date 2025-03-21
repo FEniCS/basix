@@ -60,4 +60,6 @@ jobs:
       - name: Install FFCx
         run: pip install ./ffcx[ci]
       - name: Run FFCx tests
-        run: pytest -n auto --ignore=ffcx/test/test_lnodes.py ffcx/test
+        run: |
+          cd ffcx
+          pytest -n auto --ignore=ffcx/test/test_lnodes.py test

@@ -421,191 +421,110 @@ class _BasixElement(_ElementBase):
         self._element = element
 
     def __eq__(self, other) -> bool:
-        """Check if two elements are equal."""
         return isinstance(other, _BasixElement) and self._element == other._element
 
     def __hash__(self) -> int:
-        """Return a hash."""
         return super().__hash__()
 
     def basix_hash(self) -> _typing.Optional[int]:
-        """Return the hash of the Basix element if this is a standard Basix element."""
         return self._element.hash()
 
     def tabulate(self, nderivs: int, points: _npt.NDArray[np.floating]) -> _npt.ArrayLike:
-        """Tabulate the basis functions of the element.
-
-        Args:
-            nderivs: Number of derivatives to tabulate.
-            points: Points to tabulate at
-
-        Returns:
-            Tabulated basis functions
-
-        """
         tab = self._element.tabulate(nderivs, points)
         # TODO: update FFCx to remove the need for transposing here
         return tab.transpose((0, 1, 3, 2)).reshape((tab.shape[0], tab.shape[1], -1))  # type: ignore
 
     def get_component_element(self, flat_component: int) -> tuple[_ElementBase, int, int]:
-        """Get element that represents a component.
-
-        Element that represents a component of the element, and the
-        offset and stride of the component.
-
-        For example, for a mixed element, this will return the
-        sub-element that represents the given component, the offset of
-        that sub-element, and a stride of 1. For a blocked element, this
-        will return the sub-element, an offset equal to the component
-        number, and a stride equal to the block size. For vector-valued
-        element (eg H(curl) and H(div) elements), this returns a
-        component element (and as offset of 0 and a stride of 1). When
-        tabulate is called on the component element, only the part of
-        the table for the given component is returned.
-
-        Args:
-            flat_component: The component
-
-        Returns:
-            component element, offset of the component, stride of the component
-
-        """
         assert flat_component < self.reference_value_size
         return _ComponentElement(self, flat_component), 0, 1
 
     def get_tensor_product_representation(self):
-        """Get the element's tensor product factorisation."""
         if not self.has_tensor_product_factorisation:
             return None
         return self._element.get_tensor_product_representation()
 
     @property
     def dtype(self) -> _npt.DTypeLike:
-        """Element float type."""
         return self._element.dtype
 
     @property
     def basix_sobolev_space(self) -> _basix.SobolevSpace:
-        """Return a Basix enum representing the underlying Sobolev space."""
         return self._element.sobolev_space
 
     @property
     def dim(self) -> int:
-        """Number of DOFs the element has."""
         return self._element.dim
 
     @property
     def num_entity_dofs(self) -> list[list[int]]:
-        """Number of DOFs associated with each entity."""
         return self._element.num_entity_dofs
 
     @property
     def entity_dofs(self) -> list[list[list[int]]]:
-        """DOF numbers associated with each entity."""
         return self._element.entity_dofs
 
     @property
     def num_entity_closure_dofs(self) -> list[list[int]]:
-        """Number of DOFs associated with the closure of each entity."""
         return self._element.num_entity_closure_dofs
 
     @property
     def entity_closure_dofs(self) -> list[list[list[int]]]:
-        """DOF numbers associated with the closure of each entity."""
         return self._element.entity_closure_dofs
 
     @property
     def num_global_support_dofs(self) -> int:
-        """Get the number of global support DOFs."""
         return 0
 
     @property
     def reference_topology(self) -> list[list[list[int]]]:
-        """Topology of the reference element."""
         return _basix.topology(self._element.cell_type)
 
     @property
     def reference_geometry(self) -> _npt.ArrayLike:
-        """Geometry of the reference element."""
         return _basix.geometry(self._element.cell_type)
 
     @property
     def family_name(self) -> str:
-        """Family name of the element."""
         return self._element.family.name
 
     @property
     def element_family(self) -> _typing.Union[_basix.ElementFamily, None]:
-        """Basix element family used to initialise the element."""
         return self._element.family
 
     @property
     def lagrange_variant(self) -> _typing.Union[_basix.LagrangeVariant, None]:
-        """Basix Lagrange variant used to initialise the element."""
         return self._element.lagrange_variant
 
     @property
     def dpc_variant(self) -> _typing.Union[_basix.DPCVariant, None]:
-        """Basix DPC variant used to initialise the element."""
         return self._element.dpc_variant
 
     @property
     def cell_type(self) -> _basix.CellType:
-        """Basix cell type used to initialise the element."""
         return self._element.cell_type
 
     @property
     def discontinuous(self) -> bool:
-        """True if the discontinuous version of the element is used."""
         return self._element.discontinuous
 
     @property
     def interpolation_nderivs(self) -> int:
-        """The number of derivatives needed when interpolating."""
         return self._element.interpolation_nderivs
 
     @property
     def is_custom_element(self) -> bool:
-        """True if the element is a custom Basix element."""
         return self._is_custom
 
     @property
     def map_type(self) -> _basix.MapType:
-        """The Basix map type."""
         return self._element.map_type
 
     @property
     def embedded_superdegree(self) -> int:
-        """Degree of the minimum degree Lagrange space that spans this element.
-
-        This returns the degree of the lowest degree Lagrange space such
-        that the polynomial space of the Lagrange space is a superspace
-        of this element's polynomial space. If this element contains
-        basis functions that are not in any Lagrange space, this
-        function should return None.
-
-        Note that on a simplex cells, the polynomial space of Lagrange
-        space is a complete polynomial space, but on other cells this is
-        not true. For example, on quadrilateral cells, the degree 1
-        Lagrange space includes the degree 2 polynomial xy.
-        """
         return self._element.embedded_superdegree
 
     @property
     def embedded_subdegree(self) -> int:
-        """Degree of the maximum degree Lagrange space that is spanned by this element.
-
-        This returns the degree of the highest degree Lagrange space
-        such that the polynomial space of the Lagrange space is a
-        subspace of this element's polynomial space. If this element's
-        polynomial space does not include the constant function, this
-        function should return -1.
-
-        Note that on a simplex cells, the polynomial space of Lagrange
-        space is a complete polynomial space, but on other cells this is
-        not true. For example, on quadrilateral cells, the degree 1
-        Lagrange space includes the degree 2 polynomial xy.
-        """
         return self._element.embedded_subdegree
 
     @property
@@ -614,33 +533,22 @@ class _BasixElement(_ElementBase):
 
     @property
     def _wcoeffs(self) -> _npt.ArrayLike:
-        """The coefficients used to define the polynomial set."""
         return self._element.wcoeffs
 
     @property
     def _x(self) -> list[list[_npt.ArrayLike]]:
-        """The points used to define interpolation."""
         return self._element.x
 
     @property
     def _M(self) -> list[list[_npt.ArrayLike]]:
-        """The matrices used to define interpolation."""
         return self._element.M
 
     @property
     def has_tensor_product_factorisation(self) -> bool:
-        """Indicates whether or not this element has a tensor product factorisation.
-
-        If this value is true, this element's basis functions can be
-        computed as a tensor product of the basis elements of the
-        elements in the factorisation.
-
-        """
         return self._element.has_tensor_product_factorisation
 
     @property
     def basix_element(self):
-        """Underlying Basix element."""
         return self._element
 
 
@@ -664,7 +572,6 @@ class _ComponentElement(_ElementBase):
         super().__init__(repr, element.cell_type.name, (1,), element._degree)
 
     def __eq__(self, other) -> bool:
-        """Check if two elements are equal."""
         return (
             isinstance(other, _ComponentElement)
             and self._element == other._element
@@ -672,19 +579,9 @@ class _ComponentElement(_ElementBase):
         )
 
     def __hash__(self) -> int:
-        """Return a hash."""
         return super().__hash__()
 
     def tabulate(self, nderivs: int, points: _npt.NDArray[np.floating]) -> _npt.ArrayLike:
-        """Tabulate the basis functions of the element.
-
-        Args:
-            nderivs: Number of derivatives to tabulate.
-            points: Points to tabulate at.
-
-        Returns:
-            Tabulated basis functions.
-        """
         tables = self._element.tabulate(nderivs, points)
         output = []
         for tbl in tables:  # type: ignore
@@ -706,17 +603,6 @@ class _ComponentElement(_ElementBase):
         return np.asarray(output, dtype=np.float64)
 
     def get_component_element(self, flat_component: int) -> tuple[_ElementBase, int, int]:
-        """Get element that represents a component.
-
-        Element that represents a component of the element, and the
-        offset and stride of the component.
-
-        Args:
-            flat_component: The component
-
-        Returns:
-            component element, offset of the component, stride of the component
-        """
         if flat_component == 0:
             return self, 0, 1
         else:
@@ -724,77 +610,62 @@ class _ComponentElement(_ElementBase):
 
     @property
     def dtype(self) -> _npt.DTypeLike:
-        """Element float type."""
         return self._element.dtype
 
     @property
     def basix_sobolev_space(self) -> _basix.SobolevSpace:
-        """Return a Basix enum representing the underlying Sobolev space."""
         return self._element.basix_sobolev_space
 
     @property
     def dim(self) -> int:
-        """Number of DOFs the element has."""
         raise NotImplementedError()
 
     @property
     def num_entity_dofs(self) -> list[list[int]]:
-        """Number of DOFs associated with each entity."""
         raise NotImplementedError()
 
     @property
     def entity_dofs(self) -> list[list[list[int]]]:
-        """DOF numbers associated with each entity."""
         raise NotImplementedError()
 
     @property
     def num_entity_closure_dofs(self) -> list[list[int]]:
-        """Number of DOFs associated with the closure of each entity."""
         raise NotImplementedError()
 
     @property
     def entity_closure_dofs(self) -> list[list[list[int]]]:
-        """DOF numbers associated with the closure of each entity."""
         raise NotImplementedError()
 
     @property
     def num_global_support_dofs(self) -> int:
-        """Get the number of global support DOFs."""
         raise NotImplementedError()
 
     @property
     def family_name(self) -> str:
-        """Family name of the element."""
         raise NotImplementedError()
 
     @property
     def reference_topology(self) -> list[list[list[int]]]:
-        """Topology of the reference element."""
         raise NotImplementedError()
 
     @property
     def reference_geometry(self) -> _npt.ArrayLike:
-        """Geometry of the reference element."""
         raise NotImplementedError()
 
     @property
     def element_family(self) -> _typing.Union[_basix.ElementFamily, None]:
-        """Basix element family used to initialise the element."""
         return self._element.element_family
 
     @property
     def lagrange_variant(self) -> _typing.Union[_basix.LagrangeVariant, None]:
-        """Basix Lagrange variant used to initialise the element."""
         return self._element.lagrange_variant
 
     @property
     def dpc_variant(self) -> _typing.Union[_basix.DPCVariant, None]:
-        """Basix DPC variant used to initialise the element."""
         return self._element.dpc_variant
 
     @property
     def cell_type(self) -> _basix.CellType:
-        """Basix cell type used to initialise the element."""
         return self._element.cell_type
 
     @property
@@ -803,56 +674,26 @@ class _ComponentElement(_ElementBase):
 
     @property
     def discontinuous(self) -> bool:
-        """True if the discontinuous version of the element is used."""
         return self._element.discontinuous
 
     @property
     def interpolation_nderivs(self) -> int:
-        """The number of derivatives needed when interpolating."""
         return self._element.interpolation_nderivs
 
     @property
     def map_type(self) -> _basix.MapType:
-        """The Basix map type."""
         raise NotImplementedError()
 
     @property
     def embedded_superdegree(self) -> int:
-        """Degree of the minimum degree Lagrange space that spans this element.
-
-        This returns the degree of the lowest degree Lagrange space such
-        that the polynomial space of the Lagrange space is a superspace
-        of this element's polynomial space. If this element contains
-        basis functions that are not in any Lagrange space, this
-        function should return ``None``.
-
-        Note that on a simplex cells, the polynomial space of Lagrange
-        space is a complete polynomial space, but on other cells this is
-        not true. For example, on quadrilateral cells, the degree 1
-        Lagrange space includes the degree 2 polynomial xy.
-        """
         return self._element.embedded_superdegree
 
     @property
     def embedded_subdegree(self) -> int:
-        """Degree of the maximum degree Lagrange space that is spanned by this element.
-
-        This returns the degree of the highest degree Lagrange space
-        such that the polynomial space of the Lagrange space is a
-        subspace of this element's polynomial space. If this element's
-        polynomial space does not include the constant function, this
-        function should return -1.
-
-        Note that on a simplex cells, the polynomial space of Lagrange
-        space is a complete polynomial space, but on other cells this is
-        not true. For example, on quadrilateral cells, the degree 1
-        Lagrange space includes the degree 2 polynomial xy.
-        """
         return self._element.embedded_subdegree
 
     @property
     def basix_element(self):
-        """Underlying Basix element."""
         return self._element
 
 
@@ -884,7 +725,6 @@ class _MixedElement(_ElementBase):
         )
 
     def __eq__(self, other) -> bool:
-        """Check if two elements are equal."""
         if isinstance(other, _MixedElement) and len(self._sub_elements) == len(other._sub_elements):
             for i, j in zip(self._sub_elements, other._sub_elements):
                 if i != j:
@@ -893,34 +733,21 @@ class _MixedElement(_ElementBase):
         return False
 
     def __hash__(self) -> int:
-        """Return a hash."""
         return super().__hash__()
 
     @property
     def dtype(self) -> _npt.DTypeLike:
-        """Element float type."""
         return self.elements[0].dtype
 
     @property
     def is_mixed(self) -> bool:
-        """Is this a mixed element?"""
         return True
 
     @property
     def degree(self) -> int:
-        """Degree of the element."""
         return max((e.degree for e in self._sub_elements), default=-1)
 
     def tabulate(self, nderivs: int, points: _npt.NDArray[np.floating]) -> _npt.ArrayLike:
-        """Tabulate the basis functions of the element.
-
-        Args:
-            nderivs: Number of derivatives to tabulate.
-            points: Points to tabulate at
-
-        Returns:
-            Tabulated basis functions
-        """
         tables = []
         results = [e.tabulate(nderivs, points) for e in self._sub_elements]
         for deriv_tables in zip(*results):
@@ -936,17 +763,6 @@ class _MixedElement(_ElementBase):
         return np.asarray(tables, dtype=np.float64)
 
     def get_component_element(self, flat_component: int) -> tuple[_ElementBase, int, int]:
-        """Get element that represents a component.
-
-        Element that represents a component of the element, and the
-        offset and stride of the component.
-
-        Args:
-            flat_component: The component
-
-        Returns:
-            component element, offset of the component, stride of the component
-        """
         sub_dims = [0] + [e.dim for e in self._sub_elements]
         sub_cmps = [0] + [e.reference_value_size for e in self._sub_elements]
 
@@ -967,63 +783,32 @@ class _MixedElement(_ElementBase):
 
     @property
     def embedded_superdegree(self) -> int:
-        """Degree of the minimum degree Lagrange space that spans this element.
-
-        This returns the degree of the lowest degree Lagrange space such
-        that the polynomial space of the Lagrange space is a superspace
-        of this element's polynomial space. If this element contains
-        basis functions that are not in any Lagrange space, this
-        function should return None.
-
-        Note that on a simplex cells, the polynomial space of Lagrange
-        space is a complete polynomial space, but on other cells this is
-        not true. For example, on quadrilateral cells, the degree 1
-        Lagrange space includes the degree 2 polynomial xy.
-        """
         return max(e.embedded_superdegree for e in self._sub_elements)
 
     @property
     def embedded_subdegree(self) -> int:
-        """Degree of the maximum degree Lagrange space that is spanned by this element.
-
-        This returns the degree of the highest degree Lagrange space
-        such that the polynomial space of the Lagrange space is a
-        subspace of this element's polynomial space. If this element's
-        polynomial space does not include the constant function, this
-        function should return -1.
-
-        Note that on a simplex cells, the polynomial space of Lagrange
-        space is a complete polynomial space, but on other cells this is
-        not true. For example, on quadrilateral cells, the degree 1
-        Lagrange space includes the degree 2 polynomial xy.
-        """
         raise NotImplementedError()
 
     @property
     def map_type(self) -> _basix.MapType:
-        """Basix map type."""
         raise NotImplementedError()
 
     @property
     def basix_sobolev_space(self) -> _basix.SobolevSpace:
-        """Basix Sobolev space that the element belongs to."""
         return _basix.sobolev_spaces.intersection(
             [e.basix_sobolev_space for e in self._sub_elements]
         )
 
     @property
     def sub_elements(self) -> list[_ElementBase]:
-        """List of sub elements."""
         return self._sub_elements
 
     @property
     def dim(self) -> int:
-        """Dimension (number of DOFs) for the element."""
         return sum(e.dim for e in self._sub_elements)
 
     @property
     def num_entity_dofs(self) -> list[list[int]]:
-        """Number of DOFs associated with each entity."""
         data = [e.num_entity_dofs for e in self._sub_elements]
         return [
             [sum(d[tdim][entity_n] for d in data) for entity_n, _ in enumerate(entities)]
@@ -1032,7 +817,6 @@ class _MixedElement(_ElementBase):
 
     @property
     def entity_dofs(self) -> list[list[list[int]]]:
-        """DOF numbers associated with each entity."""
         dofs: list[list[list[int]]] = [
             [[] for i in entities] for entities in self._sub_elements[0].entity_dofs
         ]
@@ -1046,7 +830,6 @@ class _MixedElement(_ElementBase):
 
     @property
     def num_entity_closure_dofs(self) -> list[list[int]]:
-        """Number of DOFs associated with the closure of each entity."""
         data = [e.num_entity_closure_dofs for e in self._sub_elements]
         return [
             [sum(d[tdim][entity_n] for d in data) for entity_n, _ in enumerate(entities)]
@@ -1055,7 +838,6 @@ class _MixedElement(_ElementBase):
 
     @property
     def entity_closure_dofs(self) -> list[list[list[int]]]:
-        """DOF numbers associated with the closure of each entity."""
         dofs: list[list[list[int]]] = [
             [[] for i in entities] for entities in self._sub_elements[0].entity_closure_dofs
         ]
@@ -1069,52 +851,42 @@ class _MixedElement(_ElementBase):
 
     @property
     def num_global_support_dofs(self) -> int:
-        """Number of global support DOFs."""
         return sum(e.num_global_support_dofs for e in self._sub_elements)
 
     @property
     def family_name(self) -> str:
-        """Family name of the element."""
         return "mixed element"
 
     @property
     def reference_topology(self) -> list[list[list[int]]]:
-        """Topology of the reference element."""
         return self._sub_elements[0].reference_topology
 
     @property
     def reference_geometry(self) -> _npt.ArrayLike:
-        """Geometry of the reference element."""
         return self._sub_elements[0].reference_geometry
 
     @property
     def lagrange_variant(self) -> _typing.Union[_basix.LagrangeVariant, None]:
-        """Basix Lagrange variant used to initialise the element."""
         return None
 
     @property
     def dpc_variant(self) -> _typing.Union[_basix.DPCVariant, None]:
-        """Basix DPC variant used to initialise the element."""
         return None
 
     @property
     def element_family(self) -> _typing.Union[_basix.ElementFamily, None]:
-        """Basix element family used to initialise the element."""
         return None
 
     @property
     def cell_type(self) -> _basix.CellType:
-        """Basix cell type used to initialise the element."""
         return self._sub_elements[0].cell_type
 
     @property
     def discontinuous(self) -> bool:
-        """True if the discontinuous version of the element is used."""
         return False
 
     @property
     def interpolation_nderivs(self) -> int:
-        """Number of derivatives needed when interpolating."""
         return max([e.interpolation_nderivs for e in self._sub_elements])
 
     @property
@@ -1127,7 +899,6 @@ class _MixedElement(_ElementBase):
     def custom_quadrature(
         self,
     ) -> tuple[_npt.NDArray[np.floating], _npt.NDArray[np.floating]]:
-        """Return custom quadrature rule or raise a ValueError."""
         custom_q = None
         for e in self._sub_elements:
             if e.has_custom_quadrature:
@@ -1145,7 +916,6 @@ class _MixedElement(_ElementBase):
 
     @property
     def has_custom_quadrature(self) -> bool:
-        """True if the element has a custom quadrature rule."""
         for e in self._sub_elements:
             if e.has_custom_quadrature:
                 return True
@@ -1223,7 +993,6 @@ class _BlockedElement(_ElementBase):
             self._pullback = _SymmetricPullback(self, symmetry_mapping)
 
     def __eq__(self, other) -> bool:
-        """Check if two elements are equal."""
         return (
             isinstance(other, _BlockedElement)
             and self._block_size == other._block_size
@@ -1232,39 +1001,24 @@ class _BlockedElement(_ElementBase):
         )
 
     def __hash__(self) -> int:
-        """Return a hash."""
         return super().__hash__()
 
     def basix_hash(self) -> _typing.Optional[int]:
-        """Return the hash of the Basix element."""
         return self._sub_element.basix_hash()
 
     @property
     def dtype(self) -> _npt.DTypeLike:
-        """Element float type."""
         return self._sub_element.dtype
 
     @property
     def is_symmetric(self) -> bool:
-        """Is the element a symmetric 2-tensor?"""
         return self._has_symmetry
 
     @property
     def is_quadrature(self) -> bool:
-        """Is this a quadrature element?"""
         return self._sub_element.is_quadrature
 
     def tabulate(self, nderivs: int, points: _npt.NDArray[np.floating]) -> _npt.ArrayLike:
-        """Tabulate the basis functions of the element.
-
-        Args:
-            nderivs: Number of derivatives to tabulate.
-            points: Points to tabulate at
-
-        Returns:
-            Tabulated basis functions
-
-        """
         assert len(self._block_shape) == 1  # TODO: block shape
         assert self.reference_value_size == self._block_size  # TODO: remove this assumption
         output = []
@@ -1285,59 +1039,39 @@ class _BlockedElement(_ElementBase):
         return np.asarray(output, dtype=np.float64)
 
     def get_component_element(self, flat_component: int) -> tuple[_ElementBase, int, int]:
-        """Get element that represents a component.
-
-        Element that represents a component of the element, and the
-        offset and stride of the component.
-
-        Args:
-            flat_component: The component
-
-        Returns:
-            component element, offset of the component, stride of the component
-
-        """
         return self._sub_element, flat_component, self._block_size
 
     def get_tensor_product_representation(self):
-        """Get the element's tensor product factorisation."""
         if not self.has_tensor_product_factorisation:
             return None
         return self._sub_element.get_tensor_product_representation()
 
     @property
     def block_size(self) -> int:
-        """Block size of the element."""
         return self._block_size
 
     @property
     def reference_value_shape(self) -> tuple[int, ...]:
-        """Reference value shape of the element basis function."""
         return self._reference_value_shape
 
     @property
     def basix_sobolev_space(self) -> _basix.SobolevSpace:
-        """Basix enum representing the underlying Sobolev space."""
         return self._sub_element.basix_sobolev_space
 
     @property
     def sub_elements(self) -> list[_ElementBase]:
-        """List of sub elements."""
         return [self._sub_element for _ in range(self._block_size)]
 
     @property
     def dim(self) -> int:
-        """Number of DOFs the element has."""
         return self._sub_element.dim * self._block_size
 
     @property
     def num_entity_dofs(self) -> list[list[int]]:
-        """Number of DOFs associated with each entity."""
         return [[j * self._block_size for j in i] for i in self._sub_element.num_entity_dofs]
 
     @property
     def entity_dofs(self) -> list[list[list[int]]]:
-        """DOF numbers associated with each entity."""
         # TODO: should this return this, or should it take blocks into
         # account?
         return [
@@ -1347,14 +1081,12 @@ class _BlockedElement(_ElementBase):
 
     @property
     def num_entity_closure_dofs(self) -> list[list[int]]:
-        """Number of DOFs associated with the closure of each entity."""
         return [
             [j * self._block_size for j in i] for i in self._sub_element.num_entity_closure_dofs
         ]
 
     @property
     def entity_closure_dofs(self) -> list[list[list[int]]]:
-        """DOF numbers associated with the closure of each entity."""
         # TODO: should this return this, or should it take blocks into
         # account?
         return [
@@ -1364,91 +1096,54 @@ class _BlockedElement(_ElementBase):
 
     @property
     def num_global_support_dofs(self) -> int:
-        """Get the number of global support DOFs."""
         return self._sub_element.num_global_support_dofs * self._block_size
 
     @property
     def family_name(self) -> str:
-        """Family name of the element."""
         return self._sub_element.family_name
 
     @property
     def reference_topology(self) -> list[list[list[int]]]:
-        """Topology of the reference element."""
         return self._sub_element.reference_topology
 
     @property
     def reference_geometry(self) -> _npt.ArrayLike:
-        """Geometry of the reference element."""
         return self._sub_element.reference_geometry
 
     @property
     def lagrange_variant(self) -> _typing.Union[_basix.LagrangeVariant, None]:
-        """Basix Lagrange variant used to initialise the element."""
         return self._sub_element.lagrange_variant
 
     @property
     def dpc_variant(self) -> _typing.Union[_basix.DPCVariant, None]:
-        """Basix DPC variant used to initialise the element."""
         return self._sub_element.dpc_variant
 
     @property
     def element_family(self) -> _typing.Union[_basix.ElementFamily, None]:
-        """Basix element family used to initialise the element."""
         return self._sub_element.element_family
 
     @property
     def cell_type(self) -> _basix.CellType:
-        """Basix cell type used to initialise the element."""
         return self._sub_element.cell_type
 
     @property
     def discontinuous(self) -> bool:
-        """True if the discontinuous version of the element is used."""
         return self._sub_element.discontinuous
 
     @property
     def interpolation_nderivs(self) -> int:
-        """The number of derivatives needed when interpolating."""
         return self._sub_element.interpolation_nderivs
 
     @property
     def map_type(self) -> _basix.MapType:
-        """The Basix map type."""
         return self._sub_element.map_type
 
     @property
     def embedded_superdegree(self) -> int:
-        """Degree of the minimum degree Lagrange space that spans this element.
-
-        This returns the degree of the lowest degree Lagrange space such
-        that the polynomial space of the Lagrange space is a superspace
-        of this element's polynomial space. If this element contains
-        basis functions that are not in any Lagrange space, this
-        function should return None.
-
-        Note that on a simplex cells, the polynomial space of Lagrange
-        space is a complete polynomial space, but on other cells this is
-        not true. For example, on quadrilateral cells, the degree 1
-        Lagrange space includes the degree 2 polynomial xy.
-        """
         return self._sub_element.embedded_superdegree
 
     @property
     def embedded_subdegree(self) -> int:
-        """Degree of the maximum degree Lagrange space that is spanned by this element.
-
-        This returns the degree of the highest degree Lagrange space
-        such that the polynomial space of the Lagrange space is a
-        subspace of this element's polynomial space. If this element's
-        polynomial space does not include the constant function, this
-        function should return -1.
-
-        Note that on a simplex cells, the polynomial space of Lagrange
-        space is a complete polynomial space, but on other cells this is
-        not true. For example, on quadrilateral cells, the degree 1
-        Lagrange space includes the degree 2 polynomial xy.
-        """
         return self._sub_element.embedded_subdegree
 
     @property
@@ -1457,7 +1152,6 @@ class _BlockedElement(_ElementBase):
 
     @property
     def _wcoeffs(self) -> _npt.ArrayLike:
-        """Coefficients used to define the polynomial set."""
         sub_wc = self._sub_element._wcoeffs
         wcoeffs = np.zeros((sub_wc.shape[0] * self._block_size, sub_wc.shape[1] * self._block_size))  # type: ignore
         for i in range(self._block_size):
@@ -1469,12 +1163,10 @@ class _BlockedElement(_ElementBase):
 
     @property
     def _x(self) -> list[list[_npt.ArrayLike]]:
-        """Points used to define interpolation."""
         return self._sub_element._x
 
     @property
     def _M(self) -> list[list[_npt.ArrayLike]]:
-        """Matrices used to define interpolation."""
         M = []
         for M_list in self._sub_element._M:
             M_row = []
@@ -1500,28 +1192,19 @@ class _BlockedElement(_ElementBase):
 
     @property
     def has_tensor_product_factorisation(self) -> bool:
-        """Indicates whether or not this element has a tensor product factorisation.
-
-        If this value is true, this element's basis functions can be
-        computed as a tensor product of the basis elements of the
-        elements in the factoriaation.
-        """
         return self._sub_element.has_tensor_product_factorisation
 
     def custom_quadrature(
         self,
     ) -> tuple[_npt.NDArray[np.floating], _npt.NDArray[np.floating]]:
-        """Return custom quadrature rule or raise a ValueError."""
         return self._sub_element.custom_quadrature()
 
     @property
     def has_custom_quadrature(self) -> bool:
-        """True if the element has a custom quadrature rule."""
         return self._sub_element.has_custom_quadrature
 
     @property
     def basix_element(self):
-        """Underlying Basix element."""
         return self._sub_element.basix_element
 
 
@@ -1553,16 +1236,13 @@ class _QuadratureElement(_ElementBase):
 
     @property
     def dtype(self) -> _npt.DTypeLike:
-        """Element float type."""
         raise self.points.dtype
 
     @property
     def basix_sobolev_space(self) -> _basix.SobolevSpace:
-        """Underlying Sobolev space."""
         return _basix.SobolevSpace.L2
 
     def __eq__(self, other) -> bool:
-        """Check if two elements are equal."""
         return isinstance(other, _QuadratureElement) and (
             self._cell_type == other._cell_type
             and self._pullback == other._pullback
@@ -1573,19 +1253,9 @@ class _QuadratureElement(_ElementBase):
         )
 
     def __hash__(self) -> int:
-        """Return a hash."""
         return super().__hash__()
 
     def tabulate(self, nderivs: int, points: _npt.NDArray[np.floating]) -> _npt.ArrayLike:
-        """Tabulate the basis functions of the element.
-
-        Args:
-            nderivs: Number of derivatives to tabulate.
-            points: Points to tabulate at
-
-        Returns:
-            Tabulated basis functions
-        """
         if nderivs > 0:
             raise ValueError("Cannot take derivatives of Quadrature element.")
 
@@ -1595,38 +1265,23 @@ class _QuadratureElement(_ElementBase):
         return tables
 
     def get_component_element(self, flat_component: int) -> tuple[_ElementBase, int, int]:
-        """Get element that represents a component.
-
-        Element that represents a component of the element, and the
-        offset and stride of the component.
-
-        Args:
-            flat_component: The component
-
-        Returns:
-            component element, offset of the component, stride of the component
-        """
         return self, 0, 1
 
     def custom_quadrature(
         self,
     ) -> tuple[_npt.NDArray[np.floating], _npt.NDArray[np.floating]]:
-        """Return custom quadrature rule or raise a ValueError."""
         return self._points, self._weights
 
     @property
     def is_quadrature(self) -> bool:
-        """Is this a quadrature element?"""
         return True
 
     @property
     def dim(self) -> int:
-        """Number of DOFs the element has."""
         return self._points.shape[0]
 
     @property
     def num_entity_dofs(self) -> list[list[int]]:
-        """Number of DOFs associated with each entity."""
         dofs = []
         for d in self._entity_counts[:-1]:
             dofs += [[0] * d]
@@ -1636,7 +1291,6 @@ class _QuadratureElement(_ElementBase):
 
     @property
     def entity_dofs(self) -> list[list[list[int]]]:
-        """DOF numbers associated with each entity."""
         start_dof = 0
         entity_dofs = []
         for i in self.num_entity_dofs:
@@ -1649,106 +1303,66 @@ class _QuadratureElement(_ElementBase):
 
     @property
     def num_entity_closure_dofs(self) -> list[list[int]]:
-        """Number of DOFs associated with the closure of each entity."""
         return self.num_entity_dofs
 
     @property
     def entity_closure_dofs(self) -> list[list[list[int]]]:
-        """DOF numbers associated with the closure of each entity."""
         return self.entity_dofs
 
     @property
     def num_global_support_dofs(self) -> int:
-        """Get the number of global support DOFs."""
         return 0
 
     @property
     def reference_topology(self) -> list[list[list[int]]]:
-        """Topology of the reference element."""
         raise NotImplementedError()
 
     @property
     def reference_geometry(self) -> _npt.ArrayLike:
-        """Geometry of the reference element."""
         raise NotImplementedError()
 
     @property
     def family_name(self) -> str:
-        """Family name of the element."""
         return "quadrature"
 
     @property
     def lagrange_variant(self) -> _typing.Union[_basix.LagrangeVariant, None]:
-        """Basix Lagrange variant used to initialise the element."""
         return None
 
     @property
     def dpc_variant(self) -> _typing.Union[_basix.DPCVariant, None]:
-        """Basix DPC variant used to initialise the element."""
         return None
 
     @property
     def element_family(self) -> _typing.Union[_basix.ElementFamily, None]:
-        """Basix element family used to initialise the element."""
         return None
 
     @property
     def cell_type(self) -> _basix.CellType:
-        """Basix cell type used to initialise the element."""
         return self._cell_type
 
     @property
     def discontinuous(self) -> bool:
-        """True if the discontinuous version of the element is used."""
         return False
 
     @property
     def map_type(self) -> _basix.MapType:
-        """The Basix map type."""
         return _basix.MapType.identity
 
     @property
     def polyset_type(self) -> _basix.PolysetType:
-        """The polyset type of the element."""
         raise NotImplementedError()
 
     @property
     def has_custom_quadrature(self) -> bool:
-        """True if the element has a custom quadrature rule."""
         return True
 
     @property
     def embedded_superdegree(self) -> int:
-        """Degree of the minimum degree Lagrange space that spans this element.
-
-        This returns the degree of the lowest degree Lagrange space such
-        that the polynomial space of the Lagrange space is a superspace
-        of this element's polynomial space. If this element contains
-        basis functions that are not in any Lagrange space, this
-        function should return ``None``.
-
-        Note that on a simplex cells, the polynomial space of Lagrange
-        space is a complete polynomial space, but on other cells this is
-        not true. For example, on quadrilateral cells, the degree 1
-        Lagrange space includes the degree 2 polynomial xy.
-        """
         return self.degree
 
     @property
     def embedded_subdegree(self) -> int:
-        """Degree of the maximum degree Lagrange space that is spanned by this element.
-
-        This returns the degree of the highest degree Lagrange space
-        such that the polynomial space of the Lagrange space is a
-        subspace of this element's polynomial space. If this element's
-        polynomial space does not include the constant function, this
-        function should return -1.
-
-        Note that on a simplex cells, the polynomial space of Lagrange
-        space is a complete polynomial space, but on other cells this is
-        not true. For example, on quadrilateral cells, the degree 1
-        Lagrange space includes the degree 2 polynomial xy.
-        """
         return -1
 
 
@@ -1772,7 +1386,6 @@ class _RealElement(_ElementBase):
         self._entity_counts.append(1)
 
     def __eq__(self, other) -> bool:
-        """Check if two elements are equal."""
         return (
             isinstance(other, _RealElement)
             and self._cell_type == other._cell_type
@@ -1780,88 +1393,36 @@ class _RealElement(_ElementBase):
         )
 
     def __hash__(self) -> int:
-        """Return a hash."""
         return super().__hash__()
 
     @property
     def dtype(self) -> _npt.DTypeLike:
-        """Element float type."""
         raise NotImplementedError()
 
     def tabulate(self, nderivs: int, points: _npt.NDArray[np.floating]) -> _npt.ArrayLike:
-        """Tabulate the basis functions of the element.
-
-        Args:
-            nderivs: Number of derivatives to tabulate.
-            points: Points to tabulate at
-
-        Returns:
-            Tabulated basis functions
-
-        """
         out = np.zeros((nderivs + 1, len(points), self.reference_value_size**2))
         for v in range(self.reference_value_size):
             out[0, :, self.reference_value_size * v + v] = 1.0
         return out
 
     def get_component_element(self, flat_component: int) -> tuple[_ElementBase, int, int]:
-        """Get element that represents a component.
-
-        Element that represents a component of the element, and the
-        offset and stride of the component.
-
-        Args:
-            flat_component: The component
-
-        Returns:
-            component element, offset of the component, stride of the component
-
-        """
         assert flat_component < self.reference_value_size
         return self, 0, 1
 
     @property
     def dim(self) -> int:
-        """Number of DOFs the element has."""
         return 0
 
     @property
     def embedded_superdegree(self) -> int:
-        """Degree of the minimum degree Lagrange space that spans this element.
-
-        This returns the degree of the lowest degree Lagrange space such
-        that the polynomial space of the Lagrange space is a superspace
-        of this element's polynomial space. If this element contains
-        basis functions that are not in any Lagrange space, this
-        function should return ``None``.
-
-        Note that on a simplex cells, the polynomial space of Lagrange
-        space is a complete polynomial space, but on other cells this is
-        not true. For example, on quadrilateral cells, the degree 1
-        Lagrange space includes the degree 2 polynomial xy.
-        """
         return 0
 
     @property
     def embedded_subdegree(self) -> int:
-        """Degree of the maximum degree Lagrange space that is spanned by this element.
-
-        This returns the degree of the highest degree Lagrange space
-        such that the polynomial space of the Lagrange space is a
-        subspace of this element's polynomial space. If this element's
-        polynomial space does not include the constant function, this
-        function should return -1.
-
-        Note that on a simplex cells, the polynomial space of Lagrange
-        space is a complete polynomial space, but on other cells this is
-        not true. For example, on quadrilateral cells, the degree 1
-        Lagrange space includes the degree 2 polynomial xy.
-        """
         return 0
 
     @property
     def num_entity_dofs(self) -> list[list[int]]:
-        """Number of DOFs associated with each entity."""
         dofs = []
         for d in self._entity_counts[:-1]:
             dofs += [[0] * d]
@@ -1871,7 +1432,6 @@ class _RealElement(_ElementBase):
 
     @property
     def entity_dofs(self) -> list[list[list[int]]]:
-        """DOF numbers associated with each entity."""
         start_dof = 0
         entity_dofs = []
         for i in self.num_entity_dofs:
@@ -1884,72 +1444,58 @@ class _RealElement(_ElementBase):
 
     @property
     def num_entity_closure_dofs(self) -> list[list[int]]:
-        """Number of DOFs associated with the closure of each entity."""
         return self.num_entity_dofs
 
     @property
     def entity_closure_dofs(self) -> list[list[list[int]]]:
-        """DOF numbers associated with the closure of each entity."""
         return self.entity_dofs
 
     @property
     def num_global_support_dofs(self) -> int:
-        """Get the number of global support DOFs."""
         return 1
 
     @property
     def reference_topology(self) -> list[list[list[int]]]:
-        """Topology of the reference element."""
         raise NotImplementedError()
 
     @property
     def reference_geometry(self) -> _npt.ArrayLike:
-        """Geometry of the reference element."""
         raise NotImplementedError()
 
     @property
     def family_name(self) -> str:
-        """Family name of the element."""
         return "real"
 
     @property
     def lagrange_variant(self) -> _typing.Union[_basix.LagrangeVariant, None]:
-        """Basix Lagrange variant used to initialise the element."""
         return None
 
     @property
     def dpc_variant(self) -> _typing.Union[_basix.DPCVariant, None]:
-        """Basix DPC variant used to initialise the element."""
         return None
 
     @property
     def element_family(self) -> _typing.Union[_basix.ElementFamily, None]:
-        """Basix element family used to initialise the element."""
         return None
 
     @property
     def cell_type(self) -> _basix.CellType:
-        """Basix cell type used to initialise the element."""
         return self._cell_type
 
     @property
     def discontinuous(self) -> bool:
-        """True if the discontinuous version of the element is used."""
         return False
 
     @property
     def basix_sobolev_space(self) -> _basix.SobolevSpace:
-        """Underlying Sobolev space."""
         return _basix.SobolevSpace.HInf
 
     @property
     def map_type(self) -> _basix.MapType:
-        """Basix map type."""
         return _basix.MapType.identity
 
     @property
     def polyset_type(self) -> _basix.PolysetType:
-        """Polyset type of the element."""
         raise NotImplementedError()
 
 

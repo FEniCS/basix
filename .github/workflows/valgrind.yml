@@ -1,0 +1,57 @@
+name: valgrind
+on:
+  push:
+    branches:
+      - "**"
+    tags:
+      - "v*"
+  pull_request:
+    branches:
+      - main
+  merge_group:
+    branches:
+      - main
+  workflow_dispatch:
+  # Weekly build on Mondays at 8 am
+  schedule:
+    - cron: "0 8 * * 1"
+
+jobs: 
+ valgrind:
+    runs-on: ubuntu-latest
+    env:
+      VALGRIND_FLAGS: "--leak-check=full --show-leak-kinds=definite,indirect --errors-for-leak-kinds=definite,indirect --error-exitcode=1 --read-var-info=yes --track-origins=yes"
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: 3.13
+    
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libopenblas-dev liblapack-dev ninja-build valgrind
+
+      - name: Install UFL branch
+        run: pip -v install git+https://github.com/FEniCS/ufl.git
+
+      - name: Install Basix
+        run: pip -v install .[ci] --config-settings=cmake.build-type="Debug"
+
+      - name: Run unit tests
+        run: valgrind ${VALGRIND_FLAGS} pytest -n auto --durations 20 test/
+
+      - name: Run simple CMake integration test
+        run: |
+          cd test/test_cmake
+          cmake -DCMAKE_BUILD_TYPE=Debug -DPython3_EXECUTABLE=python3 -G Ninja -B build-dir -S .
+          cmake --build build-dir/
+          valgrind ${VALGRIND_FLAGS} build-dir/a.out
+
+      - name: Run Python demos
+        run: valrgrind ${VALGRIND_FLAGS} pytest demo/python/test.py
+
+      - name: Run C++ demos
+        run: valgrind ${VALGRIND_FLAGS} pytest demo/cpp/test.py

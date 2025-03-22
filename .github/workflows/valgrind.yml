@@ -41,17 +41,17 @@ jobs:
         run: pip -v install .[ci] --config-settings=cmake.build-type="Debug"
 
       - name: Run unit tests
-        run: valgrind ${VALGRIND_FLAGS} pytest -n auto --durations 20 test/test_lagrange.py
+        run: PYTHONMALLOC=malloc valgrind ${VALGRIND_FLAGS} pytest -n auto --durations 20 test/test_lagrange.py
 
       - name: Run simple CMake integration test
         run: |
           cd test/test_cmake
           cmake -DCMAKE_BUILD_TYPE=Debug -DPython3_EXECUTABLE=python3 -G Ninja -B build-dir -S .
           cmake --build build-dir/
-          valgrind ${VALGRIND_FLAGS} build-dir/a.out
+          PYTHONMALLOC=malloc valgrind ${VALGRIND_FLAGS} build-dir/a.out
 
       - name: Run Python demos
-        run: valgrind ${VALGRIND_FLAGS} pytest demo/python/test.py
+        run: PYTHONMALLOC=malloc valgrind ${VALGRIND_FLAGS} pytest demo/python/test.py
 
       - name: Run C++ demos
-        run: valgrind ${VALGRIND_FLAGS} pytest demo/cpp/test.py
+        run: PYTHONMALLOC=malloc valgrind ${VALGRIND_FLAGS} pytest demo/cpp/test.py

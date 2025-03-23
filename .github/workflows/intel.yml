@@ -23,6 +23,7 @@ jobs:
       CC: icx
       CXX: icpx
       DEBIAN_FRONTEND: noninteractive
+      CMAKE_GENERATOR: Ninja
 
     defaults:
       run:

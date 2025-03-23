@@ -46,7 +46,7 @@ jobs:
 
       - name: Install
         run: >
-          conda install python=3.12 dpcpp_linux-64 cmake gcc_linux-64 git libblas=*=*mkl
+          conda install python=3.12 dpcpp_linux-64 cmake gxx_linux-64 git libblas=*=*mkl
           matplotlib nanobind ninja numba numpy pip pytest pytest-xdist
           scikit-build-core scipy sympy
 

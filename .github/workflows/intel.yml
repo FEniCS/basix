@@ -51,7 +51,7 @@ jobs:
 
       - name: Install Basix
         run: |
-          pip -v install .
+          pip -v install --no-build-isolation .
       - name: Run units tests
         run: |
           pytest -n auto --durations 20 test/

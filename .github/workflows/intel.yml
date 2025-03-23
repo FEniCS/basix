@@ -29,11 +29,10 @@ jobs:
         shell: bash -el {0}
 
     steps:
-      # - name: Install compiler dependencies
-      #   run: |
-      #     apt-get -y update
-      #     apt-get -y install binutils
-      #     # libstdc++-14-dev
+      - name: Install compiler dependencies
+        run: |
+          apt-get -y update
+          apt-get -y install binutils libstdc++-14-dev
 
       - uses: actions/checkout@v4
 
@@ -46,7 +45,7 @@ jobs:
 
       - name: Install
         run: >
-          conda install python=3.12 dpcpp_linux-64 cmake gxx_linux-64 git libblas=*=*mkl
+          conda install python=3.12 dpcpp_linux-64 cmake git libblas=*=*mkl
           matplotlib nanobind ninja numba numpy pip pytest pytest-xdist
           scikit-build-core scipy sympy
 

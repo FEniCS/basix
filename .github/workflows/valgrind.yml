@@ -24,15 +24,23 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: 3.13
-    
       - name: Install dependencies
         run: |
           sudo apt-get update
           sudo apt-get install -y libopenblas-dev liblapack-dev ninja-build valgrind
+
+      - uses: actions/checkout@v4
+        with:
+          repository: 'python/cpython'
+          ref: 'v3.13.2'
+          path: 'cpython'
+
+      - name: Build Python
+        working-directory: cpython
+        run: |
+          ./configure --with-valgrind
+          make -j4 all
+          sudo make install
 
       - name: Install UFL branch
         run: pip -v install git+https://github.com/FEniCS/ufl.git
@@ -48,7 +56,7 @@ jobs:
           cd test/test_cmake
           cmake -DCMAKE_BUILD_TYPE=Debug -DPython3_EXECUTABLE=python3 -G Ninja -B build-dir -S .
           cmake --build build-dir/
-          PYTHONMALLOC=malloc valgrind ${VALGRIND_FLAGS} build-dir/a.out
+          valgrind ${VALGRIND_FLAGS} build-dir/a.out
 
       - name: Run Python demos
         run: PYTHONMALLOC=malloc valgrind ${VALGRIND_FLAGS} pytest demo/python/test.py

@@ -60,7 +60,7 @@ jobs:
       #     apt install -y intel-oneapi-compiler-dpcpp-cpp intel-oneapi-mkl intel-oneapi-python libstdc++-11-dev
       - name: Install Basix
         run: |
-          python -m pip -v install .[test]
+          conda info
       # - name: Run units tests
       #   run: |
       #     . /opt/intel/oneapi/setvars.sh

@@ -48,6 +48,12 @@ jobs:
       - name: Check env
         run: |
           conda info --envs
+          conda info
+          conda list
+          conda config --show-sources
+          conda config --show
+          printenv | sort
+
       - run: |
           conda info
           conda list

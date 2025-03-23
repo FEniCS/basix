@@ -47,7 +47,7 @@ jobs:
         run: pip -v install git+https://github.com/FEniCS/ufl.git
 
       - name: Install Basix
-        run: pip -v install .[ci] --config-settings=cmake.build-type="Debug"
+        run: pip -v install .[ci] --config-settings=cmake.build-type="RelWithDebInfo"
 
       - name: Run unit tests
         run: valgrind ${VALGRIND_FLAGS} pytest -n auto --durations 20 test/

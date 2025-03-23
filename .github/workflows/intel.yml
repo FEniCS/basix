@@ -41,13 +41,12 @@ jobs:
           activate-environment: oneapi
           python-version: 3.12
           channels: https://software.repos.intel.com/python/conda,conda-forge
-          # environment-file: python/conda-oneapi-test-env.yml
           auto-activate-base: false
 
       - name: Install
         run: >
           conda install python=3.12 dpcpp_linux-64 cmake libblas=*=*mkl matplotlib nanobind ninja numba numpy
-          pip pytest pytest-xdist scikit-build-core scipy
+          pip pytest pytest-xdist scikit-build-core scipy sympy
 
       - name: Install Basix
         run: |

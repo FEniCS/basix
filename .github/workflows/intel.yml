@@ -50,6 +50,7 @@ jobs:
           conda config --add channels conda-forge
           conda config --add channels https://software.repos.intel.com/python/conda
           conda config --describe channel_priority
+          conda install -y python=3.12 dpcpp_linux-64 cmake libblas=*=*mkl nanobind ninja numpy pytest pytest-xdist scikit-build-core uv
 
       # - name: Install Intel compilers and Intel Python
       #   run: |
@@ -57,10 +58,8 @@ jobs:
       #     echo "deb [signed-by=/usr/share/keyrings/oneapi-archive-keyring.gpg] https://apt.repos.intel.com/oneapi all main" | tee /etc/apt/sources.list.d/oneAPI.list
       #     apt update
       #     apt install -y intel-oneapi-compiler-dpcpp-cpp intel-oneapi-mkl intel-oneapi-python libstdc++-11-dev
-      # - name: Install Basix
-      #   run: |
-      #     . /opt/intel/oneapi/setvars.sh
-      #     pip -v install .[test]
+      - name: Install Basix
+        run: pip -v install .[test]
       # - name: Run units tests
       #   run: |
       #     . /opt/intel/oneapi/setvars.sh

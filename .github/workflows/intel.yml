@@ -47,7 +47,7 @@ jobs:
       - name: Install
         run: >
           conda install python=3.12 dpcpp_linux-64 cmake libblas=*=*mkl matplotlib nanobind ninja numba numpy
-          pip pytest pytest-xdist scikit-build-core uv
+          pip pytest pytest-xdist scikit-build-core scipy
 
       - name: Install Basix
         run: |

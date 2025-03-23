@@ -46,7 +46,9 @@ jobs:
       - run: |
           conda info
           conda list
-          conda config --add channels https://software.repos.intel.com/python/conda conda-forge defaults
+          conda config --add channels defaults
+          conda config --add channels conda-forge
+          conda config --add channels https://software.repos.intel.com/python/conda
           conda config --describe channel_priority
 
       # - name: Install Intel compilers and Intel Python

@@ -45,14 +45,14 @@ jobs:
           channels: https://software.repos.intel.com/python/conda,conda-forge
           # environment-file: python/conda-oneapi-test-env.yml
           auto-activate-base: true
-      - name: Check env
-        run: |
-          conda info --envs
-          conda info
-          conda list
-          conda config --show-sources
-          conda config --show
-          printenv | sort
+      # - name: Check env
+      #   run: |
+      #     conda info --envs
+      #     conda info
+      #     conda list
+      #     conda config --show-sources
+      #     conda config --show
+      #     printenv | sort
 
       - name: Check env (2)
         run: |
@@ -62,11 +62,11 @@ jobs:
           # conda config --add channels conda-forge
           # conda config --add channels https://software.repos.intel.com/python/conda
           # conda config --describe channel_priority
-          conda install -y -n oneapi python=3.12 dpcpp_linux-64 cmake libblas=*=*mkl nanobind ninja numpy pip pytest pytest-xdist scikit-build-core uv
+          conda create-n oneapi python=3.12 dpcpp_linux-64 cmake libblas=*=*mkl nanobind ninja numpy pip pytest pytest-xdist scikit-build-core uv
 
       - name: Check env (3)
         run: |
-          # conda activate oneapi
+          conda activate oneapi
           pip -v install .[test]
         # - name: Install Intel compilers and Intel Python
       #   run: |

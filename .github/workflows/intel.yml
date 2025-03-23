@@ -55,6 +55,7 @@ jobs:
       #     printenv | sort
 
       - name: Check env (2)
+        shell: bash -el {0}
         run: |
           conda info
           conda list
@@ -65,6 +66,7 @@ jobs:
           conda create -n oneapi python=3.12 dpcpp_linux-64 cmake libblas=*=*mkl nanobind ninja numpy pip pytest pytest-xdist scikit-build-core uv
 
       - name: Check env (3)
+        shell: bash -el {0}
         run: |
           conda activate oneapi
           pip -v install .[test]

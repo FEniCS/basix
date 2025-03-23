@@ -40,7 +40,7 @@ jobs:
 
       - uses: conda-incubator/setup-miniconda@v3
         with:
-          activate-environment: oneapi-test-env
+          activate-environment: oneapi
           python-version: 3.12
           channels: https://software.repos.intel.com/python/conda,conda-forge
           # environment-file: python/conda-oneapi-test-env.yml

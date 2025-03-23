@@ -62,7 +62,8 @@ jobs:
         run: |
           which python
           which pip
-          python -m pip -v install .[test]
+
+      # python -m pip -v install .[test]
       # - name: Run units tests
       #   run: |
       #     . /opt/intel/oneapi/setvars.sh

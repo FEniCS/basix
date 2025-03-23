@@ -29,10 +29,11 @@ jobs:
         shell: bash -el {0}
 
     steps:
-      # - name: Install compiler dependencies
-      #   run: |
-      #     apt-get -y update
-      #     apt-get -y install binutils libstdc++-14-dev
+      - name: Install compiler dependencies
+        run: |
+          apt-get -y update
+          apt-get -y install binutils
+          # libstdc++-14-dev
 
       - uses: actions/checkout@v4
 

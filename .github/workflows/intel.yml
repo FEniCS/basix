@@ -61,7 +61,7 @@ jobs:
           # conda config --add channels conda-forge
           # conda config --add channels https://software.repos.intel.com/python/conda
           # conda config --describe channel_priority
-          conda install -y python=3.12 dpcpp_linux-64 cmake libblas=*=*mkl nanobind ninja numpy pip pytest pytest-xdist scikit-build-core uv
+          conda install -y -n oneapi python=3.12 dpcpp_linux-64 cmake libblas=*=*mkl nanobind ninja numpy pip pytest pytest-xdist scikit-build-core uv
 
       # - name: Install Intel compilers and Intel Python
       #   run: |

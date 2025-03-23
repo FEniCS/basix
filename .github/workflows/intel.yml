@@ -24,16 +24,15 @@ jobs:
       CXX: icpx
       DEBIAN_FRONTEND: noninteractive
       CMAKE_GENERATOR: Ninja
-
     defaults:
       run:
         shell: bash -el {0}
 
     steps:
-      - name: Install compiler dependencies
-        run: |
-          apt-get -y update
-          apt-get -y install binutils libstdc++-14-dev git
+      # - name: Install compiler dependencies
+      #   run: |
+      #     apt-get -y update
+      #     apt-get -y install binutils libstdc++-14-dev
 
       - uses: actions/checkout@v4
 
@@ -46,8 +45,9 @@ jobs:
 
       - name: Install
         run: >
-          conda install python=3.12 dpcpp_linux-64 cmake libblas=*=*mkl matplotlib nanobind ninja numba numpy
-          pip pytest pytest-xdist scikit-build-core scipy sympy
+          conda install python=3.12 dpcpp_linux-64 cmake git libblas=*=*mkl
+          matplotlib nanobind ninja numba numpy pip pytest pytest-xdist
+          scikit-build-core scipy sympy
 
       - name: Install Basix
         run: |

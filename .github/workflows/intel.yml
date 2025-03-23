@@ -66,6 +66,7 @@ jobs:
 
       - name: Check env (3)
         run: |
+          conda activate oneapi
           pip -v install .[test]
         # - name: Install Intel compilers and Intel Python
       #   run: |

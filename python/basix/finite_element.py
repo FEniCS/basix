@@ -625,6 +625,11 @@ def create_custom_element(
         x.append([])
         M.append([])
 
+    if wcoeffs.dtype != dtype:
+        wcoeffs = np.dtype(dtype).type(wcoeffs)  # type: ignore
+        x = [[np.dtype(dtype).type(j) for j in i] for i in x]  # type: ignore
+        M = [[np.dtype(dtype).type(j) for j in i] for i in M]  # type: ignore
+
     # Warn if points are not on the sub-entity they are attached to
     geo = geometry(cell_type)
     top = topology(cell_type)
@@ -667,10 +672,6 @@ def create_custom_element(
             ):
                 warn(f"Point {p} is not in cell", UserWarning)
 
-    if wcoeffs.dtype != dtype:
-        wcoeffs = np.dtype(dtype).type(wcoeffs)  # type: ignore
-        x = [[np.dtype(dtype).type(j) for j in i] for i in x]  # type: ignore
-        M = [[np.dtype(dtype).type(j) for j in i] for i in M]  # type: ignore
     if np.issubdtype(dtype, np.float32):
         _create_custom_element = _create_custom_element_float32  # type: ignore
     elif np.issubdtype(dtype, np.float64):

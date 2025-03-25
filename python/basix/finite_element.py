@@ -6,6 +6,7 @@
 """Functions for creating finite elements."""
 
 import typing
+from warnings import warn
 
 import numpy as np
 import numpy.typing as npt
@@ -23,7 +24,7 @@ from basix._basixcpp import create_element as _create_element
 from basix._basixcpp import create_tp_element as _create_tp_element
 from basix._basixcpp import tp_dof_ordering as _tp_dof_ordering
 from basix._basixcpp import tp_factors as _tp_factors
-from basix.cell import CellType
+from basix.cell import CellType, geometry, topology
 from basix import MapType
 from basix.polynomials import PolysetType
 from basix.sobolev_spaces import SobolevSpace
@@ -623,6 +624,48 @@ def create_custom_element(
     while len(x) < 4:
         x.append([])
         M.append([])
+
+    # Warn if points are not on the sub-entity they are attached to
+    geo = geometry(cell_type)
+    top = topology(cell_type)
+    for index, points in enumerate(x[0]):
+        pt = geo[index]
+        for p in points:
+            if np.linalg.norm(p - pt) > 0.001:
+                warn(f"Point {p} is not at vertex {index}", UserWarning)
+    for index, points in enumerate(x[1]):
+        pt0 = geo[top[1][index][0]]
+        pt1 = geo[top[1][index][1]]
+        direction = pt1 - pt0
+        for p in points:
+            if np.linalg.norm(np.cross(p - pt0, direction)) > 0.001:
+                warn(f"Point {p} is not on edge {index}", UserWarning)
+    for index, points in enumerate(x[2]):
+        pt0 = geo[top[2][index][0]]
+        pt1 = geo[top[2][index][1]]
+        pt2 = geo[top[2][index][2]]
+        direction = np.cross(pt1 - pt0, pt2 - pt0)
+        for p in points:
+            if abs(np.dot(p - pt0, direction)) > 0.001:
+                warn(f"Point {p} is not on face {index}", UserWarning)
+    midpoint = sum(geo) / len(geo)
+    for p in x[3]:
+        print()
+        print(p)
+        for face in top[2]:
+            pt0 = geo[face[0]]
+            pt1 = geo[face[1]]
+            pt2 = geo[face[2]]
+            direction = np.cross(pt1 - pt0, pt2 - pt0)
+            print(
+                abs(np.dot(p - pt0, direction)),
+                np.dot(p - pt0, direction) * np.dot(midpoint - pt0, direction),
+            )
+            if (
+                abs(np.dot(p - pt0, direction)) > 0.001
+                and np.dot(p - pt0, direction) * np.dot(midpoint - pt0, direction) < 0
+            ):
+                warn(f"Point {p} is not in cell", UserWarning)
 
     if wcoeffs.dtype != dtype:
         wcoeffs = np.dtype(dtype).type(wcoeffs)  # type: ignore

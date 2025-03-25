@@ -521,3 +521,33 @@ def test_wrong_discontinuous():
 def test_wrong_interpolation_nderivs():
     """Test that a runtime error is thrown when number of interpolation derivatives is wrong."""
     assert_failure(interpolation_nderivs=1)
+
+
+@pytest.mark.parametrize("dim", range(4))
+@pytest.mark.parametrize("component", range(3))
+def test_point_outside_cell_gives_warning(dim, component):
+    """Test the defining an element with a point outside the cell gives a warning."""
+    lagrange = basix.create_element(
+        basix.ElementFamily.P, CellType.tetrahedron, 4, basix.LagrangeVariant.gll_warped)
+    wcoeffs = lagrange.wcoeffs
+
+    x = [[j.copy() for j in i] for i in lagrange.x]
+    M = lagrange.M
+
+    x[dim][0][0][component] = -1.0
+
+    with pytest.warns(UserWarning):
+        basix.create_custom_element(
+            CellType.tetrahedron,
+            [],
+            wcoeffs,
+            x,
+            M,
+            0,
+            basix.MapType.identity,
+            basix.SobolevSpace.H1,
+            False,
+            4,
+            4,
+            basix.PolysetType.standard,
+        )

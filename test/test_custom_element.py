@@ -528,7 +528,8 @@ def test_wrong_interpolation_nderivs():
 def test_point_outside_cell_gives_warning(dim, component):
     """Test the defining an element with a point outside the cell gives a warning."""
     lagrange = basix.create_element(
-        basix.ElementFamily.P, CellType.tetrahedron, 4, basix.LagrangeVariant.gll_warped)
+        basix.ElementFamily.P, CellType.tetrahedron, 4, basix.LagrangeVariant.gll_warped
+    )
     wcoeffs = lagrange.wcoeffs
 
     x = [[j.copy() for j in i] for i in lagrange.x]

@@ -326,10 +326,14 @@ class FiniteElement:
             entity_index: The index of the entity
         """
         if entity_index is None:
-            return self._e.permute_subentity_closure(indices, cell_or_entity_info, entity_type)
+            return np.array(
+                self._e.permute_subentity_closure(indices, cell_or_entity_info, entity_type)
+            )
         else:
-            return self._e.permute_subentity_closure(
-                indices, cell_or_entity_info, entity_type, entity_index
+            return np.array(
+                self._e.permute_subentity_closure(
+                    indices, cell_or_entity_info, entity_type, entity_index
+                )
             )
 
     @property

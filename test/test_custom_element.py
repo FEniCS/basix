@@ -290,55 +290,60 @@ def test_create_lagrange1_quad():
     create_lagrange1_quad()
 
 
-def assert_failure(**kwargs):
-    """Assert that the correct RuntimeError is thrown."""
-    try:
-        create_lagrange1_quad(**kwargs)
-    except RuntimeError as e:
-        if len(e.args) == 0:
-            raise e
-        if "dgesv" in e.args[0]:
-            raise e
-        return
-    with pytest.raises(RuntimeError):
-        pass
-
-
 def test_wcoeffs_wrong_shape():
     """Test that a runtime error is thrown when wcoeffs is the wrong shape."""
-    assert_failure(wcoeffs=np.eye(3))
+    with pytest.raises(RuntimeError, match="wcoeffs has the wrong number of"):
+        create_lagrange1_quad(wcoeffs=np.eye(3))
 
 
 def test_wcoeffs_too_few_cols():
     """Test that a runtime error is thrown when wcoeffs has too few columns."""
-    assert_failure(
-        wcoeffs=np.array([[1.0, 0.0, 0.0, 0.0], [0.0, 1.0, 0.0, 0.0], [0.0, 0.0, 1.0, 0.0]])
-    )
+    with pytest.raises(RuntimeError, match="wcoeffs has the wrong number of"):
+        create_lagrange1_quad(
+            wcoeffs=np.array([[1.0, 0.0, 0.0, 0.0], [0.0, 1.0, 0.0, 0.0], [0.0, 0.0, 1.0, 0.0]])
+        )
 
 
 def test_wcoeffs_too_few_rows():
     """Test that a runtime error is thrown when wcoeffs has too few rows."""
-    assert_failure(
-        wcoeffs=np.array([[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0], [1.0, 0.0, 1.0]])
-    )
+    with pytest.raises(RuntimeError, match="wcoeffs has the wrong number of"):
+        create_lagrange1_quad(
+            wcoeffs=np.array([[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0], [1.0, 0.0, 1.0]])
+        )
 
 
 def test_wcoeffs_zero_row():
     """Test that a runtime error is thrown when wcoeffs has a row of zeros."""
-    assert_failure(
-        wcoeffs=np.array(
-            [[1.0, 0.0, 0.0, 0.0], [0.0, 1.0, 0.0, 0.0], [0.0, 0.0, 1.0, 0.0], [0.0, 0.0, 0.0, 0.0]]
+    with pytest.raises(
+        RuntimeError, match="Cannot orthogonalise the rows of a matrix with incomplete row rank"
+    ):
+        create_lagrange1_quad(
+            wcoeffs=np.array(
+                [
+                    [1.0, 0.0, 0.0, 0.0],
+                    [0.0, 1.0, 0.0, 0.0],
+                    [0.0, 0.0, 1.0, 0.0],
+                    [0.0, 0.0, 0.0, 0.0],
+                ]
+            )
         )
-    )
 
 
 def test_wcoeffs_equal_rows():
     """Test that a runtime error is thrown when wcoeffs has two equal rows."""
-    assert_failure(
-        wcoeffs=np.array(
-            [[1.0, 0.0, 0.0, 0.0], [0.0, 1.0, 0.0, 0.0], [0.0, 0.0, 1.0, 1.0], [0.0, 0.0, 1.0, 1.0]]
+    with pytest.raises(
+        RuntimeError, match="Cannot orthogonalise the rows of a matrix with incomplete row rank"
+    ):
+        create_lagrange1_quad(
+            wcoeffs=np.array(
+                [
+                    [1.0, 0.0, 0.0, 0.0],
+                    [0.0, 1.0, 0.0, 0.0],
+                    [0.0, 0.0, 1.0, 1.0],
+                    [0.0, 0.0, 1.0, 1.0],
+                ]
+            )
         )
-    )
 
 
 def test_x_wrong_tdim():
@@ -355,7 +360,8 @@ def test_x_wrong_tdim():
         [z],
         [],
     ]
-    assert_failure(x=x)
+    with pytest.raises(RuntimeError, match="x has a point with the wrong tdim"):
+        create_lagrange1_quad(x=x)
 
 
 def test_x_too_many_points():
@@ -372,7 +378,8 @@ def test_x_too_many_points():
         [np.array([[0.5, 0.5]])],
         [],
     ]
-    assert_failure(x=x)
+    with pytest.raises(RuntimeError, match="M has the wrong shape"):
+        create_lagrange1_quad(x=x)
 
 
 def test_x_point_tdim_too_high():
@@ -384,7 +391,8 @@ def test_x_point_tdim_too_high():
         [z],
         [np.array([[1.0, 1.0]])],
     ]
-    assert_failure(x=x)
+    with pytest.raises(RuntimeError, match="x has the wrong number of entities"):
+        create_lagrange1_quad(x=x)
 
 
 def test_x_wrong_entity_count():
@@ -401,7 +409,8 @@ def test_x_wrong_entity_count():
         [z],
         [],
     ]
-    assert_failure(x=x)
+    with pytest.raises(RuntimeError, match="x has the wrong number of entities"):
+        create_lagrange1_quad(x=x)
 
 
 def test_M_wrong_value_size():
@@ -418,7 +427,8 @@ def test_M_wrong_value_size():
         [z],
         [],
     ]
-    assert_failure(M=M)
+    with pytest.raises(RuntimeError, match="M has the wrong shape"):
+        create_lagrange1_quad(M=M)
 
 
 def test_M_too_many_points():
@@ -435,7 +445,8 @@ def test_M_too_many_points():
         [np.array([[[[1.0]]]])],
         [],
     ]
-    assert_failure(M=M)
+    with pytest.raises(RuntimeError, match="wcoeffs has the wrong number of rows"):
+        create_lagrange1_quad(M=M)
 
     z = np.zeros((0, 1, 0, 1))
     M = [
@@ -449,7 +460,8 @@ def test_M_too_many_points():
         [z],
         [],
     ]
-    assert_failure(M=M)
+    with pytest.raises(RuntimeError, match="M has the wrong shape"):
+        create_lagrange1_quad(M=M)
 
 
 def test_M_wrong_entities():
@@ -461,7 +473,8 @@ def test_M_wrong_entities():
         [z],
         [],
     ]
-    assert_failure(M=M)
+    with pytest.raises(RuntimeError, match="M has the wrong shape"):
+        create_lagrange1_quad(M=M)
 
 
 def test_M_too_many_derivs():
@@ -478,7 +491,8 @@ def test_M_too_many_derivs():
         [z],
         [],
     ]
-    assert_failure(M=M)
+    with pytest.raises(RuntimeError, match="M has the wrong shape"):
+        create_lagrange1_quad(M=M)
 
 
 def test_M_zero_row():
@@ -495,32 +509,38 @@ def test_M_zero_row():
         [z],
         [],
     ]
-    assert_failure(M=M)
+    with pytest.raises(RuntimeError, match="Dual matrix is singular"):
+        create_lagrange1_quad(M=M)
 
 
 def test_wrong_value_shape():
     """Test that a runtime error is thrown when value shape is wrong."""
-    assert_failure(value_shape=[2])
+    with pytest.raises(RuntimeError, match="wcoeffs has the wrong number of columns"):
+        create_lagrange1_quad(value_shape=[2])
 
 
 def test_wrong_cell_type():
     """Test that a runtime error is thrown when cell type is wrong."""
-    assert_failure(cell_type=CellType.hexahedron)
+    with pytest.raises(RuntimeError, match="x has a point with the wrong tdim"):
+        create_lagrange1_quad(cell_type=CellType.hexahedron)
 
 
 def test_wrong_degree():
     """Test that a runtime error is thrown when degree is wrong."""
-    assert_failure(degree=0)
+    with pytest.raises(RuntimeError, match="wcoeffs has the wrong number of columns"):
+        create_lagrange1_quad(degree=0)
 
 
 def test_wrong_discontinuous():
     """Test that a runtime error is thrown when discontinuous is wrong."""
-    assert_failure(discontinuous=True)
+    with pytest.raises(RuntimeError, match="Discontinuous element can only have interior DOFs"):
+        create_lagrange1_quad(discontinuous=True)
 
 
 def test_wrong_interpolation_nderivs():
     """Test that a runtime error is thrown when number of interpolation derivatives is wrong."""
-    assert_failure(interpolation_nderivs=1)
+    with pytest.raises(RuntimeError, match="M has the wrong shape"):
+        create_lagrange1_quad(interpolation_nderivs=1)
 
 
 @pytest.mark.parametrize("dim", range(4))

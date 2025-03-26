@@ -314,7 +314,7 @@ class FiniteElement:
         indices: npt.NDArray,
         cell_or_entity_info: int,
         entity_type: CellType,
-        entity_index: typing.Optional[int] = None
+        entity_index: typing.Optional[int] = None,
     ) -> npt.NDArray:
         """Permute DOF indices on the closure of a sub-entity.
 
@@ -326,9 +326,11 @@ class FiniteElement:
             entity_index: The index of the entity
         """
         if entity_index is None:
-            return self._e.permute_subentity_closure(data, cell_or_entity_info, entity_type)
+            return self._e.permute_subentity_closure(indices, cell_or_entity_info, entity_type)
         else:
-            return self._e.permute_subentity_closure(data, cell_or_entity_info, entity_type, entity_index)
+            return self._e.permute_subentity_closure(
+                indices, cell_or_entity_info, entity_type, entity_index
+            )
 
     @property
     def degree(self) -> int:

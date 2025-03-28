@@ -106,6 +106,15 @@ void declare_float(nb::module_& m, std::string type)
              self.permute_subentity_closure(_d, entity_info, entity_type);
              return as_nbarray(std::move(_d));
            })
+      .def("permute_subentity_closure",
+           [](const FiniteElement<T>& self,
+              nb::ndarray<std::int32_t, nb::ndim<1>, nb::c_contig> d,
+              std::uint32_t cell_info, cell::type entity_type, int entity_index)
+           {
+             std::span<std::int32_t> _d(d.data(), d.shape(0));
+             self.permute_subentity_closure(_d, cell_info, entity_type, entity_index);
+             return as_nbarray(std::move(_d));
+           })
       .def("permute_subentity_closure_inv",
            [](const FiniteElement<T>& self,
               nb::ndarray<std::int32_t, nb::ndim<1>, nb::c_contig> d,
@@ -113,6 +122,15 @@ void declare_float(nb::module_& m, std::string type)
            {
              std::span<std::int32_t> _d(d.data(), d.shape(0));
              self.permute_subentity_closure_inv(_d, entity_info, entity_type);
+             return as_nbarray(std::move(_d));
+           })
+      .def("permute_subentity_closure_inv",
+           [](const FiniteElement<T>& self,
+              nb::ndarray<std::int32_t, nb::ndim<1>, nb::c_contig> d,
+              std::uint32_t cell_info, cell::type entity_type, int entity_index)
+           {
+             std::span<std::int32_t> _d(d.data(), d.shape(0));
+             self.permute_subentity_closure_inv(_d, cell_info, entity_type, entity_index);
              return as_nbarray(std::move(_d));
            })
       .def("push_forward",

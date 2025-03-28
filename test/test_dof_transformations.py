@@ -591,3 +591,37 @@ def test_permute_subentity_closure(family, cell_type, degree, args, subentity, r
         data = np.array(result)
         data = list(e._e.permute_subentity_closure_inv(data, entity_info, subentity.value))
         assert data == list(range(len(result)))
+
+
+@pytest.mark.parametrize(
+    ("family", "args"), [(basix.ElementFamily.P, (basix.LagrangeVariant.equispaced,))]
+)
+@pytest.mark.parametrize(
+    "cell_type",
+    [
+        basix.CellType.triangle,
+        basix.CellType.quadrilateral,
+        basix.CellType.tetrahedron,
+        basix.CellType.hexahedron,
+    ],
+)
+@pytest.mark.parametrize("degree", [4, 5, 6])
+def test_permute_subentity_closure_inverse(family, cell_type, degree, args):
+    e = basix.create_element(family, cell_type, degree, *args)
+
+    for dofs, subentities in zip(
+        e.entity_closure_dofs[1:-1], basix.cell.subentity_types(cell_type)[1:-1]
+    ):
+        subentity = subentities[0]
+        n = len(dofs[0])
+        for _ in range(50):
+            entity_info = random.randrange(1000)
+            data = list(
+                e._e.permute_subentity_closure_inv(
+                    e._e.permute_subentity_closure(np.arange(n), entity_info, subentity.value),
+                    entity_info,
+                    subentity.value,
+                )
+            )
+            print(data)
+            assert data == list(range(n))

@@ -1244,37 +1244,19 @@ FiniteElement<F>::FiniteElement(
         if (!dofs[1][0].empty())
         {
           precompute::apply_permutation(trans1, std::span(rot), dofs[1][0][0]);
-        }
-        if (!dofs[1][1].empty())
-        {
           precompute::apply_permutation(trans1, std::span(rot), dofs[1][1][0]);
-        }
-        if (!dofs[2][0].empty())
-        {
-          precompute::apply_permutation(trans2[0], std::span(rot),
-                                        dofs[2][0][0]);
-        }
-        if (!dofs[1][0].empty())
-        {
           precompute::apply_permutation(trans1, std::span(ref), dofs[1][0][0]);
-        }
-        if (!dofs[2][0].empty())
-        {
-          precompute::apply_permutation(trans2[1], std::span(ref),
-                                        dofs[2][0][0]);
-        }
-        if (!dofs[1][1].empty())
-        {
           precompute::apply_permutation(trans1, std::span(rot_inv),
                                         dofs[1][1][0]);
-        }
-        if (!dofs[1][2].empty())
-        {
           precompute::apply_permutation(trans1, std::span(rot_inv),
                                         dofs[1][2][0]);
         }
         if (!dofs[2][0].empty())
         {
+          precompute::apply_permutation(trans2[0], std::span(rot),
+                                        dofs[2][0][0]);
+          precompute::apply_permutation(trans2[1], std::span(ref),
+                                        dofs[2][0][0]);
           precompute::apply_permutation(trans3[0], std::span(rot_inv),
                                         dofs[2][0][0]);
         }
@@ -1365,39 +1347,22 @@ FiniteElement<F>::FiniteElement(
         auto& trans2 = _eperm.at(cell::type::quadrilateral);
         auto& trans3 = _eperm_inv.at(cell::type::quadrilateral);
 
-        if (!dofs[1][1].empty())
+        if (!dofs[1][0].empty())
         {
           precompute::apply_permutation(trans1, std::span(rot), dofs[1][1][0]);
-        }
-        if (!dofs[1][2].empty())
-        {
           precompute::apply_permutation(trans1, std::span(rot), dofs[1][2][0]);
+          precompute::apply_permutation(trans1, std::span(rot_inv),
+                                        dofs[1][0][0]);
+          precompute::apply_permutation(trans1, std::span(rot_inv),
+                                        dofs[1][3][0]);
         }
         if (!dofs[2][0].empty())
         {
           precompute::apply_permutation(trans2[0], std::span(rot),
                                         dofs[2][0][0]);
-        }
-
-        if (!dofs[2][0].empty())
-        {
-          precompute::apply_permutation(trans2[1], std::span(ref),
-                                        dofs[2][0][0]);
-        }
-
-        if (!dofs[1][1].empty())
-        {
-          precompute::apply_permutation(trans1, std::span(rot_inv),
-                                        dofs[1][1][0]);
-        }
-        if (!dofs[1][2].empty())
-        {
-          precompute::apply_permutation(trans1, std::span(rot_inv),
-                                        dofs[1][2][0]);
-        }
-        if (!dofs[2][0].empty())
-        {
           precompute::apply_permutation(trans3[0], std::span(rot_inv),
+                                        dofs[2][0][0]);
+          precompute::apply_permutation(trans2[1], std::span(ref),
                                         dofs[2][0][0]);
         }
       }

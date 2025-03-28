@@ -605,7 +605,7 @@ def test_permute_subentity_closure(family, cell_type, degree, args, subentity, r
         basix.CellType.hexahedron,
     ],
 )
-@pytest.mark.parametrize("degree", [4, 5, 6])
+@pytest.mark.parametrize("degree", range(1, 6))
 def test_permute_subentity_closure_inverse(family, cell_type, degree, args):
     e = basix.create_element(family, cell_type, degree, *args)
 

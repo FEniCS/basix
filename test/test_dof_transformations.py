@@ -633,8 +633,9 @@ def test_permute_subentity_closure_inverse(family, cell_type, degree, args):
             data = np.arange(n, dtype=np.int32)
             ref_data = data.copy()
             e._e.permute_subentity_closure(data, entity_info, subentity.value)
-            e._e.permute_subentity_closure_inv(data,
-                    entity_info,
-                    subentity.value,
-                )
+            e._e.permute_subentity_closure_inv(
+                data,
+                entity_info,
+                subentity.value,
+            )
             np.testing.assert_allclose(data, ref_data)

@@ -599,13 +599,12 @@ def test_permute_subentity_closure(family, cell_type, degree, args, subentity, r
     e = basix.create_element(family, cell_type, degree, *args)
 
     for entity_info, result in results.items():
-        data = np.arange(len(result))
-        data = list(e._e.permute_subentity_closure(data, entity_info, subentity.value))
-        assert result == data
-
-        data = np.array(result)
-        data = list(e._e.permute_subentity_closure_inv(data, entity_info, subentity.value))
-        assert data == list(range(len(result)))
+        data = np.arange(len(result), dtype=np.int32)
+        ref_data = data.copy()
+        e._e.permute_subentity_closure(data, entity_info, subentity.value)
+        np.testing.assert_allclose(data, result)
+        e._e.permute_subentity_closure_inv(data, entity_info, subentity.value)
+        np.testing.assert_allclose(data, ref_data)
 
 
 @pytest.mark.parametrize(
@@ -631,11 +630,11 @@ def test_permute_subentity_closure_inverse(family, cell_type, degree, args):
         n = len(dofs[0])
         for _ in range(50):
             entity_info = random.randrange(1000)
-            data = list(
-                e._e.permute_subentity_closure_inv(
-                    e._e.permute_subentity_closure(np.arange(n), entity_info, subentity.value),
+            data = np.arange(n, dtype=np.int32)
+            ref_data = data.copy()
+            e._e.permute_subentity_closure(data, entity_info, subentity.value)
+            e._e.permute_subentity_closure_inv(data,
                     entity_info,
                     subentity.value,
                 )
-            )
-            assert data == list(range(n))
+            np.testing.assert_allclose(data, ref_data)

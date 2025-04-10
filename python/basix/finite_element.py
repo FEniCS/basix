@@ -6,6 +6,7 @@
 """Functions for creating finite elements."""
 
 import typing
+from warnings import warn
 
 import numpy as np
 import numpy.typing as npt
@@ -23,7 +24,7 @@ from basix._basixcpp import create_element as _create_element
 from basix._basixcpp import create_tp_element as _create_tp_element
 from basix._basixcpp import tp_dof_ordering as _tp_dof_ordering
 from basix._basixcpp import tp_factors as _tp_factors
-from basix.cell import CellType
+from basix.cell import CellType, geometry, topology, facet_outward_normals
 from basix import MapType
 from basix.polynomials import PolysetType
 from basix.sobolev_spaces import SobolevSpace
@@ -682,6 +683,26 @@ def create_custom_element(
         wcoeffs = np.dtype(dtype).type(wcoeffs)  # type: ignore
         x = [[np.dtype(dtype).type(j) for j in i] for i in x]  # type: ignore
         M = [[np.dtype(dtype).type(j) for j in i] for i in M]  # type: ignore
+
+    # Check shape of x
+    tdim = len(topology(cell_type)) - 1
+    for i in x:
+        for j in i:
+            if j.shape[1] != tdim:
+                raise RuntimeError("x has a point with the wrong tdim")
+            if len(j.shape) != 2:
+                raise ValueError("x has the wrong dimension")
+
+    # Warn if points are not inside the cell
+    geo = geometry(cell_type)
+    top = topology(cell_type)
+    for points_i in x:
+        for points_j in points_i:
+            for p in points_j:
+                for facet, facet_normal in zip(top[tdim - 1], facet_outward_normals(cell_type)):
+                    if abs(np.dot(p - geo[facet[0]], facet_normal)) > 0.001:
+                        warn(f"Point {p} is not in cell", UserWarning)
+
     if np.issubdtype(dtype, np.float32):
         _create_custom_element = _create_custom_element_float32  # type: ignore
     elif np.issubdtype(dtype, np.float64):

@@ -1,4 +1,4 @@
-Checks: ""
+Checks: "-*,performance*"
 WarningsAsErrors: "*"
 UseColor: true
 HeaderFilterRegex: '^(*mdspan\.hpp$).*'

@@ -102,7 +102,7 @@ tabulate_bernstein(cell::type celltype, int d, mdspan_t<const T, 2> x)
     ++n;
   }
 
-  return {std::move(values_b), std::move(shape)};
+  return {std::move(values_b), shape};
 }
 //-----------------------------------------------------------------------------
 } // namespace

@@ -538,6 +538,7 @@ std::vector<T> cell::facet_reference_volumes(cell::type cell_type)
   int tdim = topological_dimension(cell_type);
   std::vector<cell::type> facet_types = subentity_types(cell_type)[tdim - 1];
   std::vector<T> out;
+  out.reserve(facet_types.size());
   for (auto& facet_type : facet_types)
     out.push_back(cell::volume<T>(facet_type));
   return out;
@@ -633,7 +634,7 @@ cell::entity_jacobians(cell::type cell_type, std::size_t e_dim)
         J(e, k, j) = x(entity[1 + j], k) - x(entity[0], k);
   }
 
-  return {std::move(jacobians), std::move(shape)};
+  return {std::move(jacobians), shape};
 }
 //-----------------------------------------------------------------------------
 template <std::floating_point T>

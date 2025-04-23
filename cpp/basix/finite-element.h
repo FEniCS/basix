@@ -1645,7 +1645,7 @@ template <std::floating_point T>
 std::vector<std::vector<FiniteElement<T>>>
 tp_factors(element::family family, cell::type cell, int degree,
            element::lagrange_variant lvariant, element::dpc_variant dvariant,
-           bool discontinuous, std::vector<int> dof_ordering);
+           bool discontinuous, const std::vector<int>& dof_ordering);
 
 /// Create an element with Tensor Product dof ordering
 /// @param[in] family The element family

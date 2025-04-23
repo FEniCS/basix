@@ -346,7 +346,7 @@ std::vector<std::vector<FiniteElement<T>>>
 basix::tp_factors(element::family family, cell::type cell, int degree,
                   element::lagrange_variant lvariant,
                   element::dpc_variant dvariant, bool discontinuous,
-                  std::vector<int> dof_ordering)
+                  const std::vector<int>& dof_ordering)
 {
   std::vector<int> tp_dofs = tp_dof_ordering(family, cell, degree, lvariant,
                                              dvariant, discontinuous);
@@ -388,10 +388,10 @@ basix::tp_factors(element::family family, cell::type cell, int degree,
 //-----------------------------------------------------------------------------
 template std::vector<std::vector<basix::FiniteElement<float>>>
 basix::tp_factors(element::family, cell::type, int, element::lagrange_variant,
-                  element::dpc_variant, bool, std::vector<int>);
+                  element::dpc_variant, bool, const std::vector<int>&);
 template std::vector<std::vector<basix::FiniteElement<double>>>
 basix::tp_factors(element::family, cell::type, int, element::lagrange_variant,
-                  element::dpc_variant, bool, std::vector<int>);
+                  element::dpc_variant, bool, const std::vector<int>&);
 //-----------------------------------------------------------------------------
 std::vector<int> basix::tp_dof_ordering(element::family family, cell::type cell,
                                         int degree, element::lagrange_variant,

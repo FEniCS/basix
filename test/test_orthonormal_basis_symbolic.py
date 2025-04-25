@@ -3,9 +3,9 @@
 # SPDX-License-Identifier: MIT
 
 import numpy as np
+import pytest
 import sympy
 
-import pytest
 import basix
 
 
@@ -18,6 +18,7 @@ def P_interval(n, x):
         p /= sympy.sqrt((p * p).integrate((x, 0, 1)))
         r.append(p)
     return r
+
 
 @pytest.mark.parametrize("n", range(8))
 @pytest.mark.parametrize("nderiv", range(8))
@@ -95,12 +96,14 @@ def test_symbolic_pyramid(n, nderiv):
             (6 * y * (y + z - 1) / (1 - z) + (1 - z)) * (2 * x + z - 1) * sympy.sqrt(105),  # 120
             (6 * x * (x + z - 1) + (1 - z) ** 2) * sympy.sqrt(35),  # 200
             (6 * x * (x + z - 1) / (1 - z) + (1 - z)) * (2 * y + z - 1) * sympy.sqrt(105),  # 210
-            (6 * x * (x + z - 1) + (1 - z) ** 2) * (6 * y * (y + z - 1) / (1 - z) ** 2 + 1) * sympy.sqrt(175), # 220
+            (6 * x * (x + z - 1) + (1 - z) ** 2)
+            * (6 * y * (y + z - 1) / (1 - z) ** 2 + 1)
+            * sympy.sqrt(175),  # 220
             (4 * z - 1) * sympy.sqrt(5),  # 001
             (2 * y + z - 1) * (6 * z - 1) * sympy.sqrt(21),  # 011
             (2 * x + z - 1) * (6 * z - 1) * sympy.sqrt(21),  # 101
             (2 * x + z - 1) * (2 * y + z - 1) * (6 * z - 1) / (1 - z) * sympy.sqrt(63),  # 111
-            (15 * z ** 2 - 10 * z + 1) * sympy.sqrt(7),  # 002
+            (15 * z**2 - 10 * z + 1) * sympy.sqrt(7),  # 002
         ]
     else:
         raise NotImplementedError()
@@ -124,8 +127,7 @@ def test_symbolic_pyramid(n, nderiv):
                     print(n, wsym.shape)
                     print(i)
                     print(j)
-                    print(i-j)
+                    print(i - j)
                     print(np.allclose(i, j))
                     print()
                 assert np.allclose(wtab[idx(kx, ky, kz)], wsym)
-

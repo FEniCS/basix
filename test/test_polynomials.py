@@ -124,7 +124,11 @@ def evaluate(function, pt):
             2,
         ],
         [basix.CellType.pyramid, [one], 0],
-        [basix.CellType.pyramid, [one, 2 * y + z - 1, 2 * x + z - 1, (2 * x + z - 1) * (2 * y + z - 1) / (1 - z), z], 1],
+        [
+            basix.CellType.pyramid,
+            [one, 2 * y + z - 1, 2 * x + z - 1, (2 * x + z - 1) * (2 * y + z - 1) / (1 - z), z],
+            1,
+        ],
     ],
 )
 def test_order(cell_type, functions, degree):
@@ -162,7 +166,9 @@ def test_order(cell_type, functions, degree):
 @pytest.mark.parametrize("degree", range(8))
 def test_not_nan_pyramid(degree):
     points = np.array([[0.0, 0.0, 1.0]])
-    values = basix.tabulate_polynomials(basix.PolynomialType.legendre, basix.CellType.pyramid, degree, points)[:, 0]
+    values = basix.tabulate_polynomials(
+        basix.PolynomialType.legendre, basix.CellType.pyramid, degree, points
+    )[:, 0]
 
     for i in values:
         assert not np.isnan(i)

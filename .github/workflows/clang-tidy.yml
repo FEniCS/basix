@@ -31,7 +31,7 @@ jobs:
         run: |
           cmake -G Ninja -B build -DENABLE_CLANG_TIDY=ON .
           cmake --build build/
-          cmake --install build/
+          sudo cmake --install build/
       - name: Run clang-tidy (Python)
         working-directory: python
         run: >

@@ -36,6 +36,6 @@ jobs:
         working-directory: python
         run: >
           pip install .
-            --no-build-isolation
-            --verbose
-            --config-settings=cmake.define.ENABLE_CLANG_TIDY=ON
+          --no-build-isolation
+          --verbose
+          --config-settings=cmake.define.ENABLE_CLANG_TIDY=ON

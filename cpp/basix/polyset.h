@@ -100,16 +100,13 @@
 /// \f$z\f$s.
 ///
 /// ### Pyramid
-/// Orthogonal rationomials on the pyramid element are best calculated in
-/// the same way as the tetrahedron, using recurrence relations on each
-/// axis. Let \f$\zeta_x = 2\frac{1+x}{1-z} - 1\f$, \f$\zeta_y =
-/// 2\frac{1+y}{1-z} - 1\f$. The rationomials are then defined by
+/// Orthonormal rationomials on the pyramid element are also calculated
+/// using a recurrence relation. A derivation of the recurrence relation
+/// used can be found in https://doi.org/10.5281/zenodo.15281516 (Scroggs,
+/// 2025).
 ///
-/// \f[Q_{p, q, r} = P^{0,0}_p(\zeta_x) P^{0,0}_q(\zeta_y)
-/// \left(1-z\right)^{\max(p,q)} P_r^{2(p+q+1), 0}(2z-1).\f]
-///
-/// Note that these are rational polynomials ("rationomials") and not
-/// polynomials.
+/// Note that the orthonormal basis for pyramids is a set of rational
+/// polynomials ("rationomials") and not polynomials.
 ///
 /// ### Normalisation
 /// For each cell type, we obtain an orthonormal set of polynomials by

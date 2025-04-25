@@ -2024,6 +2024,8 @@ void tabulate_polyset_pyramid_derivs(
     md::mdspan<T, md::dextents<std::size_t, 3>> P, std::size_t n,
     std::size_t nderiv, md::mdspan<const T, md::dextents<std::size_t, 2>> x)
 {
+  // The recurrence formulae used in this function are derived in
+  // https://doi.org/10.5281/zenodo.15281516 (Scroggs, 2025)
   assert(x.extent(1) == 3);
   assert(P.extent(0) == (nderiv + 1) * (nderiv + 2) * (nderiv + 3) / 6);
   assert(P.extent(1) == (n + 1) * (n + 2) * (2 * n + 3) / 6);

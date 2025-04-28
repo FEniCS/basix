@@ -29,15 +29,10 @@
 
 using namespace basix;
 
-namespace stdex
-    = MDSPAN_IMPL_STANDARD_NAMESPACE::MDSPAN_IMPL_PROPOSED_NAMESPACE;
 template <typename T, std::size_t d>
-using mdspan_t = MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<
-    T, MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, d>>;
+using mdspan_t = md::mdspan<T, md::dextents<std::size_t, d>>;
 template <typename T, std::size_t d>
-using mdarray_t
-    = stdex::mdarray<T,
-                     MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, d>>;
+using mdarray_t = mdex::mdarray<T, md::dextents<std::size_t, d>>;
 
 namespace
 {
@@ -551,14 +546,10 @@ element::make_discontinuous(
 
   std::array<std::size_t, 2> xshape = {npoints, tdim};
   std::vector<T> xb(xshape[0] * xshape[1]);
-  MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<
-      T, MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 2>>
-      new_x(xb.data(), xshape);
+  md::mdspan<T, md::dextents<std::size_t, 2>> new_x(xb.data(), xshape);
   std::array<std::size_t, 4> Mshape = {Mshape0, value_size, npoints, nderivs};
   std::vector<T> Mb(Mshape[0] * Mshape[1] * Mshape[2] * Mshape[3]);
-  MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<
-      T, MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 4>>
-      new_M(Mb.data(), Mshape);
+  md::mdspan<T, md::dextents<std::size_t, 4>> new_M(Mb.data(), Mshape);
   int x_n = 0;
   int M_n = 0;
   for (int i = 0; i < 4; ++i)
@@ -1253,38 +1244,20 @@ FiniteElement<F>::FiniteElement(
         if (!dofs[1][0].empty())
         {
           precompute::apply_permutation(trans1, std::span(rot), dofs[1][0][0]);
-        }
-        if (!dofs[1][1].empty())
-        {
           precompute::apply_permutation(trans1, std::span(rot), dofs[1][1][0]);
-        }
-        if (!dofs[2][0].empty())
-        {
-          precompute::apply_permutation(trans2[0], std::span(rot),
-                                        dofs[2][0][0]);
-        }
-        if (!dofs[1][0].empty())
-        {
           precompute::apply_permutation(trans1, std::span(ref), dofs[1][0][0]);
-        }
-        if (!dofs[2][0].empty())
-        {
-          precompute::apply_permutation(trans2[1], std::span(ref),
-                                        dofs[2][0][0]);
-        }
-        if (!dofs[1][1].empty())
-        {
           precompute::apply_permutation(trans1, std::span(rot_inv),
                                         dofs[1][1][0]);
-        }
-        if (!dofs[1][2].empty())
-        {
           precompute::apply_permutation(trans1, std::span(rot_inv),
                                         dofs[1][2][0]);
         }
         if (!dofs[2][0].empty())
         {
-          precompute::apply_permutation(trans3[0], std::span(rot_inv),
+          precompute::apply_permutation(trans2[0], std::span(rot_inv),
+                                        dofs[2][0][0]);
+          precompute::apply_permutation(trans2[1], std::span(ref),
+                                        dofs[2][0][0]);
+          precompute::apply_permutation(trans3[0], std::span(rot),
                                         dofs[2][0][0]);
         }
       }
@@ -1374,39 +1347,22 @@ FiniteElement<F>::FiniteElement(
         auto& trans2 = _eperm.at(cell::type::quadrilateral);
         auto& trans3 = _eperm_inv.at(cell::type::quadrilateral);
 
-        if (!dofs[1][1].empty())
+        if (!dofs[1][0].empty())
         {
           precompute::apply_permutation(trans1, std::span(rot), dofs[1][1][0]);
-        }
-        if (!dofs[1][2].empty())
-        {
           precompute::apply_permutation(trans1, std::span(rot), dofs[1][2][0]);
+          precompute::apply_permutation(trans1, std::span(rot_inv),
+                                        dofs[1][0][0]);
+          precompute::apply_permutation(trans1, std::span(rot_inv),
+                                        dofs[1][3][0]);
         }
         if (!dofs[2][0].empty())
         {
-          precompute::apply_permutation(trans2[0], std::span(rot),
+          precompute::apply_permutation(trans2[0], std::span(rot_inv),
                                         dofs[2][0][0]);
-        }
-
-        if (!dofs[2][0].empty())
-        {
           precompute::apply_permutation(trans2[1], std::span(ref),
                                         dofs[2][0][0]);
-        }
-
-        if (!dofs[1][1].empty())
-        {
-          precompute::apply_permutation(trans1, std::span(rot_inv),
-                                        dofs[1][1][0]);
-        }
-        if (!dofs[1][2].empty())
-        {
-          precompute::apply_permutation(trans1, std::span(rot_inv),
-                                        dofs[1][2][0]);
-        }
-        if (!dofs[2][0].empty())
-        {
-          precompute::apply_permutation(trans3[0], std::span(rot_inv),
+          precompute::apply_permutation(trans3[0], std::span(rot),
                                         dofs[2][0][0]);
         }
       }
@@ -1520,9 +1476,7 @@ std::size_t FiniteElement<F>::hash() const
     }
     std::size_t vs_hash = 0;
     for (std::size_t i = 0; i < value_shape().size(); ++i)
-    {
       combine_hashes(vs_hash, std::hash<int>{}(value_shape()[i]));
-    }
     combine_hashes(h, coeff_hash);
     combine_hashes(h, std::hash<int>{}(embedded_superdegree()));
     combine_hashes(h, std::hash<int>{}(embedded_subdegree()));
@@ -1530,9 +1484,8 @@ std::size_t FiniteElement<F>::hash() const
     combine_hashes(h, vs_hash);
   }
   else
-  {
     combine_hashes(h, std::hash<int>{}(degree()));
-  }
+
   return h;
 }
 //-----------------------------------------------------------------------------
@@ -1712,14 +1665,10 @@ FiniteElement<F>::push_forward(impl::mdspan_t<const F, 3> U,
   std::vector<F> ub(shape[0] * shape[1] * shape[2]);
   mdspan_t<F, 3> u(ub.data(), shape);
 
-  using u_t = MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<
-      F, MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 2>>;
-  using U_t = MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<
-      const F, MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 2>>;
-  using J_t = MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<
-      const F, MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 2>>;
-  using K_t = MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<
-      const F, MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 2>>;
+  using u_t = md::mdspan<F, md::dextents<std::size_t, 2>>;
+  using U_t = md::mdspan<const F, md::dextents<std::size_t, 2>>;
+  using J_t = md::mdspan<const F, md::dextents<std::size_t, 2>>;
+  using K_t = md::mdspan<const F, md::dextents<std::size_t, 2>>;
   auto map = this->map_fn<u_t, U_t, J_t, K_t>();
   for (std::size_t i = 0; i < u.extent(0); ++i)
   {
@@ -1752,14 +1701,10 @@ FiniteElement<F>::pull_back(impl::mdspan_t<const F, 3> u,
   std::vector<F> Ub(shape[0] * shape[1] * shape[2]);
   mdspan_t<F, 3> U(Ub.data(), shape);
 
-  using u_t = MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<
-      const F, MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 2>>;
-  using U_t = MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<
-      F, MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 2>>;
-  using J_t = MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<
-      const F, MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 2>>;
-  using K_t = MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<
-      const F, MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 2>>;
+  using u_t = md::mdspan<const F, md::dextents<std::size_t, 2>>;
+  using U_t = md::mdspan<F, md::dextents<std::size_t, 2>>;
+  using J_t = md::mdspan<const F, md::dextents<std::size_t, 2>>;
+  using K_t = md::mdspan<const F, md::dextents<std::size_t, 2>>;
   auto map = this->map_fn<U_t, u_t, K_t, J_t>();
   for (std::size_t i = 0; i < u.extent(0); ++i)
   {

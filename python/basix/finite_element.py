@@ -309,6 +309,60 @@ class FiniteElement:
         factors = self._e.get_tensor_product_representation()
         return [[FiniteElement(e) for e in elements] for elements in factors]
 
+    def permute_subentity_closure(
+        self,
+        indices: npt.NDArray,
+        cell_or_entity_info: int,
+        entity_type: CellType,
+        entity_index: typing.Optional[int] = None,
+    ) -> npt.NDArray:
+        """Permute DOF indices on the closure of a sub-entity.
+
+        Args:
+            indices: The indices to permute
+            cell_or_entity_info: Bit packed entity info (if entity_index is None) or
+                cell info (if entity_index is not None)
+            entity_type: The cell type of the entity
+            entity_index: The index of the entity
+        """
+        if entity_index is None:
+            return np.array(
+                self._e.permute_subentity_closure(indices, cell_or_entity_info, entity_type)
+            )
+        else:
+            return np.array(
+                self._e.permute_subentity_closure(
+                    indices, cell_or_entity_info, entity_type, entity_index
+                )
+            )
+
+    def permute_subentity_closure_inv(
+        self,
+        indices: npt.NDArray,
+        cell_or_entity_info: int,
+        entity_type: CellType,
+        entity_index: typing.Optional[int] = None,
+    ) -> npt.NDArray:
+        """Apply inverse permutation to DOF indices on the closure of a sub-entity.
+
+        Args:
+            indices: The indices to permute
+            cell_or_entity_info: Bit packed entity info (if entity_index is None) or
+                cell info (if entity_index is not None)
+            entity_type: The cell type of the entity
+            entity_index: The index of the entity
+        """
+        if entity_index is None:
+            return np.array(
+                self._e.permute_subentity_closure_inv(indices, cell_or_entity_info, entity_type)
+            )
+        else:
+            return np.array(
+                self._e.permute_subentity_closure_inv(
+                    indices, cell_or_entity_info, entity_type, entity_index
+                )
+            )
+
     @property
     def degree(self) -> int:
         """Element polynomial degree."""
@@ -617,6 +671,13 @@ def create_custom_element(
     Returns:
         A custom finite element.
     """
+    if len(x) != len(M):
+        raise ValueError("x and M must have the same length")
+    # Allow (eg) only three lists to be included when creating a 2D cell
+    while len(x) < 4:
+        x.append([])
+        M.append([])
+
     if wcoeffs.dtype != dtype:
         wcoeffs = np.dtype(dtype).type(wcoeffs)  # type: ignore
         x = [[np.dtype(dtype).type(j) for j in i] for i in x]  # type: ignore

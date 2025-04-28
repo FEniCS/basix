@@ -7,6 +7,7 @@
 #pragma once
 
 #include "mdspan.hpp"
+#include "types.h"
 #include <algorithm>
 #include <array>
 #include <cmath>
@@ -183,21 +184,13 @@ std::pair<std::vector<T>, std::vector<T>> eigh(std::span<const T> A,
 /// @param[in] B Right-hand side matrix/vector.
 /// @return A^{-1} B.
 template <std::floating_point T>
-std::vector<T>
-solve(MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<
-          const T, MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 2>>
-          A,
-      MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<
-          const T, MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 2>>
-          B)
+std::vector<T> solve(md::mdspan<const T, md::dextents<std::size_t, 2>> A,
+                     md::mdspan<const T, md::dextents<std::size_t, 2>> B)
 {
-  namespace stdex
-      = MDSPAN_IMPL_STANDARD_NAMESPACE::MDSPAN_IMPL_PROPOSED_NAMESPACE;
-
   // Copy A and B to column-major storage
-  stdex::mdarray<T, MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 2>,
-                 MDSPAN_IMPL_STANDARD_NAMESPACE::layout_left>
-      _A(A.extents()), _B(B.extents());
+  mdex::mdarray<T, md::dextents<std::size_t, 2>, md::layout_left> _A(
+      A.extents()),
+      _B(B.extents());
   for (std::size_t i = 0; i < A.extent(0); ++i)
     for (std::size_t j = 0; j < A.extent(1); ++j)
       _A(i, j) = A(i, j);
@@ -222,9 +215,7 @@ solve(MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<
 
   // Copy result to row-major storage
   std::vector<T> rb(_B.extent(0) * _B.extent(1));
-  MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<
-      T, MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 2>>
-      r(rb.data(), _B.extents());
+  md::mdspan<T, md::dextents<std::size_t, 2>> r(rb.data(), _B.extents());
   for (std::size_t i = 0; i < _B.extent(0); ++i)
     for (std::size_t j = 0; j < _B.extent(1); ++j)
       r(i, j) = _B(i, j);
@@ -236,17 +227,11 @@ solve(MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<
 /// @param[in] A The matrix.
 /// @return A bool indicating if the matrix is singular.
 template <std::floating_point T>
-bool is_singular(
-    MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<
-        const T, MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 2>>
-        A)
+bool is_singular(md::mdspan<const T, md::dextents<std::size_t, 2>> A)
 {
   // Copy to column major matrix
-  namespace stdex
-      = MDSPAN_IMPL_STANDARD_NAMESPACE::MDSPAN_IMPL_PROPOSED_NAMESPACE;
-  stdex::mdarray<T, MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 2>,
-                 MDSPAN_IMPL_STANDARD_NAMESPACE::layout_left>
-      _A(A.extents());
+  mdex::mdarray<T, md::dextents<std::size_t, 2>, md::layout_left> _A(
+      A.extents());
   for (std::size_t i = 0; i < A.extent(0); ++i)
     for (std::size_t j = 0; j < A.extent(1); ++j)
       _A(i, j) = A(i, j);
@@ -345,11 +330,11 @@ void dot(const U& A, const V& B, W&& C,
   else
   {
     static_assert(std::is_same_v<typename std::decay_t<U>::layout_type,
-                                 MDSPAN_IMPL_STANDARD_NAMESPACE::layout_right>);
+                                 md::layout_right>);
     static_assert(std::is_same_v<typename std::decay_t<V>::layout_type,
-                                 MDSPAN_IMPL_STANDARD_NAMESPACE::layout_right>);
+                                 md::layout_right>);
     static_assert(std::is_same_v<typename std::decay_t<W>::layout_type,
-                                 MDSPAN_IMPL_STANDARD_NAMESPACE::layout_right>);
+                                 md::layout_right>);
     static_assert(std::is_same_v<typename std::decay_t<V>::value_type, T>);
     static_assert(std::is_same_v<typename std::decay_t<W>::value_type, T>);
     impl::dot_blas<T>(
@@ -366,11 +351,7 @@ template <std::floating_point T>
 std::vector<T> eye(std::size_t n)
 {
   std::vector<T> I(n * n, 0);
-  namespace stdex
-      = MDSPAN_IMPL_STANDARD_NAMESPACE::MDSPAN_IMPL_PROPOSED_NAMESPACE;
-  MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<
-      T, MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 2>>
-      Iview(I.data(), n, n);
+  md::mdspan<T, md::dextents<std::size_t, 2>> Iview(I.data(), n, n);
   for (std::size_t i = 0; i < n; ++i)
     Iview(i, i) = 1;
   return I;
@@ -381,11 +362,8 @@ std::vector<T> eye(std::size_t n)
 /// @param[in] start The row to start from. The rows before this should
 /// already be orthogonal.
 template <std::floating_point T>
-void orthogonalise(
-    MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<
-        T, MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 2>>
-        wcoeffs,
-    std::size_t start = 0)
+void orthogonalise(md::mdspan<T, md::dextents<std::size_t, 2>> wcoeffs,
+                   std::size_t start = 0)
 {
   for (std::size_t i = start; i < wcoeffs.extent(0); ++i)
   {

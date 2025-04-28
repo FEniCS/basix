@@ -73,6 +73,7 @@ set(HEADERS_basix
   ${CMAKE_CURRENT_SOURCE_DIR}/basix/e-serendipity.h
   ${CMAKE_CURRENT_SOURCE_DIR}/basix/e-hermite.h
   ${CMAKE_CURRENT_SOURCE_DIR}/basix/mdspan.hpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/basix/types.h
   ${CMAKE_CURRENT_BINARY_DIR}/basix/version.h)
 
 target_sources(basix PRIVATE
@@ -105,6 +106,9 @@ set_target_properties(basix PROPERTIES PRIVATE_HEADER "${HEADERS_basix}")
 target_include_directories(basix PUBLIC
   $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
   "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR};${CMAKE_CURRENT_SOURCE_DIR}>")
+
+target_compile_definitions(basix PUBLIC MDSPAN_USE_PAREN_OPERATOR=1)
+target_compile_definitions(basix PUBLIC MDSPAN_USE_BRACKET_OPERATOR=0)
 
 target_link_libraries(basix PRIVATE BLAS::BLAS)
 target_link_libraries(basix PRIVATE LAPACK::LAPACK)

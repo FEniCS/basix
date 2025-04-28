@@ -7,20 +7,16 @@
 #include "finite-element.h"
 #include "math.h"
 #include "quadrature.h"
+#include "types.h"
 
 using namespace basix;
 
 namespace
 {
-namespace stdex
-    = MDSPAN_IMPL_STANDARD_NAMESPACE::MDSPAN_IMPL_PROPOSED_NAMESPACE;
 template <typename T, std::size_t d>
-using mdspan_t = MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<
-    T, MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, d>>;
+using mdspan_t = md::mdspan<T, md::dextents<std::size_t, d>>;
 template <typename T, std::size_t d>
-using mdarray_t
-    = stdex::mdarray<T,
-                     MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, d>>;
+using mdarray_t = mdex::mdarray<T, md::dextents<std::size_t, d>>;
 
 //----------------------------------------------------------------------------
 std::vector<int> axis_points(const cell::type celltype)

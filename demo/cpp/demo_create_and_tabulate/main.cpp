@@ -8,13 +8,11 @@
 
 #include <basix/finite-element.h>
 #include <basix/mdspan.hpp>
+#include <basix/types.h>
 #include <iostream>
 
-namespace stdex
-    = MDSPAN_IMPL_STANDARD_NAMESPACE::MDSPAN_IMPL_PROPOSED_NAMESPACE;
 template <typename T, std::size_t d>
-using mdspan_t = MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<
-    T, MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, d>>;
+using mdspan_t = basix::md::mdspan<T, basix::md::dextents<std::size_t, d>>;
 
 using T = double;
 

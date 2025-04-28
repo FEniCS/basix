@@ -29,12 +29,11 @@ namespace basix
 namespace impl
 {
 template <typename T, std::size_t d>
-using mdspan_t = MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<
-    T, MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, d>>;
+using mdspan_t = md::mdspan<T, md::dextents<std::size_t, d>>;
 template <typename T, std::size_t d>
 using mdarray_t
-    = MDSPAN_IMPL_STANDARD_NAMESPACE::MDSPAN_IMPL_PROPOSED_NAMESPACE::mdarray<
-        T, MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, d>>;
+    = md::MDSPAN_IMPL_PROPOSED_NAMESPACE::mdarray<T,
+                                                  md::dextents<std::size_t, d>>;
 
 /// Create a container of cmdspan2_t objects from a container of
 /// mdarray2_t objects
@@ -137,8 +136,7 @@ template <std::floating_point F>
 class FiniteElement
 {
   template <typename T, std::size_t d>
-  using mdspan_t = MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<
-      T, MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, d>>;
+  using mdspan_t = md::mdspan<T, md::dextents<std::size_t, d>>;
 
 public:
   /// Scalar type.

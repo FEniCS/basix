@@ -6,6 +6,7 @@
 
 #include "cell.h"
 #include "mdspan.hpp"
+#include "types.h"
 #include <array>
 #include <concepts>
 #include <utility>
@@ -179,9 +180,7 @@ enum class type
 template <std::floating_point T>
 std::pair<std::vector<T>, std::array<std::size_t, 3>>
 tabulate(cell::type celltype, polyset::type ptype, int d, int n,
-         MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<
-             const T, MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 2>>
-             x);
+         md::mdspan<const T, md::dextents<std::size_t, 2>> x);
 
 /// @brief Tabulate the orthonormal polynomial basis, and derivatives,
 /// at points on the reference cell.
@@ -222,14 +221,9 @@ tabulate(cell::type celltype, polyset::type ptype, int d, int n,
 /// @param[in] x Points at which to evaluate the basis. The shape is
 /// `(number of points, geometric dimension)`.
 template <std::floating_point T>
-void tabulate(
-    MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<
-        T, MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 3>>
-        P,
-    cell::type celltype, polyset::type ptype, int d, int n,
-    MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<
-        const T, MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 2>>
-        x);
+void tabulate(md::mdspan<T, md::dextents<std::size_t, 3>> P,
+              cell::type celltype, polyset::type ptype, int d, int n,
+              md::mdspan<const T, md::dextents<std::size_t, 2>> x);
 
 /// @brief Dimension of a polynomial space
 /// @param[in] cell Cell type

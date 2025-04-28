@@ -170,6 +170,21 @@ def test_finite_element_eq_hash(family, cell, degree, shape):
     assert (e1 == e2) == (hash(e1) == hash(e2))
 
 
+@pytest.mark.parametrize(
+    "family,cell,degree,shape",
+    [
+        ("Lagrange", "triangle", 1, None),
+        ("Discontinuous Lagrange", "triangle", 1, None),
+        ("Lagrange", "quadrilateral", 1, None),
+        ("Lagrange", "triangle", 1, (2,)),
+        ("Lagrange", "triangle", 1, None),
+    ],
+)
+def test_finite_element_block_hash(family, cell, degree, shape):
+    e = basix.ufl.element(family, cell, degree, shape=shape)
+    assert e.basix_hash() is not None
+
+
 @pytest.mark.parametrize("component", [0, 1, 0])
 def test_component_element_eq_hash(component):
     base_el = basix.ufl.element("Lagrange", "triangle", 1)
@@ -235,3 +250,19 @@ def test_real_element_eq_hash(cell_type, value_shape):
 def test_wrap_element():
     e = basix.create_element(basix.ElementFamily.P, basix.CellType.triangle, 1)
     basix.ufl.wrap_element(e)
+
+
+def test_dof_ordering():
+    e = basix.ufl.element(basix.ElementFamily.P, basix.CellType.triangle, 1)
+
+    e_reordered = basix.ufl.element(
+        basix.ElementFamily.P, basix.CellType.triangle, 1, dof_ordering=[1, 2, 0]
+    )
+
+    points = np.array([[0.0, 0.0], [0.0, 1.0], [1.0, 0.0], [0.5, 0.5]])
+
+    table = e.tabulate(0, points)[0]
+    table2 = e_reordered.tabulate(0, points)[0]
+
+    for i, j in enumerate([1, 2, 0]):
+        assert np.allclose(table[:, i], table2[:, j])

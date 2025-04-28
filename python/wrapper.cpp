@@ -34,8 +34,7 @@ using namespace nb::literals;
 using namespace basix;
 
 template <typename T, std::size_t d>
-using mdspan_t = MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<
-    T, MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, d>>;
+using mdspan_t = md::mdspan<T, md::dextents<std::size_t, d>>;
 
 namespace
 {
@@ -105,7 +104,14 @@ void declare_float(nb::module_& m, std::string type)
            {
              std::span<std::int32_t> _d(d.data(), d.shape(0));
              self.permute_subentity_closure(_d, entity_info, entity_type);
-             return as_nbarray(std::move(_d));
+           })
+      .def("permute_subentity_closure",
+           [](const FiniteElement<T>& self,
+              nb::ndarray<std::int32_t, nb::ndim<1>, nb::c_contig> d,
+              std::uint32_t cell_info, cell::type entity_type, int entity_index)
+           {
+             std::span<std::int32_t> _d(d.data(), d.shape(0));
+             self.permute_subentity_closure(_d, cell_info, entity_type, entity_index);
            })
       .def("permute_subentity_closure_inv",
            [](const FiniteElement<T>& self,
@@ -114,7 +120,14 @@ void declare_float(nb::module_& m, std::string type)
            {
              std::span<std::int32_t> _d(d.data(), d.shape(0));
              self.permute_subentity_closure_inv(_d, entity_info, entity_type);
-             return as_nbarray(std::move(_d));
+           })
+      .def("permute_subentity_closure_inv",
+           [](const FiniteElement<T>& self,
+              nb::ndarray<std::int32_t, nb::ndim<1>, nb::c_contig> d,
+              std::uint32_t cell_info, cell::type entity_type, int entity_index)
+           {
+             std::span<std::int32_t> _d(d.data(), d.shape(0));
+             self.permute_subentity_closure_inv(_d, cell_info, entity_type, entity_index);
            })
       .def("push_forward",
            [](const FiniteElement<T>& self,
@@ -425,6 +438,8 @@ NB_MODULE(_basixcpp, m)
   m.def("topology", &cell::topology);
   m.def("geometry", [](cell::type celltype)
         { return as_nbarrayp(cell::geometry<double>(celltype)); });
+  m.def("sub_entity_type", [](cell::type celltype, int dim, int index)
+        { return cell::sub_entity_type(celltype, dim, index); });
   m.def("sub_entity_connectivity", &cell::sub_entity_connectivity);
   m.def("sub_entity_geometry",
         [](cell::type celltype, int dim, int index)
@@ -510,14 +525,12 @@ NB_MODULE(_basixcpp, m)
         { return cell::volume<double>(cell_type); });
   m.def("cell_facet_normals", [](cell::type cell_type)
         { return as_nbarrayp(cell::facet_normals<double>(cell_type)); });
-  m.def("cell_facet_reference_volumes",
-        [](cell::type cell_type) {
-          return as_nbarray(cell::facet_reference_volumes<double>(cell_type));
-        });
-  m.def("cell_facet_outward_normals",
-        [](cell::type cell_type) {
-          return as_nbarrayp(cell::facet_outward_normals<double>(cell_type));
-        });
+  m.def(
+      "cell_facet_reference_volumes", [](cell::type cell_type)
+      { return as_nbarray(cell::facet_reference_volumes<double>(cell_type)); });
+  m.def(
+      "cell_facet_outward_normals", [](cell::type cell_type)
+      { return as_nbarrayp(cell::facet_outward_normals<double>(cell_type)); });
   m.def("cell_facet_orientations",
         [](cell::type cell_type)
         {
@@ -527,6 +540,9 @@ NB_MODULE(_basixcpp, m)
         });
   m.def("cell_facet_jacobians", [](cell::type cell_type)
         { return as_nbarrayp(cell::facet_jacobians<double>(cell_type)); });
+
+  m.def("cell_edge_jacobians", [](cell::type cell_type)
+        { return as_nbarrayp(cell::edge_jacobians<double>(cell_type)); });
 
   nb::enum_<element::family>(m, "ElementFamily", nb::is_arithmetic(),
                              "Finite element family.")

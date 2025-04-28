@@ -22,6 +22,14 @@ endif()
 
 find_package(Python COMPONENTS Interpreter Development.Module REQUIRED)
 
+# Options
+include(FeatureSummary)
+
+option(ENABLE_CLANG_TIDY "Run clang-tidy while building" OFF)
+add_feature_info(ENABLE_CLANG_TIDY ENABLE_CLANG_TIDY "Run clang-tidy while building")
+
+feature_summary(WHAT ALL)
+
 # Detect the installed nanobind package and import it into CMake
 execute_process(
   COMMAND "${Python_EXECUTABLE}" -c "import nanobind; print(nanobind.cmake_dir())"
@@ -32,6 +40,12 @@ find_package(nanobind CONFIG REQUIRED)
 # Create the binding library
 nanobind_add_module(_basixcpp NB_SUPPRESS_WARNINGS wrapper.cpp)
 target_compile_definitions(_basixcpp PRIVATE cxx_std_20)
+
+if(ENABLE_CLANG_TIDY)
+  find_program(CLANG_TIDY NAMES clang-tidy REQUIRED)
+  set_target_properties(_basixcpp PROPERTIES CXX_CLANG_TIDY "${CLANG_TIDY};--config-file=${CMAKE_CURRENT_SOURCE_DIR}/../.clang-tidy")
+endif()
+
 target_link_libraries(_basixcpp PRIVATE Basix::basix)
 
 # Add strict compiler flags

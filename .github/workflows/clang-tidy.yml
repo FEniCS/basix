@@ -1,0 +1,42 @@
+name: clang-tidy
+
+on:
+  push:
+    branches:
+      - "**"
+    tags:
+      - "v*"
+  pull_request:
+    branches:
+      - main
+  merge_group:
+    branches:
+      - main
+  workflow_dispatch:
+  # Weekly build on Mondays at 8 am
+  schedule:
+    - cron: "0 8 * * 1"
+
+jobs:
+  clang-tidy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install clang-tidy ninja-build libopenblas-dev liblapack-dev
+          pip install nanobind scikit-build-core[pyproject]
+      - name: Run clang-tidy (C++)
+        working-directory: cpp
+        run: |
+          cmake -G Ninja -B build -DENABLE_CLANG_TIDY=ON .
+          cmake --build build/
+          sudo cmake --install build/
+      - name: Run clang-tidy (Python)
+        working-directory: python
+        run: >
+          pip install .
+          --no-build-isolation
+          --verbose
+          --config-settings=cmake.define.ENABLE_CLANG_TIDY=ON

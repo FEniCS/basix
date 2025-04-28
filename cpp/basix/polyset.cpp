@@ -3041,7 +3041,7 @@ polyset::tabulate(cell::type celltype, polyset::type ptype, int d, int n,
   std::vector<T> P(shape[0] * shape[1] * shape[2]);
   md::mdspan<T, md::dextents<std::size_t, 3>> _P(P.data(), shape);
   polyset::tabulate(_P, celltype, ptype, d, n, x);
-  return {std::move(P), std::move(shape)};
+  return {std::move(P), shape};
 }
 //-----------------------------------------------------------------------------
 /// @cond

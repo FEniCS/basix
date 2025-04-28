@@ -84,7 +84,7 @@ auto as_nbarrayp(std::pair<V, std::array<std::size_t, U>>&& x)
 }
 
 template <typename T>
-void declare_float(nb::module_& m, std::string type)
+void declare_float(nb::module_& m, const std::string& type)
 {
   std::string name = "FiniteElement_" + type;
   nb::class_<FiniteElement<T>>(m, name.c_str())
@@ -99,7 +99,7 @@ void declare_float(nb::module_& m, std::string type)
       .def("hash", &FiniteElement<T>::hash)
       .def("permute_subentity_closure",
            [](const FiniteElement<T>& self,
-              nb::ndarray<std::int32_t, nb::ndim<1>, nb::c_contig> d,
+              const nb::ndarray<std::int32_t, nb::ndim<1>, nb::c_contig>& d,
               std::uint32_t entity_info, cell::type entity_type)
            {
              std::span<std::int32_t> _d(d.data(), d.shape(0));
@@ -107,7 +107,7 @@ void declare_float(nb::module_& m, std::string type)
            })
       .def("permute_subentity_closure",
            [](const FiniteElement<T>& self,
-              nb::ndarray<std::int32_t, nb::ndim<1>, nb::c_contig> d,
+              const nb::ndarray<std::int32_t, nb::ndim<1>, nb::c_contig>& d,
               std::uint32_t cell_info, cell::type entity_type, int entity_index)
            {
              std::span<std::int32_t> _d(d.data(), d.shape(0));
@@ -115,7 +115,7 @@ void declare_float(nb::module_& m, std::string type)
            })
       .def("permute_subentity_closure_inv",
            [](const FiniteElement<T>& self,
-              nb::ndarray<std::int32_t, nb::ndim<1>, nb::c_contig> d,
+              const nb::ndarray<std::int32_t, nb::ndim<1>, nb::c_contig>& d,
               std::uint32_t entity_info, cell::type entity_type)
            {
              std::span<std::int32_t> _d(d.data(), d.shape(0));
@@ -123,7 +123,7 @@ void declare_float(nb::module_& m, std::string type)
            })
       .def("permute_subentity_closure_inv",
            [](const FiniteElement<T>& self,
-              nb::ndarray<std::int32_t, nb::ndim<1>, nb::c_contig> d,
+              const nb::ndarray<std::int32_t, nb::ndim<1>, nb::c_contig>& d,
               std::uint32_t cell_info, cell::type entity_type, int entity_index)
            {
              std::span<std::int32_t> _d(d.data(), d.shape(0));
@@ -470,7 +470,7 @@ NB_MODULE(_basixcpp, m)
 
   m.def("tabulate_polynomials",
         [](polynomials::type polytype, cell::type celltype, int d,
-           nb::ndarray<const double, nb::ndim<2>, nb::c_contig> x)
+           const nb::ndarray<const double, nb::ndim<2>, nb::c_contig>& x)
         {
           mdspan_t<const double, 2> _x(x.data(), x.shape(0), x.shape(1));
           return as_nbarrayp(polynomials::tabulate(polytype, celltype, d, _x));
@@ -639,7 +639,7 @@ NB_MODULE(_basixcpp, m)
         [](element::family family_name, cell::type cell, int degree,
            element::lagrange_variant lagrange_variant,
            element::dpc_variant dpc_variant, bool discontinuous,
-           std::vector<int> dof_ordering, char dtype)
+           const std::vector<int>& dof_ordering, char dtype)
             -> std::variant<std::vector<std::vector<FiniteElement<float>>>,
                             std::vector<std::vector<FiniteElement<double>>>>
         {

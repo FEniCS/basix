@@ -1,0 +1,6 @@
+WarningsAsErrors: "*"
+UseColor: true
+HeaderFilterRegex: '^(*mdspan\.hpp$).*'
+Checks: >
+  -*,
+  performance*

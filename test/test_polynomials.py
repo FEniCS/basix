@@ -23,6 +23,8 @@ z = sympy.Symbol("z")
         basix.CellType.quadrilateral,
         basix.CellType.tetrahedron,
         basix.CellType.hexahedron,
+        basix.CellType.prism,
+        basix.CellType.pyramid,
     ],
 )
 def test_legendre(cell_type, degree):
@@ -47,7 +49,6 @@ def evaluate(function, pt):
         return function.subs(x, pt[0]).subs(y, pt[1]).subs(z, pt[2])
 
 
-# TODO: pyramid
 @pytest.mark.parametrize(
     "cell_type, functions, degree",
     [
@@ -122,6 +123,12 @@ def evaluate(function, pt):
             ],
             2,
         ],
+        [basix.CellType.pyramid, [one], 0],
+        [
+            basix.CellType.pyramid,
+            [one, 2 * y + z - 1, 2 * x + z - 1, (2 * x + z - 1) * (2 * y + z - 1) / (1 - z), z],
+            1,
+        ],
     ],
 )
 def test_order(cell_type, functions, degree):
@@ -130,7 +137,7 @@ def test_order(cell_type, functions, degree):
 
     assert len(functions) == polys.shape[0]
 
-    eval_points = basix.create_lattice(cell_type, 10, basix.LatticeType.equispaced, True)
+    eval_points = basix.create_lattice(cell_type, 10, basix.LatticeType.equispaced, False)
     eval_polys = basix.tabulate_polynomials(
         basix.PolynomialType.legendre, cell_type, degree, eval_points
     )
@@ -154,3 +161,14 @@ def test_order(cell_type, functions, degree):
             coeffs.append(sum(values * polys[p, :] * weights))
         actual_eval = [float(sum(coeffs * p[: n + 1])) for p in eval_polys.T]
         assert np.allclose(expected_eval, actual_eval)
+
+
+@pytest.mark.parametrize("degree", range(8))
+def test_not_nan_pyramid(degree):
+    points = np.array([[0.0, 0.0, 1.0]])
+    values = basix.tabulate_polynomials(
+        basix.PolynomialType.legendre, basix.CellType.pyramid, degree, points
+    )[:, 0]
+
+    for i in values:
+        assert not np.isnan(i)

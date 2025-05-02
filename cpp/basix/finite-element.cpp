@@ -682,6 +682,113 @@ std::vector<int> basix::lex_dof_ordering(element::family family, cell::type cell
       assert((int)perm.size() == (degree + 1) * (degree + 2) * (degree + 3) / 6);
       break;
     }
+    case cell::type::prism:
+    {
+      perm.push_back(0);
+      if (degree > 0)
+      {
+        int n = degree - 1;
+        int face0 = 6 + 9 * n;
+        int face1 = 6 + 9 * n + n * (n - 1) / 2;
+        int face2 = 6 + 9 * n + n * (n - 1) / 2 + n * n;
+        int face3 = 6 + 9 * n + n * (n - 1) / 2 + 2 * n * n;
+        int face4 = 6 + 9 * n + n * (n - 1) / 2 + 3 * n * n;
+        int interior = 6 + 9 * n + n * (n - 1) + 3 * n * n;
+        for (int i = 0; i < n; ++i)
+          perm.push_back(6 + i);
+        perm.push_back(1);
+        for (int i = 0; i < n; ++i)
+        {
+          perm.push_back(6 + n + i);
+          for (int j = 0; j < n - 1 - i; ++j)
+            perm.push_back(face0++);
+          perm.push_back(6 + 3 * n + i);
+        }
+        perm.push_back(2);
+        for (int i = 0; i < n; ++i)
+        {
+          perm.push_back(6 + 2 * n + i);
+          for (int j = 0; j < n; ++j)
+            perm.push_back(face1++);
+          perm.push_back(6 + 4 * n + i);
+          for (int j = 0; j < n; ++j)
+          {
+            perm.push_back(face2++);
+            for (int k = 0; k < n - 1 - j; ++k)
+              perm.push_back(interior++);
+            perm.push_back(face3++);
+          }
+          perm.push_back(6 + 5 * n + i);
+        }
+        perm.push_back(3);
+        for (int i = 0; i < n; ++i)
+          perm.push_back(6 + 6 * n + i);
+        perm.push_back(4);
+        for (int i = 0; i < n; ++i)
+        {
+          perm.push_back(6 + 7 * n + i);
+          for (int j = 0; j < n - 1 - i; ++j)
+            perm.push_back(face4++);
+          perm.push_back(6 + 8 * n + i);
+        }
+        perm.push_back(5);
+      }
+
+      assert((int)perm.size()
+             == (degree + 1) * (degree + 1) * (degree + 2) / 2);
+      break;
+    }
+
+    case cell::type::pyramid:
+    {
+      perm.push_back(0);
+      if (degree > 0)
+      {
+        int n = degree - 1;
+        int face0 = 5 + 8 * n;
+        int face1 = 5 + 8 * n + n * n;
+        int face2 = 5 + 8 * n + n * n + n * (n - 1) / 2;
+        int face3 = 5 + 8 * n + n * n + n * (n - 1);
+        int face4 = 5 + 8 * n + n * n + n * (n - 1) * 3 / 2;
+        int interior = 5 + 8 * n + n * n + n * (n - 1) * 2;
+        for (int i = 0; i < n; ++i)
+          perm.push_back(5 + i);
+        perm.push_back(1);
+        for (int i = 0; i < n; ++i)
+        {
+          perm.push_back(5 + n + i);
+          for (int j = 0; j < n; ++j)
+            perm.push_back(face0++);
+          perm.push_back(5 + 3 * n + i);
+        }
+        perm.push_back(2);
+        for (int i = 0; i < n; ++i)
+          perm.push_back(5 + 5 * n + i);
+        perm.push_back(3);
+        for (int i = 0; i < n; ++i)
+        {
+          perm.push_back(5 + 2 * n + i);
+          for (int j = 0; j < n - 1 - i; ++j)
+            perm.push_back(face1++);
+          perm.push_back(5 + 4 * n + i);
+          for (int j = 0; j < n - 1 - i; ++j)
+          {
+            perm.push_back(face2++);
+            for (int k = 0; k < n - 1 - i; ++k)
+              perm.push_back(interior++);
+            perm.push_back(face3++);
+          }
+          perm.push_back(5 + 6 * n + i);
+          for (int j = 0; j < n - 1 - i; ++j)
+            perm.push_back(face4++);
+          perm.push_back(5 + 7 * n + i);
+        }
+        perm.push_back(4);
+      }
+      assert((int)perm.size()
+             == (degree + 1) * (degree + 2) * (2 * degree + 3) / 6);
+      break;
+    }
     default:
     {
     }

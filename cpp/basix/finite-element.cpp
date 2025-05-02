@@ -24,8 +24,6 @@
 #include <limits>
 #include <numeric>
 
-#include <iostream>
-
 #define str_macro(X) #X
 #define str(X) str_macro(X)
 
@@ -650,7 +648,7 @@ std::vector<int> basix::lex_dof_ordering(element::family family, cell::type cell
         int face0 = 4 + 6 * n;
         int face1 = 4 + 6 * n + n * (n - 1) / 2;
         int face2 = 4 + 6 * n + n * (n - 1);
-        int face3 = 4 + 6 * n + n * (n - 2) * 3 / 2;
+        int face3 = 4 + 6 * n + n * (n - 1) * 3 / 2;
         int interior = 4 + 6 * n + n * (n - 2) * 2;
         for (int i = 0; i < n; ++i)
           perm.push_back(4 + 5 * n + i);
@@ -672,7 +670,7 @@ std::vector<int> basix::lex_dof_ordering(element::family family, cell::type cell
           for (int j = 0; j < n - 1 - i; ++j)
           {
             perm.push_back(face1++);
-            for (int k = 0; k < n - 1 - i - j; ++k)
+            for (int k = 0; k < n - 2 - i - j; ++k)
               perm.push_back(interior++);
             perm.push_back(face0++);
           }
@@ -680,10 +678,6 @@ std::vector<int> basix::lex_dof_ordering(element::family family, cell::type cell
         }
         perm.push_back(3);
       }
-
-      for (std::size_t i = 0; i < perm.size(); ++i)
-        std::cout << perm[i] << " ";
-      std::cout << "\n";
 
       assert((int)perm.size() == (degree + 1) * (degree + 2) * (degree + 3) / 6);
       break;

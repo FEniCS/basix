@@ -106,7 +106,8 @@ template <std::floating_point T>
 FiniteElement<T> create_d_lagrange(cell::type celltype, int degree,
                                    element::lagrange_variant variant,
                                    lattice::type lattice_type,
-                                   lattice::simplex_method simplex_method)
+                                   lattice::simplex_method simplex_method,
+                                   std::vector<int> dof_ordering)
 {
   if (celltype == cell::type::prism or celltype == cell::type::pyramid)
   {
@@ -151,7 +152,7 @@ FiniteElement<T> create_d_lagrange(cell::type celltype, int degree,
       impl::mdspan_t<const T, 2>(math::eye<T>(ndofs).data(), ndofs, ndofs),
       impl::to_mdspan(x), impl::to_mdspan(M), 0, maps::type::identity,
       sobolev::space::L2, true, degree, degree, variant,
-      element::dpc_variant::unset);
+      element::dpc_variant::unset, dof_ordering);
 }
 //----------------------------------------------------------------------------
 template <std::floating_point T>
@@ -208,7 +209,7 @@ create_d_iso(cell::type celltype, int degree, element::lagrange_variant variant,
 //----------------------------------------------------------------------------
 template <std::floating_point T>
 FiniteElement<T> create_legendre(cell::type celltype, int degree,
-                                 bool discontinuous)
+                                 bool discontinuous, std::vector<int> dof_ordering)
 {
   if (!discontinuous)
     throw std::runtime_error("Legendre variant must be discontinuous");
@@ -254,12 +255,12 @@ FiniteElement<T> create_legendre(cell::type celltype, int degree,
       impl::mdspan_t<T, 2>(math::eye<T>(ndofs).data(), ndofs, ndofs),
       impl::to_mdspan(x), impl::to_mdspan(M), 0, maps::type::identity, space,
       discontinuous, degree, degree, element::lagrange_variant::legendre,
-      element::dpc_variant::unset);
+      element::dpc_variant::unset, dof_ordering);
 }
 //-----------------------------------------------------------------------------
 template <std::floating_point T>
 FiniteElement<T> create_bernstein(cell::type celltype, int degree,
-                                  bool discontinuous)
+                                  bool discontinuous, std::vector<int> dof_ordering)
 {
   assert(degree > 0);
   if (celltype != cell::type::interval and celltype != cell::type::triangle
@@ -427,7 +428,7 @@ FiniteElement<T> create_bernstein(cell::type celltype, int degree,
       impl::mdspan_t<T, 2>(math::eye<T>(ndofs).data(), ndofs, ndofs),
       impl::to_mdspan(x), impl::to_mdspan(M), 0, maps::type::identity, space,
       discontinuous, degree, degree, element::lagrange_variant::bernstein,
-      element::dpc_variant::unset);
+      element::dpc_variant::unset, dof_ordering);
 }
 //-----------------------------------------------------------------------------
 } // namespace
@@ -457,14 +458,14 @@ basix::element::create_lagrange(cell::type celltype, int degree,
   }
 
   if (variant == lagrange_variant::legendre)
-    return create_legendre<T>(celltype, degree, discontinuous);
+    return create_legendre<T>(celltype, degree, discontinuous, dof_ordering);
 
   if (variant == element::lagrange_variant::bernstein)
   {
     if (degree == 0)
       variant = lagrange_variant::unset;
     else
-      return create_bernstein<T>(celltype, degree, discontinuous);
+      return create_bernstein<T>(celltype, degree, discontinuous, dof_ordering);
   }
 
   if (variant == lagrange_variant::unset)
@@ -491,7 +492,7 @@ basix::element::create_lagrange(cell::type celltype, int degree,
                                "discontinuous elements");
     }
     return create_d_lagrange<T>(celltype, degree, variant, lattice_type,
-                                simplex_method);
+                                simplex_method, dof_ordering);
   }
 
   const std::size_t tdim = cell::topological_dimension(celltype);

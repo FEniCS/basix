@@ -28,4 +28,3 @@ def test_ordering():
     presult[:, :, order, :] = result2
 
     assert np.allclose(result1, presult)
-    print(result1)

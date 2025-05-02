@@ -781,7 +781,7 @@ def tp_factors(
 ) -> list[list[FiniteElement]]:
     """Elements in the tensor product factorisation of an element.
 
-    If the element has no factorisation, an empty list is returned.
+    If the element has no factorisation, raises a RuntimeError.
 
     Args:
         family: Finite element family.
@@ -827,8 +827,7 @@ def tp_dof_ordering(
     This DOF ordering can be passed into create_element to create the
     element with DOFs ordered in a tensor product order.
 
-    If the element has no tensor product factorisation, an empty list is
-    returned.
+    If the element has no factorisation, raises a RuntimeError.
 
     Args:
         family: Finite element family.
@@ -867,8 +866,8 @@ def lex_dof_ordering(
     This DOF ordering can be passed into create_element to create the
     element with DOFs ordered in a lexicographic order.
 
-    If the element contains DOFs that are not point evaluations, an empty list is
-    returned.
+    If the element contains DOFs that are not point evaluations, raises a
+    RuntimeError.
 
     Args:
         family: Finite element family.

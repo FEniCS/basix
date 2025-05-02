@@ -803,7 +803,7 @@ std::vector<int> basix::lex_dof_ordering(element::family family, cell::type cell
   if (perm.size() == 0)
   {
     throw std::runtime_error(
-        "Element does not have tensor product factorisation.");
+        "Lexicographic ordering not implemented for this element.");
   }
   dof_ordering.resize(perm.size());
   for (std::size_t i = 0; i < perm.size(); ++i)

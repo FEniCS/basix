@@ -649,7 +649,7 @@ std::vector<int> basix::lex_dof_ordering(element::family family, cell::type cell
         int face1 = 4 + 6 * n + n * (n - 1) / 2;
         int face2 = 4 + 6 * n + n * (n - 1);
         int face3 = 4 + 6 * n + n * (n - 1) * 3 / 2;
-        int interior = 4 + 6 * n + n * (n - 2) * 2;
+        int interior = 4 + 6 * n + n * (n - 1) * 2;
         for (int i = 0; i < n; ++i)
           perm.push_back(4 + 5 * n + i);
         perm.push_back(1);

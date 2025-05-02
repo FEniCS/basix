@@ -854,7 +854,6 @@ def tp_dof_ordering(
     )
 
 
-
 def lex_dof_ordering(
     family: ElementFamily,
     celltype: CellType,

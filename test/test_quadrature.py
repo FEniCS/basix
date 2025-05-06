@@ -2,7 +2,6 @@
 # FEniCS Project
 # SPDX-License-Identifier: MIT
 
-from math import factorial, gamma
 import numpy as np
 import pytest
 import sympy

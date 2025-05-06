@@ -58,7 +58,7 @@ quadrature::type get_default_rule(cell::type celltype, int m);
 
 /// @brief Get Gauss-Lobatto-Legendre (GLL) points on the interval [0,
 /// 1].
-/// @tparam The floating point type.
+/// @tparam T The floating point type.
 /// @param[in] m Number of points.
 /// @return Array of GLL points.
 template <std::floating_point T>

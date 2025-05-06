@@ -20,7 +20,6 @@ elements = [
     (ElementFamily.bubble, []),
     (ElementFamily.serendipity, [basix.LagrangeVariant.legendre, basix.DPCVariant.legendre]),
     (ElementFamily.DPC, [basix.LagrangeVariant.unset, basix.DPCVariant.legendre]),
-    (ElementFamily.CR, []),
 ]
 
 

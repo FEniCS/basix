@@ -131,7 +131,7 @@ FiniteElement<T> basix::element::create_cr(cell::type celltype, int degree,
     return FiniteElement<T>(
         element::family::CR, celltype, polyset::type::standard, 1, {}, wcoeffs,
         xview, Mview, 0, maps::type::identity, sobolev::space::L2,
-        discontinuous, degree, degree + 1, element::lagrange_variant::unset,
+        discontinuous, 0, degree + 1, element::lagrange_variant::unset,
         element::dpc_variant::unset);
   }
   else if (celltype == cell::type::hexahedron)
@@ -172,7 +172,7 @@ FiniteElement<T> basix::element::create_cr(cell::type celltype, int degree,
     return FiniteElement<T>(
         element::family::CR, celltype, polyset::type::standard, 1, {}, wcoeffs,
         xview, Mview, 0, maps::type::identity, sobolev::space::L2,
-        discontinuous, degree, degree + 1, element::lagrange_variant::unset,
+        discontinuous, 0, degree + 1, element::lagrange_variant::unset,
         element::dpc_variant::unset);
   }
   else

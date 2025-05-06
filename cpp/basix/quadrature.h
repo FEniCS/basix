@@ -65,7 +65,7 @@ template <std::floating_point T>
 std::vector<T> get_gll_points(int m);
 
 /// @brief Get Gauss-Legendre (GL) points on the interval [0, 1].
-/// @tparam The floating point type.
+/// @tparam T The floating point type.
 /// @param[in] m Number of points
 /// @return Array of GL points.
 template <std::floating_point T>

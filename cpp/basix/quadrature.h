@@ -27,10 +27,10 @@ enum class type
 };
 
 /// @brief Get the Gauss-Jacobi rule for the interval for integrating
-/// f(x) * (2-2x)^a on the interval [0, 1]
-/// @param[in] a The exponenet a
-/// @param[in] m The number of points
-/// @return Gauss-Jacobi rule
+/// f(x) * (2-2x)^a on the interval [0, 1].
+/// @param[in] a The exponent a.
+/// @param[in] m The number of points.
+/// @return Points and weights of a Gauss-Jacobi rule.
 template <std::floating_point T>
 std::array<std::vector<T>, 2> gauss_jacobi_rule(T a, int m);
 

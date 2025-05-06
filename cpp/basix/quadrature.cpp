@@ -4924,7 +4924,7 @@ std::array<std::vector<T>, 2> quadrature::gauss_jacobi_rule(T a, int m)
   {
     pts[i] += 1.0;
     pts[i] /= 2.0;
-    wts[i] *= 0.5 / std::pow(2.0, a);
+    wts[i] /= std::pow(2.0, a + 1);
   }
   return {std::move(pts), std::move(wts)};
 }

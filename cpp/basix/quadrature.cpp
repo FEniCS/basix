@@ -4979,6 +4979,7 @@ std::vector<T> quadrature::get_gll_points(int m)
   return make_gll_line<T>(m)[0];
 }
 //-----------------------------------------------------------------------------
+/// @cond DOXYGEN_SHOULD_SKIP_THIS
 template std::array<std::vector<float>, 2>
 quadrature::make_quadrature(quadrature::type, cell::type, polyset::type, int);
 template std::array<std::vector<double>, 2>
@@ -4990,7 +4991,6 @@ template std::vector<double> quadrature::get_gl_points(int);
 template std::vector<float> quadrature::get_gll_points(int);
 template std::vector<double> quadrature::get_gll_points(int);
 
-/// @cond DOXYGEN_SHOULD_SKIP_THIS
 template std::array<std::vector<float>, 2> quadrature::gauss_jacobi_rule(float,
                                                                          int);
 template std::array<std::vector<double>, 2>

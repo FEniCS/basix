@@ -64,7 +64,7 @@ def gauss_jacobi_rule(
     alpha: _np.floating,
     npoints: int,
 ) -> tuple[_npt.ArrayLike, _npt.ArrayLike]:
-    """Create a Gauss-Jacobi quadrature rule for integrating f(x)*(2-2*x)**alpha
+    """Create a Gauss-Jacobi quadrature rule for integrating f(x)*(1-x)**alpha
     on the interval [0, 1].
 
     Args:

@@ -27,7 +27,7 @@ enum class type
 };
 
 /// @brief Get the Gauss-Jacobi rule for the interval for integrating
-/// f(x) * (2-2x)^a on the interval [0, 1].
+/// f(x) * (1-x)^a on the interval [0, 1].
 /// @param[in] a The exponent a.
 /// @param[in] m The number of points.
 /// @return Points and weights of a Gauss-Jacobi rule.

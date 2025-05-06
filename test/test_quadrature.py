@@ -199,8 +199,7 @@ def test_gll():
 @pytest.mark.parametrize("degree", range(6))
 def test_gauss_jacobi_rule(alpha, degree):
     pts, wts = basix.quadrature.gauss_jacobi_rule(alpha, degree + 1)
-    integral = sum(w * (2 - 2 * p) ** degree for p, w in zip(pts, wts))
+    integral = sum(w * (1 - p) ** degree for p, w in zip(pts, wts))
 
-    expected = 2 ** (alpha + degree) / (alpha + degree + 1)
-
+    expected = 1 / (alpha + degree + 1)
     assert np.isclose(integral, expected)

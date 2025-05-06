@@ -4990,10 +4990,10 @@ template std::vector<double> quadrature::get_gl_points(int);
 template std::vector<float> quadrature::get_gll_points(int);
 template std::vector<double> quadrature::get_gll_points(int);
 
-#ifndef DOXYGEN_SHOULD_SKIP_THIS
+/// @cond DOXYGEN_SHOULD_SKIP_THIS
 template std::array<std::vector<float>, 2> quadrature::gauss_jacobi_rule(float,
                                                                          int);
 template std::array<std::vector<double>, 2>
 quadrature::gauss_jacobi_rule(double, int);
-#endif // DOXYGEN_SHOULD_SKIP_THIS
+/// @endcond
 //-----------------------------------------------------------------------------

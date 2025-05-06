@@ -28,6 +28,7 @@ enum class type
 
 /// @brief Get the Gauss-Jacobi rule for the interval for integrating
 /// f(x) * (1-x)^a on the interval [0, 1].
+/// @tparam The floating point type.
 /// @param[in] a The exponent a.
 /// @param[in] m The number of points.
 /// @return Points and weights of a Gauss-Jacobi rule.
@@ -35,6 +36,7 @@ template <std::floating_point T>
 std::array<std::vector<T>, 2> gauss_jacobi_rule(T a, int m);
 
 /// @brief Make a quadrature rule on a reference cell.
+/// @tparam The floating point type.
 /// @param[in] rule Type of quadrature rule (or use quadrature::Default).
 /// @param[in] celltype Cell type.
 /// @param[in] polytype Polyset type.
@@ -56,12 +58,14 @@ quadrature::type get_default_rule(cell::type celltype, int m);
 
 /// @brief Get Gauss-Lobatto-Legendre (GLL) points on the interval [0,
 /// 1].
+/// @tparam The floating point type.
 /// @param[in] m Number of points.
 /// @return Array of GLL points.
 template <std::floating_point T>
 std::vector<T> get_gll_points(int m);
 
 /// @brief Get Gauss-Legendre (GL) points on the interval [0, 1].
+/// @tparam The floating point type.
 /// @param[in] m Number of points
 /// @return Array of GL points.
 template <std::floating_point T>

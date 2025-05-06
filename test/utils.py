@@ -70,9 +70,6 @@ def parametrize_over_elements(degree, reference=None, discontinuous=False):
             elementlist.append(
                 (c, ElementFamily.BDM, k, [LagrangeVariant.legendre, DPCVariant.legendre])
             )
-
-        # Elements on triangles, tetrahedra, and quadrilatarals
-        for c in [CellType.triangle, CellType.tetrahedron, CellType.quadrilateral]:
             if k == 1:
                 elementlist.append((c, ElementFamily.CR, k, []))
 

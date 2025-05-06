@@ -126,6 +126,8 @@ FiniteElement<T> basix::element::create_cr(cell::type celltype, int degree,
       }
     }
 
+    math::orthogonalise<T>(wcoeffs, 3);
+
     return FiniteElement<T>(
         element::family::CR, celltype, polyset::type::standard, 1, {}, wcoeffs,
         xview, Mview, 0, maps::type::identity, sobolev::space::L2,
@@ -165,7 +167,7 @@ FiniteElement<T> basix::element::create_cr(cell::type celltype, int degree,
       }
     }
 
-    math::orthogonalise<T>(wcoeffs, 5);
+    math::orthogonalise<T>(wcoeffs, 4);
 
     return FiniteElement<T>(
         element::family::CR, celltype, polyset::type::standard, 1, {}, wcoeffs,

@@ -2,6 +2,7 @@
 # FEniCS Project
 # SPDX-License-Identifier: MIT
 
+from math import factorial, gamma
 import numpy as np
 import pytest
 import sympy
@@ -195,3 +196,20 @@ def test_gll():
     assert np.allclose(wts, ref_wts3)
     assert np.isclose((pts * wts.reshape(-1, 1)).sum(), 0)
     assert np.isclose(sum(wts), 8)
+
+
+@pytest.mark.parametrize("alpha", [0, 0.0, 1, 1.0, 1.5, 2.0, 3.0, 4.2])
+@pytest.mark.parametrize("degree", range(6))
+def test_gauss_jacobi_rule(alpha, degree):
+    pts, wts = basix.quadrature.gauss_jacobi_rule(alpha, degree + 1)
+    integral = sum(w * (2 - 2 * p) ** degree for p, w in zip(pts, wts))
+    print(pts)
+    print(wts)
+    print(pts**degree, (2 - 2 * pts) ** alpha)
+    print(wts * pts**degree * (2 - 2 * pts) ** alpha)
+
+    expected = 2 ** (alpha + degree) / (alpha + degree + 1)
+
+    print(integral, expected)
+    print(integral / expected)
+    assert np.isclose(integral, expected)

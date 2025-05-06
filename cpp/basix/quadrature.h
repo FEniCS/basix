@@ -36,7 +36,7 @@ template <std::floating_point T>
 std::array<std::vector<T>, 2> gauss_jacobi_rule(T a, int m);
 
 /// @brief Make a quadrature rule on a reference cell.
-/// @tparam The floating point type.
+/// @tparam T The floating point type.
 /// @param[in] rule Type of quadrature rule (or use quadrature::Default).
 /// @param[in] celltype Cell type.
 /// @param[in] polytype Polyset type.

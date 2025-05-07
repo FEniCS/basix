@@ -5,10 +5,12 @@
 # SPDX-License-Identifier:    MIT
 """Functions to manipulate quadrature types."""
 
+import numpy as _np
 import numpy.typing as _npt
 
 from basix._basixcpp import QuadratureType
 from basix._basixcpp import make_quadrature as _mq
+from basix._basixcpp import gauss_jacobi_rule as _gjr
 from basix.cell import CellType
 from basix.polynomials import PolysetType
 
@@ -56,3 +58,20 @@ def make_quadrature(
         Quadrature points and weights.
     """
     return _mq(rule, cell, polyset_type, degree)
+
+
+def gauss_jacobi_rule(
+    alpha: _np.floating,
+    npoints: int,
+) -> tuple[_npt.ArrayLike, _npt.ArrayLike]:
+    """Create a Gauss-Jacobi quadrature rule for integrating f(x)*(1-x)**alpha
+    on the interval [0, 1].
+
+    Args:
+        alpha: The exponent alpha
+        npoints: Number of points
+
+    Returns:
+        Quadrature points and weights.
+    """
+    return _gjr(_np.float64(alpha), npoints)

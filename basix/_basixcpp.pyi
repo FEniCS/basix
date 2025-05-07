@@ -2,6 +2,7 @@ from collections.abc import Sequence
 import enum
 from typing import Annotated, overload
 
+from numpy import float64
 from numpy.typing import ArrayLike
 
 
@@ -492,6 +493,8 @@ def index(arg0: int, arg1: int, /) -> int: ...
 def index(arg0: int, arg1: int, arg2: int, /) -> int: ...
 
 def make_quadrature(arg0: QuadratureType, arg1: CellType, arg2: PolysetType, arg3: int, /) -> tuple[Annotated[ArrayLike, dict(dtype='float64')], Annotated[ArrayLike, dict(dtype='float64')]]: ...
+
+def gauss_jacobi_rule(arg0: float64, arg1: int, /) -> tuple[Annotated[ArrayLike, dict(dtype='float64')], Annotated[ArrayLike, dict(dtype='float64')]]: ...
 
 def polynomials_dim(arg0: PolynomialType, arg1: CellType, arg2: int, /) -> int: ...
 

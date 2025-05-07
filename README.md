@@ -112,6 +112,7 @@ The following elements are supported on a quadrilateral:
   - [Raviart-Thomas](https://defelement.org/elements/qdiv.html)
   - [Nédélec second kind](https://defelement.org/elements/scurl.html)
   - [Brezzi-Douglas-Marini](https://defelement.org/elements/sdiv.html)
+  - [Crouzeix-Raviart](https://defelement.org/elements/rannacher-turek.html)
   - [Bubble](https://defelement.org/elements/bubble.html)
   - [DPC](https://defelement.org/elements/dpc.html)
   - [Serendipity](https://defelement.org/elements/serendipity.html)

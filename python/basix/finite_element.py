@@ -23,6 +23,7 @@ from basix._basixcpp import (
 from basix._basixcpp import create_element as _create_element
 from basix._basixcpp import create_tp_element as _create_tp_element
 from basix._basixcpp import tp_dof_ordering as _tp_dof_ordering
+from basix._basixcpp import lex_dof_ordering as _lex_dof_ordering
 from basix._basixcpp import tp_factors as _tp_factors
 from basix.cell import CellType, geometry, topology, facet_outward_normals
 from basix import MapType
@@ -34,6 +35,7 @@ __all__ = [
     "create_element",
     "create_custom_element",
     "create_tp_element",
+    "lex_dof_ordering",
     "string_to_family",
     "tp_factors",
     "tp_dof_ordering",
@@ -779,7 +781,7 @@ def tp_factors(
 ) -> list[list[FiniteElement]]:
     """Elements in the tensor product factorisation of an element.
 
-    If the element has no factorisation, an empty list is returned.
+    If the element has no factorisation, raises a RuntimeError.
 
     Args:
         family: Finite element family.
@@ -825,8 +827,7 @@ def tp_dof_ordering(
     This DOF ordering can be passed into create_element to create the
     element with DOFs ordered in a tensor product order.
 
-    If the element has no tensor product factorisation, an empty list is
-    returned.
+    If the element has no factorisation, raises a RuntimeError.
 
     Args:
         family: Finite element family.
@@ -843,6 +844,46 @@ def tp_dof_ordering(
         The DOF ordering.
     """
     return _tp_dof_ordering(
+        family,
+        celltype,
+        degree,
+        lagrange_variant,
+        dpc_variant,
+        discontinuous,
+    )
+
+
+def lex_dof_ordering(
+    family: ElementFamily,
+    celltype: CellType,
+    degree: int,
+    lagrange_variant: LagrangeVariant = LagrangeVariant.unset,
+    dpc_variant: DPCVariant = DPCVariant.unset,
+    discontinuous: bool = False,
+) -> list[int]:
+    """Lexicographic DOF ordering for an element.
+
+    This DOF ordering can be passed into create_element to create the
+    element with DOFs ordered in a lexicographic order.
+
+    If the element contains DOFs that are not point evaluations, raises a
+    RuntimeError.
+
+    Args:
+        family: Finite element family.
+        celltype: Reference cell type that the element is defined on
+        degree: Polynomial degree of the element.
+        lagrange_variant: Lagrange variant type.
+        dpc_variant: DPC variant type.
+        discontinuous: If `True` element is discontinuous. The
+            discontinuous element will have the same DOFs as a
+            continuous element, but the DOFs will all be associated with
+            the interior of the cell.
+
+    Returns:
+        The DOF ordering.
+    """
+    return _lex_dof_ordering(
         family,
         celltype,
         degree,

@@ -59,7 +59,7 @@ template <typename V>
 auto as_nbarray(V&& x, std::size_t ndim, const std::size_t* shape)
 {
   using _V = std::decay_t<V>;
-  _V* ptr = new _V(std::move(x));
+  _V* ptr = new _V(std::forward<V>(x));
   return nb::ndarray<typename _V::value_type, nb::numpy>(
       ptr->data(), ndim, shape,
       nb::capsule(ptr, [](void* p) noexcept { delete (_V*)p; }));
@@ -74,7 +74,7 @@ auto as_nbarray(V&& x, const std::initializer_list<std::size_t> shape)
 template <typename V>
 auto as_nbarray(V&& x)
 {
-  return as_nbarray(std::move(x), {x.size()});
+  return as_nbarray(std::forward<V>(x), {x.size()});
 }
 
 template <typename V, std::size_t U>
@@ -90,7 +90,7 @@ void declare_float(nb::module_& m, const std::string& type)
   nb::class_<FiniteElement<T>>(m, name.c_str())
       .def("tabulate",
            [](const FiniteElement<T>& self, int n,
-              nb::ndarray<const T, nb::ndim<2>, nb::c_contig> x)
+              const nb::ndarray<const T, nb::ndim<2>, nb::c_contig>& x)
            {
              mdspan_t<const T, 2> _x(x.data(), x.shape(0), x.shape(1));
              return as_nbarrayp(self.tabulate(n, _x));
@@ -131,10 +131,10 @@ void declare_float(nb::module_& m, const std::string& type)
            })
       .def("push_forward",
            [](const FiniteElement<T>& self,
-              nb::ndarray<const T, nb::ndim<3>, nb::c_contig> U,
-              nb::ndarray<const T, nb::ndim<3>, nb::c_contig> J,
-              nb::ndarray<const T, nb::ndim<1>, nb::c_contig> detJ,
-              nb::ndarray<const T, nb::ndim<3>, nb::c_contig> K)
+            const nb::ndarray<const T, nb::ndim<3>, nb::c_contig>& U,
+            const nb::ndarray<const T, nb::ndim<3>, nb::c_contig>& J,
+            const nb::ndarray<const T, nb::ndim<1>, nb::c_contig>& detJ,
+            const nb::ndarray<const T, nb::ndim<3>, nb::c_contig>& K)
            {
              auto u = self.push_forward(
                  mdspan_t<const T, 3>(U.data(), U.shape(0), U.shape(1),
@@ -148,10 +148,10 @@ void declare_float(nb::module_& m, const std::string& type)
            })
       .def("pull_back",
            [](const FiniteElement<T>& self,
-              nb::ndarray<const T, nb::ndim<3>, nb::c_contig> u,
-              nb::ndarray<const T, nb::ndim<3>, nb::c_contig> J,
-              nb::ndarray<const T, nb::ndim<1>, nb::c_contig> detJ,
-              nb::ndarray<const T, nb::ndim<3>, nb::c_contig> K)
+              const nb::ndarray<const T, nb::ndim<3>, nb::c_contig>& u,
+              const nb::ndarray<const T, nb::ndim<3>, nb::c_contig>& J,
+              const nb::ndarray<const T, nb::ndim<1>, nb::c_contig>& detJ,
+              const nb::ndarray<const T, nb::ndim<3>, nb::c_contig>& K)
            {
              auto U = self.pull_back(
                  mdspan_t<const T, 3>(u.data(), u.shape(0), u.shape(1),
@@ -164,18 +164,18 @@ void declare_float(nb::module_& m, const std::string& type)
              return as_nbarrayp(std::move(U));
            })
       .def("T_apply", [](const FiniteElement<T>& self,
-                         nb::ndarray<T, nb::ndim<1>, nb::c_contig> u, int n,
+                         const nb::ndarray<T, nb::ndim<1>, nb::c_contig>& u, int n,
                          std::uint32_t cell_info)
            { self.T_apply(std::span(u.data(), u.size()), n, cell_info); })
       .def("Tt_apply_right",
            [](const FiniteElement<T>& self,
-              nb::ndarray<T, nb::ndim<1>, nb::c_contig> u, int n,
+              const nb::ndarray<T, nb::ndim<1>, nb::c_contig>& u, int n,
               std::uint32_t cell_info) {
              self.Tt_apply_right(std::span(u.data(), u.size()), n,
                                 cell_info);
            })
       .def("Tt_inv_apply", [](const FiniteElement<T>& self,
-                              nb::ndarray<T, nb::ndim<1>, nb::c_contig> u,
+                              const nb::ndarray<T, nb::ndim<1>, nb::c_contig>& u,
                               int n, std::uint32_t cell_info)
            { self.Tt_inv_apply(std::span(u.data(), u.size()), n, cell_info); })
       .def("base_transformations", [](const FiniteElement<T>& self)
@@ -358,7 +358,7 @@ void declare_float(nb::module_& m, const std::string& type)
   m.def(
       custom_name.c_str(),
       [](cell::type cell_type, const std::vector<std::size_t>& value_shape,
-         nb::ndarray<const T, nb::ndim<2>, nb::c_contig> wcoeffs,
+         const nb::ndarray<const T, nb::ndim<2>, nb::c_contig>& wcoeffs,
          std::vector<
              std::vector<nb::ndarray<const T, nb::ndim<2>, nb::c_contig>>>
              x,
@@ -420,7 +420,7 @@ void declare_float(nb::module_& m, const std::string& type)
   m.def(
       "tabulate_polynomial_set",
       [](cell::type celltype, polyset::type polytype, int d, int n,
-         nb::ndarray<const T, nb::ndim<2>, nb::c_contig> x)
+         const nb::ndarray<const T, nb::ndim<2>, nb::c_contig>& x)
       {
         mdspan_t<const T, 2> _x(x.data(), x.shape(0), x.shape(1));
         return as_nbarrayp(polyset::tabulate(celltype, polytype, d, n, _x));

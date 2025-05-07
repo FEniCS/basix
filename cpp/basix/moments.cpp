@@ -26,7 +26,6 @@ std::vector<int> axis_points(const cell::type celltype)
   case cell::type::interval:
     return {1};
   case cell::type::triangle:
-    return {1, 2};
   case cell::type::quadrilateral:
     return {1, 2};
   case cell::type::tetrahedron:

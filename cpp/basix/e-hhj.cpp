@@ -12,8 +12,6 @@
 #include "sobolev-spaces.h"
 #include <cmath>
 
-#include <iostream>
-
 using namespace basix;
 
 //-----------------------------------------------------------------------------

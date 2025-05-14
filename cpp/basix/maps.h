@@ -101,7 +101,7 @@ void contravariant_piola(O&& r, const P& U, const Q& J, double detJ,
 
 /// @brief Double covariant Piola map
 template <typename O, typename P, typename Q, typename R>
-void double_covariant_piola(O&& r, const P& U, const Q& J, double /*detJ*/,
+void double_covariant_piola(O&& r, const P& U, const Q& /*J*/, double /*detJ*/,
                             const R& K)
 {
   using T = typename std::decay_t<O>::value_type;
@@ -109,7 +109,7 @@ void double_covariant_piola(O&& r, const P& U, const Q& J, double /*detJ*/,
   for (std::size_t p = 0; p < U.extent(0); ++p)
   {
     md::mdspan<const T, md::dextents<std::size_t, 2>> _U(
-        U.data_handle() + p * U.extent(1), J.extent(1), J.extent(1));
+        U.data_handle() + p * U.extent(1), K.extent(0), K.extent(0));
     md::mdspan<T, md::dextents<std::size_t, 2>> _r(
         r.data_handle() + p * r.extent(1), K.extent(1), K.extent(1));
     // _r = K^T _U K
@@ -119,7 +119,7 @@ void double_covariant_piola(O&& r, const P& U, const Q& J, double /*detJ*/,
       {
         T acc = 0;
         for (std::size_t k = 0; k < K.extent(0); ++k)
-          for (std::size_t l = 0; l < _U.extent(1); ++l)
+          for (std::size_t l = 0; l < K.extent(0); ++l)
             acc += static_cast<Z>(K(k, i)) * _U(k, l) * static_cast<Z>(K(l, j));
         _r(i, j) = acc;
       }
@@ -148,7 +148,7 @@ void double_contravariant_piola(O&& r, const P& U, const Q& J, double detJ,
       {
         T acc = 0;
         for (std::size_t k = 0; k < J.extent(1); ++k)
-          for (std::size_t l = 0; l < _U.extent(1); ++l)
+          for (std::size_t l = 0; l < J.extent(1); ++l)
             acc += static_cast<Z>(J(i, k)) * _U(k, l) * static_cast<Z>(J(j, l));
         _r(i, j) = acc;
       }

@@ -143,9 +143,9 @@ FiniteElement<T> basix::element::create_hhj(cell::type celltype, int degree,
         _x(p, k) += pts(p, k);
     }
 
-    const std::size_t ntangents = normals.extent(0);
+    const std::size_t n_normals = normals.extent(0);
 
-    auto& _M = M[tdim].emplace_back(ndofs * ntangents + 2 * extra_dofs,
+    auto& _M = M[tdim].emplace_back(ndofs * n_normals + 2 * extra_dofs,
                                     tdim * tdim, pts.extent(0), 1);
 
     if (degree > 0)
@@ -157,14 +157,14 @@ FiniteElement<T> basix::element::create_hhj(cell::type celltype, int degree,
 
       for (int n = 0; n < moment_space.dim(); ++n)
       {
-        for (std::size_t j = 0; j < ntangents; ++j)
+        for (std::size_t j = 0; j < n_normals; ++j)
         {
           for (std::size_t q = 0; q < pts.extent(0); ++q)
           {
             for (std::size_t k0 = 0; k0 < tdim; ++k0)
               for (std::size_t k1 = 0; k1 < tdim; ++k1)
               {
-                _M(n * ntangents + j, k0 * tdim + k1, q, 0)
+                _M(n * n_normals + j, k0 * tdim + k1, q, 0)
                     = normals(j, k0) * normals(j, k1) * wts[q]
                       * moment_values(0, q, n, 0);
               }
@@ -188,9 +188,11 @@ FiniteElement<T> basix::element::create_hhj(cell::type celltype, int degree,
             for (std::size_t k0 = 0; k0 < tdim; ++k0)
               for (std::size_t k1 = 0; k1 < tdim; ++k1)
               {
-                _M(ndofs * ntangents + n * 2 + j, k0 * tdim + k1, q, 0)
-                    = normals(j, k0) * normals(j + 1, k1) * wts[q]
-                      * moment_values(0, q, n, 0);
+                _M(ndofs * n_normals + n * 2 + j, k0 * tdim + k1, q, 0)
+                    = 0.5
+                      * (normals(j, k0) * normals(j + 1, k1)
+                         + normals(j, k1) * normals(j + 1, k0))
+                      * wts[q] * moment_values(0, q, n, 0);
               }
           }
         }

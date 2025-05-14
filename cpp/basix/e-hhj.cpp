@@ -115,24 +115,69 @@ FiniteElement<T> basix::element::create_hhj(cell::type celltype, int degree,
   }
 
   // Interior
-  if (tdim == 2 && degree == 0)
+  if (tdim == 2)
   {
-    x[tdim].emplace_back(0, tdim);
-    M[tdim].emplace_back(0, tdim * tdim, 0, 1);
+    if (degree == 0)
+    {
+      x[tdim].emplace_back(0, tdim);
+      M[tdim].emplace_back(0, tdim * tdim, 0, 1);
+    }
+    else
+    {
+      const std::size_t ndofs
+          = polyset::dim(celltype, polyset::type::standard, degree - 1);
+
+      const auto [ptsbuffer, wts] = quadrature::make_quadrature<T>(
+          quadrature::type::Default, celltype, polyset::type::standard,
+          2 * degree - 1);
+      impl::mdspan_t<const T, 2> pts(ptsbuffer.data(), wts.size(), tdim);
+
+      // Copy points
+      auto& _x = x[tdim].emplace_back(pts.extent(0), tdim);
+      for (std::size_t p = 0; p < pts.extent(0); ++p)
+      {
+        for (std::size_t k = 0; k < pts.extent(1); ++k)
+          _x(p, k) += pts(p, k);
+      }
+
+      auto& _M = M[tdim].emplace_back(ndofs * 3, tdim * tdim, pts.extent(0), 1);
+
+      FiniteElement<T> moment_space = create_lagrange<T>(
+          celltype, degree - 1, element::lagrange_variant::legendre, true);
+      const auto [phib, phishape] = moment_space.tabulate(0, pts);
+      impl::mdspan_t<const T, 4> moment_values(phib.data(), phishape);
+
+      for (int n = 0; n < moment_space.dim(); ++n)
+      {
+        for (std::size_t q = 0; q < pts.extent(0); ++q)
+        {
+          // [0, 1], [1, 0]
+          _M(n * 3, 1, q, 0) = 1.0 * wts[q] * moment_values(0, q, n, 0);
+          _M(n * 3, 2, q, 0) = 1.0 * wts[q] * moment_values(0, q, n, 0);
+          // [-2, 1], [1, 0]
+          _M(n * 3 + 1, 0, q, 0) = -2.0 * wts[q] * moment_values(0, q, n, 0);
+          _M(n * 3 + 1, 1, q, 0) = 1.0 * wts[q] * moment_values(0, q, n, 0);
+          _M(n * 3 + 1, 2, q, 0) = 1.0 * wts[q] * moment_values(0, q, n, 0);
+          // [0, 1], [1, -2]
+          _M(n * 3 + 2, 1, q, 0) = -1.0 * wts[q] * moment_values(0, q, n, 0);
+          _M(n * 3 + 2, 2, q, 0) = -1.0 * wts[q] * moment_values(0, q, n, 0);
+          _M(n * 3 + 2, 3, q, 0) = 2.0 * wts[q] * moment_values(0, q, n, 0);
+        }
+      }
+    }
   }
   else
   {
-    const std::size_t ndofs
+    const std::size_t ndofs0
         = degree == 0
               ? 0
               : polyset::dim(celltype, polyset::type::standard, degree - 1);
-    const std::size_t extra_dofs
-        = tdim == 3 ? polyset::dim(celltype, polyset::type::standard, degree)
-                    : 0;
+    const std::size_t ndofs1
+        = polyset::dim(celltype, polyset::type::standard, degree);
 
-    const std::size_t qdeg = tdim == 3 ? 2 * degree : 2 * degree - 1;
-    const auto [ptsbuffer, wts] = quadrature::make_quadrature<T>(
-        quadrature::type::Default, celltype, polyset::type::standard, qdeg);
+    const auto [ptsbuffer, wts]
+        = quadrature::make_quadrature<T>(quadrature::type::Default, celltype,
+                                         polyset::type::standard, 2 * degree);
     impl::mdspan_t<const T, 2> pts(ptsbuffer.data(), wts.size(), tdim);
 
     // Copy points
@@ -143,10 +188,8 @@ FiniteElement<T> basix::element::create_hhj(cell::type celltype, int degree,
         _x(p, k) += pts(p, k);
     }
 
-    const std::size_t n_normals = normals.extent(0);
-
-    auto& _M = M[tdim].emplace_back(ndofs * n_normals + 2 * extra_dofs,
-                                    tdim * tdim, pts.extent(0), 1);
+    auto& _M = M[tdim].emplace_back(ndofs0 * 4 + ndofs1 * 2, tdim * tdim,
+                                    pts.extent(0), 1);
 
     if (degree > 0)
     {
@@ -157,45 +200,72 @@ FiniteElement<T> basix::element::create_hhj(cell::type celltype, int degree,
 
       for (int n = 0; n < moment_space.dim(); ++n)
       {
-        for (std::size_t j = 0; j < n_normals; ++j)
+        for (std::size_t q = 0; q < pts.extent(0); ++q)
         {
-          for (std::size_t q = 0; q < pts.extent(0); ++q)
-          {
-            for (std::size_t k0 = 0; k0 < tdim; ++k0)
-              for (std::size_t k1 = 0; k1 < tdim; ++k1)
-              {
-                _M(n * n_normals + j, k0 * tdim + k1, q, 0)
-                    = normals(j, k0) * normals(j, k1) * wts[q]
-                      * moment_values(0, q, n, 0);
-              }
-          }
+          // [0, 1, 1], [1, 0, 1], [1, 1, 0]
+          _M(n * 4, 1, q, 0) = 1.0 * wts[q] * moment_values(0, q, n, 0);
+          _M(n * 4, 2, q, 0) = 1.0 * wts[q] * moment_values(0, q, n, 0);
+          _M(n * 4, 3, q, 0) = 1.0 * wts[q] * moment_values(0, q, n, 0);
+          _M(n * 4, 5, q, 0) = 1.0 * wts[q] * moment_values(0, q, n, 0);
+          _M(n * 4, 6, q, 0) = 1.0 * wts[q] * moment_values(0, q, n, 0);
+          _M(n * 4, 7, q, 0) = 1.0 * wts[q] * moment_values(0, q, n, 0);
+
+          // [-6, 1, 1], [1, 0, 1], [1, 1, 0]
+          _M(n * 4 + 1, 0, q, 0) = -6.0 * wts[q] * moment_values(0, q, n, 0);
+          _M(n * 4 + 1, 1, q, 0) = 1.0 * wts[q] * moment_values(0, q, n, 0);
+          _M(n * 4 + 1, 2, q, 0) = 1.0 * wts[q] * moment_values(0, q, n, 0);
+          _M(n * 4 + 1, 3, q, 0) = 1.0 * wts[q] * moment_values(0, q, n, 0);
+          _M(n * 4 + 1, 5, q, 0) = 1.0 * wts[q] * moment_values(0, q, n, 0);
+          _M(n * 4 + 1, 6, q, 0) = 1.0 * wts[q] * moment_values(0, q, n, 0);
+          _M(n * 4 + 1, 7, q, 0) = 1.0 * wts[q] * moment_values(0, q, n, 0);
+
+          // [0, 1, 1], [1, -6, 1], [1, 1, 0]
+          _M(n * 4 + 2, 1, q, 0) = 1.0 * wts[q] * moment_values(0, q, n, 0);
+          _M(n * 4 + 2, 2, q, 0) = 1.0 * wts[q] * moment_values(0, q, n, 0);
+          _M(n * 4 + 2, 3, q, 0) = 1.0 * wts[q] * moment_values(0, q, n, 0);
+          _M(n * 4 + 2, 4, q, 0) = -6.0 * wts[q] * moment_values(0, q, n, 0);
+          _M(n * 4 + 2, 5, q, 0) = 1.0 * wts[q] * moment_values(0, q, n, 0);
+          _M(n * 4 + 2, 6, q, 0) = 1.0 * wts[q] * moment_values(0, q, n, 0);
+          _M(n * 4 + 2, 7, q, 0) = 1.0 * wts[q] * moment_values(0, q, n, 0);
+
+          // [0, 1, 1], [1, 0, 1], [1, 1, -6]
+          _M(n * 4 + 3, 1, q, 0) = 1.0 * wts[q] * moment_values(0, q, n, 0);
+          _M(n * 4 + 3, 2, q, 0) = 1.0 * wts[q] * moment_values(0, q, n, 0);
+          _M(n * 4 + 3, 3, q, 0) = 1.0 * wts[q] * moment_values(0, q, n, 0);
+          _M(n * 4 + 3, 5, q, 0) = 1.0 * wts[q] * moment_values(0, q, n, 0);
+          _M(n * 4 + 3, 6, q, 0) = 1.0 * wts[q] * moment_values(0, q, n, 0);
+          _M(n * 4 + 3, 7, q, 0) = 1.0 * wts[q] * moment_values(0, q, n, 0);
+          _M(n * 4 + 3, 8, q, 0) = -6.0 * wts[q] * moment_values(0, q, n, 0);
         }
       }
     }
-    if (tdim == 3)
-    {
-      FiniteElement<T> moment_space = create_lagrange<T>(
-          celltype, degree, element::lagrange_variant::legendre, true);
-      const auto [phib, phishape] = moment_space.tabulate(0, pts);
-      impl::mdspan_t<const T, 4> moment_values(phib.data(), phishape);
+    FiniteElement<T> moment_space = create_lagrange<T>(
+        celltype, degree, element::lagrange_variant::legendre, true);
+    const auto [phib, phishape] = moment_space.tabulate(0, pts);
+    impl::mdspan_t<const T, 4> moment_values(phib.data(), phishape);
 
-      for (int n = 0; n < moment_space.dim(); ++n)
+    for (int n = 0; n < moment_space.dim(); ++n)
+    {
+      for (std::size_t q = 0; q < pts.extent(0); ++q)
       {
-        for (std::size_t j = 0; j < 2; ++j)
-        {
-          for (std::size_t q = 0; q < pts.extent(0); ++q)
-          {
-            for (std::size_t k0 = 0; k0 < tdim; ++k0)
-              for (std::size_t k1 = 0; k1 < tdim; ++k1)
-              {
-                _M(ndofs * n_normals + n * 2 + j, k0 * tdim + k1, q, 0)
-                    = 0.5
-                      * (normals(j, k0) * normals(j + 1, k1)
-                         + normals(j, k1) * normals(j + 1, k0))
-                      * wts[q] * moment_values(0, q, n, 0);
-              }
-          }
-        }
+        // [0, 0, -1], [0, 0, 1], [-1, 1, 0]
+        _M(ndofs0 * 4 + n * 2, 2, q, 0)
+            = -1.0 * wts[q] * moment_values(0, q, n, 0);
+        _M(ndofs0 * 4 + n * 2, 5, q, 0)
+            = 1.0 * wts[q] * moment_values(0, q, n, 0);
+        _M(ndofs0 * 4 + n * 2, 6, q, 0)
+            = -1.0 * wts[q] * moment_values(0, q, n, 0);
+        _M(ndofs0 * 4 + n * 2, 7, q, 0)
+            = 1.0 * wts[q] * moment_values(0, q, n, 0);
+        // [0, -1, 0], [-1, 0, 1], [0, 1, 0]
+        _M(ndofs0 * 4 + n * 2 + 1, 1, q, 0)
+            = -1.0 * wts[q] * moment_values(0, q, n, 0);
+        _M(ndofs0 * 4 + n * 2 + 1, 3, q, 0)
+            = -1.0 * wts[q] * moment_values(0, q, n, 0);
+        _M(ndofs0 * 4 + n * 2 + 1, 5, q, 0)
+            = 1.0 * wts[q] * moment_values(0, q, n, 0);
+        _M(ndofs0 * 4 + n * 2 + 1, 7, q, 0)
+            = 1.0 * wts[q] * moment_values(0, q, n, 0);
       }
     }
   }

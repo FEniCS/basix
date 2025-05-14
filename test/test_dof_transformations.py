@@ -245,7 +245,6 @@ def test_transformation_of_tabulated_data_tetrahedron(element_type, degree, elem
         detJ = np.array([np.linalg.det(_J) for p in points])
         K = np.array([np.linalg.inv(_J) for p in points])
         mapped_values = e.push_forward(rotated_values, J, detJ, K)
-        from IPython import embed; embed()
         for i, j in zip(values, mapped_values):
             for d in range(e.value_size):
                 i_slice = i[:, d]

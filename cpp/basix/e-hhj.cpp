@@ -63,7 +63,10 @@ FiniteElement<T> basix::element::create_hhj(cell::type celltype, int degree,
       M[d].emplace_back(0, tdim * tdim, 0, 1);
     }
   }
-  // Facets
+  // DOFs on facets
+  // These dofs are defined by l(F) = integral(n^t @ F @ n * p),
+  // where n is normal to the facet, p is polynomial on the facet
+  // of degree `degree`
   auto [_data, _shape] = cell::scaled_facet_normals<T>(celltype);
   impl::mdspan_t<const T, 2> normals(_data.data(), _shape);
 
@@ -116,6 +119,8 @@ FiniteElement<T> basix::element::create_hhj(cell::type celltype, int degree,
   }
 
   // Interior
+  // These DOFs are defined as in section 5.2 of
+  // https://doi.org/10.1007/s00211-017-0933-3 (Pechstein & Schoberl, 2017)
   if (tdim == 2)
   {
     if (degree == 0)

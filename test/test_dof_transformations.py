@@ -257,7 +257,7 @@ def test_transformation_of_tabulated_data_tetrahedron(element_type, degree, elem
         # Check that the 7th transformation undoes the effect of reflecting face 0
         reflected_points = np.array([[p[0], p[2], p[1]] for p in points])
         reflected_values = e.tabulate(0, reflected_points)[0]
-        _J = np.array([[1.0, 0.0, 0.0], [0.0, 0.0, 1.0], [0.0, 1.0, 0.0]])
+        _J = np.array([[1, 0, 0], [0, 0, 1], [0, 1, 0]])
         J = np.array([_J for p in points])
         detJ = np.array([np.linalg.det(_J) for p in points])
         K = np.array([np.linalg.inv(_J) for p in points])

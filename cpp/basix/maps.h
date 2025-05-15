@@ -148,7 +148,7 @@ void double_contravariant_piola(O&& r, const P& U, const Q& J, double detJ,
       {
         T acc = 0;
         for (std::size_t k = 0; k < J.extent(1); ++k)
-          for (std::size_t l = 0; l < J.extent(1); ++l)
+          for (std::size_t l = 0; l < _U.extent(1); ++l)
             acc += static_cast<Z>(J(i, k)) * _U(k, l) * static_cast<Z>(J(j, l));
         _r(i, j) = acc;
       }

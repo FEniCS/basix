@@ -119,7 +119,7 @@ void double_covariant_piola(O&& r, const P& U, const Q& /*J*/, double /*detJ*/,
       {
         T acc = 0;
         for (std::size_t k = 0; k < K.extent(0); ++k)
-          for (std::size_t l = 0; l < K.extent(0); ++l)
+          for (std::size_t l = 0; l < _U.extent(1); ++l)
             acc += static_cast<Z>(K(k, i)) * _U(k, l) * static_cast<Z>(K(l, j));
         _r(i, j) = acc;
       }

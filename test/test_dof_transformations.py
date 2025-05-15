@@ -239,8 +239,7 @@ def test_transformation_of_tabulated_data_tetrahedron(element_type, degree, elem
         rotated_points = np.array([[p[2], p[0], p[1]] for p in points])
         rotated_values = e.tabulate(0, rotated_points)[0]
 
-        _J = np.array([[0.0, 1.0, 0.0], [0.0, 0.0, 1.0], [1.0, 0.0, 0.0]])
-        print(_J)
+        _J = np.array([[0, 1, 0], [0, 0, 1], [1, 0, 0]])
         J = np.array([_J for p in points])
         detJ = np.array([np.linalg.det(_J) for p in points])
         K = np.array([np.linalg.inv(_J) for p in points])

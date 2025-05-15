@@ -54,6 +54,7 @@ FiniteElement<T> basix::element::create_hhj(cell::type celltype, int degree,
 
   const std::size_t facet_dim = tdim - 1;
 
+  // No DOFs on entities of lower dimension than facets
   for (std::size_t d = 0; d < facet_dim; ++d)
   {
     for (std::size_t e = 0; e < topology[d].size(); ++e)

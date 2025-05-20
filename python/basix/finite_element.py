@@ -936,13 +936,6 @@ def string_to_family(family: str, cell: str) -> ElementFamily:
                 "Regge": ElementFamily.Regge,
                 "CR": ElementFamily.CR,
                 "Crouzeix-Raviart": ElementFamily.CR,
-            }
-        )
-
-    # Family names that are valid for triangles
-    if cell in ["triangle"]:
-        families.update(
-            {
                 "HHJ": ElementFamily.HHJ,
                 "Hellan-Herrmann-Johnson": ElementFamily.HHJ,
             }

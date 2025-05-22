@@ -3,6 +3,7 @@
 # SPDX-License-Identifier: MIT
 
 from itertools import product
+
 import numpy as np
 import pytest
 import sympy
@@ -35,7 +36,7 @@ def test_cell_quadrature(celltype, order):
 @pytest.mark.parametrize("scheme", [basix.QuadratureType.default, basix.QuadratureType.gll])
 def test_qorder_line(m, scheme):
     Qpts, Qwts = basix.make_quadrature(basix.CellType.interval, m, rule=scheme)
-    f = x ** m
+    f = x**m
     q = sympy.integrate(f, (x, 0, 1))
     s = sum(wt * f.subs(x, pt[0]) for pt, wt in zip(Qpts, Qwts))
     assert np.isclose(float(q), float(s))
@@ -43,13 +44,13 @@ def test_qorder_line(m, scheme):
 
 @pytest.mark.parametrize(
     ("scheme", "m"),
-    list(product(
-        [basix.QuadratureType.default, basix.QuadratureType.gauss_jacobi],
-        range(9),
-    )) + [
-        (basix.QuadratureType.xiao_gimbutas, m)
-        for m in range(1, 20)
-    ]
+    list(
+        product(
+            [basix.QuadratureType.default, basix.QuadratureType.gauss_jacobi],
+            range(9),
+        )
+    )
+    + [(basix.QuadratureType.xiao_gimbutas, m) for m in range(1, 20)],
 )
 def test_qorder_tri(m, scheme):
     Qpts, Qwts = basix.make_quadrature(basix.CellType.triangle, m, rule=scheme)
@@ -61,13 +62,13 @@ def test_qorder_tri(m, scheme):
 
 @pytest.mark.parametrize(
     ("scheme", "m"),
-    list(product(
-        [basix.QuadratureType.default, basix.QuadratureType.gauss_jacobi],
-        range(9),
-    )) + [
-        (basix.QuadratureType.xiao_gimbutas, m)
-        for m in range(1, 16)
-    ]
+    list(
+        product(
+            [basix.QuadratureType.default, basix.QuadratureType.gauss_jacobi],
+            range(9),
+        )
+    )
+    + [(basix.QuadratureType.xiao_gimbutas, m) for m in range(1, 16)],
 )
 def test_qorder_tet(m, scheme):
     Qpts, Qwts = basix.make_quadrature(basix.CellType.tetrahedron, m, rule=scheme)
@@ -79,10 +80,12 @@ def test_qorder_tet(m, scheme):
 
 @pytest.mark.parametrize(
     ("scheme", "m"),
-    list(product(
-        [basix.QuadratureType.default, basix.QuadratureType.gauss_jacobi],
-        range(9),
-    ))
+    list(
+        product(
+            [basix.QuadratureType.default, basix.QuadratureType.gauss_jacobi],
+            range(9),
+        )
+    ),
 )
 def test_qorder_prism(m, scheme):
     Qpts, Qwts = basix.make_quadrature(basix.CellType.prism, m, rule=scheme)
@@ -94,10 +97,12 @@ def test_qorder_prism(m, scheme):
 
 @pytest.mark.parametrize(
     ("scheme", "m"),
-    list(product(
-        [basix.QuadratureType.default, basix.QuadratureType.gauss_jacobi],
-        range(6),
-    ))
+    list(
+        product(
+            [basix.QuadratureType.default, basix.QuadratureType.gauss_jacobi],
+            range(6),
+        )
+    ),
 )
 def test_qorder_pyramid(m, scheme):
     Qpts, Qwts = basix.make_quadrature(basix.CellType.pyramid, m, rule=scheme)

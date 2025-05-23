@@ -10,7 +10,7 @@
 #include <cmath>
 #include <concepts>
 #include <numeric>
-#include <quadraturerules.h>
+#include <quadraturerules/quadraturerules.h>
 #include <span>
 #include <vector>
 

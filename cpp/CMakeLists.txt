@@ -29,7 +29,7 @@ if(NOT QuadratureRules_FOUND)
     URL                         https://github.com/quadraturerules/quadraturerules/releases/download/v${QUADRATURERULES_VERSION}/quadraturerules-cpp-v${QUADRATURERULES_VERSION}.tar.gz
     DOWNLOAD_EXTRACT_TIMESTAMP  true
     BUILD_ALWAYS                true
-    CMAKE_ARGS                  "-DCMAKE_INSTALL_PREFIX:PATH=${CMAKE_INSTALL_PREFIX} -B ${CMAKE_BINARY_DIR}"
+    CMAKE_ARGS                  -DCMAKE_INSTALL_PREFIX:PATH=${CMAKE_INSTALL_PREFIX}
   )
   ExternalProject_Get_Property(e_quadrature INSTALL_DIR)
   add_library(QR INTERFACE)

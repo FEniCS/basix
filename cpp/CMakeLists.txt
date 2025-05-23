@@ -10,10 +10,32 @@ if(SKBUILD AND UNIX)
 endif()
 
 if (SKBUILD)
-  # Make sure includes end up inside basix/ subdirectory in wheel. 
+  # Make sure includes end up inside basix/ subdirectory in wheel.
   set(CMAKE_INSTALL_INCLUDEDIR basix/include)
   # Make sure all binaries end up inside basix/ subdirectory in wheel.
   set(CMAKE_INSTALL_BINDIR basix)
+endif()
+
+# Find or install quadraturerules
+set(QUADRATURERULES_VERSION 0.7.7)
+find_package(QuadratureRules ${QUADRATURERULES_VERSION} QUIET)
+
+if(NOT QuadratureRules_FOUND)
+  message("Installing quadraturerules v${QUADRATURERULES_VERSION}")
+  include(ExternalProject)
+  ExternalProject_Add(
+    e_quadrature
+    URL                         https://github.com/quadraturerules/quadraturerules/releases/download/v${QUADRATURERULES_VERSION}/quadraturerules-cpp-v${QUADRATURERULES_VERSION}.tar.gz
+    DOWNLOAD_EXTRACT_TIMESTAMP  true
+    BUILD_ALWAYS                true
+  )
+  ExternalProject_Get_Property(e_quadrature INSTALL_DIR)
+  add_library(QR INTERFACE)
+  add_dependencies(QR e_quadrature)
+  target_include_directories(QR INTERFACE "${INSTALL_DIR}/include")
+  target_link_directories(QR INTERFACE "${INSTALL_DIR}/lib")
+  target_link_libraries(QR INTERFACE quadraturerules)
+  add_library(QuadratureRules::quadraturerules ALIAS QR)
 endif()
 
 include(FeatureSummary)
@@ -121,6 +143,7 @@ target_compile_definitions(basix PUBLIC MDSPAN_USE_BRACKET_OPERATOR=0)
 
 target_link_libraries(basix PRIVATE BLAS::BLAS)
 target_link_libraries(basix PRIVATE LAPACK::LAPACK)
+target_link_libraries(basix PRIVATE QuadratureRules::quadraturerules)
 
 if (UNIX)
     list(APPEND BASIX_DEVELOPER_FLAGS -O2;-g;-pipe)

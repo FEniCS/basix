@@ -44,11 +44,9 @@ constexpr int compute_value_size(maps::type map_type, int dim)
   case maps::type::identity:
     return 1;
   case maps::type::covariantPiola:
-    return dim;
   case maps::type::contravariantPiola:
     return dim;
   case maps::type::doubleCovariantPiola:
-    return dim * dim;
   case maps::type::doubleContravariantPiola:
     return dim * dim;
   default:
@@ -61,7 +59,6 @@ constexpr int num_transformations(cell::type cell_type)
   switch (cell_type)
   {
   case cell::type::point:
-    return 0;
   case cell::type::interval:
     return 0;
   case cell::type::triangle:
@@ -190,7 +187,7 @@ FiniteElement<T>
 basix::create_element(element::family family, cell::type cell, int degree,
                       element::lagrange_variant lvariant,
                       element::dpc_variant dvariant, bool discontinuous,
-                      std::vector<int> dof_ordering)
+                      const std::vector<int>& dof_ordering)
 {
   if (family == element::family::custom)
   {
@@ -243,7 +240,6 @@ basix::create_element(element::family family, cell::type cell, int degree,
     switch (cell)
     {
     case cell::type::quadrilateral:
-      return element::create_rtc<T>(cell, degree, lvariant, discontinuous);
     case cell::type::hexahedron:
       return element::create_rtc<T>(cell, degree, lvariant, discontinuous);
     default:
@@ -255,7 +251,6 @@ basix::create_element(element::family family, cell::type cell, int degree,
     switch (cell)
     {
     case cell::type::quadrilateral:
-      return element::create_nce<T>(cell, degree, lvariant, discontinuous);
     case cell::type::hexahedron:
       return element::create_nce<T>(cell, degree, lvariant, discontinuous);
     default:
@@ -270,8 +265,6 @@ basix::create_element(element::family family, cell::type cell, int degree,
     switch (cell)
     {
     case cell::type::quadrilateral:
-      return element::create_serendipity_div<T>(cell, degree, lvariant,
-                                                dvariant, discontinuous);
     case cell::type::hexahedron:
       return element::create_serendipity_div<T>(cell, degree, lvariant,
                                                 dvariant, discontinuous);
@@ -282,8 +275,6 @@ basix::create_element(element::family family, cell::type cell, int degree,
     switch (cell)
     {
     case cell::type::quadrilateral:
-      return element::create_serendipity_curl<T>(cell, degree, lvariant,
-                                                 dvariant, discontinuous);
     case cell::type::hexahedron:
       return element::create_serendipity_curl<T>(cell, degree, lvariant,
                                                  dvariant, discontinuous);
@@ -316,11 +307,11 @@ basix::create_element(element::family family, cell::type cell, int degree,
 template basix::FiniteElement<float>
 basix::create_element(element::family, cell::type, int,
                       element::lagrange_variant, element::dpc_variant, bool,
-                      std::vector<int>);
+                      const std::vector<int>&);
 template basix::FiniteElement<double>
 basix::create_element(element::family, cell::type, int,
                       element::lagrange_variant, element::dpc_variant, bool,
-                      std::vector<int>);
+                      const std::vector<int>&);
 //-----------------------------------------------------------------------------
 template <std::floating_point T>
 FiniteElement<T>
@@ -760,6 +751,9 @@ FiniteElement<F>::FiniteElement(
   }
   catch (...)
   {
+    // TODO: tp_factors needs to be called here but will throw in some cases.
+    //       This optional outcome should not force a (silenced) catch to be
+    //       necessary here.
   }
 
   std::vector<F> wcoeffs_b(wcoeffs.extent(0) * wcoeffs.extent(1));

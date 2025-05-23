@@ -22,6 +22,7 @@ find_package(QuadratureRules ${QUADRATURERULES_VERSION} QUIET)
 
 if(NOT QuadratureRules_FOUND)
   message("Installing quadraturerules v${QUADRATURERULES_VERSION}")
+  message("Should be installing in v${CMAKE_INSTALL_PREFIX}")
   include(ExternalProject)
   ExternalProject_Add(
     e_quadrature

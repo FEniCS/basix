@@ -27,6 +27,15 @@ jobs:
           sudo apt-get update
           sudo apt-get install clang-tidy ninja-build libopenblas-dev liblapack-dev
           pip install nanobind scikit-build-core[pyproject]
+      - name: Install quadraturerules
+        run: |
+          mkdir qr
+          cd qr
+          wget https://github.com/quadraturerules/quadraturerules/releases/download/v0.7.7/quadraturerules-cpp-v0.7.7.tar.gz qr.tar.gz
+          tar -xvf qr.tar.gz -C src
+          cmake src
+          make
+          make install
       - name: Run clang-tidy (C++)
         working-directory: cpp
         run: |

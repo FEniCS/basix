@@ -16,30 +16,6 @@ if (SKBUILD)
   set(CMAKE_INSTALL_BINDIR basix)
 endif()
 
-# Find or install quadraturerules
-set(QUADRATURERULES_VERSION 0.7.7)
-find_package(QuadratureRules ${QUADRATURERULES_VERSION} QUIET)
-
-if(NOT QuadratureRules_FOUND)
-  message("Installing quadraturerules v${QUADRATURERULES_VERSION}")
-  message("Should be installing in ${CMAKE_INSTALL_PREFIX}")
-  include(ExternalProject)
-  ExternalProject_Add(
-    e_quadrature
-    URL                         https://github.com/quadraturerules/quadraturerules/releases/download/v${QUADRATURERULES_VERSION}/quadraturerules-cpp-v${QUADRATURERULES_VERSION}.tar.gz
-    DOWNLOAD_EXTRACT_TIMESTAMP  true
-    BUILD_ALWAYS                true
-    CMAKE_ARGS                  -DCMAKE_INSTALL_PREFIX:PATH=${CMAKE_CURRENT_BINARY_DIR}/quadraturerules-install
-  )
-  ExternalProject_Get_Property(e_quadrature INSTALL_DIR)
-  add_library(QR INTERFACE)
-  add_dependencies(QR e_quadrature)
-  target_include_directories(QR INTERFACE "${INSTALL_DIR}/include")
-  target_link_directories(QR INTERFACE "${INSTALL_DIR}/lib")
-  target_link_libraries(QR INTERFACE quadraturerules)
-  add_library(QuadratureRules::quadraturerules ALIAS QR)
-endif()
-
 include(FeatureSummary)
 
 # Options
@@ -54,6 +30,7 @@ add_feature_info(ENABLE_CLANG_TIDY ENABLE_CLANG_TIDY "Run clang-tidy while build
 
 find_package(BLAS REQUIRED)
 find_package(LAPACK REQUIRED)
+find_package(QuadratureRules 0.7.7 REQUIRED)
 
 feature_summary(WHAT ALL)
 

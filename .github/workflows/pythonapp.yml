@@ -63,6 +63,7 @@ jobs:
           mkdir qr
           cd qr
           wget https://github.com/quadraturerules/quadraturerules/releases/download/v0.7.7/quadraturerules-cpp-v0.7.7.tar.gz
+          mkdir src
           tar -xvf quadraturerules-cpp-v0.7.7.tar.gz -C src
           cmake src
           make

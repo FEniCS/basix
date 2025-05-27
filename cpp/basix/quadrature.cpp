@@ -56,8 +56,8 @@ get_from_quadraturerules(quadraturerules::QuadratureRule rule,
     for (std::size_t i = 0; i < _w.size(); ++i)
     {
       // Convert from barycentric coordinates
-      x[2 * i] = _x[4 * i + 1];
-      x[2 * i + 1] = _x[4 * i + 2];
+      x[2 * i] = _x[4 * i + 1] + _x[4 * i + 3];
+      x[2 * i + 1] = _x[4 * i + 2] + _x[4 * i + 3];
       w[i] = _w[i];
     }
     return {std::move(x), std::move(w)};
@@ -71,9 +71,9 @@ get_from_quadraturerules(quadraturerules::QuadratureRule rule,
     for (std::size_t i = 0; i < _w.size(); ++i)
     {
       // Convert from barycentric coordinates
-      x[3 * i] = _x[8 * i + 1];
-      x[3 * i + 1] = _x[8 * i + 2];
-      x[3 * i + 2] = _x[8 * i + 4];
+      x[3 * i] = _x[8 * i + 1] + _x[8 * i + 3] + _x[8 * i + 5] + _x[8 * i + 7];
+      x[3 * i + 1] = _x[8 * i + 2] + _x[8 * i + 3] + _x[8 * i + 6] + _x[8 * i + 7];
+      x[3 * i + 2] = _x[8 * i + 4] + _x[8 * i + 5] + _x[8 * i + 6] + _x[8 * i + 7];
       w[i] = _w[i];
     }
     return {std::move(x), std::move(w)};
@@ -120,9 +120,9 @@ get_from_quadraturerules(quadraturerules::QuadratureRule rule,
     for (std::size_t i = 0; i < _w.size(); ++i)
     {
       // Convert from barycentric coordinates
-      x[3 * i] = _x[6 * i + 1];
-      x[3 * i + 1] = _x[6 * i + 2];
-      x[3 * i + 2] = _x[6 * i + 3];
+      x[3 * i] = _x[6 * i + 1] + _x[6 * i + 4];
+      x[3 * i + 1] = _x[6 * i + 2] + _x[6 * i + 5];
+      x[3 * i + 2] = _x[6 * i + 3] + _x[6 * i + 4] + _x[6 * i + 5];
       // Scale to cell with volume 1/2
       w[i] = _w[i] * 0.5;
     }
@@ -137,8 +137,8 @@ get_from_quadraturerules(quadraturerules::QuadratureRule rule,
     for (std::size_t i = 0; i < _w.size(); ++i)
     {
       // Convert from barycentric coordinates
-      x[3 * i] = _x[5 * i + 1];
-      x[3 * i + 1] = _x[5 * i + 2];
+      x[3 * i] = _x[5 * i + 1] + _x[5 * i + 3];
+      x[3 * i + 1] = _x[5 * i + 2] + _x[5 * i + 3];
       x[3 * i + 2] = _x[5 * i + 4];
       // Scale to cell with volume 1/3
       w[i] = _w[i] / 3.0;

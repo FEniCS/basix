@@ -670,6 +670,17 @@ NB_MODULE(_basixcpp, m)
                                         discontinuous);
         });
 
+  m.def("lex_dof_ordering",
+        [](element::family family_name, cell::type cell, int degree,
+           element::lagrange_variant lagrange_variant,
+           element::dpc_variant dpc_variant,
+           bool discontinuous) -> std::vector<int>
+        {
+          return basix::lex_dof_ordering(family_name, cell, degree,
+                                         lagrange_variant, dpc_variant,
+                                         discontinuous);
+        });
+
   nb::enum_<polyset::type>(m, "PolysetType", nb::is_arithmetic(),
                            "Polyset type.")
       .value("standard", polyset::type::standard)

@@ -750,8 +750,8 @@ create_pyramid_equispaced(int n, bool exterior)
     {
       for (int i = 0; i < n + 1 - k; ++i)
       {
-        x(c, 0) = h * (i + b);
-        x(c, 1) = h * (j + b);
+        x(c, 0) = 2.0 * h * (i + b) - 1.0;
+        x(c, 1) = 2.0 * h * (j + b) - 1.0;
         x(c, 2) = h * (k + b);
         c++;
       }

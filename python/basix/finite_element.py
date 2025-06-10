@@ -700,7 +700,7 @@ def create_custom_element(
         for points_j in points_i:
             for p in points_j:
                 for facet, facet_normal in zip(top[tdim - 1], facet_outward_normals(cell_type)):
-                    if abs(np.dot(p - geo[facet[0]], facet_normal)) > 0.001:
+                    if np.dot(p - geo[facet[0]], facet_normal) > 0.001:
                         warn(f"Point {p} is not in cell", UserWarning)
 
     if np.issubdtype(dtype, np.float32):

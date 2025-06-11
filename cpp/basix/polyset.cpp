@@ -11,6 +11,8 @@
 #include <cmath>
 #include <stdexcept>
 
+#include <iostream>
+
 using namespace basix;
 using namespace basix::indexing;
 
@@ -2028,15 +2030,18 @@ void tabulate_polyset_pyramid_derivs(
   // https://doi.org/10.5281/zenodo.15281516 (Scroggs, 2025)
   assert(x.extent(1) == 3);
   assert(P.extent(0) == (nderiv + 1) * (nderiv + 2) * (nderiv + 3) / 6);
-  assert(P.extent(1) == (n + 1) * (n + 2) * (2 * n + 3) / 6);
+  assert(P.extent(1) == (n + 1) * (8 * n * n + 13 * n + 6) / 6);
   assert(P.extent(2) == x.extent(0));
 
   // Indexing for pyramidal basis functions
   auto pyr_idx = [n](std::size_t p, std::size_t q, std::size_t r) -> std::size_t
   {
-    std::size_t rv = n - r + 1;
-    std::size_t r0 = r * (n + 1) * (n - r + 2) + (2 * r - 1) * (r - 1) * r / 6;
-    return r0 + p * rv + q;
+    std::size_t r0 = std::min(r, n + 1);
+    std::size_t r1 = r > n ? r - n - 1 : 0;
+    std::size_t plim = std::min(n + 1, 2 * n + 1 - r);
+    std::size_t rstart
+        = r0 * (n + 1) * (n + 1) + r1 * (r1 + 1) * (2 * r1 + 1) / 6;
+    return rstart + q * plim + p;
   };
 
   const auto x0 = md::submdspan(x, md::full_extent, 0);
@@ -2054,7 +2059,8 @@ void tabulate_polyset_pyramid_derivs(
   }
 
   for (std::size_t j = 0; j < P.extent(2); ++j)
-    P(idx(0, 0, 0), pyr_idx(0, 0, 0), j) = 1.0;
+    P(idx(0, 0, 0), pyr_idx(0, 0, 0), j)
+        = x2[j] == 0.0 ? 1.0 : 1.0 / std::pow(1.0 - x2[j], n);
 
   for (std::size_t kx = 0; kx <= nderiv; ++kx)
   {
@@ -2241,13 +2247,14 @@ void tabulate_polyset_pyramid_derivs(
         }
 
         // Extend into r > 0
-        for (std::size_t r = 1; r <= n; ++r)
+        for (std::size_t r = 1; r <= 2 * n; ++r)
         {
-          for (std::size_t p = 0; p <= n - r; ++p)
+          for (std::size_t p = 0; p <= std::min(n, 2 * n - r); ++p)
           {
-            for (std::size_t q = 0; q <= n - r; ++q)
+            for (std::size_t q = 0; q <= std::min(n, 2 * n - r); ++q)
             {
-              auto [ar, br, cr] = jrc<T>(2 * std::max(p, q) + 2, r - 1);
+              auto [ar, br, cr] = jrc<T>(2 * (p + q - n) + 2, r - 1);
+              std::cout << ar << " " << br << " " << cr << "\n";
               auto r_pqr = md::submdspan(P, idx(kx, ky, kz), pyr_idx(p, q, r),
                                          md::full_extent);
               auto _r0 = md::submdspan(P, idx(kx, ky, kz), pyr_idx(p, q, r - 1),
@@ -2276,19 +2283,23 @@ void tabulate_polyset_pyramid_derivs(
     }
   }
 
-  for (std::size_t r = 0; r <= n; ++r)
+  std::cout << n << "\n";
+
+  for (std::size_t r = 0; r <= 2 * n; ++r)
   {
-    for (std::size_t p = 0; p <= n - r; ++p)
+    for (std::size_t p = 0; p <= std::min(n, 2 * n - r); ++p)
     {
-      for (std::size_t q = 0; q <= n - r; ++q)
+      for (std::size_t q = 0; q <= std::min(n, 2 * n - r); ++q)
       {
+        std::cout << p << " " << q << " " << r << " -> " << pyr_idx(p, q, r)
+                  << "\n";
         auto pqr = md::submdspan(P, md::full_extent, pyr_idx(p, q, r),
                                  md::full_extent);
         for (std::size_t i = 0; i < pqr.extent(0); ++i)
           for (std::size_t j = 0; j < pqr.extent(1); ++j)
-            pqr(i, j) *= std::sqrt(2 * (q + 0.5) * (p + 0.5)
-                                   * (std::max(p, q) + r + 1.5))
-                         * 2;
+            pqr(i, j)
+                *= std::sqrt(2 * (q + 0.5) * (p + 0.5) * (p + q - n + r + 1.5))
+                   * 2;
       }
     }
   }
@@ -3069,7 +3080,7 @@ int polyset::dim(cell::type celltype, polyset::type ptype, int d)
     case cell::type::prism:
       return (d + 1) * (d + 1) * (d + 2) / 2;
     case cell::type::pyramid:
-      return (d + 1) * (d + 2) * (2 * d + 3) / 6;
+      return (d + 1) * (8 * d * d + 13 * d + 6) / 6;
     case cell::type::interval:
       return (d + 1);
     case cell::type::quadrilateral:

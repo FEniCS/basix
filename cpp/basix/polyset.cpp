@@ -2060,7 +2060,7 @@ void tabulate_polyset_pyramid_derivs(
 
   for (std::size_t j = 0; j < P.extent(2); ++j)
     P(idx(0, 0, 0), pyr_idx(0, 0, 0), j)
-        = x2[j] == 0.0 ? 1.0 : 1.0 / std::pow(1.0 - x2[j], n);
+        = 1.0;
 
   for (std::size_t kx = 0; kx <= nderiv; ++kx)
   {
@@ -2295,11 +2295,15 @@ void tabulate_polyset_pyramid_derivs(
                   << "\n";
         auto pqr = md::submdspan(P, md::full_extent, pyr_idx(p, q, r),
                                  md::full_extent);
-        for (std::size_t i = 0; i < pqr.extent(0); ++i)
-          for (std::size_t j = 0; j < pqr.extent(1); ++j)
-            pqr(i, j)
-                *= std::sqrt(2 * (q + 0.5) * (p + 0.5) * (p + q - n + r + 1.5))
+        auto mult = std::sqrt(2 * (q + 0.5) * (p + 0.5) * (p + q - n + r + 1.5))
                    * 2;
+        for (std::size_t j = 0; j < pqr.extent(1); ++j)
+        {
+          auto zscale = x2[j] == 1.0 ? 1.0 : std::pow(1.0 - x2[j], n);
+          zscale = 1.0;
+          for (std::size_t i = 0; i < pqr.extent(0); ++i)
+            pqr(i, j) *= mult / zscale;
+        }
       }
     }
   }

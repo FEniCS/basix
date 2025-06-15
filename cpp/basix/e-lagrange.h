@@ -21,7 +21,7 @@ namespace basix::element
 template <std::floating_point T>
 FiniteElement<T> create_lagrange(cell::type celltype, int degree,
                                  lagrange_variant variant, bool discontinuous,
-                                 std::vector<int> dof_ordering = {});
+                                 const std::vector<int>& dof_ordering = {});
 
 /// @brief Create an iso macro element on cell with given degree
 /// @param[in] celltype The element cell type

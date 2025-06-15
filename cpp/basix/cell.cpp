@@ -300,15 +300,11 @@ int cell::topological_dimension(cell::type cell_type)
   case cell::type::interval:
     return 1;
   case cell::type::triangle:
-    return 2;
   case cell::type::quadrilateral:
     return 2;
   case cell::type::tetrahedron:
-    return 3;
   case cell::type::hexahedron:
-    return 3;
   case cell::type::prism:
-    return 3;
   case cell::type::pyramid:
     return 3;
   default:

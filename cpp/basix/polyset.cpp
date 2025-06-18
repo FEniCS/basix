@@ -3121,7 +3121,8 @@ int polyset::nderivs(cell::type celltype, int n)
   case cell::type::prism:
     return (n + 1) * (n + 2) * (n + 3) / 6;
   case cell::type::pyramid:
-    return (n + 1) * (n + 2) * (n + 3) / 6;
+    return n % 2 == 0 ? (7 * n * n + 21 * n + 20) * n / 6 + 1
+                      : (7 * n * n + 42 * n + 83) * n / 6 + 9;
   default:
     return 1;
   }

@@ -125,6 +125,7 @@ void tabulate_lagrange_pyramid_derivs(
     md::mdspan<T, md::dextents<std::size_t, 3>> P, std::size_t n,
     std::size_t nderiv, md::mdspan<const T, md::dextents<std::size_t, 2>> x)
 {
+  // TODO: remove derivatives
   // The recurrence formulae used in this function are derived in
   // https://doi.org/10.5281/zenodo.15281516 (Scroggs, 2025)
   assert(x.extent(1) == 3);

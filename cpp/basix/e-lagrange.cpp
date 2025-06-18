@@ -505,7 +505,9 @@ basix::element::create_lagrange(cell::type celltype, int degree,
   const std::vector<std::vector<std::vector<int>>> topology
       = cell::topology(celltype);
 
-  std::vector<T> data(ndofs * psize);
+  std::vector<T> data = celltype == cell::type::pyramid
+                            ? std::vector<T>(ndofs * psize)
+                            : math::eye<T>(ndofs);
   impl::mdspan_t<T, 2> wcoeffs(data.data(), ndofs, psize);
   if (celltype == cell::type::pyramid)
   {
@@ -533,10 +535,6 @@ basix::element::create_lagrange(cell::type celltype, int degree,
         }
       }
     }
-  }
-  else
-  {
-    wcoeffs = impl::mdspan_t<T, 2>(math::eye<T>(ndofs).data(), ndofs, psize);
   }
 
   std::array<std::vector<impl::mdarray_t<T, 2>>, 4> x;

@@ -37,6 +37,9 @@ def test_legendre(cell_type, degree):
         for j, col_j in enumerate(polys):
             matrix[i, j] = sum(col_i * col_j * weights)
 
+    for n, row in enumerate(matrix):
+        print(n, [0 if np.isclose(i, 0) else float(i) for i in row])
+
     assert np.allclose(matrix, np.identity(polys.shape[0]))
 
 
@@ -50,24 +53,25 @@ def evaluate(function, pt):
 
 
 @pytest.mark.parametrize(
-    "cell_type, functions, degree",
+    "cell_type, ptype, functions, degree",
     [
-        [basix.CellType.interval, [one, x], 1],
-        [basix.CellType.interval, [one, x, x**2], 2],
-        [basix.CellType.interval, [one, x, x**2, x**3], 3],
-        [basix.CellType.triangle, [one, y, x], 1],
-        [basix.CellType.triangle, [one, y, x, y**2, x * y, x**2], 2],
+        [basix.CellType.interval, basix.PolynomialType.legendre, [one, x], 1],
+        [basix.CellType.interval, basix.PolynomialType.legendre, [one, x, x**2], 2],
+        [basix.CellType.interval, basix.PolynomialType.legendre, [one, x, x**2, x**3], 3],
+        [basix.CellType.triangle, basix.PolynomialType.legendre, [one, y, x], 1],
+        [basix.CellType.triangle, basix.PolynomialType.legendre, [one, y, x, y**2, x * y, x**2], 2],
         [
             basix.CellType.triangle,
+            basix.PolynomialType.legendre,
             [one, y, x, y**2, x * y, x**2, y**3, x * y**2, x**2 * y, x**3],
             3,
         ],
-        [basix.CellType.tetrahedron, [one], 0],
-        [basix.CellType.tetrahedron, [one, z, y, x], 1],
-        [basix.CellType.tetrahedron, [one, z, y, x, z**2, y * z, x * z, y**2, x * y, x**2], 2],
+        [basix.CellType.tetrahedron, basix.PolynomialType.legendre, [one], 0],
+        [basix.CellType.tetrahedron, basix.PolynomialType.legendre, [one, z, y, x], 1],
+        [basix.CellType.tetrahedron, basix.PolynomialType.legendre, [one, z, y, x, z**2, y * z, x * z, y**2, x * y, x**2], 2],
         [
             basix.CellType.tetrahedron,
-            [
+            basix.PolynomialType.legendre, [
                 one,
                 z,
                 y,
@@ -91,17 +95,17 @@ def evaluate(function, pt):
             ],
             3,
         ],
-        [basix.CellType.quadrilateral, [one, y, x, x * y], 1],
+        [basix.CellType.quadrilateral, basix.PolynomialType.legendre, [one, y, x, x * y], 1],
         [
             basix.CellType.quadrilateral,
-            [one, y, y**2, x, x * y, x * y**2, x**2, x**2 * y, x**2 * y**2],
+            basix.PolynomialType.legendre, [one, y, y**2, x, x * y, x * y**2, x**2, x**2 * y, x**2 * y**2],
             2,
         ],
-        [basix.CellType.hexahedron, [one, z, y, y * z, x, x * z, x * y, x * y * z], 1],
-        [basix.CellType.prism, [one, z, y, y * z, x, x * z], 1],
+        [basix.CellType.hexahedron, basix.PolynomialType.legendre, [one, z, y, y * z, x, x * z, x * y, x * y * z], 1],
+        [basix.CellType.prism, basix.PolynomialType.legendre, [one, z, y, y * z, x, x * z], 1],
         [
             basix.CellType.prism,
-            [
+            basix.PolynomialType.legendre, [
                 one,
                 z,
                 z**2,
@@ -123,23 +127,30 @@ def evaluate(function, pt):
             ],
             2,
         ],
-        [basix.CellType.pyramid, [one], 0],
+        [basix.CellType.pyramid, basix.PolynomialType.legendre, [1 / (1 - z), one], 0],
+        [basix.CellType.pyramid, basix.PolynomialType.lagrange, [one], 0],
         [
             basix.CellType.pyramid,
-            [one, 2 * y + z - 1, 2 * x + z - 1, (2 * x + z - 1) * (2 * y + z - 1) / (1 - z), z],
+            basix.PolynomialType.lagrange, [one, 2 * y + z - 1, 2 * x + z - 1, (2 * x + z - 1) * (2 * y + z - 1) / (1 - z), z],
+            1,
+        ],
+        [
+            basix.CellType.pyramid,
+            basix.PolynomialType.legendre,
+            [one, x, y, x * y, z, 1 / (1 - z), x / (1 - z), y / (1 - z), x * y / (1 - z)],
             1,
         ],
     ],
 )
-def test_order(cell_type, functions, degree):
+def test_order(cell_type, ptype, functions, degree):
     points, weights = basix.make_quadrature(cell_type, 2 * degree)
-    polys = basix.tabulate_polynomials(basix.PolynomialType.legendre, cell_type, degree, points)
+    polys = basix.tabulate_polynomials(ptype, cell_type, degree, points)
 
     assert len(functions) == polys.shape[0]
 
     eval_points = basix.create_lattice(cell_type, 10, basix.LatticeType.equispaced, False)
     eval_polys = basix.tabulate_polynomials(
-        basix.PolynomialType.legendre, cell_type, degree, eval_points
+        ptype, cell_type, degree, eval_points
     )
 
     for n, function in enumerate(functions):

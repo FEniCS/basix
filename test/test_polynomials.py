@@ -37,9 +37,6 @@ def test_legendre(cell_type, degree):
         for j, col_j in enumerate(polys):
             matrix[i, j] = sum(col_i * col_j * weights)
 
-    for n, row in enumerate(matrix):
-        print(n, [0 if np.isclose(i, 0) else float(i) for i in row])
-
     assert np.allclose(matrix, np.identity(polys.shape[0]))
 
 
@@ -166,7 +163,6 @@ def test_order(cell_type, ptype, functions, degree):
     eval_polys = basix.tabulate_polynomials(ptype, cell_type, degree, eval_points)
 
     for n, function in enumerate(functions):
-        print(n, function)
         expected_eval = [float(evaluate(function, i)) for i in eval_points]
 
         # Using n polynomials

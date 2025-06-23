@@ -80,30 +80,96 @@ def test_symbolic_pyramid(n, nderiv):
         w = [sympy.sqrt(3)]
     elif n == 1:
         w = [
-            sympy.sqrt(3),  # 000
-            (2 * y + z - 1) * sympy.sqrt(15),  # 010
-            (2 * x + z - 1) * sympy.sqrt(15),  # 100
-            (2 * x + z - 1) * (2 * y + z - 1) / (1 - z) * sympy.sqrt(45),  # 110
-            (4 * z - 1) * sympy.sqrt(5),  # 001
+            sympy.sqrt(3),
+            sympy.sqrt(5) * (4 * z - 1),
+            3 * (2 * y + z - 1) / (1 - z),
+            sympy.sqrt(15) * (4 * z - 1) * (2 * y + z - 1) / (1 - z),
+            3 * (2 * x + z - 1) / (1 - z),
+            sympy.sqrt(15) * (4 * z - 1) * (2 * x + z - 1) / (1 - z),
+            3 * sympy.sqrt(3) * (2 * x + z - 1) * (2 * y + z - 1) / (1 - z) ** 2,
+            3 * sympy.sqrt(5) * (4 * z - 1) * (2 * x + z - 1) * (2 * y + z - 1) / (1 - z) ** 2,
         ]
     elif n == 2:
         w = [
-            sympy.sqrt(3),  # 000
-            (2 * y + z - 1) * sympy.sqrt(15),  # 010
-            (6 * y * (y + z - 1) + (1 - z) ** 2) * sympy.sqrt(35),  # 020
-            (2 * x + z - 1) * sympy.sqrt(15),  # 100
-            (2 * x + z - 1) * (2 * y + z - 1) / (1 - z) * sympy.sqrt(45),  # 110
-            (6 * y * (y + z - 1) / (1 - z) + (1 - z)) * (2 * x + z - 1) * sympy.sqrt(105),  # 120
-            (6 * x * (x + z - 1) + (1 - z) ** 2) * sympy.sqrt(35),  # 200
-            (6 * x * (x + z - 1) / (1 - z) + (1 - z)) * (2 * y + z - 1) * sympy.sqrt(105),  # 210
-            (6 * x * (x + z - 1) + (1 - z) ** 2)
-            * (6 * y * (y + z - 1) / (1 - z) ** 2 + 1)
-            * sympy.sqrt(175),  # 220
-            (4 * z - 1) * sympy.sqrt(5),  # 001
-            (2 * y + z - 1) * (6 * z - 1) * sympy.sqrt(21),  # 011
-            (2 * x + z - 1) * (6 * z - 1) * sympy.sqrt(21),  # 101
-            (2 * x + z - 1) * (2 * y + z - 1) * (6 * z - 1) / (1 - z) * sympy.sqrt(63),  # 111
-            (15 * z**2 - 10 * z + 1) * sympy.sqrt(7),  # 002
+            sympy.sqrt(3),
+            sympy.sqrt(5) * (4 * z - 1),
+            sympy.sqrt(7) * ((15 * z / 4 - 25 / 16) * (4 * z - 1) - 9 / 16),
+            3 * (2 * y + z - 1) / (1 - z),
+            sympy.sqrt(15) * (4 * z - 1) * (2 * y + z - 1) / (1 - z),
+            sympy.sqrt(21)
+            * ((15 * z / 4 - 25 / 16) * (4 * z - 1) - 9 / 16)
+            * (2 * y + z - 1)
+            / (1 - z),
+            sympy.sqrt(15) * (-1 / 2 + 3 * (2 * y + z - 1) ** 2 / (2 * (1 - z) ** 2)),
+            5 * (-1 / 2 + 3 * (2 * y + z - 1) ** 2 / (2 * (1 - z) ** 2)) * (4 * z - 1),
+            sympy.sqrt(35)
+            * (-1 / 2 + 3 * (2 * y + z - 1) ** 2 / (2 * (1 - z) ** 2))
+            * ((15 * z / 4 - 25 / 16) * (4 * z - 1) - 9 / 16),
+            3 * (2 * x + z - 1) / (1 - z),
+            sympy.sqrt(15) * (4 * z - 1) * (2 * x + z - 1) / (1 - z),
+            sympy.sqrt(21)
+            * ((15 * z / 4 - 25 / 16) * (4 * z - 1) - 9 / 16)
+            * (2 * x + z - 1)
+            / (1 - z),
+            3 * sympy.sqrt(3) * (2 * x + z - 1) * (2 * y + z - 1) / (1 - z) ** 2,
+            3 * sympy.sqrt(5) * (4 * z - 1) * (2 * x + z - 1) * (2 * y + z - 1) / (1 - z) ** 2,
+            3
+            * sympy.sqrt(7)
+            * ((15 * z / 4 - 25 / 16) * (4 * z - 1) - 9 / 16)
+            * (2 * x + z - 1)
+            * (2 * y + z - 1)
+            / (1 - z) ** 2,
+            3
+            * sympy.sqrt(5)
+            * (-1 / 2 + 3 * (2 * y + z - 1) ** 2 / (2 * (1 - z) ** 2))
+            * (2 * x + z - 1)
+            / (1 - z),
+            5
+            * sympy.sqrt(3)
+            * (-1 / 2 + 3 * (2 * y + z - 1) ** 2 / (2 * (1 - z) ** 2))
+            * (4 * z - 1)
+            * (2 * x + z - 1)
+            / (1 - z),
+            sympy.sqrt(105)
+            * (-1 / 2 + 3 * (2 * y + z - 1) ** 2 / (2 * (1 - z) ** 2))
+            * ((15 * z / 4 - 25 / 16) * (4 * z - 1) - 9 / 16)
+            * (2 * x + z - 1)
+            / (1 - z),
+            sympy.sqrt(15) * (-1 / 2 + 3 * (2 * x + z - 1) ** 2 / (2 * (1 - z) ** 2)),
+            5 * (-1 / 2 + 3 * (2 * x + z - 1) ** 2 / (2 * (1 - z) ** 2)) * (4 * z - 1),
+            sympy.sqrt(35)
+            * (-1 / 2 + 3 * (2 * x + z - 1) ** 2 / (2 * (1 - z) ** 2))
+            * ((15 * z / 4 - 25 / 16) * (4 * z - 1) - 9 / 16),
+            3
+            * sympy.sqrt(5)
+            * (-1 / 2 + 3 * (2 * x + z - 1) ** 2 / (2 * (1 - z) ** 2))
+            * (2 * y + z - 1)
+            / (1 - z),
+            5
+            * sympy.sqrt(3)
+            * (-1 / 2 + 3 * (2 * x + z - 1) ** 2 / (2 * (1 - z) ** 2))
+            * (4 * z - 1)
+            * (2 * y + z - 1)
+            / (1 - z),
+            sympy.sqrt(105)
+            * (-1 / 2 + 3 * (2 * x + z - 1) ** 2 / (2 * (1 - z) ** 2))
+            * ((15 * z / 4 - 25 / 16) * (4 * z - 1) - 9 / 16)
+            * (2 * y + z - 1)
+            / (1 - z),
+            5
+            * sympy.sqrt(3)
+            * (-1 / 2 + 3 * (2 * x + z - 1) ** 2 / (2 * (1 - z) ** 2))
+            * (-1 / 2 + 3 * (2 * y + z - 1) ** 2 / (2 * (1 - z) ** 2)),
+            5
+            * sympy.sqrt(5)
+            * (-1 / 2 + 3 * (2 * x + z - 1) ** 2 / (2 * (1 - z) ** 2))
+            * (-1 / 2 + 3 * (2 * y + z - 1) ** 2 / (2 * (1 - z) ** 2))
+            * (4 * z - 1),
+            5
+            * sympy.sqrt(7)
+            * (-1 / 2 + 3 * (2 * x + z - 1) ** 2 / (2 * (1 - z) ** 2))
+            * (-1 / 2 + 3 * (2 * y + z - 1) ** 2 / (2 * (1 - z) ** 2))
+            * ((15 * z / 4 - 25 / 16) * (4 * z - 1) - 9 / 16),
         ]
     else:
         raise NotImplementedError()
@@ -117,17 +183,9 @@ def test_symbolic_pyramid(n, nderiv):
     for kx in range(nderiv + 1):
         for ky in range(0, nderiv + 1 - kx):
             for kz in range(0, nderiv + 1 - kx - ky):
-                print(f"== {kx} {ky} {kz} ==\n")
                 wsym = np.zeros_like(wtab[0])
                 for i, wi in enumerate(w):
                     wd = sympy.diff(wi, x, kx, y, ky, z, kz)
                     for j, p in enumerate(pts0):
                         wsym[i, j] = wd.subs([(x, p[0]), (y, p[1]), (z, p[2])])
-                for n, (i, j) in enumerate(zip(wtab[idx(kx, ky, kz)], wsym)):
-                    print(n, wsym.shape)
-                    print(i)
-                    print(j)
-                    print(i - j)
-                    print(np.allclose(i, j))
-                    print()
                 assert np.allclose(wtab[idx(kx, ky, kz)], wsym)

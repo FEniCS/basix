@@ -221,31 +221,29 @@ void tabulate_lagrange_pyramid(
         }
       }
     }
-        }
+  }
 
-        // Extend into r > 0
-        for (std::size_t r = 1; r <= n; ++r)
+  // Extend into r > 0
+  for (std::size_t r = 1; r <= n; ++r)
+  {
+    for (std::size_t p = 0; p <= n - r; ++p)
+    {
+      for (std::size_t q = 0; q <= n - r; ++q)
+      {
+        auto [ar, br, cr] = jrc<T>(2 * std::max(p, q) + 2, r - 1);
+        auto r_pqr = md::submdspan(P, pyr_idx(p, q, r), md::full_extent);
+        auto _r0 = md::submdspan(P, pyr_idx(p, q, r - 1), md::full_extent);
+        for (std::size_t i = 0; i < r_pqr.size(); ++i)
+          r_pqr[i] = _r0[i] * (2.0 * x2[i] * ar + br - ar);
+        if (r > 1)
         {
-          for (std::size_t p = 0; p <= n - r; ++p)
-          {
-            for (std::size_t q = 0; q <= n - r; ++q)
-            {
-              auto [ar, br, cr] = jrc<T>(2 * std::max(p, q) + 2, r - 1);
-              auto r_pqr = md::submdspan(P, pyr_idx(p, q, r), md::full_extent);
-              auto _r0
-                  = md::submdspan(P, pyr_idx(p, q, r - 1), md::full_extent);
-              for (std::size_t i = 0; i < r_pqr.size(); ++i)
-                r_pqr[i] = _r0[i] * (2.0 * x2[i] * ar + br - ar);
-              if (r > 1)
-              {
-                auto _r
-                    = md::submdspan(P, pyr_idx(p, q, r - 2), md::full_extent);
-                for (std::size_t i = 0; i < r_pqr.size(); ++i)
-                  r_pqr[i] -= _r[i] * cr;
-              }
-            }
-          }
+          auto _r = md::submdspan(P, pyr_idx(p, q, r - 2), md::full_extent);
+          for (std::size_t i = 0; i < r_pqr.size(); ++i)
+            r_pqr[i] -= _r[i] * cr;
         }
+      }
+    }
+  }
 
   for (std::size_t r = 0; r <= n; ++r)
   {

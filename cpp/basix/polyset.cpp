@@ -11,8 +11,6 @@
 #include <cmath>
 #include <stdexcept>
 
-#include <iostream>
-
 using namespace basix;
 using namespace basix::indexing;
 
@@ -2033,7 +2031,6 @@ void tabulate_polyset_pyramid_derivs(
   assert(P.extent(1)
          == (std::size_t)dim(cell::type::pyramid, polyset::type::standard, n));
   assert(P.extent(2) == x.extent(0));
-  std::cout << n << " --> " << P.extent(1) << "\n";
 
   // Indexing for pyramidal basis functions
   auto pyr_idx
@@ -2269,15 +2266,12 @@ void tabulate_polyset_pyramid_derivs(
         auto pqr = md::submdspan(P, md::full_extent, pyr_idx(p, q, r),
                                  md::full_extent);
         auto norm = std::sqrt(2 * (q + 0.5) * (p + 0.5) * (r + 1.5)) * 2;
-        std::cout << p << " " << q << " " << r << " [" << pyr_idx(p, q, r)
-                  << "] -> " << norm << "\n";
         for (std::size_t i = 0; i < pqr.extent(0); ++i)
           for (std::size_t j = 0; j < pqr.extent(1); ++j)
             pqr(i, j) *= norm;
       }
     }
   }
-  std::cout << "A\n";
 }
 //-----------------------------------------------------------------------------
 template <typename T>

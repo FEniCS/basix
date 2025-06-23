@@ -107,7 +107,7 @@ FiniteElement<T> create_d_lagrange(cell::type celltype, int degree,
                                    element::lagrange_variant variant,
                                    lattice::type lattice_type,
                                    lattice::simplex_method simplex_method,
-                                   std::vector<int> dof_ordering)
+                                   const std::vector<int>& dof_ordering)
 {
   if (celltype == cell::type::prism or celltype == cell::type::pyramid)
   {
@@ -209,7 +209,8 @@ create_d_iso(cell::type celltype, int degree, element::lagrange_variant variant,
 //----------------------------------------------------------------------------
 template <std::floating_point T>
 FiniteElement<T> create_legendre(cell::type celltype, int degree,
-                                 bool discontinuous, std::vector<int> dof_ordering)
+                                 bool discontinuous,
+                                 const std::vector<int>& dof_ordering)
 {
   if (!discontinuous)
     throw std::runtime_error("Legendre variant must be discontinuous");
@@ -260,7 +261,8 @@ FiniteElement<T> create_legendre(cell::type celltype, int degree,
 //-----------------------------------------------------------------------------
 template <std::floating_point T>
 FiniteElement<T> create_bernstein(cell::type celltype, int degree,
-                                  bool discontinuous, std::vector<int> dof_ordering)
+                                  bool discontinuous,
+                                  const std::vector<int>& dof_ordering)
 {
   assert(degree > 0);
   if (celltype != cell::type::interval and celltype != cell::type::triangle
@@ -438,7 +440,7 @@ template <std::floating_point T>
 FiniteElement<T>
 basix::element::create_lagrange(cell::type celltype, int degree,
                                 lagrange_variant variant, bool discontinuous,
-                                std::vector<int> dof_ordering)
+                                const std::vector<int>& dof_ordering)
 {
   if (celltype == cell::type::point)
   {
@@ -766,10 +768,10 @@ FiniteElement<T> basix::element::create_iso(cell::type celltype, int degree,
 //-----------------------------------------------------------------------------
 template FiniteElement<float> element::create_lagrange(cell::type, int,
                                                        lagrange_variant, bool,
-                                                       std::vector<int>);
-template FiniteElement<double> element::create_lagrange(cell::type, int,
-                                                        lagrange_variant, bool,
-                                                        std::vector<int>);
+                                                       const std::vector<int>&);
+template FiniteElement<double>
+element::create_lagrange(cell::type, int, lagrange_variant, bool,
+                         const std::vector<int>&);
 template FiniteElement<float> element::create_iso(cell::type, int,
                                                   lagrange_variant, bool);
 template FiniteElement<double> element::create_iso(cell::type, int,

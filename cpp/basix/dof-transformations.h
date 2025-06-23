@@ -40,9 +40,8 @@ template <std::floating_point T>
 std::map<cell::type, std::pair<std::vector<T>, std::array<std::size_t, 3>>>
 compute_entity_transformations(
     cell::type cell_type,
-    std::array<std::vector<md::mdspan<const T, md::dextents<std::size_t, 2>>>,
-               4>
-        x,
+    const std::array<
+        std::vector<md::mdspan<const T, md::dextents<std::size_t, 2>>>, 4>& x,
     std::array<std::vector<md::mdspan<const T, md::dextents<std::size_t, 4>>>,
                4>
         M,

@@ -3111,15 +3111,11 @@ int polyset::nderivs(cell::type celltype, int n)
   case cell::type::interval:
     return n + 1;
   case cell::type::triangle:
-    return (n + 1) * (n + 2) / 2;
   case cell::type::quadrilateral:
     return (n + 1) * (n + 2) / 2;
   case cell::type::tetrahedron:
-    return (n + 1) * (n + 2) * (n + 3) / 6;
   case cell::type::hexahedron:
-    return (n + 1) * (n + 2) * (n + 3) / 6;
   case cell::type::prism:
-    return (n + 1) * (n + 2) * (n + 3) / 6;
   case cell::type::pyramid:
     return (n + 1) * (n + 2) * (n + 3) / 6;
   default:

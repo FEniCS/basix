@@ -776,7 +776,7 @@ def tp_factors(
     discontinuous: bool = False,
     dof_ordering: typing.Optional[list[int]] = None,
     dtype: npt.DTypeLike = np.float64,
-) -> list[list[FiniteElement]]:
+) -> typing.Optional[list[list[FiniteElement]]]:
     """Elements in the tensor product factorisation of an element.
 
     If the element has no factorisation, an empty list is returned.
@@ -797,19 +797,21 @@ def tp_factors(
     Returns:
         A list of finite elements.
     """
-    return [
-        [FiniteElement(e) for e in elements]
-        for elements in _tp_factors(
-            family,
-            celltype,
-            degree,
-            lagrange_variant,
-            dpc_variant,
-            discontinuous,
-            dof_ordering if dof_ordering is not None else [],
-            np.dtype(dtype).char,
-        )
-    ]
+    factors = _tp_factors(
+        family,
+        celltype,
+        degree,
+        lagrange_variant,
+        dpc_variant,
+        discontinuous,
+        dof_ordering if dof_ordering is not None else [],
+        np.dtype(dtype).char,
+    )
+
+    if factors is None:
+        return None
+
+    return [[FiniteElement(e) for e in elements] for elements in factors]
 
 
 def tp_dof_ordering(
@@ -819,7 +821,7 @@ def tp_dof_ordering(
     lagrange_variant: LagrangeVariant = LagrangeVariant.unset,
     dpc_variant: DPCVariant = DPCVariant.unset,
     discontinuous: bool = False,
-) -> list[int]:
+) -> typing.Optional[list[int]]:
     """Tensor product DOF ordering for an element.
 
     This DOF ordering can be passed into create_element to create the

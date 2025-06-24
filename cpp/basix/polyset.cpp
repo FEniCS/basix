@@ -2078,20 +2078,28 @@ void tabulate_polyset_pyramid_derivs(
               p00[i] = (a + 1.0) * (2.0 * x0over - 1.0) * p1[i];
             }
             if (kx > 0)
-            { // TODO
+            {
               auto p11 = md::submdspan(P, idx(kx - 1, ky, kz),
                                        pyr_idx(p - 1, 0, 0), md::full_extent);
 
               for (std::size_t i = 0; i < p00.size(); ++i)
-                p00[i] += (a + 1.0) * 2.0 * kx * p11[i];
+              {
+                const T over_z = x2[i] == 1.0 ? 1.0 : 1.0 / (1.0 - x2[i]);
+                p00[i] += (a + 1.0) * 2.0 * kx * p11[i] * over_z;
+              }
             }
 
             if (kz > 0)
-            { // TODO
-              auto pz = md::submdspan(P, idx(kx, ky, kz - 1),
-                                      pyr_idx(p - 1, 0, 0), md::full_extent);
+            {
+              auto pz = md::submdspan(P, idx(kx, ky, kz - 1), pyr_idx(p, 0, 0),
+                                      md::full_extent);
+              auto p1z = md::submdspan(P, idx(kx, ky, kz - 1),
+                                       pyr_idx(p - 1, 0, 0), md::full_extent);
               for (std::size_t i = 0; i < p00.size(); ++i)
-                p00[i] += (a + 1.0) * kz * pz[i];
+              {
+                const T over_z = x2[i] == 1.0 ? 1.0 : 1.0 / (1.0 - x2[i]);
+                p00[i] += kz * ((a + 1.0) * p1z[i] + pz[i]) * over_z;
+              }
             }
             if (p > 1)
             {
@@ -2100,19 +2108,14 @@ void tabulate_polyset_pyramid_derivs(
               for (std::size_t i = 0; i < p00.size(); ++i)
                 p00[i] -= a * p2[i];
               if (kz > 0)
-              { // TODO
+              {
                 auto p2z = md::submdspan(P, idx(kx, ky, kz - 1),
                                          pyr_idx(p - 2, 0, 0), md::full_extent);
                 for (std::size_t i = 0; i < p00.size(); ++i)
-                  p00[i] += 2.0 * a * kz * (1.0 - x2[i]) * p2z[i];
-              }
-
-              if (kz > 1)
-              { // TODO
-                auto pz = md::submdspan(P, idx(kx, ky, kz - 2),
-                                        pyr_idx(p - 2, 0, 0), md::full_extent);
-                for (std::size_t i = 0; i < p00.size(); ++i)
-                  p00[i] -= a * kz * (kz - 1) * pz[i];
+                {
+                  const T over_z = x2[i] == 1.0 ? 1.0 : 1.0 / (1.0 - x2[i]);
+                  p00[i] += a * kz * p2z[i] * over_z;
+                }
               }
             }
           }
@@ -2120,57 +2123,37 @@ void tabulate_polyset_pyramid_derivs(
           for (std::size_t q = 1; q <= n; ++q)
           {
             const T a = static_cast<T>(q - 1) / static_cast<T>(q);
-            auto r_pq = md::submdspan(P, idx(kx, ky, kz), pyr_idx(p, q, 0),
-                                      md::full_extent);
+            auto pq0 = md::submdspan(P, idx(kx, ky, kz), pyr_idx(p, q, 0),
+                                     md::full_extent);
 
             auto _p = md::submdspan(P, idx(kx, ky, kz), pyr_idx(p, q - 1, 0),
                                     md::full_extent);
-            for (std::size_t i = 0; i < r_pq.size(); ++i)
+            for (std::size_t i = 0; i < pq0.size(); ++i)
             {
               const T x1over = x2[i] == 1.0 ? 0.0 : x1[i] / (1.0 - x2[i]);
-              r_pq[i] = (a + 1.0) * (2.0 * x1over - 1.0) * _p[i];
+              pq0[i] = (a + 1.0) * (2.0 * x1over - 1.0) * _p[i];
             }
             if (ky > 0)
-            { // TODO
-              auto _p = md::submdspan(P, idx(kx, ky - 1, kz),
-                                      pyr_idx(p, q - 1, 0), md::full_extent);
-              if (q <= p)
+            {
+              auto p11 = md::submdspan(P, idx(kx, ky - 1, kz),
+                                       pyr_idx(p, q - 1, 0), md::full_extent);
+              for (std::size_t i = 0; i < pq0.size(); ++i)
               {
-                for (std::size_t i = 0; i < r_pq.size(); ++i)
-                {
-                  const T over_z = x2[i] == 1.0 ? 1.0 : 1.0 / (1.0 - x2[i]);
-                  r_pq[i] += 2.0 * (a + 1.0) * ky * over_z * _p[i];
-                }
-              }
-              else
-              {
-                for (std::size_t i = 0; i < r_pq.size(); ++i)
-                  r_pq[i] += 2.0 * (a + 1.0) * ky * _p[i];
+                const T over_z = x2[i] == 1.0 ? 1.0 : 1.0 / (1.0 - x2[i]);
+                pq0[i] += 2.0 * (a + 1.0) * ky * p11[i] * over_z;
               }
             }
 
             if (kz > 0)
-            { // TODO
-              if (q <= p)
+            {
+              auto pz = md::submdspan(P, idx(kx, ky, kz - 1), pyr_idx(p, q, 0),
+                                      md::full_extent);
+              auto p1z = md::submdspan(P, idx(kx, ky, kz - 1),
+                                       pyr_idx(p, q - 1, 0), md::full_extent);
+              for (std::size_t i = 0; i < pq0.size(); ++i)
               {
-                auto _p = md::submdspan(P, idx(kx, ky, kz - 1),
-                                        pyr_idx(p, q, 0), md::full_extent);
-                auto _p1 = md::submdspan(P, idx(kx, ky, kz - 1),
-                                         pyr_idx(p, q - 1, 0), md::full_extent);
-                for (std::size_t i = 0; i < r_pq.size(); ++i)
-                {
-                  const T over_z = x2[i] == 1.0 ? 1.0 : 1.0 / (1.0 - x2[i]);
-                  r_pq[i] += kz * over_z * ((a + 1.0) * _p1[i] + _p[i]);
-                }
-              }
-              else
-              {
-                auto _p1 = md::submdspan(P, idx(kx, ky, kz - 1),
-                                         pyr_idx(p, q - 1, 0), md::full_extent);
-                for (std::size_t i = 0; i < r_pq.size(); ++i)
-                {
-                  r_pq[i] += (a + 1.0) * kz * _p1[i];
-                }
+                const T over_z = x2[i] == 1.0 ? 1.0 : 1.0 / (1.0 - x2[i]);
+                pq0[i] += kz * ((a + 1.0) * p1z[i] + pz[i]) * over_z;
               }
             }
 
@@ -2178,37 +2161,17 @@ void tabulate_polyset_pyramid_derivs(
             {
               auto _p = md::submdspan(P, idx(kx, ky, kz), pyr_idx(p, q - 2, 0),
                                       md::full_extent);
-              for (std::size_t i = 0; i < r_pq.size(); ++i)
-                r_pq[i] -= a * _p[i];
+              for (std::size_t i = 0; i < pq0.size(); ++i)
+                pq0[i] -= a * _p[i];
               if (kz > 0)
-              { // TODO
-                auto _p = md::submdspan(P, idx(kx, ky, kz - 1),
-                                        pyr_idx(p, q - 2, 0), md::full_extent);
-                if (q <= p)
+              {
+                auto p2z = md::submdspan(P, idx(kx, ky, kz - 1),
+                                         pyr_idx(p, q - 2, 0), md::full_extent);
+                for (std::size_t i = 0; i < pq0.size(); ++i)
                 {
-                  for (std::size_t i = 0; i < r_pq.size(); ++i)
-                  {
-                    const T over_z = x2[i] == 1.0 ? 1.0 : 1.0 / (1.0 - x2[i]);
-                    r_pq[i] += kz * a * over_z * _p[i];
-                  }
+                  const T over_z = x2[i] == 1.0 ? 1.0 : 1.0 / (1.0 - x2[i]);
+                  pq0[i] += a * kz * p2z[i] * over_z;
                 }
-                else if (q == p + 1)
-                {
-                  for (std::size_t i = 0; i < r_pq.size(); ++i)
-                    r_pq[i] += kz * a * _p[i];
-                }
-                else
-                {
-                  for (std::size_t i = 0; i < r_pq.size(); ++i)
-                    r_pq[i] -= 2.0 * kz * a * (x2[i] - 1.0) * _p[i];
-                }
-              }
-              if (kz > 1 && q > p + 1)
-              { // TODO
-                auto _p = md::submdspan(P, idx(kx, ky, kz - 2),
-                                        pyr_idx(p, q - 2, 0), md::full_extent);
-                for (std::size_t i = 0; i < r_pq.size(); ++i)
-                  r_pq[i] -= kz * (kz - 1.0) * a * _p[i];
               }
             }
           }

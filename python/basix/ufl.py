@@ -190,7 +190,7 @@ class _ElementBase(_AbstractFiniteElement):
         return self._reference_value_shape
 
     @property
-    def sub_elements(self) -> list[_AbstractFiniteElement]:
+    def sub_elements(self) -> _typing.Sequence[_AbstractFiniteElement]:
         """List of sub elements.
 
         This function does not recurse: i.e. it does not extract the
@@ -820,7 +820,7 @@ class _MixedElement(_ElementBase):
         )
 
     @property
-    def sub_elements(self) -> _typing.Sequence[_AbstractFiniteElement]:
+    def sub_elements(self) -> _typing.Sequence[_ElementBase]:
         return self._sub_elements
 
     @property

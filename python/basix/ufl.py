@@ -756,7 +756,7 @@ class _MixedElement(_ElementBase):
 
     @property
     def dtype(self) -> _npt.DTypeLike:
-        return self.elements[0].dtype
+        return self._sub_elements[0].dtype
 
     @property
     def is_mixed(self) -> bool:

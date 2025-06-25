@@ -80,9 +80,6 @@ def parametrize_over_elements(degree, reference=None, discontinuous=False):
             elementlist.append((c, ElementFamily.Regge, k, []))
             if k == 3:
                 elementlist.append((c, ElementFamily.Hermite, k, []))
-
-        # Elements on triangles
-        for c in [CellType.triangle]:
             elementlist.append((c, ElementFamily.HHJ, k, []))
 
         # Elements on tensor product cells

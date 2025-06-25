@@ -730,10 +730,11 @@ class _MixedElement(_ElementBase):
         """Initialise the element."""
         assert len(sub_elements) > 0
         self._sub_elements = sub_elements
-        if all(isinstance(e.pullback, _IdentityPullback) for e in sub_elements):
-            pullback = _ufl.identity_pullback
-        else:
-            pullback = _MixedPullback(self)
+        pullback = (
+            _ufl.identity_pullback
+            if all(isinstance(e.pullback, _IdentityPullback) for e in sub_elements)
+            else _MixedPullback(self)
+        )
 
         repr = "mixed element (" + ", ".join(i._repr for i in sub_elements) + ")"
         super().__init__(

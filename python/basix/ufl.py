@@ -820,7 +820,7 @@ class _MixedElement(_ElementBase):
         )
 
     @property
-    def sub_elements(self) -> list[_AbstractFiniteElement]:
+    def sub_elements(self) -> _typing.Sequence[_AbstractFiniteElement]:
         return self._sub_elements
 
     @property

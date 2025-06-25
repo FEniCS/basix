@@ -1255,7 +1255,7 @@ class _QuadratureElement(_ElementBase):
 
     @property
     def dtype(self) -> _npt.DTypeLike:
-        raise self.points.dtype
+        raise self._points.dtype
 
     @property
     def basix_sobolev_space(self) -> _basix.SobolevSpace:

@@ -820,7 +820,7 @@ class _MixedElement(_ElementBase):
         )
 
     @property
-    def sub_elements(self) -> list[_ElementBase]:
+    def sub_elements(self) -> list[_AbstractFiniteElement]:
         return self._sub_elements
 
     @property
@@ -1079,7 +1079,7 @@ class _BlockedElement(_ElementBase):
         return self._sub_element.basix_sobolev_space
 
     @property
-    def sub_elements(self) -> list[_ElementBase]:
+    def sub_elements(self) -> list[_AbstractFiniteElement]:
         return [self._sub_element for _ in range(self._block_size)]
 
     @property

@@ -1003,7 +1003,7 @@ class _BlockedElement(_ElementBase):
 
         if symmetry:
             n = 0
-            symmetry_mapping = {}
+            symmetry_mapping: dict[tuple[int, ...], int] = {}
             for i in range(shape[0]):
                 for j in range(i + 1):
                     symmetry_mapping[(i, j)] = n

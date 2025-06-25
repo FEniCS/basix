@@ -10,7 +10,7 @@ if(SKBUILD AND UNIX)
 endif()
 
 if (SKBUILD)
-  # Make sure includes end up inside basix/ subdirectory in wheel. 
+  # Make sure includes end up inside basix/ subdirectory in wheel.
   set(CMAKE_INSTALL_INCLUDEDIR basix/include)
   # Make sure all binaries end up inside basix/ subdirectory in wheel.
   set(CMAKE_INSTALL_BINDIR basix)
@@ -30,6 +30,7 @@ add_feature_info(ENABLE_CLANG_TIDY ENABLE_CLANG_TIDY "Run clang-tidy while build
 
 find_package(BLAS REQUIRED)
 find_package(LAPACK REQUIRED)
+find_package(QuadratureRules 0.7.7 REQUIRED)
 
 feature_summary(WHAT ALL)
 
@@ -121,6 +122,7 @@ target_compile_definitions(basix PUBLIC MDSPAN_USE_BRACKET_OPERATOR=0)
 
 target_link_libraries(basix PRIVATE BLAS::BLAS)
 target_link_libraries(basix PRIVATE LAPACK::LAPACK)
+target_link_libraries(basix PRIVATE QuadratureRules::quadraturerules)
 
 if (UNIX)
     list(APPEND BASIX_DEVELOPER_FLAGS -O2;-g;-pipe)

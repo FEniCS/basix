@@ -190,7 +190,7 @@ class _ElementBase(_AbstractFiniteElement):
         return self._reference_value_shape
 
     @property
-    def sub_elements(self) -> list[_AbstractFiniteElement]:
+    def sub_elements(self) -> _typing.Sequence[_AbstractFiniteElement]:
         """List of sub elements.
 
         This function does not recurse: i.e. it does not extract the
@@ -730,10 +730,11 @@ class _MixedElement(_ElementBase):
         """Initialise the element."""
         assert len(sub_elements) > 0
         self._sub_elements = sub_elements
-        if all(isinstance(e.pullback, _IdentityPullback) for e in sub_elements):
-            pullback = _ufl.identity_pullback
-        else:
-            pullback = _MixedPullback(self)
+        pullback = (
+            _ufl.identity_pullback
+            if all(isinstance(e.pullback, _IdentityPullback) for e in sub_elements)
+            else _MixedPullback(self)
+        )
 
         repr = "mixed element (" + ", ".join(i._repr for i in sub_elements) + ")"
         super().__init__(
@@ -756,7 +757,7 @@ class _MixedElement(_ElementBase):
 
     @property
     def dtype(self) -> _npt.DTypeLike:
-        return self.elements[0].dtype
+        return self._sub_elements[0].dtype
 
     @property
     def is_mixed(self) -> bool:
@@ -819,7 +820,7 @@ class _MixedElement(_ElementBase):
         )
 
     @property
-    def sub_elements(self) -> list[_ElementBase]:
+    def sub_elements(self) -> _typing.Sequence[_ElementBase]:
         return self._sub_elements
 
     @property
@@ -1002,7 +1003,7 @@ class _BlockedElement(_ElementBase):
 
         if symmetry:
             n = 0
-            symmetry_mapping = {}
+            symmetry_mapping: dict[tuple[int, ...], int] = {}
             for i in range(shape[0]):
                 for j in range(i + 1):
                     symmetry_mapping[(i, j)] = n
@@ -1078,7 +1079,7 @@ class _BlockedElement(_ElementBase):
         return self._sub_element.basix_sobolev_space
 
     @property
-    def sub_elements(self) -> list[_ElementBase]:
+    def sub_elements(self) -> list[_AbstractFiniteElement]:
         return [self._sub_element for _ in range(self._block_size)]
 
     @property
@@ -1255,7 +1256,7 @@ class _QuadratureElement(_ElementBase):
 
     @property
     def dtype(self) -> _npt.DTypeLike:
-        raise self.points.dtype
+        return self._points.dtype
 
     @property
     def basix_sobolev_space(self) -> _basix.SobolevSpace:

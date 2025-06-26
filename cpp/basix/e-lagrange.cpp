@@ -496,10 +496,46 @@ basix::element::create_lagrange(cell::type celltype, int degree,
   }
 
   const std::size_t tdim = cell::topological_dimension(celltype);
-  const std::size_t ndofs
+  const std::size_t psize
       = polyset::dim(celltype, polyset::type::standard, degree);
+  const std::size_t ndofs
+      = celltype == cell::type::pyramid
+            ? polynomials::dim(polynomials::type::lagrange, celltype, degree)
+            : psize;
   const std::vector<std::vector<std::vector<int>>> topology
       = cell::topology(celltype);
+
+  std::vector<T> data = celltype == cell::type::pyramid
+                            ? std::vector<T>(ndofs * psize)
+                            : math::eye<T>(ndofs);
+  impl::mdspan_t<T, 2> wcoeffs(data.data(), ndofs, psize);
+  if (celltype == cell::type::pyramid)
+  {
+    const auto [_pts, wts] = quadrature::make_quadrature<T>(
+        quadrature::type::Default, cell::type::pyramid, polyset::type::standard,
+        2 * degree);
+    impl::mdspan_t<const T, 2> pts(_pts.data(), wts.size(),
+                                   _pts.size() / wts.size());
+
+    const auto [_pset_table, shape] = polyset::tabulate(
+        cell::type::pyramid, polyset::type::standard, degree, 0, pts);
+    impl::mdspan_t<const T, 3> pset_table(_pset_table.data(), shape);
+    const auto [_poly_table, shape2] = polynomials::tabulate(
+        polynomials::type::lagrange, cell::type::pyramid, degree, pts);
+    impl::mdspan_t<const T, 2> poly_table(_poly_table.data(), shape2);
+
+    for (std::size_t i = 0; i < ndofs; ++i)
+    {
+      for (std::size_t j = 0; j < psize; ++j)
+      {
+        wcoeffs(i, j) = 0.0;
+        for (std::size_t k = 0; k < wts.size(); ++k)
+        {
+          wcoeffs(i, j) += wts[k] * poly_table(i, k) * pset_table(0, j, k);
+        }
+      }
+    }
+  }
 
   std::array<std::vector<impl::mdarray_t<T, 2>>, 4> x;
   std::array<std::vector<impl::mdarray_t<T, 4>>, 4> M;
@@ -603,11 +639,11 @@ basix::element::create_lagrange(cell::type celltype, int degree,
 
   sobolev::space space
       = discontinuous ? sobolev::space::L2 : sobolev::space::H1;
-  return FiniteElement<T>(
-      family::P, celltype, polyset::type::standard, degree, {},
-      impl::mdspan_t<T, 2>(math::eye<T>(ndofs).data(), ndofs, ndofs), xview,
-      Mview, 0, maps::type::identity, space, discontinuous, degree, degree,
-      variant, dpc_variant::unset, dof_ordering);
+
+  return FiniteElement<T>(family::P, celltype, polyset::type::standard, degree,
+                          {}, wcoeffs, xview, Mview, 0, maps::type::identity,
+                          space, discontinuous, degree, degree, variant,
+                          dpc_variant::unset, dof_ordering);
 }
 //-----------------------------------------------------------------------------
 template <std::floating_point T>

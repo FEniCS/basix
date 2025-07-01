@@ -63,9 +63,10 @@ jobs:
       - name: Install Basix
         run: pip -v install .[ci]
       - name: Run MyPy
+        working-directory: python
         run: |
           mypy -p basix
-          mypy test
+        # mypy ../test
         # mypy demo/python
       - name: Run units tests
         run: pytest -n auto --durations 20 test/

@@ -23,7 +23,15 @@ test = ["pytest", "sympy", "scipy", "matplotlib", "fenics-basix[optional]"]
 ci = ["mypy", "pytest-xdist", "fenics-basix[docs,lint,test,optional]"]
 
 [tool.mypy]
-ignore_missing_imports = true
+# Suggested at https://blog.wolt.com/engineering/2021/09/30/professional-grade-mypy-configuration/
+# Goal would be to make all of the below True long-term
+disallow_untyped_defs = true
+disallow_any_unimported = true
+no_implicit_optional = true
+check_untyped_defs = true
+warn_return_any = true
+warn_unused_ignores = true
+show_error_codes = true
 
 [tool.ruff]
 line-length = 100

@@ -502,6 +502,57 @@ cell::facet_normals(cell::type cell_type)
   }
 }
 //-----------------------------------------------------------------------------
+template <std::floating_point T>
+std::pair<std::vector<T>, std::array<std::size_t, 2>>
+cell::scaled_facet_normals(cell::type cell_type)
+{
+  const std::size_t tdim = cell::topological_dimension(cell_type);
+  std::vector<std::vector<int>> facets = cell::topology(cell_type)[tdim - 1];
+  auto [xdata, xshape] = cell::geometry<T>(cell_type);
+
+  mdspan_t<const T, 2> x(xdata.data(), xshape);
+  std::array<std::size_t, 2> shape = {facets.size(), tdim};
+  std::vector<T> normal(shape[0] * shape[1]);
+  mdspan_t<T, 2> n(normal.data(), shape);
+  switch (tdim)
+  {
+  case 1:
+    std::ranges::fill(normal, 1.0);
+    return {normal, shape};
+  case 2:
+  {
+    for (std::size_t f = 0; f < facets.size(); ++f)
+    {
+      const std::vector<int>& facet = facets[f];
+      assert(facet.size() == 2);
+      n(f, 0) = x(facet[1], 1) - x(facet[0], 1);
+      n(f, 1) = x(facet[0], 0) - x(facet[1], 0);
+    }
+    return {normal, shape};
+  }
+  case 3:
+  {
+    for (std::size_t f = 0; f < facets.size(); ++f)
+    {
+      const std::vector<int>& facet = facets[f];
+      assert(facets[f].size() == 3 or facets[f].size() == 4);
+      std::array<T, 3> e0, e1;
+      for (std::size_t i = 0; i < 3; ++i)
+      {
+        e0[i] = x(facet[1], i) - x(facet[0], i);
+        e1[i] = x(facet[2], i) - x(facet[0], i);
+      }
+      n(f, 0) = e0[1] * e1[2] - e0[2] * e1[1];
+      n(f, 1) = e0[2] * e1[0] - e0[0] * e1[2];
+      n(f, 2) = e0[0] * e1[1] - e0[1] * e1[0];
+    }
+    return {normal, shape};
+  }
+  default:
+    throw std::runtime_error("Wrong topological dimension");
+  }
+}
+//-----------------------------------------------------------------------------
 std::vector<bool> cell::facet_orientations(cell::type cell_type)
 {
   const std::size_t tdim = cell::topological_dimension(cell_type);
@@ -538,6 +589,7 @@ std::vector<T> cell::facet_reference_volumes(cell::type cell_type)
   int tdim = topological_dimension(cell_type);
   std::vector<cell::type> facet_types = subentity_types(cell_type)[tdim - 1];
   std::vector<T> out;
+  out.reserve(facet_types.size());
   for (auto& facet_type : facet_types)
     out.push_back(cell::volume<T>(facet_type));
   return out;
@@ -633,7 +685,7 @@ cell::entity_jacobians(cell::type cell_type, std::size_t e_dim)
         J(e, k, j) = x(entity[1 + j], k) - x(entity[0], k);
   }
 
-  return {std::move(jacobians), std::move(shape)};
+  return {std::move(jacobians), shape};
 }
 //-----------------------------------------------------------------------------
 template <std::floating_point T>
@@ -688,6 +740,11 @@ template std::pair<std::vector<float>, std::array<std::size_t, 2>>
     cell::facet_normals(cell::type);
 template std::pair<std::vector<double>, std::array<std::size_t, 2>>
     cell::facet_normals(cell::type);
+
+template std::pair<std::vector<float>, std::array<std::size_t, 2>>
+    cell::scaled_facet_normals(cell::type);
+template std::pair<std::vector<double>, std::array<std::size_t, 2>>
+    cell::scaled_facet_normals(cell::type);
 
 template std::vector<float> cell::facet_reference_volumes(cell::type);
 template std::vector<double> cell::facet_reference_volumes(cell::type);

@@ -431,9 +431,9 @@ def test_transformation_of_tabulated_data_pyramid(element_type, degree, element_
     points = np.array(
         [
             [i / N, j / N, k / N]
-            for i in range(N + 1)
-            for j in range(N + 1 - i)
             for k in range(N + 1)
+            for i in range(N + 1 - k)
+            for j in range(N + 1 - k)
         ]
     )
     values = e.tabulate(0, points)[0]
@@ -463,7 +463,7 @@ def test_transformation_of_tabulated_data_pyramid(element_type, degree, element_
     if ndofs != 0:
         # Check that the 8th transformation undoes the effect of
         # rotating face 0
-        rotated_points = np.array([[1 - p[1] - p[2], p[0], p[2]] for p in points])
+        rotated_points = np.array([[1 - p[2] - p[1], p[0], p[2]] for p in points])
         rotated_values = e.tabulate(0, rotated_points)[0]
         _J = np.array([[0, 1, 0], [-1, 0, 0], [-1, 0, 1]])
         J = np.array([_J for p in points])

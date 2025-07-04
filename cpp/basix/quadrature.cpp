@@ -4917,6 +4917,19 @@ quadrature::type quadrature::get_default_rule(cell::type celltype, int m)
 }
 //-----------------------------------------------------------------------------
 template <std::floating_point T>
+std::array<std::vector<T>, 2> quadrature::gauss_jacobi_rule(T a, int m)
+{
+  auto [pts, wts] = compute_gauss_jacobi_rule(a, m);
+  for (std::size_t i = 0; i < wts.size(); ++i)
+  {
+    pts[i] += 1.0;
+    pts[i] /= 2.0;
+    wts[i] /= std::pow(2.0, a + 1);
+  }
+  return {std::move(pts), std::move(wts)};
+}
+//-----------------------------------------------------------------------------
+template <std::floating_point T>
 std::array<std::vector<T>, 2>
 quadrature::make_quadrature(quadrature::type rule, cell::type celltype,
                             polyset::type polytype, int m)
@@ -4966,6 +4979,7 @@ std::vector<T> quadrature::get_gll_points(int m)
   return make_gll_line<T>(m)[0];
 }
 //-----------------------------------------------------------------------------
+/// @cond DOXYGEN_SHOULD_SKIP_THIS
 template std::array<std::vector<float>, 2>
 quadrature::make_quadrature(quadrature::type, cell::type, polyset::type, int);
 template std::array<std::vector<double>, 2>
@@ -4976,4 +4990,10 @@ template std::vector<double> quadrature::get_gl_points(int);
 
 template std::vector<float> quadrature::get_gll_points(int);
 template std::vector<double> quadrature::get_gll_points(int);
+
+template std::array<std::vector<float>, 2> quadrature::gauss_jacobi_rule(float,
+                                                                         int);
+template std::array<std::vector<double>, 2>
+quadrature::gauss_jacobi_rule(double, int);
+/// @endcond
 //-----------------------------------------------------------------------------

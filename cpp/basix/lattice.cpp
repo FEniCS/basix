@@ -251,7 +251,7 @@ create_quad(std::size_t n, lattice::type lattice_type, bool exterior)
       }
     }
 
-    return {std::move(xb), std::move(shape)};
+    return {std::move(xb), shape};
   }
 }
 //-----------------------------------------------------------------------------
@@ -286,7 +286,7 @@ create_hex(int n, lattice::type lattice_type, bool exterior)
       }
     }
 
-    return {std::move(xb), std::move(shape)};
+    return {std::move(xb), shape};
   }
 }
 //-----------------------------------------------------------------------------
@@ -314,7 +314,7 @@ create_tri_equispaced(std::size_t n, bool exterior)
     }
   }
 
-  return {std::move(_p), std::move(shape)};
+  return {std::move(_p), shape};
 }
 //-----------------------------------------------------------------------------
 
@@ -357,7 +357,7 @@ create_tri_warped(std::size_t n, lattice::type lattice_type, bool exterior)
     }
   }
 
-  return {std::move(_p), std::move(shape)};
+  return {std::move(_p), shape};
 }
 //-----------------------------------------------------------------------------
 template <std::floating_point T>
@@ -417,7 +417,7 @@ create_tri_isaac(std::size_t n, lattice::type lattice_type, bool exterior)
     }
   }
 
-  return {std::move(_p), std::move(shape)};
+  return {std::move(_p), shape};
 }
 //-----------------------------------------------------------------------------
 
@@ -453,7 +453,7 @@ create_tri_centroid(std::size_t n, lattice::type lattice_type, bool exterior)
     }
   }
 
-  return {std::move(_p), std::move(shape)};
+  return {std::move(_p), shape};
 }
 //-----------------------------------------------------------------------------
 template <std::floating_point T>
@@ -520,7 +520,7 @@ create_tet_equispaced(std::size_t n, bool exterior)
     }
   }
 
-  return {std::move(xb), std::move(shape)};
+  return {std::move(xb), shape};
 }
 //-----------------------------------------------------------------------------
 
@@ -554,7 +554,7 @@ create_tet_isaac(std::size_t n, lattice::type lattice_type, bool exterior)
     }
   }
 
-  return {std::move(xb), std::move(shape)};
+  return {std::move(xb), shape};
 }
 //-----------------------------------------------------------------------------
 template <std::floating_point T>
@@ -608,7 +608,7 @@ create_tet_warped(std::size_t n, lattice::type lattice_type, bool exterior)
     }
   }
 
-  return {std::move(xb), std::move(shape)};
+  return {std::move(xb), shape};
 }
 //-----------------------------------------------------------------------------
 
@@ -650,7 +650,7 @@ create_tet_centroid(std::size_t n, lattice::type lattice_type, bool exterior)
     }
   }
 
-  return {std::move(xb), std::move(shape)};
+  return {std::move(xb), shape};
 }
 //-----------------------------------------------------------------------------
 template <std::floating_point T>
@@ -726,7 +726,7 @@ create_prism(std::size_t n, lattice::type lattice_type, bool exterior,
       }
     }
 
-    return {std::move(xb), std::move(shape)};
+    return {std::move(xb), shape};
   }
 }
 //-----------------------------------------------------------------------------
@@ -758,7 +758,7 @@ create_pyramid_equispaced(int n, bool exterior)
     }
   }
 
-  return {std::move(xb), std::move(shape)};
+  return {std::move(xb), shape};
 }
 //-----------------------------------------------------------------------------
 template <std::floating_point T>

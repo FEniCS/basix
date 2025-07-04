@@ -101,7 +101,7 @@ void contravariant_piola(O&& r, const P& U, const Q& J, double detJ,
 
 /// @brief Double covariant Piola map
 template <typename O, typename P, typename Q, typename R>
-void double_covariant_piola(O&& r, const P& U, const Q& J, double /*detJ*/,
+void double_covariant_piola(O&& r, const P& U, const Q& /*J*/, double /*detJ*/,
                             const R& K)
 {
   using T = typename std::decay_t<O>::value_type;
@@ -109,7 +109,7 @@ void double_covariant_piola(O&& r, const P& U, const Q& J, double /*detJ*/,
   for (std::size_t p = 0; p < U.extent(0); ++p)
   {
     md::mdspan<const T, md::dextents<std::size_t, 2>> _U(
-        U.data_handle() + p * U.extent(1), J.extent(1), J.extent(1));
+        U.data_handle() + p * U.extent(1), K.extent(0), K.extent(0));
     md::mdspan<T, md::dextents<std::size_t, 2>> _r(
         r.data_handle() + p * r.extent(1), K.extent(1), K.extent(1));
     // _r = K^T _U K

@@ -1629,6 +1629,21 @@ std::vector<int> tp_dof_ordering(element::family family, cell::type cell,
                                  element::dpc_variant dvariant,
                                  bool discontinuous);
 
+/// Get the lexicographic DOF ordering for an element
+/// @param[in] family The element family
+/// @param[in] cell The reference cell type that the element is defined on.
+/// @param[in] degree The degree of the element
+/// @param[in] lvariant The variant of Lagrange to use
+/// @param[in] dvariant The variant of DPC to use
+/// @param[in] discontinuous Indicates whether the element is discontinuous
+/// between cells points of the element. The discontinuous element will have the
+/// same DOFs, but they will all be associated with the interior of the cell.
+/// @return A vector containing the dof ordering
+std::vector<int> lex_dof_ordering(element::family family, cell::type cell,
+                                  int degree, element::lagrange_variant lvariant,
+                                  element::dpc_variant dvariant,
+                                  bool discontinuous);
+
 /// Get the tensor factors of an element
 /// @param[in] family The element family
 /// @param[in] cell The reference cell type that the element is defined on.
@@ -1645,7 +1660,7 @@ template <std::floating_point T>
 std::vector<std::vector<FiniteElement<T>>>
 tp_factors(element::family family, cell::type cell, int degree,
            element::lagrange_variant lvariant, element::dpc_variant dvariant,
-           bool discontinuous, std::vector<int> dof_ordering);
+           bool discontinuous, const std::vector<int>& dof_ordering);
 
 /// Create an element with Tensor Product dof ordering
 /// @param[in] family The element family

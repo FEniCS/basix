@@ -6,6 +6,7 @@
 """Functions for creating finite elements."""
 
 import typing
+from warnings import warn
 
 import numpy as np
 import numpy.typing as npt
@@ -22,8 +23,9 @@ from basix._basixcpp import (
 from basix._basixcpp import create_element as _create_element
 from basix._basixcpp import create_tp_element as _create_tp_element
 from basix._basixcpp import tp_dof_ordering as _tp_dof_ordering
+from basix._basixcpp import lex_dof_ordering as _lex_dof_ordering
 from basix._basixcpp import tp_factors as _tp_factors
-from basix.cell import CellType
+from basix.cell import CellType, geometry, topology, facet_outward_normals
 from basix import MapType
 from basix.polynomials import PolysetType
 from basix.sobolev_spaces import SobolevSpace
@@ -33,6 +35,7 @@ __all__ = [
     "create_element",
     "create_custom_element",
     "create_tp_element",
+    "lex_dof_ordering",
     "string_to_family",
     "tp_factors",
     "tp_dof_ordering",
@@ -682,6 +685,26 @@ def create_custom_element(
         wcoeffs = np.dtype(dtype).type(wcoeffs)  # type: ignore
         x = [[np.dtype(dtype).type(j) for j in i] for i in x]  # type: ignore
         M = [[np.dtype(dtype).type(j) for j in i] for i in M]  # type: ignore
+
+    # Check shape of x
+    tdim = len(topology(cell_type)) - 1
+    for i in x:
+        for j in i:
+            if j.shape[1] != tdim:
+                raise RuntimeError("x has a point with the wrong tdim")
+            if len(j.shape) != 2:
+                raise ValueError("x has the wrong dimension")
+
+    # Warn if points are not inside the cell
+    geo = geometry(cell_type)
+    top = topology(cell_type)
+    for points_i in x:
+        for points_j in points_i:
+            for p in points_j:
+                for facet, facet_normal in zip(top[tdim - 1], facet_outward_normals(cell_type)):
+                    if np.dot(p - geo[facet[0]], facet_normal) > 0.001:
+                        warn(f"Point {p} is not in cell", UserWarning)
+
     if np.issubdtype(dtype, np.float32):
         _create_custom_element = _create_custom_element_float32  # type: ignore
     elif np.issubdtype(dtype, np.float64):
@@ -758,7 +781,7 @@ def tp_factors(
 ) -> list[list[FiniteElement]]:
     """Elements in the tensor product factorisation of an element.
 
-    If the element has no factorisation, an empty list is returned.
+    If the element has no factorisation, raises a RuntimeError.
 
     Args:
         family: Finite element family.
@@ -804,8 +827,7 @@ def tp_dof_ordering(
     This DOF ordering can be passed into create_element to create the
     element with DOFs ordered in a tensor product order.
 
-    If the element has no tensor product factorisation, an empty list is
-    returned.
+    If the element has no factorisation, raises a RuntimeError.
 
     Args:
         family: Finite element family.
@@ -822,6 +844,46 @@ def tp_dof_ordering(
         The DOF ordering.
     """
     return _tp_dof_ordering(
+        family,
+        celltype,
+        degree,
+        lagrange_variant,
+        dpc_variant,
+        discontinuous,
+    )
+
+
+def lex_dof_ordering(
+    family: ElementFamily,
+    celltype: CellType,
+    degree: int,
+    lagrange_variant: LagrangeVariant = LagrangeVariant.unset,
+    dpc_variant: DPCVariant = DPCVariant.unset,
+    discontinuous: bool = False,
+) -> list[int]:
+    """Lexicographic DOF ordering for an element.
+
+    This DOF ordering can be passed into create_element to create the
+    element with DOFs ordered in a lexicographic order.
+
+    If the element contains DOFs that are not point evaluations, raises a
+    RuntimeError.
+
+    Args:
+        family: Finite element family.
+        celltype: Reference cell type that the element is defined on
+        degree: Polynomial degree of the element.
+        lagrange_variant: Lagrange variant type.
+        dpc_variant: DPC variant type.
+        discontinuous: If `True` element is discontinuous. The
+            discontinuous element will have the same DOFs as a
+            continuous element, but the DOFs will all be associated with
+            the interior of the cell.
+
+    Returns:
+        The DOF ordering.
+    """
+    return _lex_dof_ordering(
         family,
         celltype,
         degree,
@@ -915,13 +977,6 @@ def string_to_family(family: str, cell: str) -> ElementFamily:
                 "Regge": ElementFamily.Regge,
                 "CR": ElementFamily.CR,
                 "Crouzeix-Raviart": ElementFamily.CR,
-            }
-        )
-
-    # Family names that are valid for triangles
-    if cell in ["triangle"]:
-        families.update(
-            {
                 "HHJ": ElementFamily.HHJ,
                 "Hellan-Herrmann-Johnson": ElementFamily.HHJ,
             }

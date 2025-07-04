@@ -97,6 +97,15 @@ std::pair<std::vector<T>, std::array<std::size_t, 2>>
 facet_outward_normals(cell::type cell_type);
 
 /// Get the normals to the facets of a reference cell oriented using the
+/// low-to-high ordering of the facet, scaled so that the length of the
+/// normal is the volume of the facet
+/// @param cell_type Type of cell
+/// @return The normals. Shape is (nfacets, gdim)
+template <std::floating_point T>
+std::pair<std::vector<T>, std::array<std::size_t, 2>>
+scaled_facet_normals(cell::type cell_type);
+
+/// Get the normals to the facets of a reference cell oriented using the
 /// low-to-high ordering of the facet
 /// @param cell_type Type of cell
 /// @return The normals. Shape is (nfacets, gdim)

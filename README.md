@@ -2,7 +2,7 @@
 
 [![Basix CI](https://github.com/FEniCS/basix/actions/workflows/pythonapp.yml/badge.svg)](https://github.com/FEniCS/basix/actions/workflows/pythonapp.yml)
 [![Spack install](https://github.com/FEniCS/basix/actions/workflows/spack.yml/badge.svg)](https://github.com/FEniCS/basix/actions/workflows/spack.yml)
-[![DefElement verification](https://defelement.org/badges/basix.ufl.svg)](https://defelement.org/verification.html)
+[![DefElement verification](https://defelement.org/badges/basix.ufl.svg)](https://defelement.org/verification/basix.ufl.html)
 
 Basix is a finite element definition and tabulation runtime library.
 Basix allows users to:
@@ -112,6 +112,7 @@ The following elements are supported on a quadrilateral:
   - [Raviart-Thomas](https://defelement.org/elements/qdiv.html)
   - [Nédélec second kind](https://defelement.org/elements/scurl.html)
   - [Brezzi-Douglas-Marini](https://defelement.org/elements/sdiv.html)
+  - [Crouzeix-Raviart](https://defelement.org/elements/rannacher-turek.html)
   - [Bubble](https://defelement.org/elements/bubble.html)
   - [DPC](https://defelement.org/elements/dpc.html)
   - [Serendipity](https://defelement.org/elements/serendipity.html)

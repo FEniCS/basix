@@ -20,7 +20,7 @@ jobs:
  valgrind:
     runs-on: ubuntu-latest
     env:
-      VALGRIND_FLAGS: "--suppressions=cpython/Misc/valgrind-python.supp --leak-check=full --show-leak-kinds=definite,indirect --errors-for-leak-kinds=definite,indirect --error-exitcode=1"
+      VALGRIND_FLAGS: "--suppressions=cpython/Misc/valgrind-python.supp --leak-check=full --show-leak-kinds=all --errors-for-leak-kinds=definite,indirect --error-exitcode=1"
       # Slow, but useful for in-depth info: --track-origins=yes --read-var-info=yes
     steps:
       - uses: actions/checkout@v4

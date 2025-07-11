@@ -125,3 +125,6 @@ select = [
 
 [tool.ruff.lint.pydocstyle]
 convention = "google"
+
+[tool.ruff.lint.isort]
+known-first-party = ["basix", "ufl"]

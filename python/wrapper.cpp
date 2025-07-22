@@ -466,6 +466,7 @@ NB_MODULE(_basixcpp, m)
   nb::enum_<polynomials::type>(m, "PolynomialType", nb::is_arithmetic(),
                                "Polynomial type.")
       .value("legendre", polynomials::type::legendre)
+      .value("lagrange", polynomials::type::lagrange)
       .value("bernstein", polynomials::type::bernstein);
 
   m.def("tabulate_polynomials",

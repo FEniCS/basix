@@ -37,10 +37,6 @@ jobs:
       OMPI_ALLOW_RUN_AS_ROOT_CONFIRM: 1
 
     steps:
-      # Remove once pin in dolfinx gets removed
-      - name: Pin scipy
-        run: pip install scipy==1.15.3
-
       - uses: actions/checkout@v4
       - name: Install Basix
         run: |
@@ -96,7 +92,7 @@ jobs:
           ctest -V --output-on-failure -R unittests
 
       - name: Install Python demo/test dependencies
-        run: python3 -m pip install --break-system-packages matplotlib numba pyamg pytest pytest-xdist scipy
+        run: python3 -m pip install --break-system-packages matplotlib numba pyamg pytest pytest-xdist scipy pyvista networkx
       - name: Run DOLFINx Python unit tests
         run: |
           cd dolfinx

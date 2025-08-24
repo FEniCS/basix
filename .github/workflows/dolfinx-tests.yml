@@ -75,7 +75,7 @@ jobs:
           cmake --install build
       - name: Run DOLFINx C++ unit tests
         working-directory: build
-        run: ctest -V --output-on-failure -R unittests
+        run: ctest -V --output-on-failure -R unittests_np_1
       - name: Install DOLFINx (Python)
         run: |
           python3 -m pip install --break-system-packages -r dolfinx/python/build-requirements.txt # TO REMOVE

@@ -20,7 +20,7 @@ else()
   find_package(Basix REQUIRED)
 endif()
 
-find_package(Python COMPONENTS Interpreter Development.Module REQUIRED)
+find_package(Python COMPONENTS Interpreter Development.Module ${SKBUILD_SABI_COMPONENT} REQUIRED)
 
 # Options
 include(FeatureSummary)
@@ -38,7 +38,10 @@ list(APPEND CMAKE_PREFIX_PATH "${NB_DIR}")
 find_package(nanobind CONFIG REQUIRED)
 
 # Create the binding library
-nanobind_add_module(_basixcpp NB_SUPPRESS_WARNINGS wrapper.cpp)
+if(NOT "${SKBUILD_SABI_VERSION}" STREQUAL "")
+  set(NANOBIND_SABI "STABLE_ABI")
+endif()
+nanobind_add_module(_basixcpp NB_SUPPRESS_WARNINGS ${NANOBIND_SABI} wrapper.cpp)
 target_compile_definitions(_basixcpp PRIVATE cxx_std_20)
 
 if(ENABLE_CLANG_TIDY)

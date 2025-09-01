@@ -46,7 +46,7 @@ test-command = [
     "cmake -G Ninja -DPython3_EXECUTABLE=$(which python) -B build-dir -S {project}/test/test_cmake",
     "cmake --build build-dir/",
     "build-dir/a.out",
-    "python -m pytest -v -n auto --durations 20 {project}/test/",
+    "python -m pytest -n auto --durations 20 {project}/test/",
 ]
 test-requires = ["pytest-xdist"]
 test-extras = ["test"]
@@ -57,7 +57,7 @@ manylinux-aarch64-image = "quay.io/pypa/manylinux_2_28_aarch64:2025.08.29-1"
 [tool.cibuildwheel.windows]
 build-frontend = {name = "pip", args = ["--config-settings=wheel.py-api=cp312", "--config-settings=cmake.args=-DINSTALL_RUNTIME_DEPENDENCIES=ON", "--config-settings=cmake.args=-DCMAKE_TOOLCHAIN_FILE=C:/vcpkg/scripts/buildsystems/vcpkg.cmake"] }
 test-command = [
-    "python -m pytest -v -n auto --durations 20 {project}/test/",
+    "python -m pytest -n auto --durations 20 {project}/test/",
 ]
 
 [tool.cibuildwheel.linux]
@@ -70,7 +70,7 @@ test-command = [
     "cmake -G Ninja -DPython3_EXECUTABLE=$(which python) -B build-dir -S {project}/test/test_cmake",
     "cmake --build build-dir/",
     "build-dir/a.out",
-    "python -m pytest -v -n auto --durations 20 {project}/test/",
+    "python -m pytest -n auto --durations 20 {project}/test/",
 ]
 
 [tool.cibuildwheel.macos]
@@ -84,7 +84,7 @@ test-command = [
     "cmake -G Ninja -DPython3_EXECUTABLE=$(which python) -B build-dir -S {project}/test/test_cmake",
     "cmake --build build-dir/",
     "build-dir/a.out",
-    "python -m pytest -v -n auto --durations 20 {project}/test/",
+    "python -m pytest -n auto --durations 20 {project}/test/",
 ]
 
 [tool.mypy]

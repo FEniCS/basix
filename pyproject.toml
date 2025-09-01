@@ -34,13 +34,13 @@ testpaths = ["test"]
 wheel.packages = ["python/basix"]
 
 [tool.cibuildwheel]
-build-frontend = {name = "pip", args = ["--config-settings=wheel.py-api=3.12"] }
+build-frontend = {name = "pip", args = ["--config-settings=wheel.py-api=cp312"}
 build = [
-    "cp{39,310,311,312,313}-manylinux_x86_64",
-    "cp{39,310,311,312,313}-manylinux_aarch64",
-    "cp{39,310,311,312,313}-macosx_x86_64",
-    "cp{39,310,311,312,313}-macosx_arm64",
-    "cp{39,310,311,312,313}-win_amd64",
+    "cp3{9,10,11,12,13}-manylinux_x86_64",
+    "cp3{9,10,11,12,13}-manylinux_aarch64",
+    "cp3{9,10,11,12,13}-macosx_x86_64",
+    "cp3{9,10,11,12,13}-macosx_arm64",
+    "cp3{9,10,11,12,13}-win_amd64",
 ]
 test-command = [
     "cmake -G Ninja -DPython3_EXECUTABLE=$(which python) -B build-dir -S {project}/test/test_cmake",
@@ -55,7 +55,7 @@ manylinux-x86_64-image = "quay.io/pypa/manylinux_2_28_x86_64:2025.08.29-1"
 manylinux-aarch64-image = "quay.io/pypa/manylinux_2_28_aarch64:2025.08.29-1"
 
 [tool.cibuildwheel.windows]
-build-frontend = {name = "pip", args = ["--config-settings=wheel.py-api=3.12", "--config-settings=cmake.args=-DINSTALL_RUNTIME_DEPENDENCIES=ON", "--config-settings=cmake.args=-DCMAKE_TOOLCHAIN_FILE=C:/vcpkg/scripts/buildsystems/vcpkg.cmake"] }
+build-frontend = {name = "pip", args = ["--config-settings=wheel.py-api=cp312", "--config-settings=cmake.args=-DINSTALL_RUNTIME_DEPENDENCIES=ON", "--config-settings=cmake.args=-DCMAKE_TOOLCHAIN_FILE=C:/vcpkg/scripts/buildsystems/vcpkg.cmake"] }
 test-command = [
     "python -m pytest -v -n auto --durations 20 {project}/test/",
 ]

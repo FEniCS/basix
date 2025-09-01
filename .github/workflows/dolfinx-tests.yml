@@ -37,11 +37,7 @@ jobs:
       OMPI_ALLOW_RUN_AS_ROOT_CONFIRM: 1
 
     steps:
-      # Remove once pin in dolfinx gets removed
-      - name: Pin scipy
-        run: pip install scipy==1.15.3
-
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Install Basix
         run: |
           cmake -G Ninja -DCMAKE_BUILD_TYPE=Developer -B build-dir -S ./cpp
@@ -60,23 +56,26 @@ jobs:
           python3 -m pip install --break-system-packages git+https://github.com/FEniCS/ffcx.git@${{ github.event.inputs.ffcx_branch }}
       - name: Get DOLFINx
         if: github.event_name != 'workflow_dispatch'
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           path: ./dolfinx
           repository: FEniCS/dolfinx
           ref: main
       - name: Get DOLFINx
         if: github.event_name == 'workflow_dispatch'
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           path: ./dolfinx
           repository: FEniCS/dolfinx
           ref: ${{ github.event.inputs.dolfinx_branch }}
       - name: Install DOLFINx (C++)
         run: |
-          cmake -G Ninja -DCMAKE_BUILD_TYPE=Developer -B build -S dolfinx/cpp/
+          cmake -G Ninja -DCMAKE_BUILD_TYPE=Developer -DBUILD_TESTING=true -B build -S dolfinx/cpp/
           cmake --build build
           cmake --install build
+      - name: Run DOLFINx C++ unit tests
+        working-directory: build
+        run: ctest -V --output-on-failure -R unittests
       - name: Install DOLFINx (Python)
         run: |
           python3 -m pip install --break-system-packages -r dolfinx/python/build-requirements.txt # TO REMOVE
@@ -86,17 +85,8 @@ jobs:
           python3 -m pip install --break-system-packages mypy
           cd dolfinx/python
           python3 -m mypy dolfinx
-      - name: Build DOLFINx C++ unit tests
-        run: |
-          cmake -G Ninja -DCMAKE_BUILD_TYPE=Developer -B build/test/ -S dolfinx/cpp/test/
-          cmake --build build/test
-      - name: Run DOLFINx C++ unit tests
-        run: |
-          cd build/test
-          ctest -V --output-on-failure -R unittests
-
       - name: Install Python demo/test dependencies
-        run: python3 -m pip install --break-system-packages matplotlib numba pyamg pytest pytest-xdist scipy
+        run: python3 -m pip install --break-system-packages matplotlib numba pyamg pytest pytest-xdist scipy pyvista networkx
       - name: Run DOLFINx Python unit tests
         run: |
           cd dolfinx

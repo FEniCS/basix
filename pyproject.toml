@@ -36,11 +36,11 @@ wheel.packages = ["python/basix"]
 [tool.cibuildwheel]
 build-frontend = {name = "pip", args = ["--config-settings=wheel.py-api=cp312"] }
 build = [
-    "cp3{9,10,11,12,13}-manylinux_x86_64",
-    "cp3{9,10,11,12,13}-manylinux_aarch64",
-    "cp3{9,10,11,12,13}-macosx_x86_64",
-    "cp3{9,10,11,12,13}-macosx_arm64",
-    "cp3{9,10,11,12,13}-win_amd64",
+    "cp3{12,13}-manylinux_x86_64",
+    "cp3{12,13}-manylinux_aarch64",
+    "cp3{12,13}-macosx_x86_64",
+    "cp3{12,13}-macosx_arm64",
+    "cp3{12,13}-win_amd64",
 ]
 test-command = [
     "cmake -G Ninja -DPython3_EXECUTABLE=$(which python) -B build-dir -S {project}/test/test_cmake",
@@ -59,6 +59,10 @@ build-frontend = {name = "pip", args = ["--config-settings=wheel.py-api=cp312", 
 test-command = [
     "python -m pytest -n auto --durations 20 {project}/test/",
 ]
+repair-wheel-command = [
+  "copy {wheel} {dest_dir}",
+  "pipx run abi3audit --strict --report {wheel}",
+]
 
 [tool.cibuildwheel.linux]
 archs = [
@@ -71,6 +75,10 @@ test-command = [
     "cmake --build build-dir/",
     "build-dir/a.out",
     "python -m pytest -n auto --durations 20 {project}/test/",
+]
+repair-wheel-command = [
+  "auditwheel repair -w {dest_dir} {wheel}",
+  "pipx run abi3audit --strict --report {wheel}",
 ]
 
 [tool.cibuildwheel.macos]
@@ -85,6 +93,10 @@ test-command = [
     "cmake --build build-dir/",
     "build-dir/a.out",
     "python -m pytest -n auto --durations 20 {project}/test/",
+]
+repair-wheel-command = [
+  "delocate-wheel --require-archs {delocate_archs} -w {dest_dir} -v {wheel}",
+  "pipx run abi3audit --strict --report {wheel}",
 ]
 
 [tool.mypy]

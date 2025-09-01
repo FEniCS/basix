@@ -34,7 +34,7 @@ testpaths = ["test"]
 wheel.packages = ["python/basix"]
 
 [tool.cibuildwheel]
-build-frontend = {name = "pip", args = ["--config-settings=wheel.py-api=cp312"}
+build-frontend = {name = "pip", args = ["--config-settings=wheel.py-api=cp312"] }
 build = [
     "cp3{9,10,11,12,13}-manylinux_x86_64",
     "cp3{9,10,11,12,13}-manylinux_aarch64",

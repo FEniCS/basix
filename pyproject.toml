@@ -36,11 +36,11 @@ wheel.packages = ["python/basix"]
 [tool.cibuildwheel]
 build-frontend = {name = "pip", args = ["--config-settings=wheel.py-api=cp312"] }
 build = [
-    "cp3{9,10,11,12,13}-manylinux_x86_64",
-    "cp3{9,10,11,12,13}-manylinux_aarch64",
-    "cp3{9,10,11,12,13}-macosx_x86_64",
-    "cp3{9,10,11,12,13}-macosx_arm64",
-    "cp3{9,10,11,12,13}-win_amd64",
+    "cp3{10,11,12,13}-manylinux_x86_64",
+    "cp3{10,11,12,13}-manylinux_aarch64",
+    "cp3{10,11,12,13}-macosx_x86_64",
+    "cp3{10,11,12,13}-macosx_arm64",
+    "cp3{10,11,12,13}-win_amd64",
 ]
 test-command = [
     "cmake -G Ninja -DPython3_EXECUTABLE=$(which python) -B build-dir -S {project}/test/test_cmake",

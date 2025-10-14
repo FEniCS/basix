@@ -34,18 +34,18 @@ jobs:
           apt-get -y update
           apt-get -y install binutils libstdc++-14-dev
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - uses: conda-incubator/setup-miniconda@v3
         with:
           activate-environment: oneapi
-          python-version: 3.12
+          python-version: 3.13
           channels: https://software.repos.intel.com/python/conda,conda-forge
           auto-activate-base: false
 
       - name: Install
         run: >
-          conda install python=3.12 dpcpp_linux-64 cmake git libblas=*=*mkl
+          conda install python=3.13 dpcpp_linux-64 cmake git libblas=*=*mkl
           matplotlib nanobind ninja numba numpy pip pytest pytest-xdist
           scikit-build-core scipy sympy
 

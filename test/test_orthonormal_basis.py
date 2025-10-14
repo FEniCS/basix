@@ -113,6 +113,7 @@ def test_prism(order):
         basix.CellType.tetrahedron,
         basix.CellType.hexahedron,
         basix.CellType.prism,
+        basix.CellType.pyramid,
     ],
 )
 @pytest.mark.parametrize("order", [0, 1, 2, 3, 4])

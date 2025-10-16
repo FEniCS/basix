@@ -23,7 +23,8 @@ documentation = "https://docs.fenicsproject.org"
 [project.optional-dependencies]
 docs = ["markdown", "pylit3", "pyyaml", "sphinx", "sphinx_rtd_theme"]
 lint = ["ruff"]
-optional = ["numba", "fenics-ufl@git+https://github.com/fenics/ufl"]
+ufl = ["fenics-ufl@git+https://github.com/fenics/ufl"]
+optional = ["numba", "fenics-basix[ufl]"]
 test = ["pytest", "sympy", "scipy", "matplotlib", "fenics-basix[optional]"]
 ci = ["mypy", "pytest-xdist", "fenics-basix[docs,lint,test,optional]"]
 

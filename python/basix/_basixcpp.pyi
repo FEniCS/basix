@@ -2,8 +2,107 @@ from collections.abc import Sequence
 import enum
 from typing import Annotated, overload
 
-from numpy.typing import ArrayLike
+import numpy
+from numpy.typing import NDArray
 
+
+def topology(arg: CellType, /) -> list[list[list[int]]]: ...
+
+def geometry(arg: CellType, /) -> NDArray[numpy.float64]: ...
+
+def sub_entity_type(arg0: CellType, arg1: int, arg2: int, /) -> CellType: ...
+
+def sub_entity_connectivity(arg: CellType, /) -> list[list[list[list[int]]]]: ...
+
+def sub_entity_geometry(arg0: CellType, arg1: int, arg2: int, /) -> NDArray[numpy.float64]: ...
+
+def subentity_types(arg: CellType, /) -> list[list[CellType]]: ...
+
+def sobolev_space_intersection(arg0: SobolevSpace, arg1: SobolevSpace, /) -> SobolevSpace: ...
+
+class LatticeType(enum.IntEnum):
+    """Lattice type."""
+
+    equispaced = 0
+
+    gll = 1
+
+    chebyshev = 2
+
+    gl = 4
+
+class LatticeSimplexMethod(enum.IntEnum):
+    """Lattice simplex method."""
+
+    none = 0
+
+    warp = 1
+
+    isaac = 2
+
+    centroid = 3
+
+class PolynomialType(enum.IntEnum):
+    """Polynomial type."""
+
+    legendre = 0
+
+    lagrange = 1
+
+    bernstein = 2
+
+def tabulate_polynomials(arg0: PolynomialType, arg1: CellType, arg2: int, arg3: Annotated[NDArray[numpy.float64], dict(shape=(None, None), order='C', writable=False)], /) -> NDArray[numpy.float64]: ...
+
+def polynomials_dim(arg0: PolynomialType, arg1: CellType, arg2: int, /) -> int: ...
+
+def create_lattice(arg0: CellType, arg1: int, arg2: LatticeType, arg3: bool, arg4: LatticeSimplexMethod, /) -> NDArray[numpy.float64]: ...
+
+class MapType(enum.IntEnum):
+    """Element map type."""
+
+    identity = 0
+
+    L2Piola = 1
+
+    covariantPiola = 2
+
+    contravariantPiola = 3
+
+    doubleCovariantPiola = 4
+
+    doubleContravariantPiola = 5
+
+class SobolevSpace(enum.IntEnum):
+    """Sobolev space."""
+
+    L2 = 0
+
+    H1 = 1
+
+    H2 = 2
+
+    H3 = 3
+
+    HInf = 8
+
+    HDiv = 10
+
+    HCurl = 11
+
+    HEin = 12
+
+    HDivDiv = 13
+
+class QuadratureType(enum.IntEnum):
+    """Quadrature type."""
+
+    default = 0
+
+    gauss_jacobi = 1
+
+    gll = 2
+
+    xiao_gimbutas = 3
 
 class CellType(enum.IntEnum):
     """Cell type."""
@@ -24,24 +123,19 @@ class CellType(enum.IntEnum):
 
     pyramid = 7
 
-class DPCVariant(enum.IntEnum):
-    """DPC variant."""
+def cell_volume(arg: CellType, /) -> float: ...
 
-    unset = 0
+def cell_facet_normals(arg: CellType, /) -> NDArray[numpy.float64]: ...
 
-    simplex_equispaced = 1
+def cell_facet_reference_volumes(arg: CellType, /) -> NDArray[numpy.float64]: ...
 
-    simplex_gll = 2
+def cell_facet_outward_normals(arg: CellType, /) -> NDArray[numpy.float64]: ...
 
-    horizontal_equispaced = 3
+def cell_facet_orientations(arg: CellType, /) -> list[int]: ...
 
-    horizontal_gll = 4
+def cell_facet_jacobians(arg: CellType, /) -> NDArray[numpy.float64]: ...
 
-    diagonal_equispaced = 5
-
-    diagonal_gll = 6
-
-    legendre = 7
+def cell_edge_jacobians(arg: CellType, /) -> NDArray[numpy.float64]: ...
 
 class ElementFamily(enum.IntEnum):
     """Finite element family."""
@@ -74,28 +168,118 @@ class ElementFamily(enum.IntEnum):
 
     iso = 13
 
+class LagrangeVariant(enum.IntEnum):
+    """Lagrange element variant."""
+
+    unset = 0
+
+    equispaced = 1
+
+    gll_warped = 2
+
+    gll_isaac = 3
+
+    gll_centroid = 4
+
+    chebyshev_warped = 5
+
+    chebyshev_isaac = 6
+
+    chebyshev_centroid = 7
+
+    gl_warped = 8
+
+    gl_isaac = 9
+
+    gl_centroid = 10
+
+    legendre = 11
+
+    bernstein = 12
+
+class DPCVariant(enum.IntEnum):
+    """DPC variant."""
+
+    unset = 0
+
+    simplex_equispaced = 1
+
+    simplex_gll = 2
+
+    horizontal_equispaced = 3
+
+    horizontal_gll = 4
+
+    diagonal_equispaced = 5
+
+    diagonal_gll = 6
+
+    legendre = 7
+
+def create_element(arg0: ElementFamily, arg1: CellType, arg2: int, arg3: LagrangeVariant, arg4: DPCVariant, arg5: bool, arg6: Sequence[int], arg7: str, /) -> FiniteElement_float32 | FiniteElement_float64: ...
+
+def create_tp_element(arg0: ElementFamily, arg1: CellType, arg2: int, arg3: LagrangeVariant, arg4: DPCVariant, arg5: bool, arg6: str, /) -> FiniteElement_float32 | FiniteElement_float64: ...
+
+def tp_factors(arg0: ElementFamily, arg1: CellType, arg2: int, arg3: LagrangeVariant, arg4: DPCVariant, arg5: bool, arg6: Sequence[int], arg7: str, /) -> list[list[FiniteElement_float32]] | list[list[FiniteElement_float64]]: ...
+
+def tp_dof_ordering(arg0: ElementFamily, arg1: CellType, arg2: int, arg3: LagrangeVariant, arg4: DPCVariant, arg5: bool, /) -> list[int]: ...
+
+def lex_dof_ordering(arg0: ElementFamily, arg1: CellType, arg2: int, arg3: LagrangeVariant, arg4: DPCVariant, arg5: bool, /) -> list[int]: ...
+
+class PolysetType(enum.IntEnum):
+    """Polyset type."""
+
+    standard = 0
+
+    macroedge = 1
+
+def superset(arg0: CellType, arg1: PolysetType, arg2: PolysetType, /) -> PolysetType: ...
+
+def restriction(arg0: PolysetType, arg1: CellType, arg2: CellType, /) -> PolysetType: ...
+
+def make_quadrature(arg0: QuadratureType, arg1: CellType, arg2: PolysetType, arg3: int, /) -> tuple[NDArray[numpy.float64], NDArray[numpy.float64]]: ...
+
+def gauss_jacobi_rule(arg0: float, arg1: int, /) -> tuple[NDArray[numpy.float64], NDArray[numpy.float64]]: ...
+
+@overload
+def index(arg: int, /) -> int: ...
+
+@overload
+def index(arg0: int, arg1: int, /) -> int: ...
+
+@overload
+def index(arg0: int, arg1: int, arg2: int, /) -> int: ...
+
 class FiniteElement_float32:
-    def tabulate(self, arg0: int, arg1: Annotated[ArrayLike, dict(dtype='float32', writable=False, shape=(None, None), order='C')], /) -> Annotated[ArrayLike, dict(dtype='float32', )]: ...
+    def tabulate(self, arg0: int, arg1: Annotated[NDArray[numpy.float32], dict(shape=(None, None), order='C', writable=False)], /) -> NDArray[numpy.float32]: ...
 
     def __eq__(self, arg: object, /) -> bool: ...
 
     def hash(self) -> int: ...
 
-    def permute_subentity_closure(self, arg0: Annotated[ArrayLike, dict(dtype='int32', shape=(None), order='C')], arg1: int, arg2: CellType, /) -> Annotated[ArrayLike, dict(dtype='int32', )]: ...
+    @overload
+    def permute_subentity_closure(self, arg0: Annotated[NDArray[numpy.int32], dict(shape=(None,), order='C')], arg1: int, arg2: CellType, /) -> None: ...
 
-    def permute_subentity_closure_inv(self, arg0: Annotated[ArrayLike, dict(dtype='int32', shape=(None), order='C')], arg1: int, arg2: CellType, /) -> Annotated[ArrayLike, dict(dtype='int32', )]: ...
+    @overload
+    def permute_subentity_closure(self, arg0: Annotated[NDArray[numpy.int32], dict(shape=(None,), order='C')], arg1: int, arg2: CellType, arg3: int, /) -> None: ...
 
-    def push_forward(self, arg0: Annotated[ArrayLike, dict(dtype='float32', writable=False, shape=(None, None, None), order='C')], arg1: Annotated[ArrayLike, dict(dtype='float32', writable=False, shape=(None, None, None), order='C')], arg2: Annotated[ArrayLike, dict(dtype='float32', writable=False, shape=(None), order='C')], arg3: Annotated[ArrayLike, dict(dtype='float32', writable=False, shape=(None, None, None), order='C')], /) -> Annotated[ArrayLike, dict(dtype='float32', )]: ...
+    @overload
+    def permute_subentity_closure_inv(self, arg0: Annotated[NDArray[numpy.int32], dict(shape=(None,), order='C')], arg1: int, arg2: CellType, /) -> None: ...
 
-    def pull_back(self, arg0: Annotated[ArrayLike, dict(dtype='float32', writable=False, shape=(None, None, None), order='C')], arg1: Annotated[ArrayLike, dict(dtype='float32', writable=False, shape=(None, None, None), order='C')], arg2: Annotated[ArrayLike, dict(dtype='float32', writable=False, shape=(None), order='C')], arg3: Annotated[ArrayLike, dict(dtype='float32', writable=False, shape=(None, None, None), order='C')], /) -> Annotated[ArrayLike, dict(dtype='float32', )]: ...
+    @overload
+    def permute_subentity_closure_inv(self, arg0: Annotated[NDArray[numpy.int32], dict(shape=(None,), order='C')], arg1: int, arg2: CellType, arg3: int, /) -> None: ...
 
-    def T_apply(self, arg0: Annotated[ArrayLike, dict(dtype='float32', shape=(None), order='C')], arg1: int, arg2: int, /) -> None: ...
+    def push_forward(self, arg0: Annotated[NDArray[numpy.float32], dict(shape=(None, None, None), order='C', writable=False)], arg1: Annotated[NDArray[numpy.float32], dict(shape=(None, None, None), order='C', writable=False)], arg2: Annotated[NDArray[numpy.float32], dict(shape=(None,), order='C', writable=False)], arg3: Annotated[NDArray[numpy.float32], dict(shape=(None, None, None), order='C', writable=False)], /) -> NDArray[numpy.float32]: ...
 
-    def Tt_apply_right(self, arg0: Annotated[ArrayLike, dict(dtype='float32', shape=(None), order='C')], arg1: int, arg2: int, /) -> None: ...
+    def pull_back(self, arg0: Annotated[NDArray[numpy.float32], dict(shape=(None, None, None), order='C', writable=False)], arg1: Annotated[NDArray[numpy.float32], dict(shape=(None, None, None), order='C', writable=False)], arg2: Annotated[NDArray[numpy.float32], dict(shape=(None,), order='C', writable=False)], arg3: Annotated[NDArray[numpy.float32], dict(shape=(None, None, None), order='C', writable=False)], /) -> NDArray[numpy.float32]: ...
 
-    def Tt_inv_apply(self, arg0: Annotated[ArrayLike, dict(dtype='float32', shape=(None), order='C')], arg1: int, arg2: int, /) -> None: ...
+    def T_apply(self, arg0: Annotated[NDArray[numpy.float32], dict(shape=(None,), order='C')], arg1: int, arg2: int, /) -> None: ...
 
-    def base_transformations(self) -> Annotated[ArrayLike, dict(dtype='float32', )]: ...
+    def Tt_apply_right(self, arg0: Annotated[NDArray[numpy.float32], dict(shape=(None,), order='C')], arg1: int, arg2: int, /) -> None: ...
+
+    def Tt_inv_apply(self, arg0: Annotated[NDArray[numpy.float32], dict(shape=(None,), order='C')], arg1: int, arg2: int, /) -> None: ...
+
+    def base_transformations(self) -> NDArray[numpy.float32]: ...
 
     def entity_transformations(self) -> dict: ...
 
@@ -165,26 +349,26 @@ class FiniteElement_float32:
     def sobolev_space(self) -> SobolevSpace: ...
 
     @property
-    def points(self) -> Annotated[ArrayLike, dict(dtype='float32', writable=False, shape=(None, None), )]: ...
+    def points(self) -> Annotated[NDArray[numpy.float32], dict(shape=(None, None), writable=False)]: ...
 
     @property
-    def interpolation_matrix(self) -> Annotated[ArrayLike, dict(dtype='float32', writable=False, shape=(None, None), )]: ...
+    def interpolation_matrix(self) -> Annotated[NDArray[numpy.float32], dict(shape=(None, None), writable=False)]: ...
 
     @property
-    def dual_matrix(self) -> Annotated[ArrayLike, dict(dtype='float32', writable=False, shape=(None, None), )]: ...
+    def dual_matrix(self) -> Annotated[NDArray[numpy.float32], dict(shape=(None, None), writable=False)]: ...
 
     @property
-    def coefficient_matrix(self) -> Annotated[ArrayLike, dict(dtype='float32', writable=False, shape=(None, None), )]:
+    def coefficient_matrix(self) -> Annotated[NDArray[numpy.float32], dict(shape=(None, None), writable=False)]:
         """Coefficient matrix."""
 
     @property
-    def wcoeffs(self) -> Annotated[ArrayLike, dict(dtype='float32', writable=False, shape=(None, None), )]: ...
+    def wcoeffs(self) -> Annotated[NDArray[numpy.float32], dict(shape=(None, None), writable=False)]: ...
 
     @property
-    def M(self) -> list[list[Annotated[ArrayLike, dict(dtype='float32', writable=False, )]]]: ...
+    def M(self) -> list[list[Annotated[NDArray[numpy.float32], dict(writable=False)]]]: ...
 
     @property
-    def x(self) -> list[list[Annotated[ArrayLike, dict(dtype='float32', writable=False, )]]]: ...
+    def x(self) -> list[list[Annotated[NDArray[numpy.float32], dict(writable=False)]]]: ...
 
     @property
     def has_tensor_product_factorisation(self) -> bool: ...
@@ -198,28 +382,46 @@ class FiniteElement_float32:
     @property
     def dtype(self) -> str: ...
 
+def create_custom_element_float32(cell_type: CellType, value_shape: Sequence[int], wcoeffs: Annotated[NDArray[numpy.float32], dict(shape=(None, None), order='C', writable=False)], x: Sequence[Sequence[Annotated[NDArray[numpy.float32], dict(shape=(None, None), order='C', writable=False)]]], M: Sequence[Sequence[Annotated[NDArray[numpy.float32], dict(shape=(None, None, None, None), order='C', writable=False)]]], interpolation_nderivs: int, map_type: MapType, sobolev_space: SobolevSpace, discontinuous: bool, embedded_subdegree: int, embedded_superdegree: int, poly_type: PolysetType) -> FiniteElement_float32: ...
+
+@overload
+def compute_interpolation_operator(arg0: FiniteElement_float32, arg1: FiniteElement_float32, /) -> NDArray[numpy.float32]: ...
+
+@overload
+def compute_interpolation_operator(arg0: FiniteElement_float64, arg1: FiniteElement_float64, /) -> NDArray[numpy.float64]: ...
+
+def tabulate_polynomial_set(celltype: CellType, polytype: PolysetType, d: int, n: int, x: Annotated[ArrayLike, dict(dtype='float64', writable=False, shape=(None, None), order='C')]) -> Annotated[ArrayLike, dict(dtype='float64', )]: ...
+
 class FiniteElement_float64:
-    def tabulate(self, arg0: int, arg1: Annotated[ArrayLike, dict(dtype='float64', writable=False, shape=(None, None), order='C')], /) -> Annotated[ArrayLike, dict(dtype='float64', )]: ...
+    def tabulate(self, arg0: int, arg1: Annotated[NDArray[numpy.float64], dict(shape=(None, None), order='C', writable=False)], /) -> NDArray[numpy.float64]: ...
 
     def __eq__(self, arg: object, /) -> bool: ...
 
     def hash(self) -> int: ...
 
-    def permute_subentity_closure(self, arg0: Annotated[ArrayLike, dict(dtype='int32', shape=(None), order='C')], arg1: int, arg2: CellType, /) -> Annotated[ArrayLike, dict(dtype='int32', )]: ...
+    @overload
+    def permute_subentity_closure(self, arg0: Annotated[NDArray[numpy.int32], dict(shape=(None,), order='C')], arg1: int, arg2: CellType, /) -> None: ...
 
-    def permute_subentity_closure_inv(self, arg0: Annotated[ArrayLike, dict(dtype='int32', shape=(None), order='C')], arg1: int, arg2: CellType, /) -> Annotated[ArrayLike, dict(dtype='int32', )]: ...
+    @overload
+    def permute_subentity_closure(self, arg0: Annotated[NDArray[numpy.int32], dict(shape=(None,), order='C')], arg1: int, arg2: CellType, arg3: int, /) -> None: ...
 
-    def push_forward(self, arg0: Annotated[ArrayLike, dict(dtype='float64', writable=False, shape=(None, None, None), order='C')], arg1: Annotated[ArrayLike, dict(dtype='float64', writable=False, shape=(None, None, None), order='C')], arg2: Annotated[ArrayLike, dict(dtype='float64', writable=False, shape=(None), order='C')], arg3: Annotated[ArrayLike, dict(dtype='float64', writable=False, shape=(None, None, None), order='C')], /) -> Annotated[ArrayLike, dict(dtype='float64', )]: ...
+    @overload
+    def permute_subentity_closure_inv(self, arg0: Annotated[NDArray[numpy.int32], dict(shape=(None,), order='C')], arg1: int, arg2: CellType, /) -> None: ...
 
-    def pull_back(self, arg0: Annotated[ArrayLike, dict(dtype='float64', writable=False, shape=(None, None, None), order='C')], arg1: Annotated[ArrayLike, dict(dtype='float64', writable=False, shape=(None, None, None), order='C')], arg2: Annotated[ArrayLike, dict(dtype='float64', writable=False, shape=(None), order='C')], arg3: Annotated[ArrayLike, dict(dtype='float64', writable=False, shape=(None, None, None), order='C')], /) -> Annotated[ArrayLike, dict(dtype='float64', )]: ...
+    @overload
+    def permute_subentity_closure_inv(self, arg0: Annotated[NDArray[numpy.int32], dict(shape=(None,), order='C')], arg1: int, arg2: CellType, arg3: int, /) -> None: ...
 
-    def T_apply(self, arg0: Annotated[ArrayLike, dict(dtype='float64', shape=(None), order='C')], arg1: int, arg2: int, /) -> None: ...
+    def push_forward(self, arg0: Annotated[NDArray[numpy.float64], dict(shape=(None, None, None), order='C', writable=False)], arg1: Annotated[NDArray[numpy.float64], dict(shape=(None, None, None), order='C', writable=False)], arg2: Annotated[NDArray[numpy.float64], dict(shape=(None,), order='C', writable=False)], arg3: Annotated[NDArray[numpy.float64], dict(shape=(None, None, None), order='C', writable=False)], /) -> NDArray[numpy.float64]: ...
 
-    def Tt_apply_right(self, arg0: Annotated[ArrayLike, dict(dtype='float64', shape=(None), order='C')], arg1: int, arg2: int, /) -> None: ...
+    def pull_back(self, arg0: Annotated[NDArray[numpy.float64], dict(shape=(None, None, None), order='C', writable=False)], arg1: Annotated[NDArray[numpy.float64], dict(shape=(None, None, None), order='C', writable=False)], arg2: Annotated[NDArray[numpy.float64], dict(shape=(None,), order='C', writable=False)], arg3: Annotated[NDArray[numpy.float64], dict(shape=(None, None, None), order='C', writable=False)], /) -> NDArray[numpy.float64]: ...
 
-    def Tt_inv_apply(self, arg0: Annotated[ArrayLike, dict(dtype='float64', shape=(None), order='C')], arg1: int, arg2: int, /) -> None: ...
+    def T_apply(self, arg0: Annotated[NDArray[numpy.float64], dict(shape=(None,), order='C')], arg1: int, arg2: int, /) -> None: ...
 
-    def base_transformations(self) -> Annotated[ArrayLike, dict(dtype='float64', )]: ...
+    def Tt_apply_right(self, arg0: Annotated[NDArray[numpy.float64], dict(shape=(None,), order='C')], arg1: int, arg2: int, /) -> None: ...
+
+    def Tt_inv_apply(self, arg0: Annotated[NDArray[numpy.float64], dict(shape=(None,), order='C')], arg1: int, arg2: int, /) -> None: ...
+
+    def base_transformations(self) -> NDArray[numpy.float64]: ...
 
     def entity_transformations(self) -> dict: ...
 
@@ -289,26 +491,26 @@ class FiniteElement_float64:
     def sobolev_space(self) -> SobolevSpace: ...
 
     @property
-    def points(self) -> Annotated[ArrayLike, dict(dtype='float64', writable=False, shape=(None, None), )]: ...
+    def points(self) -> Annotated[NDArray[numpy.float64], dict(shape=(None, None), writable=False)]: ...
 
     @property
-    def interpolation_matrix(self) -> Annotated[ArrayLike, dict(dtype='float64', writable=False, shape=(None, None), )]: ...
+    def interpolation_matrix(self) -> Annotated[NDArray[numpy.float64], dict(shape=(None, None), writable=False)]: ...
 
     @property
-    def dual_matrix(self) -> Annotated[ArrayLike, dict(dtype='float64', writable=False, shape=(None, None), )]: ...
+    def dual_matrix(self) -> Annotated[NDArray[numpy.float64], dict(shape=(None, None), writable=False)]: ...
 
     @property
-    def coefficient_matrix(self) -> Annotated[ArrayLike, dict(dtype='float64', writable=False, shape=(None, None), )]:
+    def coefficient_matrix(self) -> Annotated[NDArray[numpy.float64], dict(shape=(None, None), writable=False)]:
         """Coefficient matrix."""
 
     @property
-    def wcoeffs(self) -> Annotated[ArrayLike, dict(dtype='float64', writable=False, shape=(None, None), )]: ...
+    def wcoeffs(self) -> Annotated[NDArray[numpy.float64], dict(shape=(None, None), writable=False)]: ...
 
     @property
-    def M(self) -> list[list[Annotated[ArrayLike, dict(dtype='float64', writable=False, )]]]: ...
+    def M(self) -> list[list[Annotated[NDArray[numpy.float64], dict(writable=False)]]]: ...
 
     @property
-    def x(self) -> list[list[Annotated[ArrayLike, dict(dtype='float64', writable=False, )]]]: ...
+    def x(self) -> list[list[Annotated[NDArray[numpy.float64], dict(writable=False)]]]: ...
 
     @property
     def has_tensor_product_factorisation(self) -> bool: ...
@@ -322,179 +524,4 @@ class FiniteElement_float64:
     @property
     def dtype(self) -> str: ...
 
-class LagrangeVariant(enum.IntEnum):
-    """Lagrange element variant."""
-
-    unset = 0
-
-    equispaced = 1
-
-    gll_warped = 2
-
-    gll_isaac = 3
-
-    gll_centroid = 4
-
-    chebyshev_warped = 5
-
-    chebyshev_isaac = 6
-
-    chebyshev_centroid = 7
-
-    gl_warped = 8
-
-    gl_isaac = 9
-
-    gl_centroid = 10
-
-    legendre = 11
-
-    bernstein = 12
-
-class LatticeSimplexMethod(enum.IntEnum):
-    """Lattice simplex method."""
-
-    none = 0
-
-    warp = 1
-
-    isaac = 2
-
-    centroid = 3
-
-class LatticeType(enum.IntEnum):
-    """Lattice type."""
-
-    equispaced = 0
-
-    gll = 1
-
-    chebyshev = 2
-
-    gl = 4
-
-class MapType(enum.IntEnum):
-    """Element map type."""
-
-    identity = 0
-
-    L2Piola = 1
-
-    covariantPiola = 2
-
-    contravariantPiola = 3
-
-    doubleCovariantPiola = 4
-
-    doubleContravariantPiola = 5
-
-class PolynomialType(enum.IntEnum):
-    """Polynomial type."""
-
-    legendre = 0
-
-    bernstein = 1
-
-class PolysetType(enum.IntEnum):
-    """Polyset type."""
-
-    standard = 0
-
-    macroedge = 1
-
-class QuadratureType(enum.IntEnum):
-    """Quadrature type."""
-
-    default = 0
-
-    gauss_jacobi = 1
-
-    gll = 2
-
-    xiao_gimbutas = 3
-
-class SobolevSpace(enum.IntEnum):
-    """Sobolev space."""
-
-    L2 = 0
-
-    H1 = 1
-
-    H2 = 2
-
-    H3 = 3
-
-    HInf = 8
-
-    HDiv = 10
-
-    HCurl = 11
-
-    HEin = 12
-
-    HDivDiv = 13
-
-def cell_facet_jacobians(arg: CellType, /) -> Annotated[ArrayLike, dict(dtype='float64', )]: ...
-
-def cell_facet_normals(arg: CellType, /) -> Annotated[ArrayLike, dict(dtype='float64', )]: ...
-
-def cell_facet_orientations(arg: CellType, /) -> list[int]: ...
-
-def cell_facet_outward_normals(arg: CellType, /) -> Annotated[ArrayLike, dict(dtype='float64', )]: ...
-
-def cell_facet_reference_volumes(arg: CellType, /) -> Annotated[ArrayLike, dict(dtype='float64', )]: ...
-
-def cell_volume(arg: CellType, /) -> float: ...
-
-@overload
-def compute_interpolation_operator(arg0: FiniteElement_float32, arg1: FiniteElement_float32, /) -> Annotated[ArrayLike, dict(dtype='float32', )]: ...
-
-@overload
-def compute_interpolation_operator(arg0: FiniteElement_float64, arg1: FiniteElement_float64, /) -> Annotated[ArrayLike, dict(dtype='float64', )]: ...
-
-def create_custom_element_float32(cell_type: CellType, value_shape: Sequence[int], wcoeffs: Annotated[ArrayLike, dict(dtype='float32', writable=False, shape=(None, None), order='C')], x: Sequence[Sequence[Annotated[ArrayLike, dict(dtype='float32', writable=False, shape=(None, None), order='C')]]], M: Sequence[Sequence[Annotated[ArrayLike, dict(dtype='float32', writable=False, shape=(None, None, None, None), order='C')]]], interpolation_nderivs: int, map_type: MapType, sobolev_space: SobolevSpace, discontinuous: bool, embedded_subdegree: int, embedded_superdegree: int, poly_type: PolysetType) -> FiniteElement_float32: ...
-
-def create_custom_element_float64(cell_type: CellType, value_shape: Sequence[int], wcoeffs: Annotated[ArrayLike, dict(dtype='float64', writable=False, shape=(None, None), order='C')], x: Sequence[Sequence[Annotated[ArrayLike, dict(dtype='float64', writable=False, shape=(None, None), order='C')]]], M: Sequence[Sequence[Annotated[ArrayLike, dict(dtype='float64', writable=False, shape=(None, None, None, None), order='C')]]], interpolation_nderivs: int, map_type: MapType, sobolev_space: SobolevSpace, discontinuous: bool, embedded_subdegree: int, embedded_superdegree: int, poly_type: PolysetType) -> FiniteElement_float64: ...
-
-def create_element(arg0: ElementFamily, arg1: CellType, arg2: int, arg3: LagrangeVariant, arg4: DPCVariant, arg5: bool, arg6: Sequence[int], arg7: str, /) -> FiniteElement_float32 | FiniteElement_float64: ...
-
-def create_lattice(arg0: CellType, arg1: int, arg2: LatticeType, arg3: bool, arg4: LatticeSimplexMethod, /) -> Annotated[ArrayLike, dict(dtype='float64', )]: ...
-
-def create_tp_element(arg0: ElementFamily, arg1: CellType, arg2: int, arg3: LagrangeVariant, arg4: DPCVariant, arg5: bool, arg6: str, /) -> FiniteElement_float32 | FiniteElement_float64: ...
-
-def geometry(arg: CellType, /) -> Annotated[ArrayLike, dict(dtype='float64', )]: ...
-
-@overload
-def index(arg: int, /) -> int: ...
-
-@overload
-def index(arg0: int, arg1: int, /) -> int: ...
-
-@overload
-def index(arg0: int, arg1: int, arg2: int, /) -> int: ...
-
-def make_quadrature(arg0: QuadratureType, arg1: CellType, arg2: PolysetType, arg3: int, /) -> tuple[Annotated[ArrayLike, dict(dtype='float64', )], Annotated[ArrayLike, dict(dtype='float64', )]]: ...
-
-def polynomials_dim(arg0: PolynomialType, arg1: CellType, arg2: int, /) -> int: ...
-
-def restriction(arg0: PolysetType, arg1: CellType, arg2: CellType, /) -> PolysetType: ...
-
-def sobolev_space_intersection(arg0: SobolevSpace, arg1: SobolevSpace, /) -> SobolevSpace: ...
-
-def subentity_types(arg: CellType, /) -> list[list[CellType]]: ...
-
-def sub_entity_connectivity(arg: CellType, /) -> list[list[list[list[int]]]]: ...
-
-def sub_entity_geometry(arg0: CellType, arg1: int, arg2: int, /) -> Annotated[ArrayLike, dict(dtype='float64', )]: ...
-
-def superset(arg0: CellType, arg1: PolysetType, arg2: PolysetType, /) -> PolysetType: ...
-
-def tabulate_polynomial_set(celltype: CellType, polytype: PolysetType, d: int, n: int, x: Annotated[ArrayLike, dict(dtype='float64', writable=False, shape=(None, None), order='C')]) -> Annotated[ArrayLike, dict(dtype='float64', )]: ...
-
-def tabulate_polynomials(arg0: PolynomialType, arg1: CellType, arg2: int, arg3: Annotated[ArrayLike, dict(dtype='float64', writable=False, shape=(None, None), order='C')], /) -> Annotated[ArrayLike, dict(dtype='float64', )]: ...
-
-def topology(arg: CellType, /) -> list[list[list[int]]]: ...
-
-def tp_dof_ordering(arg0: ElementFamily, arg1: CellType, arg2: int, arg3: LagrangeVariant, arg4: DPCVariant, arg5: bool, /) -> list[int]: ...
-
-def tp_factors(arg0: ElementFamily, arg1: CellType, arg2: int, arg3: LagrangeVariant, arg4: DPCVariant, arg5: bool, arg6: Sequence[int], arg7: str, /) -> list[list[FiniteElement_float32]] | list[list[FiniteElement_float64]]: ...
+def create_custom_element_float64(cell_type: CellType, value_shape: Sequence[int], wcoeffs: Annotated[NDArray[numpy.float64], dict(shape=(None, None), order='C', writable=False)], x: Sequence[Sequence[Annotated[NDArray[numpy.float64], dict(shape=(None, None), order='C', writable=False)]]], M: Sequence[Sequence[Annotated[NDArray[numpy.float64], dict(shape=(None, None, None, None), order='C', writable=False)]]], interpolation_nderivs: int, map_type: MapType, sobolev_space: SobolevSpace, discontinuous: bool, embedded_subdegree: int, embedded_superdegree: int, poly_type: PolysetType) -> FiniteElement_float64: ...

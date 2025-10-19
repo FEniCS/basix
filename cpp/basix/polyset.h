@@ -6,6 +6,7 @@
 
 #include "cell.h"
 #include "mdspan.hpp"
+#include "types.h"
 #include <array>
 #include <concepts>
 #include <utility>
@@ -99,13 +100,13 @@
 /// \f$z\f$s.
 ///
 /// ### Pyramid
-/// Orthogonal polynomials on the pyramid element are best calculated in
-/// the same way as the tetrahedron, using recurrence relations on each
-/// axis. Let \f$\zeta_x = 2\frac{1+x}{1-z} - 1\f$, \f$\zeta_y =
-/// 2\frac{1+y}{1-z} - 1\f$. The recurrence relation is then
+/// Orthonormal rationomials on the pyramid element are also calculated
+/// using a recurrence relation. A derivation of the recurrence relation
+/// used can be found in https://doi.org/10.5281/zenodo.15281516 (Scroggs,
+/// 2025).
 ///
-/// \f[Q_{p, q, r} = P^{0,0}_p(\zeta_x) P^{0,0}_q(\zeta_y)
-/// \left(\frac{1-z}{2}\right)^{(p+q)} P_r^{2(p+q+1), 0}(z).\f]
+/// Note that the orthonormal basis for pyramids is a set of rational
+/// polynomials ("rationomials") and not polynomials.
 ///
 /// ### Normalisation
 /// For each cell type, we obtain an orthonormal set of polynomials by
@@ -179,9 +180,7 @@ enum class type
 template <std::floating_point T>
 std::pair<std::vector<T>, std::array<std::size_t, 3>>
 tabulate(cell::type celltype, polyset::type ptype, int d, int n,
-         MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<
-             const T, MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 2>>
-             x);
+         md::mdspan<const T, md::dextents<std::size_t, 2>> x);
 
 /// @brief Tabulate the orthonormal polynomial basis, and derivatives,
 /// at points on the reference cell.
@@ -203,7 +202,6 @@ tabulate(cell::type celltype, polyset::type ptype, int d, int n,
 /// @param[in,out] P Polynomial sets, for each derivative, tabulated at
 /// points. The shape is `(number of derivatives computed, number of
 /// points, basis index)`.
-///
 /// - The first index is the derivative. The first entry is the basis
 /// itself. Derivatives are stored in triangular (2D) or tetrahedral
 /// (3D) ordering, eg if `(p, q)` denotes `p` order derivative with
@@ -212,10 +210,8 @@ tabulate(cell::type celltype, polyset::type ptype, int d, int n,
 /// [5] -> (0, 2), [6] -> (3, 0),...
 /// The function basix::indexing::idx maps tuples `(p, q, r)` to the array
 /// index.
-///
 /// - The second index is the point, with index `i` corresponding to the
 /// point in row `i` of `x`.
-///
 /// - The third index is the basis function index.
 /// @todo Does the order for the third index need to be documented?
 /// @param[in] celltype Cell type
@@ -225,14 +221,9 @@ tabulate(cell::type celltype, polyset::type ptype, int d, int n,
 /// @param[in] x Points at which to evaluate the basis. The shape is
 /// `(number of points, geometric dimension)`.
 template <std::floating_point T>
-void tabulate(
-    MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<
-        T, MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 3>>
-        P,
-    cell::type celltype, polyset::type ptype, int d, int n,
-    MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<
-        const T, MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 2>>
-        x);
+void tabulate(md::mdspan<T, md::dextents<std::size_t, 3>> P,
+              cell::type celltype, polyset::type ptype, int d, int n,
+              md::mdspan<const T, md::dextents<std::size_t, 2>> x);
 
 /// @brief Dimension of a polynomial space
 /// @param[in] cell Cell type

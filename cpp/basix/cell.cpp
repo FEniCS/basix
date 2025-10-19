@@ -12,8 +12,7 @@
 using namespace basix;
 
 template <typename T, std::size_t D>
-using mdspan_t = MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<
-    T, MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, D>>;
+using mdspan_t = md::mdspan<T, md::dextents<std::size_t, D>>;
 
 //-----------------------------------------------------------------------------
 template <std::floating_point T>
@@ -503,6 +502,57 @@ cell::facet_normals(cell::type cell_type)
   }
 }
 //-----------------------------------------------------------------------------
+template <std::floating_point T>
+std::pair<std::vector<T>, std::array<std::size_t, 2>>
+cell::scaled_facet_normals(cell::type cell_type)
+{
+  const std::size_t tdim = cell::topological_dimension(cell_type);
+  std::vector<std::vector<int>> facets = cell::topology(cell_type)[tdim - 1];
+  auto [xdata, xshape] = cell::geometry<T>(cell_type);
+
+  mdspan_t<const T, 2> x(xdata.data(), xshape);
+  std::array<std::size_t, 2> shape = {facets.size(), tdim};
+  std::vector<T> normal(shape[0] * shape[1]);
+  mdspan_t<T, 2> n(normal.data(), shape);
+  switch (tdim)
+  {
+  case 1:
+    std::ranges::fill(normal, 1.0);
+    return {normal, shape};
+  case 2:
+  {
+    for (std::size_t f = 0; f < facets.size(); ++f)
+    {
+      const std::vector<int>& facet = facets[f];
+      assert(facet.size() == 2);
+      n(f, 0) = x(facet[1], 1) - x(facet[0], 1);
+      n(f, 1) = x(facet[0], 0) - x(facet[1], 0);
+    }
+    return {normal, shape};
+  }
+  case 3:
+  {
+    for (std::size_t f = 0; f < facets.size(); ++f)
+    {
+      const std::vector<int>& facet = facets[f];
+      assert(facets[f].size() == 3 or facets[f].size() == 4);
+      std::array<T, 3> e0, e1;
+      for (std::size_t i = 0; i < 3; ++i)
+      {
+        e0[i] = x(facet[1], i) - x(facet[0], i);
+        e1[i] = x(facet[2], i) - x(facet[0], i);
+      }
+      n(f, 0) = e0[1] * e1[2] - e0[2] * e1[1];
+      n(f, 1) = e0[2] * e1[0] - e0[0] * e1[2];
+      n(f, 2) = e0[0] * e1[1] - e0[1] * e1[0];
+    }
+    return {normal, shape};
+  }
+  default:
+    throw std::runtime_error("Wrong topological dimension");
+  }
+}
+//-----------------------------------------------------------------------------
 std::vector<bool> cell::facet_orientations(cell::type cell_type)
 {
   const std::size_t tdim = cell::topological_dimension(cell_type);
@@ -539,6 +589,7 @@ std::vector<T> cell::facet_reference_volumes(cell::type cell_type)
   int tdim = topological_dimension(cell_type);
   std::vector<cell::type> facet_types = subentity_types(cell_type)[tdim - 1];
   std::vector<T> out;
+  out.reserve(facet_types.size());
   for (auto& facet_type : facet_types)
     out.push_back(cell::volume<T>(facet_type));
   return out;
@@ -608,6 +659,37 @@ std::vector<std::vector<cell::type>> cell::subentity_types(cell::type cell_type)
 //-----------------------------------------------------------------------------
 template <std::floating_point T>
 std::pair<std::vector<T>, std::array<std::size_t, 3>>
+cell::entity_jacobians(cell::type cell_type, std::size_t e_dim)
+{
+  std::size_t tdim = cell::topological_dimension(cell_type);
+  if ((e_dim >= tdim))
+  {
+    throw std::runtime_error(
+        "Entity jacobians supported for entity of dimension "
+        + std::to_string(e_dim) + "for cell of dimension "
+        + std::to_string(tdim));
+  }
+
+  const auto [_x, xshape] = cell::geometry<T>(cell_type);
+  mdspan_t<const T, 2> x(_x.data(), xshape);
+  std::vector<std::vector<int>> entities = topology(cell_type)[e_dim];
+
+  std::array<std::size_t, 3> shape = {entities.size(), tdim, e_dim};
+  std::vector<T> jacobians(shape[0] * shape[1] * shape[2]);
+  mdspan_t<T, 3> J(jacobians.data(), shape);
+  for (std::size_t e = 0; e < entities.size(); ++e)
+  {
+    const std::vector<int>& entity = entities[e];
+    for (std::size_t j = 0; j < e_dim; ++j)
+      for (std::size_t k = 0; k < J.extent(1); ++k)
+        J(e, k, j) = x(entity[1 + j], k) - x(entity[0], k);
+  }
+
+  return {std::move(jacobians), shape};
+}
+//-----------------------------------------------------------------------------
+template <std::floating_point T>
+std::pair<std::vector<T>, std::array<std::size_t, 3>>
 cell::facet_jacobians(cell::type cell_type)
 {
   std::size_t tdim = cell::topological_dimension(cell_type);
@@ -617,22 +699,20 @@ cell::facet_jacobians(cell::type cell_type)
         "Facet jacobians not supported for this cell type.");
   }
 
-  const auto [_x, xshape] = cell::geometry<T>(cell_type);
-  mdspan_t<const T, 2> x(_x.data(), xshape);
-  std::vector<std::vector<int>> facets = topology(cell_type)[tdim - 1];
-
-  std::array<std::size_t, 3> shape = {facets.size(), tdim, tdim - 1};
-  std::vector<T> jacobians(shape[0] * shape[1] * shape[2]);
-  mdspan_t<T, 3> J(jacobians.data(), shape);
-  for (std::size_t f = 0; f < facets.size(); ++f)
+  return entity_jacobians<T>(cell_type, tdim - 1);
+}
+//-----------------------------------------------------------------------------
+template <std::floating_point T>
+std::pair<std::vector<T>, std::array<std::size_t, 3>>
+cell::edge_jacobians(cell::type cell_type)
+{
+  std::size_t tdim = cell::topological_dimension(cell_type);
+  if (tdim != 3)
   {
-    const std::vector<int>& facet = facets[f];
-    for (std::size_t j = 0; j < tdim - 1; ++j)
-      for (std::size_t k = 0; k < J.extent(1); ++k)
-        J(f, k, j) = x(facet[1 + j], k) - x(facet[0], k);
+    throw std::runtime_error(
+        "Edge jacobians not supported for this cell type.");
   }
-
-  return {std::move(jacobians), std::move(shape)};
+  return entity_jacobians<T>(cell_type, 1);
 }
 //-----------------------------------------------------------------------------
 
@@ -661,6 +741,11 @@ template std::pair<std::vector<float>, std::array<std::size_t, 2>>
 template std::pair<std::vector<double>, std::array<std::size_t, 2>>
     cell::facet_normals(cell::type);
 
+template std::pair<std::vector<float>, std::array<std::size_t, 2>>
+    cell::scaled_facet_normals(cell::type);
+template std::pair<std::vector<double>, std::array<std::size_t, 2>>
+    cell::scaled_facet_normals(cell::type);
+
 template std::vector<float> cell::facet_reference_volumes(cell::type);
 template std::vector<double> cell::facet_reference_volumes(cell::type);
 
@@ -668,6 +753,10 @@ template std::pair<std::vector<float>, std::array<std::size_t, 3>>
     cell::facet_jacobians(cell::type);
 template std::pair<std::vector<double>, std::array<std::size_t, 3>>
     cell::facet_jacobians(cell::type);
+template std::pair<std::vector<float>, std::array<std::size_t, 3>>
+    cell::edge_jacobians(cell::type);
+template std::pair<std::vector<double>, std::array<std::size_t, 3>>
+    cell::edge_jacobians(cell::type);
 /// @endcond
 
 //-----------------------------------------------------------------------------

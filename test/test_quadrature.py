@@ -137,8 +137,6 @@ def test_qorder_pyramid(m, scheme):
     polyset += [x**a * y**b / (1 - z) ** min(a, b) for a in range(m) for b in range(m + 1 - a, m)]
     for f in polyset:
         q = sympy.integrate(f, (x, 0, 1 - z), (y, 0, 1 - z), (z, 0, 1))
-        print(Qpts)
-        print(Qwts)
         s = 0.0
         for pt, wt in zip(Qpts, Qwts):
             s += wt * f.subs([(x, pt[0]), (y, pt[1]), (z, pt[2])])
@@ -195,3 +193,13 @@ def test_gll():
     assert np.allclose(wts, ref_wts3)
     assert np.isclose((pts * wts.reshape(-1, 1)).sum(), 0)
     assert np.isclose(sum(wts), 8)
+
+
+@pytest.mark.parametrize("alpha", [0, 0.0, 1, 1.0, 1.5, 2.0, 3.0, 4.2])
+@pytest.mark.parametrize("degree", range(6))
+def test_gauss_jacobi_rule(alpha, degree):
+    pts, wts = basix.quadrature.gauss_jacobi_rule(alpha, degree + 1)
+    integral = sum(w * (1 - p) ** degree for p, w in zip(pts, wts))
+
+    expected = 1 / (alpha + degree + 1)
+    assert np.isclose(integral, expected)

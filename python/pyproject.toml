@@ -1,13 +1,13 @@
 [build-system]
-requires = ["scikit-build-core[pyproject]>=0.5.0", "nanobind>=1.6.0"]
+requires = ["scikit-build-core[pyproject]>=0.10.0", "nanobind>=2.5.0"]
 build-backend = "scikit_build_core.build"
 
 [project]
 name = "fenics-basix"
-version = "0.9.0"
+version = "0.10.0"
 description = "Basix Python interface"
 readme = "../README.md"
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 license = { file = "../LICENSE" }
 authors = [
     { email = "fenics-steering-council@googlegroups.com" },
@@ -16,9 +16,9 @@ authors = [
 dependencies = ["numpy>=1.21"]
 
 [project.optional-dependencies]
-docs = ["markdown", "pylit3", "pyyaml", "sphinx==5.0.2", "sphinx_rtd_theme"]
+docs = ["markdown", "pylit3", "pyyaml", "sphinx", "sphinx_rtd_theme"]
 lint = ["ruff"]
-optional = ["numba", "fenics-ufl@git+https://github.com/fenics/ufl"]
+optional = ["numba", "fenics-ufl>=2025.2.0,<2025.3.0"]
 test = ["pytest", "sympy", "scipy", "matplotlib", "fenics-basix[optional]"]
 ci = ["mypy", "pytest-xdist", "fenics-basix[docs,lint,test,optional]"]
 
@@ -31,7 +31,5 @@ indent-width = 4
 extend-exclude = ["_basixcpp.pyi"]
 
 [tool.scikit-build]
-minimum-version = "0.5"
-cmake.minimum-version = "3.19.0"
 wheel.packages = ["basix"]
 wheel.license-files = ["../LICENSE"]

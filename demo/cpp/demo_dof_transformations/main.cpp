@@ -22,6 +22,7 @@
 
 #include <basix/finite-element.h>
 #include <basix/lattice.h>
+#include <basix/types.h>
 #include <iomanip>
 #include <iostream>
 #include <span>
@@ -182,9 +183,8 @@ int main(int argc, char* argv[])
 
     const auto [pdata, shape] = basix::lattice::create<T>(
         cell_type, 5, basix::lattice::type::equispaced, true);
-    MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<
-        const T, MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 2>>
-        points(pdata.data(), shape);
+    basix::md::mdspan<const T, basix::md::dextents<std::size_t, 2>> points(
+        pdata.data(), shape);
     int num_points = points.extent(0);
 
     // If (for example) the direction of edge 2 in the physical cell

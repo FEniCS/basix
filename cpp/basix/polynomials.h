@@ -6,6 +6,7 @@
 
 #include "cell.h"
 #include "mdspan.hpp"
+#include "types.h"
 #include <array>
 #include <concepts>
 #include <utility>
@@ -14,11 +15,17 @@
 /// Polynomials
 namespace basix::polynomials
 {
-/// @brief Variants of a Lagrange space that can be created.
+/// @brief Polynomial types that can be created.
 enum class type
 {
+  /// Legendre polynomials: polynomials that span the full space on a cell
   legendre = 0,
-  bernstein = 1,
+  /// Lagrange polynomials: polynomials that span the Lagrange space on a cell.
+  /// Note that these will be equal to the Legendre polynomials on all cells
+  /// except pyramids
+  lagrange = 1,
+  /// Bernstein polynomials
+  bernstein = 2,
 };
 
 /// @brief Tabulate a set of polynomials.
@@ -32,9 +39,7 @@ enum class type
 template <std::floating_point T>
 std::pair<std::vector<T>, std::array<std::size_t, 2>>
 tabulate(polynomials::type polytype, cell::type celltype, int d,
-         MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<
-             const T, MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 2>>
-             x);
+         md::mdspan<const T, md::dextents<std::size_t, 2>> x);
 
 /// @brief Dimension of a polynomial space.
 /// @param[in] polytype Polynomial type

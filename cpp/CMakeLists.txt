@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.21)
 
 # Set the version
-project(Basix VERSION "0.9.0" LANGUAGES CXX)
+project(Basix VERSION "0.10.0" LANGUAGES CXX)
 include(GNUInstallDirs)
 
 if(SKBUILD AND UNIX)
@@ -24,6 +24,9 @@ add_feature_info(BUILD_SHARED_LIBS BUILD_SHARED_LIBS "Build Basix with shared li
 
 option(INSTALL_RUNTIME_DEPENDENCIES "Include runtime dependencies in install (Windows-only)" OFF)
 add_feature_info(INSTALL_RUNTIME_DEPENDENCIES INSTALL_RUNTIME_DEPENDENCIES "Include runtime dependencies in install (Windows-only)")
+
+option(ENABLE_CLANG_TIDY "Run clang-tidy while building" OFF)
+add_feature_info(ENABLE_CLANG_TIDY ENABLE_CLANG_TIDY "Run clang-tidy while building")
 
 find_package(BLAS REQUIRED)
 find_package(LAPACK REQUIRED)
@@ -73,6 +76,7 @@ set(HEADERS_basix
   ${CMAKE_CURRENT_SOURCE_DIR}/basix/e-serendipity.h
   ${CMAKE_CURRENT_SOURCE_DIR}/basix/e-hermite.h
   ${CMAKE_CURRENT_SOURCE_DIR}/basix/mdspan.hpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/basix/types.h
   ${CMAKE_CURRENT_BINARY_DIR}/basix/version.h)
 
 target_sources(basix PRIVATE
@@ -102,9 +106,18 @@ target_sources(basix PRIVATE
 # Configure the library
 set_target_properties(basix PROPERTIES PUBLIC_HEADER basix/finite-element.h)
 set_target_properties(basix PROPERTIES PRIVATE_HEADER "${HEADERS_basix}")
+
+if(ENABLE_CLANG_TIDY)
+  find_program(CLANG_TIDY NAMES clang-tidy REQUIRED)
+  set_target_properties(basix PROPERTIES CXX_CLANG_TIDY "${CLANG_TIDY};--config-file=${CMAKE_CURRENT_SOURCE_DIR}/../.clang-tidy")
+endif()
+
 target_include_directories(basix PUBLIC
   $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
   "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR};${CMAKE_CURRENT_SOURCE_DIR}>")
+
+target_compile_definitions(basix PUBLIC MDSPAN_USE_PAREN_OPERATOR=1)
+target_compile_definitions(basix PUBLIC MDSPAN_USE_BRACKET_OPERATOR=0)
 
 target_link_libraries(basix PRIVATE BLAS::BLAS)
 target_link_libraries(basix PRIVATE LAPACK::LAPACK)
@@ -121,10 +134,7 @@ if (MSVC)
     target_compile_definitions(basix PUBLIC _USE_MATH_DEFINES)
 endif()
 
-
-# TODO: This if can be removed once all platforms have CMake 3.21.
-if (WIN32)
-  install(TARGETS basix
+install(TARGETS basix
   EXPORT BasixTargets
   RUNTIME_DEPENDENCY_SET dependencies
   PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
@@ -132,21 +142,10 @@ if (WIN32)
   RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT RuntimeExecutables
   LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT RuntimeLibraries
   ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Development
-  )
-  if (INSTALL_RUNTIME_DEPENDENCIES)
-    LIST(APPEND PRE_EXCLUDE_REGEXES "api-ms-.*")
-    LIST(APPEND PRE_EXCLUDE_REGEXES "ext-ms-.*")
-    install(RUNTIME_DEPENDENCY_SET dependencies DESTINATION ${CMAKE_INSTALL_BINDIR} PRE_EXCLUDE_REGEXES ${PRE_EXCLUDE_REGEXES} POST_EXCLUDE_REGEXES ".*system32/.*\\.dll" )
-  endif()
-else()
-  install(TARGETS basix
-  EXPORT BasixTargets
-  PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
-  PRIVATE_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/basix
-  RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT RuntimeExecutables
-  LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT RuntimeLibraries
-  ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Development
-  )
+)
+if (INSTALL_RUNTIME_DEPENDENCIES AND WIN32)
+  # https://discourse.cmake.org/t/migration-experiences-comparison-runtime-dependency-set-vs-fixup-bundle-bundleutilities
+  install(RUNTIME_DEPENDENCY_SET dependencies DESTINATION ${CMAKE_INSTALL_BINDIR} PRE_EXCLUDE_REGEXES [[api-ms-win-.*]] [[ext-ms-.*]] POST_EXCLUDE_REGEXES [[.*(\\|/)system32(\\|/).*\.dll]])
 endif()
 
 # Configure CMake helpers

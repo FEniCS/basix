@@ -6,6 +6,7 @@
 """Functions for creating finite elements."""
 
 import typing
+from warnings import warn
 
 import numpy as np
 import numpy.typing as npt
@@ -22,8 +23,9 @@ from basix._basixcpp import (
 from basix._basixcpp import create_element as _create_element
 from basix._basixcpp import create_tp_element as _create_tp_element
 from basix._basixcpp import tp_dof_ordering as _tp_dof_ordering
+from basix._basixcpp import lex_dof_ordering as _lex_dof_ordering
 from basix._basixcpp import tp_factors as _tp_factors
-from basix.cell import CellType
+from basix.cell import CellType, geometry, topology, facet_outward_normals
 from basix import MapType
 from basix.polynomials import PolysetType
 from basix.sobolev_spaces import SobolevSpace
@@ -33,6 +35,7 @@ __all__ = [
     "create_element",
     "create_custom_element",
     "create_tp_element",
+    "lex_dof_ordering",
     "string_to_family",
     "tp_factors",
     "tp_dof_ordering",
@@ -308,6 +311,60 @@ class FiniteElement:
         """
         factors = self._e.get_tensor_product_representation()
         return [[FiniteElement(e) for e in elements] for elements in factors]
+
+    def permute_subentity_closure(
+        self,
+        indices: npt.NDArray,
+        cell_or_entity_info: int,
+        entity_type: CellType,
+        entity_index: typing.Optional[int] = None,
+    ) -> npt.NDArray:
+        """Permute DOF indices on the closure of a sub-entity.
+
+        Args:
+            indices: The indices to permute
+            cell_or_entity_info: Bit packed entity info (if entity_index is None) or
+                cell info (if entity_index is not None)
+            entity_type: The cell type of the entity
+            entity_index: The index of the entity
+        """
+        if entity_index is None:
+            return np.array(
+                self._e.permute_subentity_closure(indices, cell_or_entity_info, entity_type)
+            )
+        else:
+            return np.array(
+                self._e.permute_subentity_closure(
+                    indices, cell_or_entity_info, entity_type, entity_index
+                )
+            )
+
+    def permute_subentity_closure_inv(
+        self,
+        indices: npt.NDArray,
+        cell_or_entity_info: int,
+        entity_type: CellType,
+        entity_index: typing.Optional[int] = None,
+    ) -> npt.NDArray:
+        """Apply inverse permutation to DOF indices on the closure of a sub-entity.
+
+        Args:
+            indices: The indices to permute
+            cell_or_entity_info: Bit packed entity info (if entity_index is None) or
+                cell info (if entity_index is not None)
+            entity_type: The cell type of the entity
+            entity_index: The index of the entity
+        """
+        if entity_index is None:
+            return np.array(
+                self._e.permute_subentity_closure_inv(indices, cell_or_entity_info, entity_type)
+            )
+        else:
+            return np.array(
+                self._e.permute_subentity_closure_inv(
+                    indices, cell_or_entity_info, entity_type, entity_index
+                )
+            )
 
     @property
     def degree(self) -> int:
@@ -617,10 +674,37 @@ def create_custom_element(
     Returns:
         A custom finite element.
     """
+    if len(x) != len(M):
+        raise ValueError("x and M must have the same length")
+    # Allow (eg) only three lists to be included when creating a 2D cell
+    while len(x) < 4:
+        x.append([])
+        M.append([])
+
     if wcoeffs.dtype != dtype:
         wcoeffs = np.dtype(dtype).type(wcoeffs)  # type: ignore
         x = [[np.dtype(dtype).type(j) for j in i] for i in x]  # type: ignore
         M = [[np.dtype(dtype).type(j) for j in i] for i in M]  # type: ignore
+
+    # Check shape of x
+    tdim = len(topology(cell_type)) - 1
+    for i in x:
+        for j in i:
+            if j.shape[1] != tdim:
+                raise RuntimeError("x has a point with the wrong tdim")
+            if len(j.shape) != 2:
+                raise ValueError("x has the wrong dimension")
+
+    # Warn if points are not inside the cell
+    geo = geometry(cell_type)
+    top = topology(cell_type)
+    for points_i in x:
+        for points_j in points_i:
+            for p in points_j:
+                for facet, facet_normal in zip(top[tdim - 1], facet_outward_normals(cell_type)):
+                    if np.dot(p - geo[facet[0]], facet_normal) > 0.001:
+                        warn(f"Point {p} is not in cell", UserWarning)
+
     if np.issubdtype(dtype, np.float32):
         _create_custom_element = _create_custom_element_float32  # type: ignore
     elif np.issubdtype(dtype, np.float64):
@@ -697,7 +781,7 @@ def tp_factors(
 ) -> list[list[FiniteElement]]:
     """Elements in the tensor product factorisation of an element.
 
-    If the element has no factorisation, an empty list is returned.
+    If the element has no factorisation, raises a RuntimeError.
 
     Args:
         family: Finite element family.
@@ -743,8 +827,7 @@ def tp_dof_ordering(
     This DOF ordering can be passed into create_element to create the
     element with DOFs ordered in a tensor product order.
 
-    If the element has no tensor product factorisation, an empty list is
-    returned.
+    If the element has no factorisation, raises a RuntimeError.
 
     Args:
         family: Finite element family.
@@ -761,6 +844,46 @@ def tp_dof_ordering(
         The DOF ordering.
     """
     return _tp_dof_ordering(
+        family,
+        celltype,
+        degree,
+        lagrange_variant,
+        dpc_variant,
+        discontinuous,
+    )
+
+
+def lex_dof_ordering(
+    family: ElementFamily,
+    celltype: CellType,
+    degree: int,
+    lagrange_variant: LagrangeVariant = LagrangeVariant.unset,
+    dpc_variant: DPCVariant = DPCVariant.unset,
+    discontinuous: bool = False,
+) -> list[int]:
+    """Lexicographic DOF ordering for an element.
+
+    This DOF ordering can be passed into create_element to create the
+    element with DOFs ordered in a lexicographic order.
+
+    If the element contains DOFs that are not point evaluations, raises a
+    RuntimeError.
+
+    Args:
+        family: Finite element family.
+        celltype: Reference cell type that the element is defined on
+        degree: Polynomial degree of the element.
+        lagrange_variant: Lagrange variant type.
+        dpc_variant: DPC variant type.
+        discontinuous: If `True` element is discontinuous. The
+            discontinuous element will have the same DOFs as a
+            continuous element, but the DOFs will all be associated with
+            the interior of the cell.
+
+    Returns:
+        The DOF ordering.
+    """
+    return _lex_dof_ordering(
         family,
         celltype,
         degree,
@@ -854,13 +977,6 @@ def string_to_family(family: str, cell: str) -> ElementFamily:
                 "Regge": ElementFamily.Regge,
                 "CR": ElementFamily.CR,
                 "Crouzeix-Raviart": ElementFamily.CR,
-            }
-        )
-
-    # Family names that are valid for triangles
-    if cell in ["triangle"]:
-        families.update(
-            {
                 "HHJ": ElementFamily.HHJ,
                 "Hellan-Herrmann-Johnson": ElementFamily.HHJ,
             }

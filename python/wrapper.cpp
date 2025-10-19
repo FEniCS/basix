@@ -34,8 +34,7 @@ using namespace nb::literals;
 using namespace basix;
 
 template <typename T, std::size_t d>
-using mdspan_t = MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<
-    T, MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, d>>;
+using mdspan_t = md::mdspan<T, md::dextents<std::size_t, d>>;
 
 namespace
 {
@@ -85,7 +84,7 @@ auto as_nbarrayp(std::pair<V, std::array<std::size_t, U>>&& x)
 }
 
 template <typename T>
-void declare_float(nb::module_& m, std::string type)
+void declare_float(nb::module_& m, const std::string& type)
 {
   std::string name = "FiniteElement_" + type;
   nb::class_<FiniteElement<T>>(m, name.c_str())
@@ -100,21 +99,35 @@ void declare_float(nb::module_& m, std::string type)
       .def("hash", &FiniteElement<T>::hash)
       .def("permute_subentity_closure",
            [](const FiniteElement<T>& self,
-              nb::ndarray<std::int32_t, nb::ndim<1>, nb::c_contig> d,
+              const nb::ndarray<std::int32_t, nb::ndim<1>, nb::c_contig>& d,
               std::uint32_t entity_info, cell::type entity_type)
            {
              std::span<std::int32_t> _d(d.data(), d.shape(0));
              self.permute_subentity_closure(_d, entity_info, entity_type);
-             return as_nbarray(std::move(_d));
+           })
+      .def("permute_subentity_closure",
+           [](const FiniteElement<T>& self,
+              const nb::ndarray<std::int32_t, nb::ndim<1>, nb::c_contig>& d,
+              std::uint32_t cell_info, cell::type entity_type, int entity_index)
+           {
+             std::span<std::int32_t> _d(d.data(), d.shape(0));
+             self.permute_subentity_closure(_d, cell_info, entity_type, entity_index);
            })
       .def("permute_subentity_closure_inv",
            [](const FiniteElement<T>& self,
-              nb::ndarray<std::int32_t, nb::ndim<1>, nb::c_contig> d,
+              const nb::ndarray<std::int32_t, nb::ndim<1>, nb::c_contig>& d,
               std::uint32_t entity_info, cell::type entity_type)
            {
              std::span<std::int32_t> _d(d.data(), d.shape(0));
              self.permute_subentity_closure_inv(_d, entity_info, entity_type);
-             return as_nbarray(std::move(_d));
+           })
+      .def("permute_subentity_closure_inv",
+           [](const FiniteElement<T>& self,
+              const nb::ndarray<std::int32_t, nb::ndim<1>, nb::c_contig>& d,
+              std::uint32_t cell_info, cell::type entity_type, int entity_index)
+           {
+             std::span<std::int32_t> _d(d.data(), d.shape(0));
+             self.permute_subentity_closure_inv(_d, cell_info, entity_type, entity_index);
            })
       .def("push_forward",
            [](const FiniteElement<T>& self,
@@ -425,6 +438,8 @@ NB_MODULE(_basixcpp, m)
   m.def("topology", &cell::topology);
   m.def("geometry", [](cell::type celltype)
         { return as_nbarrayp(cell::geometry<double>(celltype)); });
+  m.def("sub_entity_type", [](cell::type celltype, int dim, int index)
+        { return cell::sub_entity_type(celltype, dim, index); });
   m.def("sub_entity_connectivity", &cell::sub_entity_connectivity);
   m.def("sub_entity_geometry",
         [](cell::type celltype, int dim, int index)
@@ -451,11 +466,12 @@ NB_MODULE(_basixcpp, m)
   nb::enum_<polynomials::type>(m, "PolynomialType", nb::is_arithmetic(),
                                "Polynomial type.")
       .value("legendre", polynomials::type::legendre)
+      .value("lagrange", polynomials::type::lagrange)
       .value("bernstein", polynomials::type::bernstein);
 
   m.def("tabulate_polynomials",
         [](polynomials::type polytype, cell::type celltype, int d,
-           nb::ndarray<const double, nb::ndim<2>, nb::c_contig> x)
+           const nb::ndarray<const double, nb::ndim<2>, nb::c_contig>& x)
         {
           mdspan_t<const double, 2> _x(x.data(), x.shape(0), x.shape(1));
           return as_nbarrayp(polynomials::tabulate(polytype, celltype, d, _x));
@@ -510,14 +526,12 @@ NB_MODULE(_basixcpp, m)
         { return cell::volume<double>(cell_type); });
   m.def("cell_facet_normals", [](cell::type cell_type)
         { return as_nbarrayp(cell::facet_normals<double>(cell_type)); });
-  m.def("cell_facet_reference_volumes",
-        [](cell::type cell_type) {
-          return as_nbarray(cell::facet_reference_volumes<double>(cell_type));
-        });
-  m.def("cell_facet_outward_normals",
-        [](cell::type cell_type) {
-          return as_nbarrayp(cell::facet_outward_normals<double>(cell_type));
-        });
+  m.def(
+      "cell_facet_reference_volumes", [](cell::type cell_type)
+      { return as_nbarray(cell::facet_reference_volumes<double>(cell_type)); });
+  m.def(
+      "cell_facet_outward_normals", [](cell::type cell_type)
+      { return as_nbarrayp(cell::facet_outward_normals<double>(cell_type)); });
   m.def("cell_facet_orientations",
         [](cell::type cell_type)
         {
@@ -527,6 +541,9 @@ NB_MODULE(_basixcpp, m)
         });
   m.def("cell_facet_jacobians", [](cell::type cell_type)
         { return as_nbarrayp(cell::facet_jacobians<double>(cell_type)); });
+
+  m.def("cell_edge_jacobians", [](cell::type cell_type)
+        { return as_nbarrayp(cell::edge_jacobians<double>(cell_type)); });
 
   nb::enum_<element::family>(m, "ElementFamily", nb::is_arithmetic(),
                              "Finite element family.")
@@ -623,7 +640,7 @@ NB_MODULE(_basixcpp, m)
         [](element::family family_name, cell::type cell, int degree,
            element::lagrange_variant lagrange_variant,
            element::dpc_variant dpc_variant, bool discontinuous,
-           std::vector<int> dof_ordering, char dtype)
+           const std::vector<int>& dof_ordering, char dtype)
             -> std::variant<std::vector<std::vector<FiniteElement<float>>>,
                             std::vector<std::vector<FiniteElement<double>>>>
         {
@@ -654,6 +671,17 @@ NB_MODULE(_basixcpp, m)
                                         discontinuous);
         });
 
+  m.def("lex_dof_ordering",
+        [](element::family family_name, cell::type cell, int degree,
+           element::lagrange_variant lagrange_variant,
+           element::dpc_variant dpc_variant,
+           bool discontinuous) -> std::vector<int>
+        {
+          return basix::lex_dof_ordering(family_name, cell, degree,
+                                         lagrange_variant, dpc_variant,
+                                         discontinuous);
+        });
+
   nb::enum_<polyset::type>(m, "PolysetType", nb::is_arithmetic(),
                            "Polyset type.")
       .value("standard", polyset::type::standard)
@@ -676,6 +704,16 @@ NB_MODULE(_basixcpp, m)
             = quadrature::make_quadrature<double>(rule, celltype, polytype, m);
         std::array shape{w.size(), pts.size() / w.size()};
         return std::pair(as_nbarray(std::move(pts), shape.size(), shape.data()),
+                         as_nbarray(std::move(w)));
+      });
+
+  m.def(
+      "gauss_jacobi_rule",
+      [](double a, int m)
+      {
+        auto [pts, w]
+            = quadrature::gauss_jacobi_rule<double>(a, m);
+        return std::pair(as_nbarray(std::move(pts)),
                          as_nbarray(std::move(w)));
       });
 

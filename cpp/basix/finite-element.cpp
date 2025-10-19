@@ -23,20 +23,16 @@
 #include <concepts>
 #include <limits>
 #include <numeric>
+
 #define str_macro(X) #X
 #define str(X) str_macro(X)
 
 using namespace basix;
 
-namespace stdex
-    = MDSPAN_IMPL_STANDARD_NAMESPACE::MDSPAN_IMPL_PROPOSED_NAMESPACE;
 template <typename T, std::size_t d>
-using mdspan_t = MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<
-    T, MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, d>>;
+using mdspan_t = md::mdspan<T, md::dextents<std::size_t, d>>;
 template <typename T, std::size_t d>
-using mdarray_t
-    = stdex::mdarray<T,
-                     MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, d>>;
+using mdarray_t = mdex::mdarray<T, md::dextents<std::size_t, d>>;
 
 namespace
 {
@@ -350,7 +346,7 @@ std::vector<std::vector<FiniteElement<T>>>
 basix::tp_factors(element::family family, cell::type cell, int degree,
                   element::lagrange_variant lvariant,
                   element::dpc_variant dvariant, bool discontinuous,
-                  std::vector<int> dof_ordering)
+                  const std::vector<int>& dof_ordering)
 {
   std::vector<int> tp_dofs = tp_dof_ordering(family, cell, degree, lvariant,
                                              dvariant, discontinuous);
@@ -392,10 +388,10 @@ basix::tp_factors(element::family family, cell::type cell, int degree,
 //-----------------------------------------------------------------------------
 template std::vector<std::vector<basix::FiniteElement<float>>>
 basix::tp_factors(element::family, cell::type, int, element::lagrange_variant,
-                  element::dpc_variant, bool, std::vector<int>);
+                  element::dpc_variant, bool, const std::vector<int>&);
 template std::vector<std::vector<basix::FiniteElement<double>>>
 basix::tp_factors(element::family, cell::type, int, element::lagrange_variant,
-                  element::dpc_variant, bool, std::vector<int>);
+                  element::dpc_variant, bool, const std::vector<int>&);
 //-----------------------------------------------------------------------------
 std::vector<int> basix::tp_dof_ordering(element::family family, cell::type cell,
                                         int degree, element::lagrange_variant,
@@ -513,6 +509,308 @@ std::vector<int> basix::tp_dof_ordering(element::family family, cell::type cell,
   return dof_ordering;
 }
 //-----------------------------------------------------------------------------
+std::vector<int> basix::lex_dof_ordering(element::family family, cell::type cell,
+                                         int degree, element::lagrange_variant,
+                                         element::dpc_variant, bool)
+{
+  std::vector<int> dof_ordering;
+  std::vector<int> perm;
+
+  switch (family)
+  {
+  case element::family::P:
+  {
+    switch (cell)
+    {
+    case cell::type::interval:
+    {
+      perm.push_back(0);
+      if (degree > 0)
+      {
+        for (int i = 2; i <= degree; ++i)
+          perm.push_back(i);
+        perm.push_back(1);
+      }
+      break;
+    }
+    case cell::type::quadrilateral:
+    {
+      perm.push_back(0);
+      if (degree > 0)
+      {
+        int n = degree - 1;
+        for (int i = 0; i < n; ++i)
+          perm.push_back(4 + i);
+        perm.push_back(1);
+        for (int i = 0; i < n; ++i)
+        {
+          perm.push_back(4 + n + i);
+          for (int j = 0; j < n; ++j)
+            perm.push_back(4 + j + (4 + i) * n);
+          perm.push_back(4 + 2 * n + i);
+        }
+        perm.push_back(2);
+        for (int i = 0; i < n; ++i)
+          perm.push_back(4 + 3 * n + i);
+        perm.push_back(3);
+      }
+      assert((int)perm.size() == (degree + 1) * (degree + 1));
+      break;
+    }
+    case cell::type::triangle:
+    {
+      perm.push_back(0);
+      if (degree > 0)
+      {
+        int n = degree - 1;
+        for (int i = 0; i < n; ++i)
+          perm.push_back(3 + 2 * n + i);
+        perm.push_back(1);
+        int dof = 3 + 3 * n;
+        for (int i = 0; i < n; ++i)
+        {
+          perm.push_back(3 + n + i);
+          for (int j = 0; j < n - 1 - i; ++j)
+            perm.push_back(dof++);
+          perm.push_back(3 + i);
+        }
+        perm.push_back(2);
+      }
+
+      assert((int)perm.size() == (degree + 1) * (degree + 2) / 2);
+      break;
+    }
+    case cell::type::hexahedron:
+    {
+      perm.push_back(0);
+      if (degree > 0)
+      {
+        int n = degree - 1;
+        for (int i = 0; i < n; ++i)
+          perm.push_back(8 + i);
+        perm.push_back(1);
+        for (int i = 0; i < n; ++i)
+        {
+          perm.push_back(8 + n + i);
+          for (int j = 0; j < n; ++j)
+            perm.push_back(8 + 12 * n + n * i + j);
+          perm.push_back(8 + 3 * n + i);
+        }
+        perm.push_back(2);
+        for (int i = 0; i < n; ++i)
+          perm.push_back(8 + 5 * n + i);
+        perm.push_back(3);
+
+        for (int i = 0; i < n; ++i)
+        {
+          perm.push_back(8 + 2 * n + i);
+          for (int j = 0; j < n; ++j)
+            perm.push_back(8 + 12 * n + n * n + n * i + j);
+          perm.push_back(8 + 4 * n + i);
+          for (int j = 0; j < n; ++j)
+          {
+            perm.push_back(8 + 12 * n + 2 * n * n + n * i + j);
+            for (int k = 0; k < n; ++k)
+              perm.push_back(8 + 12 * n + 6 * n * n + i * n * n + j * n + k);
+            perm.push_back(8 + 12 * n + 3 * n * n + n * i + j);
+          }
+          perm.push_back(8 + 6 * n + i);
+          for (int j = 0; j < n; ++j)
+            perm.push_back(8 + 12 * n + 4 * n * n + n * i + j);
+          perm.push_back(8 + 7 * n + i);
+        }
+        perm.push_back(4);
+        for (int i = 0; i < n; ++i)
+          perm.push_back(8 + 8 * n + i);
+        perm.push_back(5);
+        for (int i = 0; i < n; ++i)
+        {
+          perm.push_back(8 + 9 * n + i);
+          for (int j = 0; j < n; ++j)
+            perm.push_back(8 + 12 * n + 5 * n * n + n * i + j);
+          perm.push_back(8 + 10 * n + i);
+        }
+        perm.push_back(6);
+        for (int i = 0; i < n; ++i)
+          perm.push_back(8 + 11 * n + i);
+        perm.push_back(7);
+      }
+
+      assert((int)perm.size() == (degree + 1) * (degree + 1) * (degree + 1));
+      break;
+    }
+    case cell::type::tetrahedron:
+    {
+      perm.push_back(0);
+      if (degree > 0)
+      {
+        int n = degree - 1;
+        int face0 = 4 + 6 * n;
+        int face1 = 4 + 6 * n + n * (n - 1) / 2;
+        int face2 = 4 + 6 * n + n * (n - 1);
+        int face3 = 4 + 6 * n + n * (n - 1) * 3 / 2;
+        int interior = 4 + 6 * n + n * (n - 1) * 2;
+        for (int i = 0; i < n; ++i)
+          perm.push_back(4 + 5 * n + i);
+        perm.push_back(1);
+        for (int i = 0; i < n; ++i)
+        {
+          perm.push_back(4 + 4 * n + i);
+          for (int j = 0; j < n - 1 - i; ++j)
+            perm.push_back(face3++);
+          perm.push_back(4 + 2 * n + i);
+        }
+        perm.push_back(2);
+        for (int i = 0; i < n; ++i)
+        {
+          perm.push_back(4 + 3 * n + i);
+          for (int j = 0; j < n - 1 - i; ++j)
+            perm.push_back(face2++);
+          perm.push_back(4 + n + i);
+          for (int j = 0; j < n - 1 - i; ++j)
+          {
+            perm.push_back(face1++);
+            for (int k = 0; k < n - 2 - i - j; ++k)
+              perm.push_back(interior++);
+            perm.push_back(face0++);
+          }
+          perm.push_back(4 + i);
+        }
+        perm.push_back(3);
+      }
+
+      assert((int)perm.size() == (degree + 1) * (degree + 2) * (degree + 3) / 6);
+      break;
+    }
+    case cell::type::prism:
+    {
+      perm.push_back(0);
+      if (degree > 0)
+      {
+        int n = degree - 1;
+        int face0 = 6 + 9 * n;
+        int face1 = 6 + 9 * n + n * (n - 1) / 2;
+        int face2 = 6 + 9 * n + n * (n - 1) / 2 + n * n;
+        int face3 = 6 + 9 * n + n * (n - 1) / 2 + 2 * n * n;
+        int face4 = 6 + 9 * n + n * (n - 1) / 2 + 3 * n * n;
+        int interior = 6 + 9 * n + n * (n - 1) + 3 * n * n;
+        for (int i = 0; i < n; ++i)
+          perm.push_back(6 + i);
+        perm.push_back(1);
+        for (int i = 0; i < n; ++i)
+        {
+          perm.push_back(6 + n + i);
+          for (int j = 0; j < n - 1 - i; ++j)
+            perm.push_back(face0++);
+          perm.push_back(6 + 3 * n + i);
+        }
+        perm.push_back(2);
+        for (int i = 0; i < n; ++i)
+        {
+          perm.push_back(6 + 2 * n + i);
+          for (int j = 0; j < n; ++j)
+            perm.push_back(face1++);
+          perm.push_back(6 + 4 * n + i);
+          for (int j = 0; j < n; ++j)
+          {
+            perm.push_back(face2++);
+            for (int k = 0; k < n - 1 - j; ++k)
+              perm.push_back(interior++);
+            perm.push_back(face3++);
+          }
+          perm.push_back(6 + 5 * n + i);
+        }
+        perm.push_back(3);
+        for (int i = 0; i < n; ++i)
+          perm.push_back(6 + 6 * n + i);
+        perm.push_back(4);
+        for (int i = 0; i < n; ++i)
+        {
+          perm.push_back(6 + 7 * n + i);
+          for (int j = 0; j < n - 1 - i; ++j)
+            perm.push_back(face4++);
+          perm.push_back(6 + 8 * n + i);
+        }
+        perm.push_back(5);
+      }
+
+      assert((int)perm.size()
+             == (degree + 1) * (degree + 1) * (degree + 2) / 2);
+      break;
+    }
+
+    case cell::type::pyramid:
+    {
+      perm.push_back(0);
+      if (degree > 0)
+      {
+        int n = degree - 1;
+        int face0 = 5 + 8 * n;
+        int face1 = 5 + 8 * n + n * n;
+        int face2 = 5 + 8 * n + n * n + n * (n - 1) / 2;
+        int face3 = 5 + 8 * n + n * n + n * (n - 1);
+        int face4 = 5 + 8 * n + n * n + n * (n - 1) * 3 / 2;
+        int interior = 5 + 8 * n + n * n + n * (n - 1) * 2;
+        for (int i = 0; i < n; ++i)
+          perm.push_back(5 + i);
+        perm.push_back(1);
+        for (int i = 0; i < n; ++i)
+        {
+          perm.push_back(5 + n + i);
+          for (int j = 0; j < n; ++j)
+            perm.push_back(face0++);
+          perm.push_back(5 + 3 * n + i);
+        }
+        perm.push_back(2);
+        for (int i = 0; i < n; ++i)
+          perm.push_back(5 + 5 * n + i);
+        perm.push_back(3);
+        for (int i = 0; i < n; ++i)
+        {
+          perm.push_back(5 + 2 * n + i);
+          for (int j = 0; j < n - 1 - i; ++j)
+            perm.push_back(face1++);
+          perm.push_back(5 + 4 * n + i);
+          for (int j = 0; j < n - 1 - i; ++j)
+          {
+            perm.push_back(face2++);
+            for (int k = 0; k < n - 1 - i; ++k)
+              perm.push_back(interior++);
+            perm.push_back(face3++);
+          }
+          perm.push_back(5 + 6 * n + i);
+          for (int j = 0; j < n - 1 - i; ++j)
+            perm.push_back(face4++);
+          perm.push_back(5 + 7 * n + i);
+        }
+        perm.push_back(4);
+      }
+      assert((int)perm.size()
+             == (degree + 1) * (degree + 2) * (2 * degree + 3) / 6);
+      break;
+    }
+    default:
+    {
+    }
+    }
+    break;
+  }
+  default:
+  {
+  }
+  }
+
+  if (perm.size() == 0)
+  {
+    throw std::runtime_error(
+        "Lexicographic ordering not implemented for this element.");
+  }
+  dof_ordering.resize(perm.size());
+  for (std::size_t i = 0; i < perm.size(); ++i)
+    dof_ordering[perm[i]] = i;
+  return dof_ordering;
+}
+//-----------------------------------------------------------------------------
 template <std::floating_point T>
 std::tuple<std::array<std::vector<std::vector<T>>, 4>,
            std::array<std::vector<std::array<std::size_t, 2>>, 4>,
@@ -550,14 +848,10 @@ element::make_discontinuous(
 
   std::array<std::size_t, 2> xshape = {npoints, tdim};
   std::vector<T> xb(xshape[0] * xshape[1]);
-  MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<
-      T, MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 2>>
-      new_x(xb.data(), xshape);
+  md::mdspan<T, md::dextents<std::size_t, 2>> new_x(xb.data(), xshape);
   std::array<std::size_t, 4> Mshape = {Mshape0, value_size, npoints, nderivs};
   std::vector<T> Mb(Mshape[0] * Mshape[1] * Mshape[2] * Mshape[3]);
-  MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<
-      T, MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 4>>
-      new_M(Mb.data(), Mshape);
+  md::mdspan<T, md::dextents<std::size_t, 4>> new_M(Mb.data(), Mshape);
   int x_n = 0;
   int M_n = 0;
   for (int i = 0; i < 4; ++i)
@@ -965,7 +1259,7 @@ FiniteElement<F>::FiniteElement(
           rtot += r;
         }
 
-        constexpr F eps = 10.0 * std::numeric_limits<float>::epsilon();
+        const F eps = 10 * degree * degree * std::numeric_limits<F>::epsilon();
         if ((trans.extent(2) != 1 and std::abs(rmin) > eps)
             or std::abs(rmax - 1.0) > eps or std::abs(rtot - 1.0) > eps)
         {
@@ -1252,38 +1546,20 @@ FiniteElement<F>::FiniteElement(
         if (!dofs[1][0].empty())
         {
           precompute::apply_permutation(trans1, std::span(rot), dofs[1][0][0]);
-        }
-        if (!dofs[1][1].empty())
-        {
           precompute::apply_permutation(trans1, std::span(rot), dofs[1][1][0]);
-        }
-        if (!dofs[2][0].empty())
-        {
-          precompute::apply_permutation(trans2[0], std::span(rot),
-                                        dofs[2][0][0]);
-        }
-        if (!dofs[1][0].empty())
-        {
           precompute::apply_permutation(trans1, std::span(ref), dofs[1][0][0]);
-        }
-        if (!dofs[2][0].empty())
-        {
-          precompute::apply_permutation(trans2[1], std::span(ref),
-                                        dofs[2][0][0]);
-        }
-        if (!dofs[1][1].empty())
-        {
           precompute::apply_permutation(trans1, std::span(rot_inv),
                                         dofs[1][1][0]);
-        }
-        if (!dofs[1][2].empty())
-        {
           precompute::apply_permutation(trans1, std::span(rot_inv),
                                         dofs[1][2][0]);
         }
         if (!dofs[2][0].empty())
         {
-          precompute::apply_permutation(trans3[0], std::span(rot_inv),
+          precompute::apply_permutation(trans2[0], std::span(rot_inv),
+                                        dofs[2][0][0]);
+          precompute::apply_permutation(trans2[1], std::span(ref),
+                                        dofs[2][0][0]);
+          precompute::apply_permutation(trans3[0], std::span(rot),
                                         dofs[2][0][0]);
         }
       }
@@ -1373,39 +1649,22 @@ FiniteElement<F>::FiniteElement(
         auto& trans2 = _eperm.at(cell::type::quadrilateral);
         auto& trans3 = _eperm_inv.at(cell::type::quadrilateral);
 
-        if (!dofs[1][1].empty())
+        if (!dofs[1][0].empty())
         {
           precompute::apply_permutation(trans1, std::span(rot), dofs[1][1][0]);
-        }
-        if (!dofs[1][2].empty())
-        {
           precompute::apply_permutation(trans1, std::span(rot), dofs[1][2][0]);
+          precompute::apply_permutation(trans1, std::span(rot_inv),
+                                        dofs[1][0][0]);
+          precompute::apply_permutation(trans1, std::span(rot_inv),
+                                        dofs[1][3][0]);
         }
         if (!dofs[2][0].empty())
         {
-          precompute::apply_permutation(trans2[0], std::span(rot),
+          precompute::apply_permutation(trans2[0], std::span(rot_inv),
                                         dofs[2][0][0]);
-        }
-
-        if (!dofs[2][0].empty())
-        {
           precompute::apply_permutation(trans2[1], std::span(ref),
                                         dofs[2][0][0]);
-        }
-
-        if (!dofs[1][1].empty())
-        {
-          precompute::apply_permutation(trans1, std::span(rot_inv),
-                                        dofs[1][1][0]);
-        }
-        if (!dofs[1][2].empty())
-        {
-          precompute::apply_permutation(trans1, std::span(rot_inv),
-                                        dofs[1][2][0]);
-        }
-        if (!dofs[2][0].empty())
-        {
-          precompute::apply_permutation(trans3[0], std::span(rot_inv),
+          precompute::apply_permutation(trans3[0], std::span(rot),
                                         dofs[2][0][0]);
         }
       }
@@ -1436,7 +1695,7 @@ FiniteElement<F>::FiniteElement(
     for (std::size_t col = 0; col < matM.extent(1); ++col)
     {
       F v = col == row ? 1.0 : 0.0;
-      constexpr F eps = 100 * std::numeric_limits<F>::epsilon();
+      const F eps = 10 * degree * degree * std::numeric_limits<F>::epsilon();
       if (std::abs(matM(row, col) - v) > eps)
       {
         _interpolation_is_identity = false;
@@ -1519,9 +1778,7 @@ std::size_t FiniteElement<F>::hash() const
     }
     std::size_t vs_hash = 0;
     for (std::size_t i = 0; i < value_shape().size(); ++i)
-    {
       combine_hashes(vs_hash, std::hash<int>{}(value_shape()[i]));
-    }
     combine_hashes(h, coeff_hash);
     combine_hashes(h, std::hash<int>{}(embedded_superdegree()));
     combine_hashes(h, std::hash<int>{}(embedded_subdegree()));
@@ -1529,9 +1786,8 @@ std::size_t FiniteElement<F>::hash() const
     combine_hashes(h, vs_hash);
   }
   else
-  {
     combine_hashes(h, std::hash<int>{}(degree()));
-  }
+
   return h;
 }
 //-----------------------------------------------------------------------------
@@ -1711,14 +1967,10 @@ FiniteElement<F>::push_forward(impl::mdspan_t<const F, 3> U,
   std::vector<F> ub(shape[0] * shape[1] * shape[2]);
   mdspan_t<F, 3> u(ub.data(), shape);
 
-  using u_t = MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<
-      F, MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 2>>;
-  using U_t = MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<
-      const F, MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 2>>;
-  using J_t = MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<
-      const F, MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 2>>;
-  using K_t = MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<
-      const F, MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 2>>;
+  using u_t = md::mdspan<F, md::dextents<std::size_t, 2>>;
+  using U_t = md::mdspan<const F, md::dextents<std::size_t, 2>>;
+  using J_t = md::mdspan<const F, md::dextents<std::size_t, 2>>;
+  using K_t = md::mdspan<const F, md::dextents<std::size_t, 2>>;
   auto map = this->map_fn<u_t, U_t, J_t, K_t>();
   for (std::size_t i = 0; i < u.extent(0); ++i)
   {
@@ -1751,14 +2003,10 @@ FiniteElement<F>::pull_back(impl::mdspan_t<const F, 3> u,
   std::vector<F> Ub(shape[0] * shape[1] * shape[2]);
   mdspan_t<F, 3> U(Ub.data(), shape);
 
-  using u_t = MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<
-      const F, MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 2>>;
-  using U_t = MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<
-      F, MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 2>>;
-  using J_t = MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<
-      const F, MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 2>>;
-  using K_t = MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<
-      const F, MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 2>>;
+  using u_t = md::mdspan<const F, md::dextents<std::size_t, 2>>;
+  using U_t = md::mdspan<F, md::dextents<std::size_t, 2>>;
+  using J_t = md::mdspan<const F, md::dextents<std::size_t, 2>>;
+  using K_t = md::mdspan<const F, md::dextents<std::size_t, 2>>;
   auto map = this->map_fn<U_t, u_t, K_t, J_t>();
   for (std::size_t i = 0; i < u.extent(0); ++i)
   {

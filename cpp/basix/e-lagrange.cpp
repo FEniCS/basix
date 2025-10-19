@@ -15,8 +15,7 @@
 #include <concepts>
 
 using namespace basix;
-namespace stdex
-    = MDSPAN_IMPL_STANDARD_NAMESPACE::MDSPAN_IMPL_PROPOSED_NAMESPACE;
+namespace md = md::MDSPAN_IMPL_PROPOSED_NAMESPACE;
 
 namespace
 {
@@ -107,7 +106,8 @@ template <std::floating_point T>
 FiniteElement<T> create_d_lagrange(cell::type celltype, int degree,
                                    element::lagrange_variant variant,
                                    lattice::type lattice_type,
-                                   lattice::simplex_method simplex_method)
+                                   lattice::simplex_method simplex_method,
+                                   std::vector<int> dof_ordering)
 {
   if (celltype == cell::type::prism or celltype == cell::type::pyramid)
   {
@@ -152,7 +152,7 @@ FiniteElement<T> create_d_lagrange(cell::type celltype, int degree,
       impl::mdspan_t<const T, 2>(math::eye<T>(ndofs).data(), ndofs, ndofs),
       impl::to_mdspan(x), impl::to_mdspan(M), 0, maps::type::identity,
       sobolev::space::L2, true, degree, degree, variant,
-      element::dpc_variant::unset);
+      element::dpc_variant::unset, dof_ordering);
 }
 //----------------------------------------------------------------------------
 template <std::floating_point T>
@@ -209,7 +209,7 @@ create_d_iso(cell::type celltype, int degree, element::lagrange_variant variant,
 //----------------------------------------------------------------------------
 template <std::floating_point T>
 FiniteElement<T> create_legendre(cell::type celltype, int degree,
-                                 bool discontinuous)
+                                 bool discontinuous, std::vector<int> dof_ordering)
 {
   if (!discontinuous)
     throw std::runtime_error("Legendre variant must be discontinuous");
@@ -255,12 +255,12 @@ FiniteElement<T> create_legendre(cell::type celltype, int degree,
       impl::mdspan_t<T, 2>(math::eye<T>(ndofs).data(), ndofs, ndofs),
       impl::to_mdspan(x), impl::to_mdspan(M), 0, maps::type::identity, space,
       discontinuous, degree, degree, element::lagrange_variant::legendre,
-      element::dpc_variant::unset);
+      element::dpc_variant::unset, dof_ordering);
 }
 //-----------------------------------------------------------------------------
 template <std::floating_point T>
 FiniteElement<T> create_bernstein(cell::type celltype, int degree,
-                                  bool discontinuous)
+                                  bool discontinuous, std::vector<int> dof_ordering)
 {
   assert(degree > 0);
   if (celltype != cell::type::interval and celltype != cell::type::triangle
@@ -428,7 +428,7 @@ FiniteElement<T> create_bernstein(cell::type celltype, int degree,
       impl::mdspan_t<T, 2>(math::eye<T>(ndofs).data(), ndofs, ndofs),
       impl::to_mdspan(x), impl::to_mdspan(M), 0, maps::type::identity, space,
       discontinuous, degree, degree, element::lagrange_variant::bernstein,
-      element::dpc_variant::unset);
+      element::dpc_variant::unset, dof_ordering);
 }
 //-----------------------------------------------------------------------------
 } // namespace
@@ -448,9 +448,7 @@ basix::element::create_lagrange(cell::type celltype, int degree,
     std::array<std::vector<impl::mdarray_t<T, 2>>, 4> x;
     std::array<std::vector<impl::mdarray_t<T, 4>>, 4> M;
     x[0].emplace_back(1, 0);
-    M[0].emplace_back(
-        MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 4>{1, 1, 1, 1},
-        1);
+    M[0].emplace_back(md::dextents<std::size_t, 4>{1, 1, 1, 1}, 1);
     return FiniteElement<T>(
         family::P, cell::type::point, polyset::type::standard, 0, {},
         impl::mdspan_t<T, 2>(math::eye<T>(1).data(), 1, 1), impl::to_mdspan(x),
@@ -460,14 +458,14 @@ basix::element::create_lagrange(cell::type celltype, int degree,
   }
 
   if (variant == lagrange_variant::legendre)
-    return create_legendre<T>(celltype, degree, discontinuous);
+    return create_legendre<T>(celltype, degree, discontinuous, dof_ordering);
 
   if (variant == element::lagrange_variant::bernstein)
   {
     if (degree == 0)
       variant = lagrange_variant::unset;
     else
-      return create_bernstein<T>(celltype, degree, discontinuous);
+      return create_bernstein<T>(celltype, degree, discontinuous, dof_ordering);
   }
 
   if (variant == lagrange_variant::unset)
@@ -494,14 +492,50 @@ basix::element::create_lagrange(cell::type celltype, int degree,
                                "discontinuous elements");
     }
     return create_d_lagrange<T>(celltype, degree, variant, lattice_type,
-                                simplex_method);
+                                simplex_method, dof_ordering);
   }
 
   const std::size_t tdim = cell::topological_dimension(celltype);
-  const std::size_t ndofs
+  const std::size_t psize
       = polyset::dim(celltype, polyset::type::standard, degree);
+  const std::size_t ndofs
+      = celltype == cell::type::pyramid
+            ? polynomials::dim(polynomials::type::lagrange, celltype, degree)
+            : psize;
   const std::vector<std::vector<std::vector<int>>> topology
       = cell::topology(celltype);
+
+  std::vector<T> data = celltype == cell::type::pyramid
+                            ? std::vector<T>(ndofs * psize)
+                            : math::eye<T>(ndofs);
+  impl::mdspan_t<T, 2> wcoeffs(data.data(), ndofs, psize);
+  if (celltype == cell::type::pyramid)
+  {
+    const auto [_pts, wts] = quadrature::make_quadrature<T>(
+        quadrature::type::Default, cell::type::pyramid, polyset::type::standard,
+        2 * degree);
+    impl::mdspan_t<const T, 2> pts(_pts.data(), wts.size(),
+                                   _pts.size() / wts.size());
+
+    const auto [_pset_table, shape] = polyset::tabulate(
+        cell::type::pyramid, polyset::type::standard, degree, 0, pts);
+    impl::mdspan_t<const T, 3> pset_table(_pset_table.data(), shape);
+    const auto [_poly_table, shape2] = polynomials::tabulate(
+        polynomials::type::lagrange, cell::type::pyramid, degree, pts);
+    impl::mdspan_t<const T, 2> poly_table(_poly_table.data(), shape2);
+
+    for (std::size_t i = 0; i < ndofs; ++i)
+    {
+      for (std::size_t j = 0; j < psize; ++j)
+      {
+        wcoeffs(i, j) = 0.0;
+        for (std::size_t k = 0; k < wts.size(); ++k)
+        {
+          wcoeffs(i, j) += wts[k] * poly_table(i, k) * pset_table(0, j, k);
+        }
+      }
+    }
+  }
 
   std::array<std::vector<impl::mdarray_t<T, 2>>, 4> x;
   std::array<std::vector<impl::mdarray_t<T, 4>>, 4> M;
@@ -522,10 +556,7 @@ basix::element::create_lagrange(cell::type celltype, int degree,
 
     const auto [pt, shape]
         = lattice::create<T>(celltype, 0, lattice_type, true, simplex_method);
-    x[tdim].emplace_back(
-        MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 2>{shape[0],
-                                                                 shape[1]},
-        pt);
+    x[tdim].emplace_back(md::dextents<std::size_t, 2>{shape[0], shape[1]}, pt);
     auto& _M = M[tdim].emplace_back(shape[0], 1, shape[0], 1);
     std::fill(_M.data(), _M.data() + _M.size(), 0);
     for (std::size_t i = 0; i < shape[0]; ++i)
@@ -543,10 +574,9 @@ basix::element::create_lagrange(cell::type celltype, int degree,
             = cell::sub_entity_geometry<T>(celltype, dim, e);
         if (dim == 0)
         {
-          x[dim].emplace_back(
-              MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 2>{
-                  entity_x_shape[0], entity_x_shape[1]},
-              entity_x);
+          x[dim].emplace_back(md::dextents<std::size_t, 2>{entity_x_shape[0],
+                                                           entity_x_shape[1]},
+                              entity_x);
           auto& _M
               = M[dim].emplace_back(entity_x_shape[0], 1, entity_x_shape[0], 1);
           std::fill(_M.data(), _M.data() + _M.size(), 0);
@@ -557,10 +587,8 @@ basix::element::create_lagrange(cell::type celltype, int degree,
         {
           const auto [pt, shape] = lattice::create<T>(
               celltype, degree, lattice_type, false, simplex_method);
-          x[dim].emplace_back(
-              MDSPAN_IMPL_STANDARD_NAMESPACE::dextents<std::size_t, 2>{
-                  shape[0], shape[1]},
-              pt);
+          x[dim].emplace_back(md::dextents<std::size_t, 2>{shape[0], shape[1]},
+                              pt);
           auto& _M = M[dim].emplace_back(shape[0], 1, shape[0], 1);
           std::fill(_M.data(), _M.data() + _M.size(), 0);
           for (std::size_t i = 0; i < shape[0]; ++i)
@@ -611,11 +639,11 @@ basix::element::create_lagrange(cell::type celltype, int degree,
 
   sobolev::space space
       = discontinuous ? sobolev::space::L2 : sobolev::space::H1;
-  return FiniteElement<T>(
-      family::P, celltype, polyset::type::standard, degree, {},
-      impl::mdspan_t<T, 2>(math::eye<T>(ndofs).data(), ndofs, ndofs), xview,
-      Mview, 0, maps::type::identity, space, discontinuous, degree, degree,
-      variant, dpc_variant::unset, dof_ordering);
+
+  return FiniteElement<T>(family::P, celltype, polyset::type::standard, degree,
+                          {}, wcoeffs, xview, Mview, 0, maps::type::identity,
+                          space, discontinuous, degree, degree, variant,
+                          dpc_variant::unset, dof_ordering);
 }
 //-----------------------------------------------------------------------------
 template <std::floating_point T>

@@ -13,6 +13,8 @@ namespace basix::element
 
 /// Crouzeix-Raviart element
 /// @note degree must be 1 for Crouzeix-Raviart
+/// @note on quadrilateral and hexahedral cells, this element is more commonly
+/// called the Rannacher-Turek element
 /// @param[in] celltype The cell type
 /// @param[in] degree The degree of the element
 /// @param[in] discontinuous Controls whether the element is continuous or

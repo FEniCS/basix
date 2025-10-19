@@ -5,10 +5,12 @@
 # SPDX-License-Identifier:    MIT
 """Functions to get cell geometry information and manipulate cell types."""
 
+import numpy as np
 import numpy.typing as npt
 
 from basix._basixcpp import CellType
 from basix._basixcpp import cell_facet_jacobians as _fj
+from basix._basixcpp import cell_edge_jacobians as _ej
 from basix._basixcpp import cell_facet_normals as _fn
 from basix._basixcpp import cell_facet_orientations as _fo
 from basix._basixcpp import cell_facet_outward_normals as _fon
@@ -17,18 +19,34 @@ from basix._basixcpp import cell_volume as _v
 from basix._basixcpp import geometry as _geometry
 from basix._basixcpp import subentity_types as _sut
 from basix._basixcpp import sub_entity_connectivity as _sec
+from basix._basixcpp import sub_entity_type as _set
 from basix._basixcpp import topology as _topology
 
 __all__ = [
     "sub_entity_connectivity",
     "subentity_types",
     "volume",
+    "edge_jacobians",
     "facet_jacobians",
     "facet_normals",
     "facet_orientations",
     "facet_outward_normals",
     "facet_reference_volumes",
 ]
+
+
+def sub_entity_type(celltype: CellType, dim: int, index: int) -> CellType:
+    """Cell type of a sub-entity.
+
+    Args:
+        celltype: cell type.
+        dim: dimension of the sub-entity.
+        index: index of the sub-entity
+
+    Returns:
+        The cell type of the sub-entity.
+    """
+    return _set(celltype, dim, index)
 
 
 def sub_entity_connectivity(celltype: CellType) -> list[list[list[list[int]]]]:
@@ -55,7 +73,7 @@ def volume(celltype: CellType) -> float:
     return _v(celltype)
 
 
-def facet_jacobians(celltype: CellType) -> npt.ArrayLike:
+def facet_jacobians(celltype: CellType) -> npt.NDArray:
     """Jacobians of the facets of a reference cell.
 
     Args:
@@ -64,10 +82,22 @@ def facet_jacobians(celltype: CellType) -> npt.ArrayLike:
     Returns:
         Jacobians of the facets.
     """
-    return _fj(celltype)
+    return np.array(_fj(celltype))
 
 
-def facet_normals(celltype: CellType) -> npt.ArrayLike:
+def edge_jacobians(celltype: CellType) -> npt.NDArray:
+    """Jacobians of the edges of a reference cell.
+
+    Args:
+        celltype: cell type.
+
+    Returns:
+        Jacobians of the edges.
+    """
+    return np.array(_ej(celltype))
+
+
+def facet_normals(celltype: CellType) -> npt.NDArray:
     """Normals to the facets of a reference cell.
 
     These normals will be oriented using the low-to-high ordering of the
@@ -79,7 +109,7 @@ def facet_normals(celltype: CellType) -> npt.ArrayLike:
     Returns:
         Normals to the facets.
     """
-    return _fn(celltype)
+    return np.array(_fn(celltype))
 
 
 def facet_orientations(celltype: CellType) -> list[int]:
@@ -97,7 +127,7 @@ def facet_orientations(celltype: CellType) -> list[int]:
     return _fo(celltype)
 
 
-def facet_outward_normals(celltype: CellType) -> npt.ArrayLike:
+def facet_outward_normals(celltype: CellType) -> npt.NDArray:
     """Normals to the facets of a reference cell.
 
     These normals will be oriented to be pointing outwards.
@@ -108,10 +138,10 @@ def facet_outward_normals(celltype: CellType) -> npt.ArrayLike:
     Returns:
         Normals to the facets.
     """
-    return _fon(celltype)
+    return np.array(_fon(celltype))
 
 
-def facet_reference_volumes(celltype: CellType) -> npt.ArrayLike:
+def facet_reference_volumes(celltype: CellType) -> npt.NDArray:
     """Reference volumes of the facets of a reference cell.
 
     Args:
@@ -120,10 +150,10 @@ def facet_reference_volumes(celltype: CellType) -> npt.ArrayLike:
     Returns:
         Reference volumes.
     """
-    return _frv(celltype)
+    return np.array(_frv(celltype))
 
 
-def geometry(celltype: CellType) -> npt.ArrayLike:
+def geometry(celltype: CellType) -> npt.NDArray:
     """Cell geometry.
 
     Args:
@@ -132,7 +162,7 @@ def geometry(celltype: CellType) -> npt.ArrayLike:
     Returns:
         Vertices of the cell.
     """
-    return _geometry(celltype)
+    return np.array(_geometry(celltype))
 
 
 def topology(celltype: CellType) -> list[list[list[int]]]:

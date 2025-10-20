@@ -1182,11 +1182,11 @@ class _BlockedElement(_ElementBase):
         return wcoeffs
 
     @property
-    def _x(self) -> list[list[_npt.ArrayLike]]:
+    def _x(self) -> list[list[_npt.NDArray]]:
         return self._sub_element._x
 
     @property
-    def _M(self) -> list[list[_npt.ArrayLike]]:
+    def _M(self) -> list[list[_npt.NDArray]]:
         M = []
         for M_list in self._sub_element._M:
             M_row = []

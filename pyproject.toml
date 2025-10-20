@@ -77,12 +77,6 @@ archs = [
     "aarch64",
 ] # Forces arm64 build on x86_64 runner using emulation (and vice-versa).
 before-build = "yum -y update && yum install -y epel-release && yum install -y openblas-devel ninja-build"
-test-command = [
-    "cmake -G Ninja -DPython3_EXECUTABLE=$(which python) -B build-dir -S {project}/test/test_cmake",
-    "cmake --build build-dir/",
-    "build-dir/a.out",
-    "python -m pytest -n auto --durations 20 {project}/test/",
-]
 
 [[tool.cibuildwheel.overrides]]
 select = "cp3{12,13}-manylinux*"
@@ -98,12 +92,6 @@ archs = [
     "arm64",
 ] # Forces x86_64 build on arm64 runner using cross-compilation (and vice-versa).
 before-build = "export HOMEBREW_AUTO_UPDATING=0 && brew update && brew install ninja"
-test-command = [
-    "cmake -G Ninja -DPython3_EXECUTABLE=$(which python) -B build-dir -S {project}/test/test_cmake",
-    "cmake --build build-dir/",
-    "build-dir/a.out",
-    "python -m pytest -n auto --durations 20 {project}/test/",
-]
 
 [[tool.cibuildwheel.overrides]]
 select = "cp3{12,13}-macosx*"

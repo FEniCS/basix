@@ -358,12 +358,12 @@ class _ElementBase(_AbstractFiniteElement):
         raise NotImplementedError()
 
     @property
-    def _x(self) -> list[list[_npt.ArrayLike]]:
+    def _x(self) -> list[list[_npt.NDArray]]:
         """The points used to define interpolation."""
         raise NotImplementedError()
 
     @property
-    def _M(self) -> list[list[_npt.ArrayLike]]:
+    def _M(self) -> list[list[_npt.NDArray]]:
         """The matrices used to define interpolation."""
         raise NotImplementedError()
 

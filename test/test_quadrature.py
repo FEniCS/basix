@@ -22,7 +22,7 @@ import basix
 )
 @pytest.mark.parametrize("order", range(9))
 def test_cell_quadrature(celltype, order):
-    Qpts, Qwts = basix.make_quadrature(celltype[0], order)
+    _Qpts, Qwts = basix.make_quadrature(celltype[0], order)
     assert np.isclose(sum(Qwts), celltype[1])
 
 

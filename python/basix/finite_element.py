@@ -548,7 +548,7 @@ class FiniteElement:
         return self._e.wcoeffs
 
     @property
-    def M(self) ->list[list[npt.NDArray]]:
+    def M(self) -> list[list[npt.NDArray]]:
         """Interpolation matrices for each sub-entity.
 
         See C++ documentation for details.

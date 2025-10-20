@@ -555,11 +555,11 @@ class _BasixElement(_ElementBase):
         return self._element.wcoeffs
 
     @property
-    def _x(self) -> list[list[_npt.ArrayLike]]:
+    def _x(self) -> list[list[_npt.NDArray]]:
         return self._element.x
 
     @property
-    def _M(self) -> list[list[_npt.ArrayLike]]:
+    def _M(self) -> list[list[_npt.NDArray]]:
         return self._element.M
 
     @property

@@ -3,7 +3,7 @@ import enum
 from typing import Annotated, overload
 
 import numpy
-from numpy.typing import NDArray
+from numpy.typing import NDArray, ArrayLike
 
 
 def topology(arg: CellType, /) -> list[list[list[int]]]: ...

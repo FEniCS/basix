@@ -47,12 +47,12 @@ jobs:
         run: >
           conda install python=3.13 dpcpp_linux-64 cmake git libblas=*=*mkl
           matplotlib nanobind ninja numba numpy pip pytest pytest-xdist
-          scikit-build-core scipy sympy
+          scikit-build-core scipy sympy setuptools
 
       - name: Install UFL
         run: pip -v install --no-build-isolation git+https://github.com/FEniCS/ufl.git
       - name: Install Basix
-        run: pip -v install --no-build-isolation --check-build-dependencies .
+        run: pip -v install --no-build-isolation .
       - name: Run units tests
         run: pytest -n auto --durations 20 test/
       - name: Run Python demos

@@ -50,7 +50,7 @@ jobs:
           scikit-build-core scipy sympy setuptools
 
       - name: Install UFL
-        run: pip -v install --no-build-isolation git+https://github.com/FEniCS/ufl.git
+        run: pip -v install --no-build-isolation --check-build-dependencies git+https://github.com/FEniCS/ufl.git
       - name: Install Basix
         run: pip -v install --no-build-isolation .
       - name: Run units tests

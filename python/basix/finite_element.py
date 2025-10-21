@@ -548,7 +548,7 @@ class FiniteElement:
         return self._e.wcoeffs
 
     @property
-    def M(self) -> list[list[npt.ArrayLike]]:
+    def M(self) -> list[list[npt.NDArray]]:
         """Interpolation matrices for each sub-entity.
 
         See C++ documentation for details.
@@ -556,7 +556,7 @@ class FiniteElement:
         return self._e.M
 
     @property
-    def x(self) -> list[list[npt.ArrayLike]]:
+    def x(self) -> list[list[npt.NDArray]]:
         """Interpolation points for each sub-entity.
 
         The indices of this data are ``(tdim, entity index, point index,

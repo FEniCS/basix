@@ -13,7 +13,6 @@ functionality can be used via this Python interface.
 # WINDOWSDLL
 
 from basix._basixcpp import MapType
-from basix._basixcpp import __version__  # type: ignore
 from basix import cell, finite_element, lattice, polynomials, quadrature, sobolev_spaces
 from basix.cell import CellType, geometry, topology
 from basix.finite_element import (
@@ -32,6 +31,10 @@ from basix.polynomials import superset as polyset_superset
 from basix.quadrature import QuadratureType, make_quadrature
 from basix.sobolev_spaces import SobolevSpace
 from basix.utils import index
+
+from importlib.metadata import metadata
+
+__version__ = metadata("fenics-basix")["Version"]
 
 __all__ = [
     "cell",

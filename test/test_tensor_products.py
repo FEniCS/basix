@@ -73,7 +73,7 @@ def test_tensor_product_factorisation_quadrilateral(degree):
 
     # Quadrature degree
     Q = 2 * P + 2
-    points, w = basix.make_quadrature(cell_type, Q)
+    points, _w = basix.make_quadrature(cell_type, Q)
 
     data = element.tabulate(1, points)
     dphi_x = data[1, :, :, 0]
@@ -137,7 +137,7 @@ def test_tensor_product_factorisation_hexahedron(degree):
     assert points.shape[0] == (P + 2) * (P + 2) * (P + 2)
 
     cell1d = element0.cell_type
-    points, w = basix.make_quadrature(cell1d, Q)
+    points, _w = basix.make_quadrature(cell1d, Q)
     data = element0.tabulate(1, points)
     phi0 = data[0, :, :, 0]
     dphi0 = data[1, :, :, 0]

@@ -54,7 +54,7 @@ jobs:
           pip -v install --no-build-isolation .
       - name: Run units tests
         run: |
-          pip -v install --no-build-isolation git+https://github.com/FEniCS/ufl.git
+          pip -v install git+https://github.com/FEniCS/ufl.git
           pytest -n auto --durations 20 test/
       - name: Run Python demos
         run: |

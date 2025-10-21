@@ -43,22 +43,19 @@ jobs:
           channels: https://software.repos.intel.com/python/conda,conda-forge
           auto-activate-base: false
 
-      - name: Install
+      - name: Install dependencies
         run: >
           conda install python=3.13 dpcpp_linux-64 cmake git libblas=*=*mkl
           matplotlib nanobind ninja numba numpy pip pytest pytest-xdist
           scikit-build-core scipy sympy
 
+      - name: Install UFL
+        run: pip -v install --no-build-isolation git+https://github.com/FEniCS/ufl.git
       - name: Install Basix
-        run: |
-          pip -v install --no-build-isolation .
+        run: pip -v install --no-build-isolation --check-build-dependencies .
       - name: Run units tests
-        run: |
-          pip -v install --no-build-isolation git+https://github.com/FEniCS/ufl.git
-          pytest -n auto --durations 20 test/
+        run: pytest -n auto --durations 20 test/
       - name: Run Python demos
-        run: |
-          pytest demo/python/test.py
+        run: pytest demo/python/test.py
       - name: Run C++ demos
-        run: |
-          pytest demo/cpp/test.py
+        run: pytest demo/cpp/test.py

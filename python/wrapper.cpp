@@ -17,6 +17,7 @@
 #include <memory>
 #include <nanobind/nanobind.h>
 #include <nanobind/ndarray.h>
+#include <nanobind/stl/optional.h>
 #include <nanobind/stl/pair.h>
 #include <nanobind/stl/string.h>
 #include <nanobind/stl/tuple.h>
@@ -662,7 +663,7 @@ NB_MODULE(_basixcpp, m)
 
   m.def("tp_dof_ordering", &basix::tp_dof_ordering);
   m.def("lex_dof_ordering", &basix::lex_dof_ordering);
-  
+
   nb::enum_<polyset::type>(m, "PolysetType", nb::is_arithmetic(),
                            "Polyset type.")
       .value("standard", polyset::type::standard)

@@ -522,8 +522,7 @@ NB_MODULE(_basixcpp, m)
       .value("prism", cell::type::prism)
       .value("pyramid", cell::type::pyramid);
 
-  m.def("cell_volume", [](cell::type cell_type) -> double
-        { return cell::volume<double>(cell_type); });
+  m.def("cell_volume", &cell::volume<double>);
   m.def("cell_facet_normals", [](cell::type cell_type)
         { return as_nbarrayp(cell::facet_normals<double>(cell_type)); });
   m.def(
@@ -661,40 +660,16 @@ NB_MODULE(_basixcpp, m)
             throw std::runtime_error("Unsupported finite element dtype.");
         });
 
-  m.def("tp_dof_ordering",
-        [](element::family family_name, cell::type cell, int degree,
-           element::lagrange_variant lagrange_variant,
-           element::dpc_variant dpc_variant,
-           bool discontinuous) -> std::optional<std::vector<int>>
-        {
-          return basix::tp_dof_ordering(family_name, cell, degree,
-                                        lagrange_variant, dpc_variant,
-                                        discontinuous);
-        });
-
-  m.def("lex_dof_ordering",
-        [](element::family family_name, cell::type cell, int degree,
-           element::lagrange_variant lagrange_variant,
-           element::dpc_variant dpc_variant,
-           bool discontinuous) -> std::vector<int>
-        {
-          return basix::lex_dof_ordering(family_name, cell, degree,
-                                         lagrange_variant, dpc_variant,
-                                         discontinuous);
-        });
-
+  m.def("tp_dof_ordering", &basix::tp_dof_ordering);
+  m.def("lex_dof_ordering", &basix::lex_dof_ordering);
+  
   nb::enum_<polyset::type>(m, "PolysetType", nb::is_arithmetic(),
                            "Polyset type.")
       .value("standard", polyset::type::standard)
       .value("macroedge", polyset::type::macroedge);
 
-  m.def("superset",
-        [](cell::type cell, polyset::type type1, polyset::type type2)
-        { return polyset::superset(cell, type1, type2); });
-
-  m.def("restriction",
-        [](polyset::type ptype, cell::type cell, cell::type restriction_cell)
-        { return polyset::restriction(ptype, cell, restriction_cell); });
+  m.def("superset", &polyset::superset);
+  m.def("restriction", &polyset::restriction);
 
   m.def(
       "make_quadrature",

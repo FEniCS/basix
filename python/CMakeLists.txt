@@ -44,6 +44,9 @@ endif()
 nanobind_add_module(_basixcpp NB_SUPPRESS_WARNINGS ${NANOBIND_SABI} wrapper.cpp)
 target_compile_definitions(_basixcpp PRIVATE cxx_std_20)
 
+# and the nanobind typing stubs.
+nanobind_add_stub(_basixcpp_stub MODULE _basixcpp OUTPUT _basixcpp.pyi MARKER_FILE py.typed PYTHON_PATH $<TARGET_FILE_DIR:_basixcpp> DEPENDS _basixcpp)
+
 if(ENABLE_CLANG_TIDY)
   find_program(CLANG_TIDY NAMES clang-tidy REQUIRED)
   set_target_properties(_basixcpp PROPERTIES CXX_CLANG_TIDY "${CLANG_TIDY};--config-file=${CMAKE_CURRENT_SOURCE_DIR}/../.clang-tidy")
@@ -81,3 +84,4 @@ else()
 endif()
 
 install(TARGETS _basixcpp LIBRARY DESTINATION basix)
+install(FILES $<TARGET_FILE_DIR:_basixcpp>/py.typed $<TARGET_FILE_DIR:_basixcpp>/_basixcpp.pyi DESTINATION basix)

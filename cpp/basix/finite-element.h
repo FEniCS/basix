@@ -1612,7 +1612,7 @@ FiniteElement<T> create_element(element::family family, cell::type cell,
                                 int degree, element::lagrange_variant lvariant,
                                 element::dpc_variant dvariant,
                                 bool discontinuous,
-                                const std::vector<int>& dof_ordering = {});
+                                std::vector<int> dof_ordering = {});
 
 /// Get the tensor product DOF ordering for an element
 /// @param[in] family The element family

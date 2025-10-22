@@ -20,7 +20,7 @@ jobs:
     runs-on: windows-2022
     permissions:
       packages: write
-
+    env:
       USERNAME: FEniCS
       VCPKG_EXE: C:/vcpkg/vcpkg
       FEED_URL: https://nuget.pkg.github.com/FEniCS/index.json

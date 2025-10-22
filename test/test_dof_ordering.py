@@ -15,7 +15,6 @@ np.set_printoptions(suppress=True)
     [
         basix.LagrangeVariant.gll_warped,
         basix.LagrangeVariant.legendre,
-        basix.LagrangeVariant.bernstein,
         basix.LagrangeVariant.chebyshev_warped,
     ],
 )

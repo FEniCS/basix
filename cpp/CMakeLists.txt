@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.21)
 
 # Set the version
-project(Basix VERSION "0.10.0.0" LANGUAGES CXX)
+project(Basix VERSION "0.11.0.0" LANGUAGES CXX)
 include(GNUInstallDirs)
 
 if(SKBUILD AND UNIX)

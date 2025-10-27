@@ -83,7 +83,17 @@ endif()
 install(TARGETS _basixcpp LIBRARY DESTINATION basix)
 
 # and the nanobind typing stubs.
-set(BASIXCPP_OUTPUT_DIR "$<TARGET_FILE_DIR:_basixcpp>" PARENT_SCOPE)
-nanobind_add_stub(_basixcpp_stub INSTALL_TIME MODULE _basixcpp OUTPUT _basixcpp.pyi MARKER_FILE py.typed ${CMAKE_INSTALL_PREFIX} DEPENDS _basixcpp)
-# install(FILES $<TARGET_FILE_DIR:_basixcpp>/_basixcpp.pyi DESTINATION basix)
-# $<TARGET_FILE_DIR:_basixcpp>/py.typed
+# nanobind_add_stub(_basixcpp_stub MODULE _basixcpp OUTPUT $<TARGET_FILE_DIR:_basixcpp>/_basixcpp.pyi MARKER_FILE $<TARGET_FILE_DIR:_basixcpp>/py.typed PYTHON_PATH $<TARGET_FILE_DIR:_basixcpp> DEPENDS _basixcpp)
+# install(FILES $<TARGET_FILE_DIR:_basixcpp>/py.typed $<TARGET_FILE_DIR:_basixcpp>/_basixcpp.pyi DESTINATION basix)
+
+if (CMAKE_CONFIGURATION_TYPES)
+  # On multi-config generators like Visual Studio, put stubs in the 'Debug' / 'Release' /.. folders
+  set(PYI_PREFIX $<CONFIG>/)
+endif()
+
+nanobind_add_stub(_basixcpp_stub
+  MODULE _basixcpp
+  OUTPUT ${PYI_PREFIX}_basixcpp.pyi
+  PYTHON_PATH $<TARGET_FILE_DIR:_basixcpp>
+  DEPENDS _basixcpp)
+install(FILES $<TARGET_FILE_DIR:_basixcpp>/${PYI_PREFIX}_basixcpp.pyi DESTINATION basix)

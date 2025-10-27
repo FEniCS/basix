@@ -1,18 +1,18 @@
 name: Basix CI on Windows
 
 on:
-   pull_request:
-     branches:
-       - main
+  #  pull_request:
+  #    branches:
+  #      - main
    push:
-     tags:
-       - "v*"
-     branches:
-       - main
-   merge_group:
-     branches:
-       - main
-   workflow_dispatch:
+    #  tags:
+    #    - "v*"
+    #  branches:
+      #  - main
+  #  merge_group:
+  #    branches:
+  #      - main
+  #  workflow_dispatch:
 
 jobs:
   build-combined:

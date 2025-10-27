@@ -84,4 +84,4 @@ install(TARGETS _basixcpp LIBRARY DESTINATION basix)
 
 # and the nanobind typing stubs.
 nanobind_add_stub(_basixcpp_stub MODULE _basixcpp OUTPUT _basixcpp.pyi PYTHON_PATH $<TARGET_FILE_DIR:_basixcpp> DEPENDS _basixcpp)
-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/_basixcpp.pyi DESTINATION basix)
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/_basixcpp.pyi DESTINATION basix)

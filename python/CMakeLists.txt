@@ -86,7 +86,7 @@ install(TARGETS _basixcpp LIBRARY DESTINATION basix)
 nanobind_add_stub(_basixcpp_stub
   MODULE _basixcpp
   OUTPUT _basixcpp.pyi
-  PYTHON_PATH $<TARGET_FILE_DIR:_basixcpp>
+  PYTHON_PATH "."
   DEPENDS _basixcpp)
 
 install(FILES ${CMAKE_BINARY_DIR}/_basixcpp.pyi DESTINATION basix)

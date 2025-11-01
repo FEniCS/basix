@@ -81,3 +81,7 @@ else()
 endif()
 
 install(TARGETS _basixcpp LIBRARY DESTINATION basix)
+
+# and the nanobind typing stubs.
+nanobind_add_stub(_basixcpp_stub MODULE _basixcpp OUTPUT $<TARGET_FILE_DIR:_basixcpp>/_basixcpp.pyi MARKER_FILE $<TARGET_FILE_DIR:_basixcpp>/py.typed PYTHON_PATH $<TARGET_FILE_DIR:_basixcpp> DEPENDS _basixcpp)
+install(FILES $<TARGET_FILE_DIR:_basixcpp>/py.typed $<TARGET_FILE_DIR:_basixcpp>/_basixcpp.pyi DESTINATION basix)

@@ -156,7 +156,7 @@ class _ElementBase(_AbstractFiniteElement):
         basis functions that are not in any Lagrange space, this
         function should return None.
 
-        Note that on a simplex cells, the polynomial space of Lagrange
+        Note that on a simplex cell, the polynomial space of Lagrange
         space is a complete polynomial space, but on other cells this is
         not true. For example, on quadrilateral cells, the degree 1
         Lagrange space includes the degree 2 polynomial xy.
@@ -173,7 +173,7 @@ class _ElementBase(_AbstractFiniteElement):
         polynomial space does not include the constant function, this
         function should return -1.
 
-        Note that on a simplex cells, the polynomial space of Lagrange
+        Note that on a simplex cell, the polynomial space of Lagrange
         space is a complete polynomial space, but on other cells this is
         not true. For example, on quadrilateral cells, the degree 1
         Lagrange space includes the degree 2 polynomial xy.

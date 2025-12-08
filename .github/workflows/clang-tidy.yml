@@ -26,7 +26,7 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install clang-tidy ninja-build libopenblas-dev liblapack-dev
-          pip install nanobind scikit-build-core[pyproject]
+          pip install nanobind!=2.10.0 scikit-build-core[pyproject]
       - name: Run clang-tidy (C++)
         working-directory: cpp
         run: |

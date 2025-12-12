@@ -3,9 +3,13 @@
 // SPDX-License-Identifier:    MIT
 
 #include "interpolation.h"
-#include "finite-element.h"
 #include <concepts>
-#include <exception>
+#include <functional>
+#include <numeric>
+#include <stdexcept>
+#include "basix/mdspan.hpp"
+#include "basix/types.h"
+#include "finite-element.h"
 
 using namespace basix;
 

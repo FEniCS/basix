@@ -3,16 +3,20 @@
 // SPDX-License-Identifier:    MIT
 
 #include "lattice.h"
+#include <algorithm>
+#include <cmath>
+#include <concepts>
+#include <iterator>
+#include <numeric>
+#include <span>
+#include <stdexcept>
+#include <vector>
+#include "basix/mdspan.hpp"
+#include "basix/types.h"
 #include "cell.h"
 #include "math.h"
 #include "polyset.h"
 #include "quadrature.h"
-#include <algorithm>
-#include <cmath>
-#include <concepts>
-#include <math.h>
-#include <numeric>
-#include <vector>
 
 using namespace basix;
 

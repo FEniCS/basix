@@ -3,12 +3,14 @@
 // SPDX-License-Identifier:    MIT
 
 #include "cell.h"
-#include "math.h"
-#include "mdspan.hpp"
+#include <assert.h>
 #include <algorithm>
 #include <cmath>
 #include <concepts>
-
+#include <stdexcept>
+#include <string>
+#include "basix/types.h"
+#include "mdspan.hpp"
 using namespace basix;
 
 template <typename T, std::size_t D>

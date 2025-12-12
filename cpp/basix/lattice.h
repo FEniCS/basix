@@ -4,11 +4,12 @@
 
 #pragma once
 
-#include "cell.h"
 #include <array>
 #include <concepts>
+#include <cstddef>
 #include <utility>
 #include <vector>
+#include "cell.h"
 
 /// @brief Lattices of points
 namespace basix::lattice

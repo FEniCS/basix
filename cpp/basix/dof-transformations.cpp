@@ -3,15 +3,20 @@
 // SPDX-License-Identifier:    MIT
 
 #include "dof-transformations.h"
-#include "math.h"
-#include "mdspan.hpp"
-#include "polyset.h"
-#include <algorithm>
+#include <assert.h>
 #include <array>
 #include <concepts>
 #include <functional>
+#include <iterator>
+#include <ranges>
 #include <span>
+#include <stdexcept>
 #include <tuple>
+#include "basix/cell.h"
+#include "basix/maps.h"
+#include "math.h"
+#include "mdspan.hpp"
+#include "polyset.h"
 
 using namespace basix;
 

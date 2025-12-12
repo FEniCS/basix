@@ -4,6 +4,23 @@
 
 #pragma once
 
+#include <assert.h>
+#include <array>
+#include <concepts>
+#include <cstddef>
+#include <cstdint>
+#include <functional>
+#include <iterator>
+#include <map>
+#include <numeric>
+#include <optional>
+#include <span>
+#include <stdexcept>
+#include <string>
+#include <tuple>
+#include <utility>
+#include <vector>
+#include "basix/types.h"
 #include "cell.h"
 #include "element-families.h"
 #include "maps.h"
@@ -11,18 +28,6 @@
 #include "polyset.h"
 #include "precompute.h"
 #include "sobolev-spaces.h"
-#include <array>
-#include <concepts>
-#include <cstdint>
-#include <functional>
-#include <map>
-#include <numeric>
-#include <optional>
-#include <span>
-#include <string>
-#include <tuple>
-#include <utility>
-#include <vector>
 
 /// Basix: FEniCS runtime basis evaluation library
 namespace basix

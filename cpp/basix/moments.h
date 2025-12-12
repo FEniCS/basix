@@ -4,13 +4,13 @@
 
 #pragma once
 
-#include "cell.h"
-#include "polyset.h"
 #include <array>
 #include <concepts>
+#include <cstddef>
 #include <tuple>
-#include <utility>
 #include <vector>
+#include "cell.h"
+#include "polyset.h"
 
 namespace basix
 {

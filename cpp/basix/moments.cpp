@@ -3,6 +3,13 @@
 // SPDX-License-Identifier:    MIT
 
 #include "moments.h"
+#include <assert.h>
+#include <functional>
+#include <numeric>
+#include <stdexcept>
+#include <utility>
+#include "basix/mdspan.hpp"
+#include "basix/polyset.h"
 #include "cell.h"
 #include "finite-element.h"
 #include "math.h"

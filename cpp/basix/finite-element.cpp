@@ -3,6 +3,19 @@
 // SPDX-License-Identifier:    MIT
 
 #include "finite-element.h"
+#include <basix/version.h>
+#include <algorithm>
+#include <concepts>
+#include <limits>
+#include <numeric>
+#include <optional>
+#include <stdexcept>
+#include "basix/cell.h"
+#include "basix/element-families.h"
+#include "basix/maps.h"
+#include "basix/mdspan.hpp"
+#include "basix/precompute.h"
+#include "basix/sobolev-spaces.h"
 #include "dof-transformations.h"
 #include "e-brezzi-douglas-marini.h"
 #include "e-bubble.h"
@@ -17,14 +30,6 @@
 #include "e-serendipity.h"
 #include "math.h"
 #include "polyset.h"
-#include <algorithm>
-#include <basix/version.h>
-#include <cmath>
-#include <concepts>
-#include <limits>
-#include <numeric>
-#include <optional>
-#include <stdexcept>
 
 #define str_macro(X) #X
 #define str(X) str_macro(X)

@@ -1,4 +1,4 @@
-name: clang-tidy
+name: static-analysis
 
 on:
   push:
@@ -40,3 +40,28 @@ jobs:
           --no-build-isolation
           --verbose
           --config-settings=cmake.define.ENABLE_CLANG_TIDY=ON
+
+  include-what-you-use:
+    runs-on: ubuntu-latest
+    env:
+        FLAGS: "include-what-you-use;-Xiwyu;--error_always;-Xiwyu;--no_comments;-Xiwyu;--no_fwd_decls"
+    steps:
+      - uses: actions/checkout@v5
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install ninja-build libopenblas-dev liblapack-dev iwyu
+          pip install nanobind scikit-build-core[pyproject]
+      - name: Run include-what-you-use (C++)
+        working-directory: cpp
+        run: |
+          cmake -G Ninja -B build -DCMAKE_CXX_INCLUDE_WHAT_YOU_USE=$FLAGS .
+          cmake --build build/
+          sudo cmake --install build/
+      - name: Run include-what-you-use (Python)
+        working-directory: python
+        run: >
+          pip install .
+          --no-build-isolation
+          --verbose
+          --config-settings=cmake.define.CMAKE_CXX_INCLUDE_WHAT_YOU_USE=$FLAGS

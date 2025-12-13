@@ -3,13 +3,18 @@
 // SPDX-License-Identifier:    MIT
 
 #include "polynomials.h"
-#include "indexing.h"
-#include "mdspan.hpp"
-#include "polyset.h"
+#include <assert.h>
+#include <algorithm>
+#include <cmath>
 #include <concepts>
 #include <stdexcept>
 #include <utility>
 #include <vector>
+#include "basix/cell.h"
+#include "basix/types.h"
+#include "indexing.h"
+#include "mdspan.hpp"
+#include "polyset.h"
 
 using namespace basix;
 using namespace basix::indexing;

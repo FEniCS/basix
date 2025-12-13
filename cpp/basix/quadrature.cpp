@@ -3,15 +3,22 @@
 // SPDX-License-Identifier:    MIT
 
 #include "quadrature.h"
-#include "math.h"
-#include "mdspan.hpp"
+#include <assert.h>
 #include <algorithm>
 #include <array>
 #include <cmath>
 #include <concepts>
+#include <cstddef>
+#include <iterator>
 #include <numeric>
 #include <span>
+#include <stdexcept>
 #include <vector>
+#include "basix/cell.h"
+#include "basix/polyset.h"
+#include "basix/types.h"
+#include "math.h"
+#include "mdspan.hpp"
 
 using namespace basix;
 

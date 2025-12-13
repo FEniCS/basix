@@ -4,14 +4,16 @@
 
 #pragma once
 
-#include "math.h"
-#include "mdspan.hpp"
+#include <array>
 #include <concepts>
-#include <cstdint>
+#include <cstddef>
+#include <iterator>
 #include <span>
-#include <tuple>
 #include <type_traits>
 #include <vector>
+#include "basix/types.h"
+#include "math.h"
+#include "mdspan.hpp"
 
 /// Matrix and permutation pre-computation
 namespace basix::precompute

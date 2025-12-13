@@ -4,9 +4,9 @@
 
 #include "finite-element.h"
 #include <basix/version.h>
+#include <bits/std_abs.h>
 #include <algorithm>
 #include <concepts>
-#include <cmath>
 #include <limits>
 #include <numeric>
 #include <optional>

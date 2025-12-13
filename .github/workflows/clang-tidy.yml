@@ -44,7 +44,7 @@ jobs:
   include-what-you-use:
     runs-on: ubuntu-latest
     env:
-        FLAGS: "include-what-you-use;-Xiwyu;--error_always;-Xiwyu;--no_comments;-Xiwyu;--no_fwd_decls"
+        FLAGS: "include-what-you-use;-Xiwyu;--error;-Xiwyu;--no_comments;-Xiwyu;--no_fwd_decls"
     steps:
       - uses: actions/checkout@v5
       - name: Install dependencies

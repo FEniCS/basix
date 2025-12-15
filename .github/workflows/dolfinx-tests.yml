@@ -35,9 +35,11 @@ jobs:
       PETSC_ARCH: linux-gnu-complex64-32
       OMPI_ALLOW_RUN_AS_ROOT: 1
       OMPI_ALLOW_RUN_AS_ROOT_CONFIRM: 1
+      PRTE_MCA_rmaps_default_mapping_policy: :oversubscribe   # Newer OpenMPI
+      OMPI_MCA_rmaps_base_oversubscribe: true                 # Older OpenMPI
 
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - name: Install Basix
         run: |
           cmake -G Ninja -DCMAKE_BUILD_TYPE=Developer -B build-dir -S ./cpp
@@ -56,14 +58,14 @@ jobs:
           python3 -m pip install --break-system-packages git+https://github.com/FEniCS/ffcx.git@${{ github.event.inputs.ffcx_branch }}
       - name: Get DOLFINx
         if: github.event_name != 'workflow_dispatch'
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           path: ./dolfinx
           repository: FEniCS/dolfinx
           ref: main
       - name: Get DOLFINx
         if: github.event_name == 'workflow_dispatch'
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           path: ./dolfinx
           repository: FEniCS/dolfinx
@@ -78,7 +80,8 @@ jobs:
         run: ctest -V --output-on-failure -R unittests
       - name: Install DOLFINx (Python)
         run: |
-          python3 -m pip install --break-system-packages -r dolfinx/python/build-requirements.txt # TO REMOVE
+          python3 -m pip install scikit-build-core
+          python3 -m scikit_build_core.build requires | python3 -c "import sys, json; print(' '.join(json.load(sys.stdin)))" | xargs pip install
           python3 -m pip -v install --break-system-packages --check-build-dependencies --no-build-isolation dolfinx/python/
       - name: Run mypy checks
         run: |

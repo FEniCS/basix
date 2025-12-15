@@ -21,7 +21,7 @@ on:
 jobs:
   build:
     name: Build and test (MacOS)
-    runs-on: macos-13
+    runs-on: macos-latest
     steps:
       - uses: actions/checkout@v5
       - name: Set up Python

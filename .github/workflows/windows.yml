@@ -41,7 +41,7 @@ jobs:
             setapikey "${{ secrets.GITHUB_TOKEN }}" `
             -Source "${{ env.FEED_URL }}"
 
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
 
       - name: Export GitHub Actions cache environment variables
         uses: actions/github-script@v8
@@ -77,7 +77,7 @@ jobs:
     env:
       VCPKG_BINARY_SOURCES: "clear;x-gha,readwrite"
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
 
       - name: Insert add_dll_directory calls
         working-directory: python/basix

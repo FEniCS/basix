@@ -5,10 +5,10 @@ on:
      branches:
        - main
    push:
-     tags:
-       - "v*"
-     branches:
-       - main
+    #  tags:
+    #    - "v*"
+    #  branches:
+    #    - main
    merge_group:
      branches:
        - main

@@ -82,6 +82,12 @@ endif()
 
 install(TARGETS _basixcpp LIBRARY DESTINATION basix)
 
+if (MSVC)
+  add_custom_command(TARGET _basixcpp POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            $<TARGET_FILE:_basixcpp>
+            $<TARGET_FILE_DIR:_basixcpp>)
+endif()
 # and the nanobind typing stubs.
 nanobind_add_stub(_basixcpp_stub
   MODULE _basixcpp

@@ -58,7 +58,7 @@ jobs:
       - name: Set up CMake
         uses: lukka/get-cmake@latest
         with:
-          cmakeVersion: "~3.30.0"
+          cmakeVersion: "latest"
           ninjaVersion: "latest"
 
       - name: Install Basix (combined)
@@ -105,7 +105,7 @@ jobs:
       - name: Set up CMake
         uses: lukka/get-cmake@latest
         with:
-          cmakeVersion: "~3.30.0"
+          cmakeVersion: "latest"
           ninjaVersion: "latest"
 
       - name: Install Basix (C++)

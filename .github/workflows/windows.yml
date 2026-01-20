@@ -8,7 +8,7 @@ on:
      tags:
        - "v*"
      branches:
-       - main
+      #  - main
    merge_group:
      branches:
        - main

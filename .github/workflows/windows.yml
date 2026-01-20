@@ -59,10 +59,15 @@ jobs:
         uses: lukka/get-cmake@latest
         with:
           cmakeVersion: "~3.30.0"
+          ninjaVersion: "latest"
 
       - name: Install Basix (combined)
-        run: |
-          python -m pip -v install --no-cache-dir .[ci] --config-settings=cmake.args=-DINSTALL_RUNTIME_DEPENDENCIES=ON --config-settings=cmake.args=-DCMAKE_TOOLCHAIN_FILE=C:/vcpkg/scripts/buildsystems/vcpkg.cmake
+        run: >
+          python -m pip -v install --no-cache-dir .[ci]
+          --config-settings=cmake.args=-DINSTALL_RUNTIME_DEPENDENCIES=ON
+          --config-settings=cmake.args=-DCMAKE_TOOLCHAIN_FILE=C:/vcpkg/scripts/buildsystems/vcpkg.cmake
+          --config-settings=cmake.args=-G"Ninja"
+          --config-settings=cmake.args=-DCMAKE_BUILD_TYPE=Release
 
       - name: Run units tests
         run: |
@@ -101,6 +106,7 @@ jobs:
         uses: lukka/get-cmake@latest
         with:
           cmakeVersion: "~3.30.0"
+          ninjaVersion: "latest"
 
       - name: Install Basix (C++)
         run: |
@@ -113,7 +119,7 @@ jobs:
       - name: Install Basix (Python)
         run: |
           cd python
-          python -m pip -v install --no-cache-dir .[ci] --config-settings=cmake.args=-DBasix_DIR=D:/a/basix/install/lib/cmake/basix
+          python -m pip -v install --no-cache-dir .[ci] --config-settings=cmake.args=-DBasix_DIR=D:/a/basix/install/lib/cmake/basix --config-settings=cmake.args=-G"Ninja" --config-settings=cmake.args=-DCMAKE_BUILD_TYPE=Release
           cd ../
       
       - name: Run units tests

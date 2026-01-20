@@ -90,6 +90,7 @@ if (MSVC)
 endif()
 # and the nanobind typing stubs.
 nanobind_add_stub(_basixcpp_stub
+INSTALL_TIME
   MODULE _basixcpp
   OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/_basixcpp.pyi"
   MARKER_FILE "${CMAKE_CURRENT_BINARY_DIR}/py.typed"

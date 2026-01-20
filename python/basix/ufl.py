@@ -1398,11 +1398,11 @@ class _RealElement(_ElementBase):
 
         self._entity_counts = []
         if tdim >= 1:
-            self._entity_counts.append(self.cell.num_vertices())
+            self._entity_counts.append(self.cell.num_vertices)
         if tdim >= 2:
-            self._entity_counts.append(self.cell.num_edges())
+            self._entity_counts.append(self.cell.num_edges)
         if tdim >= 3:
-            self._entity_counts.append(self.cell.num_facets())
+            self._entity_counts.append(self.cell.num_facets)
         self._entity_counts.append(1)
 
     def __eq__(self, other) -> bool:

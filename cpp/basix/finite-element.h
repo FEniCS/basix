@@ -17,6 +17,7 @@
 #include <functional>
 #include <map>
 #include <numeric>
+#include <optional>
 #include <span>
 #include <string>
 #include <tuple>
@@ -1623,11 +1624,12 @@ FiniteElement<T> create_element(element::family family, cell::type cell,
 /// @param[in] discontinuous Indicates whether the element is discontinuous
 /// between cells points of the element. The discontinuous element will have the
 /// same DOFs, but they will all be associated with the interior of the cell.
-/// @return A vector containing the dof ordering
-std::vector<int> tp_dof_ordering(element::family family, cell::type cell,
-                                 int degree, element::lagrange_variant lvariant,
-                                 element::dpc_variant dvariant,
-                                 bool discontinuous);
+/// @return An optional vector containing the dof ordering, if has tensor
+/// structure
+std::optional<std::vector<int>>
+tp_dof_ordering(element::family family, cell::type cell, int degree,
+                element::lagrange_variant lvariant,
+                element::dpc_variant dvariant, bool discontinuous);
 
 /// Get the lexicographic DOF ordering for an element
 /// @param[in] family The element family
@@ -1655,9 +1657,10 @@ std::vector<int> lex_dof_ordering(element::family family, cell::type cell,
 /// between cells points of the element. The discontinuous element will have the
 /// same DOFs, but they will all be associated with the interior of the cell.
 /// @param[in] dof_ordering The ordering of the DOFs
-/// @return A list of lists of finite element factors
+/// @return An optioanl list of lists of finite element factors if family has
+/// tensor structure
 template <std::floating_point T>
-std::vector<std::vector<FiniteElement<T>>>
+std::optional<std::vector<std::vector<FiniteElement<T>>>>
 tp_factors(element::family family, cell::type cell, int degree,
            element::lagrange_variant lvariant, element::dpc_variant dvariant,
            bool discontinuous, const std::vector<int>& dof_ordering);

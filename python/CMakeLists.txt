@@ -89,5 +89,5 @@ if (CMAKE_CONFIGURATION_TYPES)
 endif()
 
 # and the nanobind typing stubs.
-nanobind_add_stub(_basixcpp_stub MODULE _basixcpp OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/_basixcpp.pyi" MARKER_FILE "${CMAKE_CURRENT_BINARY_DIR}/py.typed" PYTHON_PATH ${CMAKE_CURRENT_BINARY_DIR} DEPENDS _basixcpp)
 install(FILES $<TARGET_FILE_DIR:_basixcpp>/py.typed $<TARGET_FILE_DIR:_basixcpp>/_basixcpp.pyi DESTINATION basix)
+nanobind_add_stub(_basixcpp_stub MODULE _basixcpp OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/_basixcpp.pyi" MARKER_FILE "${CMAKE_CURRENT_BINARY_DIR}/py.typed" PYTHON_PATH ${CMAKE_CURRENT_BINARY_DIR} DEPENDS _basixcpp)

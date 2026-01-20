@@ -5,8 +5,8 @@ on:
      branches:
        - main
    push:
-     tags:
-       - "v*"
+    #  tags:
+    #    - "v*"
     #  branches:
       #  - main
    merge_group:

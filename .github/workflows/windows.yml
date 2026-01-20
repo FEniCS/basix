@@ -7,7 +7,7 @@ on:
    push:
      tags:
        - "v*"
-     branches:
+    #  branches:
       #  - main
    merge_group:
      branches:

@@ -87,7 +87,7 @@ nanobind_add_stub(_basixcpp_stub
   MODULE _basixcpp
   OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/_basixcpp.pyi"
   MARKER_FILE "${CMAKE_CURRENT_BINARY_DIR}/py.typed"
-  PYTHON_PATH ${CMAKE_CURRENT_BINARY_DIR}
+  PYTHON_PATH $<TARGET_FILE_DIR:_basixcpp>
   DEPENDS _basixcpp)
 install(FILES
   "${CMAKE_CURRENT_BINARY_DIR}/py.typed"

@@ -47,16 +47,8 @@ jobs:
         with:
           ref: ${{ github.event.inputs.basix_ref }}
 
-      - name: Export GitHub Actions cache environment variables
-        if: runner.os == 'Windows'
-        uses: actions/github-script@v8
-        with:
-          script: |
-            core.exportVariable('ACTIONS_CACHE_URL', process.env.ACTIONS_CACHE_URL || '');
-            core.exportVariable('ACTIONS_RUNTIME_TOKEN', process.env.ACTIONS_RUNTIME_TOKEN || '');
-
       - name: Build wheels
-        uses: pypa/cibuildwheel@v3.2.1
+        uses: pypa/cibuildwheel@v3.3.1
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v6

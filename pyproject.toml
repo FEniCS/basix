@@ -71,9 +71,8 @@ repair-wheel-command = [
 
 [tool.cibuildwheel.linux]
 archs = [
-    "x86_64",
-    "aarch64",
-] # Forces arm64 build on x86_64 runner using emulation (and vice-versa).
+    "native"
+]
 before-build = "yum -y update && yum install -y epel-release && yum install -y openblas-devel ninja-build"
 
 [[tool.cibuildwheel.overrides]]

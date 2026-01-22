@@ -52,7 +52,6 @@ test-command = [
 ]
 test-requires = ["pytest-xdist"]
 test-extras = ["test"]
-test-skip = "*-*linux_aarch64"
 
 [tool.cibuildwheel.windows]
 build-frontend = { name = "pip", args = [

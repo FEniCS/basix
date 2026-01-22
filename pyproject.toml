@@ -52,7 +52,8 @@ test-command = [
 ]
 test-requires = ["pytest-xdist"]
 test-extras = ["test"]
-test-skip = "*-*linux_aarch64"
+# llvmlite (numba) not being built for x86_64 on macOS
+test-skip = "*-macosx_x86_64"
 
 [tool.cibuildwheel.windows]
 build-frontend = { name = "pip", args = [
@@ -71,9 +72,8 @@ repair-wheel-command = [
 
 [tool.cibuildwheel.linux]
 archs = [
-    "x86_64",
-    "aarch64",
-] # Forces arm64 build on x86_64 runner using emulation (and vice-versa).
+    "native"
+]
 before-build = "yum -y update && yum install -y epel-release && yum install -y openblas-devel ninja-build"
 
 [[tool.cibuildwheel.overrides]]

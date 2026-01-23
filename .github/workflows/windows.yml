@@ -16,7 +16,7 @@ on:
 
 jobs:
   build-combined:
-    name: Combined build and test
+    name: Combined build and test (clang-cl.exe/LLVM)
     runs-on: windows-2022
     env:
       VCPKG_BINARY_SOURCES: "clear;x-gha,readwrite"
@@ -31,6 +31,12 @@ jobs:
             core.exportVariable('ACTIONS_CACHE_URL', process.env.ACTIONS_CACHE_URL || '');
             core.exportVariable('ACTIONS_RUNTIME_TOKEN', process.env.ACTIONS_RUNTIME_TOKEN || '');
 
+      - name: Checkout custom vcpkg triplets
+        uses: actions/checkout@v4
+        with:
+          repository: Neumann-A/my-vcpkg-triplets
+          path: vcpkg-triplets/
+
       - name: Set up Python
         uses: actions/setup-python@v6
         with:
@@ -42,8 +48,15 @@ jobs:
           cmakeVersion: "~3.30.0"
 
       - name: Install Basix (combined)
-        run: |
-          python -m pip -v install --no-cache-dir .[ci] --config-settings=cmake.args=-DINSTALL_RUNTIME_DEPENDENCIES=ON --config-settings=cmake.args=-DCMAKE_TOOLCHAIN_FILE=C:/vcpkg/scripts/buildsystems/vcpkg.cmake
+        run: >
+          python -m pip -v install --no-cache-dir .[ci]
+          --config-settings=cmake.args=-DCMAKE_C_COMPILER="C:/Program Files/LLVM/bin/clang-cl.exe"
+          --config-settings=cmake.args=-DCMAKE_CXX_COMPILER="C:/Program Files/LLVM/bin/clang-cl.exe"
+          --config-settings=cmake.args=-DINSTALL_RUNTIME_DEPENDENCIES=ON
+          --config-settings=cmake.args=-DCMAKE_TOOLCHAIN_FILE=C:/vcpkg/scripts/buildsystems/vcpkg.cmake
+          --config-settings=cmake.args=-DVCPKG_OVERLAY_TRIPLETS=vcpkg-triplets/
+          --config-settings=cmake.args=-DVCPKG_HOST_TRIPLET=x64-win-llvm
+          --config-settings=cmake.args=-DVCPKG_TARGET_TRIPLET=x64-win-llvm
 
       - name: Run units tests
         run: |
@@ -53,7 +66,7 @@ jobs:
         run: python -m pytest demo/python/test.py
 
   build-split:
-    name: Split build and test
+    name: Split build and test (cl.exe)
     runs-on: windows-2022
     env:
       VCPKG_BINARY_SOURCES: "clear;x-gha,readwrite"

@@ -55,10 +55,10 @@ target_link_libraries(_basixcpp PRIVATE Basix::basix)
 include(CheckCXXCompilerFlag)
 
 # Add some strict compiler checks
-check_cxx_compiler_flag("-Wall -Werror -Wextra -pedantic" HAVE_PEDANTIC)
+check_cxx_compiler_flag("-Wall -Werror -Wextra -pedantic -Wno-comment" HAVE_PEDANTIC)
 
 if(HAVE_PEDANTIC)
-  list(APPEND BASIX_PY_CXX_DEVELOPER_FLAGS -Wall;-Werror;-Wextra;-pedantic)
+	list(APPEND BASIX_PY_CXX_DEVELOPER_FLAGS -Wall;-Werror;-Wextra;-pedantic;-Wno-comment)
 endif()
 
 # Debug flags

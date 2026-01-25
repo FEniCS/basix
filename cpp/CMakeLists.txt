@@ -122,12 +122,50 @@ target_compile_definitions(basix PUBLIC MDSPAN_USE_BRACKET_OPERATOR=0)
 target_link_libraries(basix PRIVATE BLAS::BLAS)
 target_link_libraries(basix PRIVATE LAPACK::LAPACK)
 
-if (UNIX)
-    list(APPEND BASIX_DEVELOPER_FLAGS -O2;-g;-pipe)
-    list(APPEND BASIX_COMPILER_FLAGS -Wall;-Werror;-Wextra;-Wno-comment;-pedantic;)
-    target_compile_options(basix PRIVATE "$<$<OR:$<CONFIG:Debug>,$<CONFIG:Developer>>:${BASIX_COMPILER_FLAGS}>")
-    target_compile_options(basix PRIVATE $<$<CONFIG:Developer>:${BASIX_DEVELOPER_FLAGS}>)
+# Check for some compiler flags
+include(CheckCXXCompilerFlag)
+
+# Add some strict compiler checks
+check_cxx_compiler_flag("-Wall -Werror -Wextra -pedantic -Wno-comment" HAVE_PEDANTIC)
+
+if(HAVE_PEDANTIC)
+  list(APPEND BASIX_CXX_DEVELOPER_FLAGS -Wall;-Werror;-Wextra;-pedantic;-Wno-comment)
 endif()
+
+# Debug flags
+check_cxx_compiler_flag(-g HAVE_DEBUG)
+if(HAVE_DEBUG)
+  list(APPEND BASIX_CXX_DEVELOPER_FLAGS -g)
+endif()
+
+# Optimisation
+check_cxx_compiler_flag(-O2 HAVE_O2_OPTIMISATION)
+if(HAVE_O2_OPTIMISATION)
+  list(APPEND BASIX_CXX_DEVELOPER_FLAGS -O2)
+endif()
+
+# Pipe
+check_cxx_compiler_flag(-pipe HAVE_PIPE)
+if(HAVE_PIPE)
+  list(APPEND BASIX_CXX_DEVELOPER_FLAGS -pipe)
+endif()
+
+# Enable C++ standard library debugging
+include(CheckCXXSymbolExists)
+
+check_cxx_symbol_exists(_LIBCPP_VERSION "version" LIBCPP)
+check_cxx_symbol_exists(__GLIBCXX__ "version" GLIBCXX)
+
+if(LIBCPP)
+  list(APPEND BASIX_CXX_DEVELOPER_DEFINITIONS _LIBCPP_HARDENING_MODE=_LIBCPP_HARDENING_MODE_DEBUG)
+endif()
+
+if(GLIBCXX)
+  list(APPEND BASIX_CXX_DEVELOPER_DEFINITIONS _GLIBCXX_ASSERTIONS)
+endif()
+
+target_compile_options(basix PRIVATE $<$<CONFIG:Developer>:${BASIX_CXX_DEVELOPER_FLAGS}>)
+target_compile_definitions(basix PRIVATE $<$<CONFIG:Developer>:${BASIX_CXX_DEVELOPER_DEFINITIONS}>) 
 
 if (MSVC)
     # M_PI etc. are not not in the standard-compliant MSVC headers.

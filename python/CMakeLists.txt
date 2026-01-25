@@ -53,14 +53,46 @@ target_link_libraries(_basixcpp PRIVATE Basix::basix)
 
 # Add strict compiler flags
 include(CheckCXXCompilerFlag)
+
+# Add some strict compiler checks
 check_cxx_compiler_flag("-Wall -Werror -Wextra -pedantic" HAVE_PEDANTIC)
+
 if(HAVE_PEDANTIC)
-  target_compile_options(_basixcpp PRIVATE -Wall;-Werror;-Wextra;-Wno-comment;-pedantic)
-  # Intel's complex header uses #include_next which is not allowed with -Wall
-  if (CMAKE_CXX_COMPILER_ID STREQUAL "IntelLLVM")
-    target_compile_options(_basixcpp PRIVATE -Wno-gnu-include-next)
-  endif()
+  list(APPEND BASIX_PY_CXX_DEVELOPER_FLAGS -Wall;-Werror;-Wextra;-pedantic)
 endif()
+
+# Debug flags
+check_cxx_compiler_flag(-g HAVE_DEBUG)
+if(HAVE_DEBUG)
+  list(APPEND BASIX_PY_CXX_DEVELOPER_FLAGS -g)
+endif()
+
+# Optimisation
+check_cxx_compiler_flag(-O2 HAVE_O2_OPTIMISATION)
+if(HAVE_O2_OPTIMISATION)
+  list(APPEND BASIX_PY_CXX_DEVELOPER_FLAGS -O2)
+endif()
+
+# Enable C++ standard library debugging
+include(CheckCXXSymbolExists)
+
+check_cxx_symbol_exists(_LIBCPP_VERSION "version" LIBCPP)
+check_cxx_symbol_exists(__GLIBCXX__ "version" GLIBCXX)
+
+if(LIBCPP)
+  list(APPEND BASIX_PY_CXX_DEVELOPER_DEFINITIONS _LIBCPP_HARDENING_MODE=_LIBCPP_HARDENING_MODE_DEBUG)
+endif()
+
+if(GLIBCXX)
+  list(APPEND BASIX_PY_CXX_DEVELOPER_DEFINITIONS _GLIBCXX_ASSERTIONS)
+endif()
+
+target_compile_options(
+  _basixcpp PRIVATE $<$<CONFIG:Developer>:${BASIX_PY_CXX_DEVELOPER_FLAGS}>
+)
+target_compile_definitions(
+  _basixcpp PRIVATE $<$<CONFIG:Developer>:${BASIX_PY_CXX_DEVELOPER_DEFINITIONS}>
+)
 
 # TODO: remove after issue https://github.com/FEniCS/basix/issues/842 is resolved
 target_compile_definitions(_basixcpp PRIVATE MDSPAN_USE_PAREN_OPERATOR=1)

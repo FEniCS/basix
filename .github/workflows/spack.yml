@@ -56,11 +56,11 @@ jobs:
           . ./spack/share/spack/setup-env.sh
           spack env create main
           spack env activate main
-          spack add py-fenics-basix
+          spack add py-fenics-basix build_type=Developer
       - name: Install Basix and run tests
         if: github.event_name == 'workflow_dispatch'
         run: |
           . ./spack/share/spack/setup-env.sh
           spack env create main
           spack env activate main
-          spack add py-fenics-basix@${{ github.event.inputs.basix_version }}
+          spack add py-fenics-basix@${{ github.event.inputs.basix_version }} build_type=Developer

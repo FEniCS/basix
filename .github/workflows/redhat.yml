@@ -10,8 +10,8 @@ on:
     branches:
       - main
   push:
-    branches:
-      - "main"
+    # branches:
+    #   - "main"
   merge_group:
     branches:
       - main

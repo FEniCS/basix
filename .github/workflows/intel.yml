@@ -50,8 +50,13 @@ jobs:
           scikit-build-core scipy sympy
 
       - name: Install Basix
-        run: |
-          pip -v install --no-build-isolation -Ccmake.build-type="Developer" .
+        run: >
+          pip install .
+          --verbose
+          --no-build-isolation
+          -Cbuild.verbose=true
+          -Ccmake.build-type="Developer"
+
       - name: Run units tests
         run: |
           pip -v install git+https://github.com/FEniCS/ufl.git

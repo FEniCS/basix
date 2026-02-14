@@ -36,7 +36,11 @@ jobs:
         run: python3 -m pip install pip --upgrade
       - uses: actions/checkout@v6
       - name: Install Basix
-        run: python3 -m pip install -Ccmake.build-type="Developer" .[test]
+        run: >
+          pip install .[test]
+          --verbose
+          -Cbuild.verbose=true
+          -Ccmake.build-type="Developer"
       - name: Run units tests
         run: python3 -m pytest --durations 20 test/
       - name: Run Python demos

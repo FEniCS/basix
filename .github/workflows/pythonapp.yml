@@ -61,7 +61,11 @@ jobs:
       - name: Install UFL branch
         run: pip -v install git+https://github.com/FEniCS/ufl.git
       - name: Install Basix
-        run: pip -v install -Ccmake.build-type="Developer" .[ci]
+        run: >
+          pip install .[ci]
+          --verbose
+          -Cbuild.verbose=true
+          -Ccmake.build-type="Developer"
       - name: Run units tests
         run: pytest -n auto --durations 20 test/
       - name: Run simple CMake integration test

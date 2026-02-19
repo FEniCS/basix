@@ -88,9 +88,7 @@ nanobind_add_stub(
   MODULE basix._basixcpp
   DEPENDS _basixcpp
   VERBOSE
-  RECURSIVE
   INSTALL_TIME
-  OUTPUT_PATH basix
   OUTPUT
-    _basixcpp.pyi
+    basix/_basixcpp.pyi
 )

@@ -6,6 +6,8 @@ name: Basix CI on MacOS
 
 on:
   pull_request:
+    branches:
+      - main
   push:
     tags:
       - "v*"

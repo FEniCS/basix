@@ -1636,7 +1636,7 @@ def element(
         dpc_variant,
         discontinuous,
         dof_ordering=dof_ordering,
-        dtype=dtype,
+        dtype=dtype,  # type: ignore
     )
     ufl_e = _BasixElement(e)
 
@@ -1802,7 +1802,7 @@ def custom_element(
         embedded_subdegree,
         embedded_superdegree,
         polyset_type,
-        dtype=dtype,
+        dtype=dtype,  # type: ignore
     )
     return _BasixElement(e)
 

@@ -593,7 +593,7 @@ def create_element(
     dpc_variant: DPCVariant = DPCVariant.unset,
     discontinuous: bool = False,
     dof_ordering: typing.Optional[list[int]] = None,
-    dtype: npt.DTypeLike = np.float64,
+    dtype: npt.DTypeLike | None = np.float64,
 ) -> FiniteElement:
     """Create a finite element.
 
@@ -640,7 +640,7 @@ def create_custom_element(
     embedded_subdegree: int,
     embedded_superdegree: int,
     poly_type: PolysetType,
-    dtype: npt.DTypeLike = np.float64,
+    dtype: npt.DTypeLike | None = np.float64,
 ) -> FiniteElement:
     """Create a custom finite element.
 

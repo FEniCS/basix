@@ -61,7 +61,7 @@ jobs:
       - name: Install UFL branch
         run: pip -v install git+https://github.com/FEniCS/ufl.git
       - name: Install Basix
-        run: pip -v install .[ci]
+        run: pip -v install -Ccmake.build-type="Developer" .[ci]
       - name: Run units tests
         run: pytest -n auto --durations 20 test/
       - name: Run simple CMake integration test
@@ -168,7 +168,7 @@ jobs:
       - name: Install Basix C++ library
         run: |
           cd cpp
-          cmake -DCMAKE_BUILD_TYPE=Release -B build-dir -S . # Use make (not ninja)
+          cmake -DCMAKE_BUILD_TYPE=Developer -B build-dir -S . # Use make (not ninja)
           cmake --build build-dir
           sudo cmake --install build-dir
       - name: Install Basix Python wrapper
@@ -193,7 +193,7 @@ jobs:
         run: sudo apt-get install -y libopenblas-dev liblapack-dev ninja-build
       - name: Install Basix
         run: |
-          cmake -G Ninja -DCMAKE_BUILD_TYPE=Release -B build-dir -S cpp
+          cmake -G Ninja -DCMAKE_BUILD_TYPE=Developer -B build-dir -S cpp
           cmake --build build-dir
           sudo cmake --install build-dir
       - name: Set up Python

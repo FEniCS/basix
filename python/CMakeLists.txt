@@ -113,3 +113,14 @@ else()
 endif()
 
 install(TARGETS _basixcpp LIBRARY DESTINATION basix)
+
+# and the nanobind typing stubs.
+nanobind_add_stub(
+  _basixcpp_stub
+  MODULE basix._basixcpp
+  DEPENDS _basixcpp
+  VERBOSE
+  INSTALL_TIME
+  OUTPUT
+    basix/_basixcpp.pyi
+)

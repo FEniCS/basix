@@ -117,6 +117,7 @@ nanobind_add_stub(
   _basixcpp_stub
   MODULE basix._basixcpp
   DEPENDS _basixcpp
+  PATTERN_FILE ${CMAKE_CURRENT_SOURCE_DIR}/pattern_stub.txt
   VERBOSE
   OUTPUT
     _basixcpp.pyi

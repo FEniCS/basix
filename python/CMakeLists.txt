@@ -115,7 +115,8 @@ endif()
 # and the nanobind typing stubs.
 nanobind_add_stub(
   _basixcpp_stub
-  MODULE basix._basixcpp
+  MODULE _basixcpp
+  PYTHON_PATH $<TARGET_FILE_DIR:_basixcpp>
   DEPENDS _basixcpp
   PATTERN_FILE ${CMAKE_CURRENT_SOURCE_DIR}/pattern_stub.txt
   VERBOSE

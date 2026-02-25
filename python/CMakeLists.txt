@@ -114,29 +114,43 @@ endif()
 
 # and the nanobind typing stubs.
 if (WIN32)
+  # On Windows we cannot import basix._basixcpp without installing the package
+  # alongside its external dlls.
+
+  # This *must* be called prior to nanobind_add_stub
   install(TARGETS _basixcpp LIBRARY DESTINATION basix)
+  # nanobind automatically installs into ${CMAKE_INSTALL_PREFIX} in
+  # INSTALL_TIME mode.
+  # DEPENDS is redundant in INSTALL_TIME mode - _basixcpp must be installed.
   nanobind_add_stub(
     _basixcpp_stub
     MODULE basix._basixcpp
-    DEPENDS _basixcpp
     INSTALL_TIME
     PATTERN_FILE ${CMAKE_CURRENT_SOURCE_DIR}/pattern_stub.txt
+    MARKER_FILE basix/py.typed
     VERBOSE
     OUTPUT
       basix/_basixcpp.pyi
   )
 else()
+  # On UNIX-like systems we can import the cpp compiled module before
+  # installing and rely on dynamic linking at import time.
   nanobind_add_stub(
     _basixcpp_stub
     MODULE _basixcpp
     PYTHON_PATH $<TARGET_FILE_DIR:_basixcpp>
     DEPENDS _basixcpp
     PATTERN_FILE ${CMAKE_CURRENT_SOURCE_DIR}/pattern_stub.txt
+    MARKER_FILE ${CMAKE_CURRENT_SOURCE_DIR}/basix/py.typed
     VERBOSE
     OUTPUT
       _basixcpp.pyi
   )
 
   install(TARGETS _basixcpp LIBRARY DESTINATION basix)
-  install(FILES ${CMAKE_CURRENT_BINARY_DIR}/_basixcpp.pyi DESTINATION basix)
+  install(FILES
+    ${CMAKE_CURRENT_SOURCE_DIR}/basix/py.typed
+    ${CMAKE_CURRENT_BINARY_DIR}/_basixcpp.pyi
+    DESTINATION basix
+  )
 endif()

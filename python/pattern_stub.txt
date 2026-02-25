@@ -1,2 +1,7 @@
-basix._basixcpp.tabulate_polynomial_set:
-    def tabulate_polynomial_set(celltype: CellType, polytype: PolysetType, d: int, n: int, x: Annotated[ArrayLike, dict(dtype='float64', writable=False, shape=(None, None), order='C')]) -> Annotated[ArrayLike, dict(dtype='float64', )]: ...
+tabulate_polynomial_set:
+    \from typing import TypeVar
+    \from numpy.typing import NDArray as _NDArray
+    \from numpy import float32 as _f32, float64 as _f64
+    _polynomial_set_floats = TypeVar("_polynomial_set_floats", _f32, _f64)
+
+    def tabulate_polynomial_set(celltype: CellType, polytype: PolysetType, d: int, n: int, x: _NDArray[_polynomial_set_floats],) -> _NDArray[_polynomial_set_floats]: ...

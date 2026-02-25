@@ -112,15 +112,15 @@ else()
   set_target_properties(_basixcpp PROPERTIES INSTALL_RPATH ${_basix_dir})
 endif()
 
-install(TARGETS _basixcpp LIBRARY DESTINATION basix)
-
 # and the nanobind typing stubs.
 nanobind_add_stub(
   _basixcpp_stub
   MODULE basix._basixcpp
   DEPENDS _basixcpp
   VERBOSE
-  INSTALL_TIME
   OUTPUT
-    basix/_basixcpp.pyi
+    _basixcpp.pyi
 )
+
+install(TARGETS _basixcpp LIBRARY DESTINATION basix)
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/_basixcpp.pyi DESTINATION basix)

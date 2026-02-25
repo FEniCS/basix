@@ -153,6 +153,14 @@ jobs:
         run: pip install nanobind scikit-build-core[pyproject]
       - name: Install Basix
         run: pip install --no-build-isolation .
+      - name: Install mypy
+        run: pip install mypy
+      - name: Run mypy (module)
+        run: mypy -p basix
+      - name: Run mypy (test)
+        run: mypy test
+      # - name: Run mypy (demo)
+      #   run: mypy demo/python
 
   build-cmake:
     name: Build using C++ and Python parts separately and run tests

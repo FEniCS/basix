@@ -358,12 +358,12 @@ class _ElementBase(_AbstractFiniteElement):
         raise NotImplementedError()
 
     @property
-    def _x(self) -> list[list[_npt.NDArray]]:
+    def _x(self) -> list[list[_npt.ArrayLike]]:
         """The points used to define interpolation."""
         raise NotImplementedError()
 
     @property
-    def _M(self) -> list[list[_npt.NDArray]]:
+    def _M(self) -> list[list[_npt.ArrayLike]]:
         """The matrices used to define interpolation."""
         raise NotImplementedError()
 
@@ -555,11 +555,11 @@ class _BasixElement(_ElementBase):
         return self._element.wcoeffs
 
     @property
-    def _x(self) -> list[list[_npt.NDArray]]:
+    def _x(self) -> list[list[_npt.ArrayLike]]:
         return self._element.x
 
     @property
-    def _M(self) -> list[list[_npt.NDArray]]:
+    def _M(self) -> list[list[_npt.ArrayLike]]:
         return self._element.M
 
     @property
@@ -1182,11 +1182,11 @@ class _BlockedElement(_ElementBase):
         return wcoeffs
 
     @property
-    def _x(self) -> list[list[_npt.NDArray]]:
+    def _x(self) -> list[list[_npt.ArrayLike]]:
         return self._sub_element._x
 
     @property
-    def _M(self) -> list[list[_npt.NDArray]]:
+    def _M(self) -> list[list[_npt.ArrayLike]]:
         M = []
         for M_list in self._sub_element._M:
             M_row = []

@@ -7,7 +7,7 @@ endif()
 
 project(basix_nanobind VERSION "0.9.0.0" LANGUAGES CXX)
 
-if (WIN32)
+if(WIN32)
     # Windows requires all symbols to be manually exported.
     # This flag exports all symbols automatically, as in Unix.
     set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS TRUE)
@@ -113,16 +113,30 @@ else()
 endif()
 
 # and the nanobind typing stubs.
-nanobind_add_stub(
-  _basixcpp_stub
-  MODULE _basixcpp
-  PYTHON_PATH $<TARGET_FILE_DIR:_basixcpp>
-  DEPENDS _basixcpp
-  PATTERN_FILE ${CMAKE_CURRENT_SOURCE_DIR}/pattern_stub.txt
-  VERBOSE
-  OUTPUT
-    _basixcpp.pyi
-)
+if (WIN32)
+  install(TARGETS _basixcpp LIBRARY DESTINATION basix)
+  nanobind_add_stub(
+    _basixcpp_stub
+    MODULE basix._basixcpp
+    DEPENDS _basixcpp
+    INSTALL_TIME
+    PATTERN_FILE ${CMAKE_CURRENT_SOURCE_DIR}/pattern_stub.txt
+    VERBOSE
+    OUTPUT
+      basix/_basixcpp.pyi
+  )
+else()
+  nanobind_add_stub(
+    _basixcpp_stub
+    MODULE _basixcpp
+    PYTHON_PATH $<TARGET_FILE_DIR:_basixcpp>
+    DEPENDS _basixcpp
+    PATTERN_FILE ${CMAKE_CURRENT_SOURCE_DIR}/pattern_stub.txt
+    VERBOSE
+    OUTPUT
+      _basixcpp.pyi
+  )
 
-install(TARGETS _basixcpp LIBRARY DESTINATION basix)
-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/_basixcpp.pyi DESTINATION basix)
+  install(TARGETS _basixcpp LIBRARY DESTINATION basix)
+  install(FILES ${CMAKE_CURRENT_BINARY_DIR}/_basixcpp.pyi DESTINATION basix)
+endif()

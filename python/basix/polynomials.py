@@ -5,6 +5,8 @@
 # SPDX-License-Identifier:    MIT
 """Functions for working with polynomials."""
 
+from typing import TypeVar
+
 import numpy as np
 import numpy.typing as npt
 
@@ -12,12 +14,15 @@ from basix._basixcpp import PolynomialType, PolysetType
 from basix._basixcpp import polynomials_dim as _pd
 from basix._basixcpp import restriction as _restriction
 from basix._basixcpp import superset as _superset
-from basix._basixcpp import tabulate_polynomial_set as _tps
+from basix._basixcpp import tabulate_polynomial_set_float32, tabulate_polynomial_set_float64
 from basix._basixcpp import tabulate_polynomials as _tabulate_polynomials
 from basix.cell import CellType
 from basix.utils import index
 
 __all__ = ["reshape_coefficients", "dim", "tabulate_polynomial_set"]
+
+
+T = TypeVar("T", np.float32, np.float64)
 
 
 def reshape_coefficients(
@@ -196,8 +201,8 @@ def superset(cell: CellType, type1: PolysetType, type2: PolysetType) -> PolysetT
 
 
 def tabulate_polynomial_set(
-    celltype: CellType, ptype: PolysetType, degree: int, nderiv: int, pts: npt.NDArray
-) -> npt.ArrayLike:
+    celltype: CellType, ptype: PolysetType, degree: int, nderiv: int, pts: npt.NDArray[T]
+) -> npt.NDArray[T]:
     """Tabulate a polynomial set.
 
     Args:
@@ -210,4 +215,9 @@ def tabulate_polynomial_set(
     Returns:
         Tabulated polynomial set
     """
-    return _tps(celltype, ptype, degree, nderiv, pts)
+    if pts.dtype == np.float32:
+        return tabulate_polynomial_set_float32(celltype, ptype, degree, nderiv, pts)  # type: ignore
+    elif pts.dtype == np.float64:
+        return tabulate_polynomial_set_float64(celltype, ptype, degree, nderiv, pts)  # type: ignore
+    else:
+        raise RuntimeError(f"Unsupported data dtype: {pts.dtype}")

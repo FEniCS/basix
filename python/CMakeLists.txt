@@ -126,7 +126,6 @@ if (WIN32)
     _basixcpp_stub
     MODULE basix._basixcpp
     INSTALL_TIME
-    PATTERN_FILE ${CMAKE_CURRENT_SOURCE_DIR}/pattern_stub.txt
     MARKER_FILE basix/py.typed
     VERBOSE
     OUTPUT
@@ -140,7 +139,6 @@ else()
     MODULE _basixcpp
     PYTHON_PATH $<TARGET_FILE_DIR:_basixcpp>
     DEPENDS _basixcpp
-    PATTERN_FILE ${CMAKE_CURRENT_SOURCE_DIR}/pattern_stub.txt
     MARKER_FILE ${CMAKE_CURRENT_SOURCE_DIR}/basix/py.typed
     VERBOSE
     OUTPUT

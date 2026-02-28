@@ -419,7 +419,7 @@ void declare_float(nb::module_& m, const std::string& type)
         });
 
   m.def(
-      "tabulate_polynomial_set",
+      ("tabulate_polynomial_set_" + type).c_str(),
       [](cell::type celltype, polyset::type polytype, int d, int n,
          nb::ndarray<const T, nb::ndim<2>, nb::c_contig> x)
       {

@@ -22,7 +22,7 @@ from basix.utils import index
 __all__ = ["reshape_coefficients", "dim", "tabulate_polynomial_set"]
 
 
-T = TypeVar("T", np.int32, np.int64)
+T = TypeVar("T", np.float32, np.float64)
 
 
 def reshape_coefficients(
@@ -202,7 +202,7 @@ def superset(cell: CellType, type1: PolysetType, type2: PolysetType) -> PolysetT
 
 def tabulate_polynomial_set(
     celltype: CellType, ptype: PolysetType, degree: int, nderiv: int, pts: npt.NDArray[T]
-) -> npt.ArrayLike[T]:
+) -> npt.NDArray[T]:
     """Tabulate a polynomial set.
 
     Args:
@@ -216,8 +216,8 @@ def tabulate_polynomial_set(
         Tabulated polynomial set
     """
     if pts.dtype == np.float32:
-        return tabulate_polynomial_set_float32(celltype, ptype, degree, nderiv, pts)
+        return tabulate_polynomial_set_float32(celltype, ptype, degree, nderiv, pts)  # type: ignore
     elif pts.dtype == np.float64:
-        return tabulate_polynomial_set_float64(celltype, ptype, degree, nderiv, pts)
-
-    raise RuntimeError(f"Unsupported data dtype: {pts.dtype}")
+        return tabulate_polynomial_set_float64(celltype, ptype, degree, nderiv, pts)  # type: ignore
+    else:
+        raise RuntimeError(f"Unsupported data dtype: {pts.dtype}")

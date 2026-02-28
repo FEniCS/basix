@@ -23,6 +23,7 @@
 #include <nanobind/stl/tuple.h>
 #include <nanobind/stl/variant.h>
 #include <nanobind/stl/vector.h>
+#include <nanobind/typing.h>
 #include <span>
 #include <string>
 #include <type_traits>
@@ -419,7 +420,7 @@ void declare_float(nb::module_& m, const std::string& type)
         });
 
   m.def(
-      "tabulate_polynomial_set",
+      ("tabulate_polynomial_set_" + type).c_str(),
       [](cell::type celltype, polyset::type polytype, int d, int n,
          nb::ndarray<const T, nb::ndim<2>, nb::c_contig> x)
       {

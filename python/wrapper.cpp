@@ -23,7 +23,6 @@
 #include <nanobind/stl/tuple.h>
 #include <nanobind/stl/variant.h>
 #include <nanobind/stl/vector.h>
-#include <nanobind/typing.h>
 #include <span>
 #include <string>
 #include <type_traits>

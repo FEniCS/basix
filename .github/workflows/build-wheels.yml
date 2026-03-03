@@ -51,7 +51,7 @@ jobs:
         uses: pypa/cibuildwheel@v3.3.1
 
       - name: Upload artifacts
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: ${{ matrix.os }}-wheel-artifact
           path: ./wheelhouse/*.whl
@@ -74,7 +74,7 @@ jobs:
         run: python -m build --sdist .
 
       - name: Upload sdist
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: src-artifact
           path: dist/*

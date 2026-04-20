@@ -353,6 +353,11 @@ class _ElementBase(_AbstractFiniteElement):
         return 1
 
     @property
+    def block_shape(self) -> tuple[int, ...]:
+        """The block size of the element."""
+        return ()
+
+    @property
     def _wcoeffs(self) -> _npt.ArrayLike:
         """The coefficients used to define the polynomial set."""
         raise NotImplementedError()
@@ -1069,6 +1074,10 @@ class _BlockedElement(_ElementBase):
     @property
     def block_size(self) -> int:
         return self._block_size
+
+    @property
+    def block_shape(self) -> tuple[int, ...]:
+        return self._block_shape
 
     @property
     def reference_value_shape(self) -> tuple[int, ...]:

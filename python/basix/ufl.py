@@ -354,7 +354,7 @@ class _ElementBase(_AbstractFiniteElement):
 
     @property
     def block_shape(self) -> tuple[int, ...]:
-        """The block size of the element."""
+        """The block shape of the element."""
         return ()
 
     @property

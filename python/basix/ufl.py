@@ -1396,7 +1396,9 @@ class _RealElement(_ElementBase):
         self._cell_type = cell
         tdim = len(_basix.topology(cell)) - 1
 
-        super().__init__(f"RealElement({cell.name})", cell.name, (), 0)
+        super().__init__(
+            f"RealElement({cell.name})", cell.name, (), 0, pullback=_ufl.identity_pullback
+        )
 
         self._entity_counts = []
         if tdim >= 1:

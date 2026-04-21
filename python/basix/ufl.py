@@ -1515,7 +1515,7 @@ class _RealElement(_ElementBase):
     @property
     def basix_element(self):
         return _basix.create_element(
-            _basix.ElementFamily.P, self.basix_cell_type, 0, discontinuous=True, dtype=self._dtype
+            _basix.ElementFamily.P, self.cell_type, 0, discontinuous=True, dtype=self._dtype
         )
 
 

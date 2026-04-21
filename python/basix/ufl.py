@@ -1430,7 +1430,7 @@ class _RealElement(_ElementBase):
 
     @property
     def dim(self) -> int:
-        return 0
+        return 1
 
     @property
     def embedded_superdegree(self) -> int:
@@ -1882,7 +1882,7 @@ def quadrature_element(
 
 def real_element(
     cell: _typing.Union[_basix.CellType, str],
-    value_shape: tuple[int, ...],
+    value_shape: tuple[int, ...] = (),
     symmetry: _typing.Optional[bool] = None,
     dtype: _typing.Optional[_npt.DTypeLike] = None,
 ) -> _ElementBase:

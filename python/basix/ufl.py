@@ -1881,7 +1881,7 @@ def real_element(
     if isinstance(cell, str):
         cell = _basix.CellType[cell]
 
-    e = _RealElement(cell, value_shape)
+    e = _RealElement(cell)
     if value_shape == ():
         if symmetry is not None:
             raise ValueError("Cannot pass a symmetry argument to this element.")

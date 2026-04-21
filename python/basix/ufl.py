@@ -407,6 +407,11 @@ class _ElementBase(_AbstractFiniteElement):
         """Is the element a symmetric 2-tensor?"""
         return False
 
+    @property
+    def is_real(self) -> bool:
+        """Is this a real element?"""
+        return False
+
 
 class _BasixElement(_ElementBase):
     """A wrapper allowing Basix elements to be used directly with UFL.
@@ -1526,6 +1531,10 @@ class _RealElement(_ElementBase):
     @property
     def polyset_type(self) -> _basix.PolysetType:
         raise NotImplementedError()
+
+    @property
+    def is_real(self) -> bool:
+        return True
 
 
 def _compute_signature(element: _basix.finite_element.FiniteElement) -> str:

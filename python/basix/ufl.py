@@ -1443,6 +1443,10 @@ class _RealElement(_ElementBase):
         return 0
 
     @property
+    def polyset_type(self) -> _basix.PolysetType:
+        return _basix.PolysetType.standard
+
+    @property
     def num_entity_dofs(self) -> list[list[int]]:
         dofs = []
         for d in self._entity_counts[:-1]:

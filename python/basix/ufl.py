@@ -1378,12 +1378,12 @@ class _QuadratureElement(_ElementBase):
 class _RealElement(_ElementBase):
     """A real element."""
 
-    def __init__(self, cell: _basix.CellType, value_shape: tuple[int, ...]):
+    def __init__(self, cell: _basix.CellType):
         """Initialise the element."""
         self._cell_type = cell
         tdim = len(_basix.topology(cell)) - 1
 
-        super().__init__(f"RealElement({cell.name}, {value_shape})", cell.name, value_shape, 0)
+        super().__init__(f"RealElement({cell.name}, {value_shape})", cell.name, (), 0)
 
         self._entity_counts = []
         if tdim >= 1:
@@ -1398,7 +1398,6 @@ class _RealElement(_ElementBase):
         return (
             isinstance(other, _RealElement)
             and self._cell_type == other._cell_type
-            and self._reference_value_shape == other._reference_value_shape
         )
 
     def __hash__(self) -> int:
@@ -1865,7 +1864,9 @@ def quadrature_element(
 
 
 def real_element(
-    cell: _typing.Union[_basix.CellType, str], value_shape: tuple[int, ...]
+    cell: _typing.Union[_basix.CellType, str],
+    value_shape: tuple[int, ...],
+    symmetry: _typing.Optional[bool] = None,
 ) -> _ElementBase:
     """Create a real element.
 
@@ -1880,7 +1881,12 @@ def real_element(
     if isinstance(cell, str):
         cell = _basix.CellType[cell]
 
-    return _RealElement(cell, value_shape)
+    e = _RealElement(cell, value_shape)
+    if value_shape == ():
+        if symmetry is not None:
+            raise ValueError("Cannot pass a symmetry argument to this element.")
+        return e
+    return blocked_element(e, shape=value_shape, symmetry=symmetry)
 
 
 def blocked_element(

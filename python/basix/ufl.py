@@ -1382,7 +1382,11 @@ class _QuadratureElement(_ElementBase):
 class _RealElement(_ElementBase):
     """A real element."""
 
-    def __init__(self, cell: _basix.CellType):
+    def __init__(
+        self,
+        cell: _basix.CellType,
+        dtype: _npt.DTypeLike | None,
+    ):
         """Initialise the element."""
         self._cell_type = cell
         tdim = len(_basix.topology(cell)) - 1
@@ -1397,12 +1401,10 @@ class _RealElement(_ElementBase):
         if tdim >= 3:
             self._entity_counts.append(self.cell.num_facets)
         self._entity_counts.append(1)
+        self._dtype = dtype
 
     def __eq__(self, other) -> bool:
-        return (
-            isinstance(other, _RealElement)
-            and self._cell_type == other._cell_type
-        )
+        return isinstance(other, _RealElement) and self._cell_type == other._cell_type
 
     def __hash__(self) -> int:
         return super().__hash__()
@@ -1509,6 +1511,12 @@ class _RealElement(_ElementBase):
     @property
     def is_real(self) -> bool:
         return True
+
+    @property
+    def basix_element(self):
+        return _basix.create_element(
+            _basix.ElementFamily.P, self.basix_cell_type, 0, discontinuous=True, dtype=self._dtype
+        )
 
 
 def _compute_signature(element: _basix.finite_element.FiniteElement) -> str:
@@ -1871,6 +1879,7 @@ def real_element(
     cell: _typing.Union[_basix.CellType, str],
     value_shape: tuple[int, ...],
     symmetry: _typing.Optional[bool] = None,
+    dtype: _typing.Optional[_npt.DTypeLike] = None,
 ) -> _ElementBase:
     """Create a real element.
 
@@ -1885,7 +1894,7 @@ def real_element(
     if isinstance(cell, str):
         cell = _basix.CellType[cell]
 
-    e = _RealElement(cell)
+    e = _RealElement(cell, dtype=dtype)
     if value_shape == ():
         if symmetry is not None:
             raise ValueError("Cannot pass a symmetry argument to this element.")

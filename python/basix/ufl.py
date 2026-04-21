@@ -1031,6 +1031,10 @@ class _BlockedElement(_ElementBase):
     def is_quadrature(self) -> bool:
         return self._sub_element.is_quadrature
 
+    @property
+    def is_real(self) -> bool:
+        return self._sub_element.is_real
+
     def tabulate(self, nderivs: int, points: _npt.NDArray[np.floating]) -> _npt.ArrayLike:
         assert len(self._block_shape) == 1  # TODO: block shape
         assert self.reference_value_size == self._block_size  # TODO: remove this assumption

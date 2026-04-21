@@ -259,11 +259,6 @@ class _ElementBase(_AbstractFiniteElement):
 
     @property
     @_abstractmethod
-    def num_global_support_dofs(self) -> int:
-        """Get the number of global support DOFs."""
-
-    @property
-    @_abstractmethod
     def reference_topology(self) -> list[list[list[int]]]:
         """Topology of the reference element."""
 
@@ -501,10 +496,6 @@ class _BasixElement(_ElementBase):
         return self._element.entity_closure_dofs
 
     @property
-    def num_global_support_dofs(self) -> int:
-        return 0
-
-    @property
     def reference_topology(self) -> list[list[list[int]]]:
         return _basix.topology(self._element.cell_type)
 
@@ -663,10 +654,6 @@ class _ComponentElement(_ElementBase):
 
     @property
     def entity_closure_dofs(self) -> list[list[list[int]]]:
-        raise NotImplementedError()
-
-    @property
-    def num_global_support_dofs(self) -> int:
         raise NotImplementedError()
 
     @property
@@ -878,10 +865,6 @@ class _MixedElement(_ElementBase):
                     dofs[tdim][entity_n] += [start_dof + i for i in entity_dofs]
             start_dof += e.dim
         return dofs
-
-    @property
-    def num_global_support_dofs(self) -> int:
-        return sum(e.num_global_support_dofs for e in self._sub_elements)
 
     @property
     def family_name(self) -> str:
@@ -1129,10 +1112,6 @@ class _BlockedElement(_ElementBase):
         ]
 
     @property
-    def num_global_support_dofs(self) -> int:
-        return self._sub_element.num_global_support_dofs * self._block_size
-
-    @property
     def family_name(self) -> str:
         return self._sub_element.family_name
 
@@ -1344,10 +1323,6 @@ class _QuadratureElement(_ElementBase):
         return self.entity_dofs
 
     @property
-    def num_global_support_dofs(self) -> int:
-        return 0
-
-    @property
     def reference_topology(self) -> list[list[list[int]]]:
         raise NotImplementedError()
 
@@ -1483,10 +1458,6 @@ class _RealElement(_ElementBase):
     @property
     def entity_closure_dofs(self) -> list[list[list[int]]]:
         return self.entity_dofs
-
-    @property
-    def num_global_support_dofs(self) -> int:
-        return 1
 
     @property
     def reference_topology(self) -> list[list[list[int]]]:

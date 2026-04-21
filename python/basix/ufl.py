@@ -725,6 +725,10 @@ class _MixedElement(_ElementBase):
 
     def __init__(self, sub_elements: list[_ElementBase]):
         """Initialise the element."""
+        for e in sub_elements:
+            if e.is_real:
+                raise NotImplementedError(
+                    "Real elements inside mixed elements are not currently supported")
         assert len(sub_elements) > 0
         self._sub_elements = sub_elements
         pullback = (

@@ -7,17 +7,15 @@
 #
 # First, we import Basix and Numpy.
 
+import typing  # For type checking
+
 import matplotlib.pyplot as plt
 import numpy as np
+import numpy.typing as npt
 from mpl_toolkits import mplot3d  # noqa: F401
 
 import basix
 from basix import CellType, LatticeType, MapType, PolynomialType, PolysetType, SobolevSpace
-
-# Imports for type checking
-
-import typing
-import numpy.typing as npt
 
 # Aliases for type casting to maintain readability
 

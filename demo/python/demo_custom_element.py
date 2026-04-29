@@ -7,16 +7,13 @@
 #
 # First, we import Basix and Numpy.
 
+import typing  # For type checking
+
 import numpy as np
+import numpy.typing as npt
 
 import basix
 from basix import CellType, LatticeType, MapType, PolynomialType, PolysetType, SobolevSpace
-
-# Imporrts for type checking
-
-import typing
-
-import numpy.typing as npt
 
 # Aliases for type casting to maintain readability
 

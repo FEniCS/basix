@@ -14,15 +14,13 @@
 #
 # First, we import Basix and Numpy.
 
+import typing  # For type checking
+
 import numpy as np
+import numpy.typing as npt
 
 import basix
 from basix import CellType, ElementFamily, LagrangeVariant
-
-# Imports for type checking
-
-import typing
-import numpy.typing as npt
 
 # Aliases for type casting
 
@@ -60,6 +58,7 @@ points, weights = typing.cast(
 #
 # We define Python functions that compute :math:`f` and :math:`g` for every point.
 # These functions use features of Numpy to compute all the values at once.
+
 
 def f(points: FloatArray) -> FloatArray:
     return points[:, 0] ** 3 * points[:, 1]

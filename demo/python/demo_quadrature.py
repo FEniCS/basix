@@ -14,10 +14,18 @@
 #
 # First, we import Basix and Numpy.
 
+import typing  # For type checking
+
 import numpy as np
+import numpy.typing as npt
 
 import basix
 from basix import CellType, ElementFamily, LagrangeVariant
+
+# Aliases for type casting
+
+FloatArray = npt.NDArray[np.float64]
+QuadratureRule = tuple[FloatArray, FloatArray]
 
 # To get a quadrature rule on a triangle, we use the function `make_quadrature`.
 # This function takes two or three three inputs. We want to use the default
@@ -29,14 +37,15 @@ from basix import CellType, ElementFamily, LagrangeVariant
 # `make_quadrature` returns two values: the points and the weights of the
 # quadrature rule.
 
-points, weights = basix.make_quadrature(CellType.triangle, 4)
+points, weights = typing.cast(QuadratureRule, basix.make_quadrature(CellType.triangle, 4))
 
 # If we want to control the type of quadrature used, we can pass in three
 # inputs to `make_quadrautre`. For example, the following code would force basix
 # to use a Gauss-Jacobi quadrature rule:
 
-points, weights = basix.make_quadrature(
-    CellType.triangle, 4, rule=basix.QuadratureType.gauss_jacobi
+points, weights = typing.cast(
+    QuadratureRule,
+    basix.make_quadrature(CellType.triangle, 4, rule=basix.QuadratureType.gauss_jacobi),
 )
 
 # We now use this quadrature rule to integrate the functions :math:`f(x,y)=x^3y`
@@ -51,11 +60,11 @@ points, weights = basix.make_quadrature(
 # These functions use features of Numpy to compute all the values at once.
 
 
-def f(points):
+def f(points: FloatArray) -> FloatArray:
     return points[:, 0] ** 3 * points[:, 1]
 
 
-def g(points):
+def g(points: FloatArray) -> FloatArray:
     return points[:, 0] ** 3 * points[:, 1] ** 2
 
 
@@ -77,7 +86,7 @@ print(np.sum(weights * g(points)))
 
 lagrange = basix.create_element(ElementFamily.P, CellType.triangle, 3, LagrangeVariant.equispaced)
 
-values = lagrange.tabulate(0, points)
+values = typing.cast(FloatArray, lagrange.tabulate(0, points))
 
 # We compute the integral of the third (note that the counting starts at 0) basis
 # function in this space. We can obtain the values of this basis function from

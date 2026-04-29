@@ -7,12 +7,19 @@
 #
 # First, we import Basix and Numpy.
 
+import typing  # For type checking
+
 import matplotlib.pyplot as plt
 import numpy as np
+import numpy.typing as npt
 from mpl_toolkits import mplot3d  # noqa: F401
 
 import basix
 from basix import CellType, LatticeType, MapType, PolynomialType, PolysetType, SobolevSpace
+
+# Aliases for type casting to maintain readability
+
+FloatArray = npt.NDArray[np.float64]
 
 # Conforming CR element on a triangle
 # ===================================
@@ -125,11 +132,14 @@ e = create_ccr_triangle(2)
 
 # We now visualise the basis functions of the element we have created.
 
-pts = basix.create_lattice(CellType.triangle, 30, LatticeType.equispaced, True)
+pts = typing.cast(
+    FloatArray,
+    basix.create_lattice(CellType.triangle, 30, LatticeType.equispaced, True),
+)
 
 x = pts[:, 0]
 y = pts[:, 1]
-z = e.tabulate(0, pts)[0]
+z = typing.cast(FloatArray, e.tabulate(0, pts))[0]
 
 fig = plt.figure(figsize=(8, 8))
 
@@ -151,11 +161,14 @@ plt.savefig("ccr_triangle_2.png")
 
 e = create_ccr_triangle(3)
 
-pts = basix.create_lattice(CellType.triangle, 30, LatticeType.equispaced, True)
+pts = typing.cast(
+    FloatArray,
+    basix.create_lattice(CellType.triangle, 30, LatticeType.equispaced, True),
+)
 
 x = pts[:, 0]
 y = pts[:, 1]
-z = e.tabulate(0, pts)[0]
+z = typing.cast(FloatArray, e.tabulate(0, pts))[0]
 
 fig = plt.figure(figsize=(11, 8))
 

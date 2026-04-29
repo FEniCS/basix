@@ -8,10 +8,17 @@
 #
 # First, we import Basix and Numpy.
 
+import typing  # For type checking
+
 import numpy as np
+import numpy.typing as npt
 
 import basix
 from basix import CellType, ElementFamily, LagrangeVariant
+
+# Alias for type casting to maintain readability
+
+FloatArray = npt.NDArray[np.float64]
 
 # Next, we create a degree 4 Lagrange element on a quadrilateral using the function
 # `create_element`. The first input is the element family: for Lagrange elements,
@@ -38,7 +45,7 @@ print(lagrange.dim)
 # functions (and no derivatives). We pass in the points as the second input.
 
 points = np.array([[0.0, 0.0], [0.1, 0.1], [0.2, 0.3], [0.3, 0.6], [0.4, 1.0]])
-tab = lagrange.tabulate(0, points)
+tab = typing.cast(FloatArray, lagrange.tabulate(0, points))
 print(tab)
 print(tab.shape)
 

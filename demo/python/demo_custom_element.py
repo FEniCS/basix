@@ -12,6 +12,18 @@ import numpy as np
 import basix
 from basix import CellType, LatticeType, MapType, PolynomialType, PolysetType, SobolevSpace
 
+# Imporrts for type checking
+
+import typing
+
+import numpy.typing as npt
+
+# Aliases for type casting to maintain readability
+
+FloatArray = npt.NDArray[np.float64]
+FloatingArray = npt.NDArray[np.floating]
+QuadratureRule = tuple[FloatArray, FloatArray]
+
 # Lagrange element with bubble
 # ============================
 #
@@ -76,11 +88,14 @@ wcoeffs[3, 4] = 1
 # the largest degree that the integrand will be, so these integrals will
 # be exact).
 
-pts, wts = basix.make_quadrature(CellType.quadrilateral, 4)
-poly = basix.tabulate_polynomials(PolynomialType.legendre, CellType.quadrilateral, 2, pts)
-x = pts[:, 0]
-y = pts[:, 1]
-f = x * (1 - x) * y * (1 - y)
+pts, wts = typing.cast(QuadratureRule, basix.make_quadrature(CellType.quadrilateral, 4))
+poly = typing.cast(
+    FloatArray,
+    basix.tabulate_polynomials(PolynomialType.legendre, CellType.quadrilateral, 2, pts),
+)
+x_coord = pts[:, 0]
+y_coord = pts[:, 1]
+f = x_coord * (1 - x_coord) * y_coord * (1 - y_coord)
 for i in range(9):
     wcoeffs[4, i] = sum(f * poly[i, :] * wts)
 
@@ -100,7 +115,7 @@ for i in range(9):
 #
 # The shape of each of the point lists is (number of points, dimension).
 
-x = [[], [], [], []]
+x: list[list[FloatingArray]] = [[], [], [], []]
 x[0].append(np.array([[0.0, 0.0]]))
 x[0].append(np.array([[1.0, 0.0]]))
 x[0].append(np.array([[0.0, 1.0]]))
@@ -121,7 +136,7 @@ for _ in range(4):
 # The shape of each matrix is (number of DOFs, value size, number of
 # points, number of derivatives).
 
-M = [[], [], [], []]
+M: list[list[FloatingArray]] = [[], [], [], []]
 for _ in range(4):
     M[0].append(np.array([[[[1.0]]]]))
 M[2].append(np.array([[[[1.0]]]]))
@@ -156,7 +171,7 @@ for _ in range(4):
 
 element = basix.create_custom_element(
     CellType.quadrilateral,
-    [],
+    (),
     wcoeffs,
     x,
     M,
@@ -213,13 +228,16 @@ wcoeffs = np.zeros((3, 6))
 wcoeffs[0, 0] = 1
 wcoeffs[1, 3] = 1
 
-pts, wts = basix.make_quadrature(CellType.triangle, 2)
-poly = basix.tabulate_polynomials(PolynomialType.legendre, CellType.triangle, 1, pts)
-x = pts[:, 0]
-y = pts[:, 1]
+pts, wts = typing.cast(QuadratureRule, basix.make_quadrature(CellType.triangle, 2))
+poly = typing.cast(
+    FloatArray,
+    basix.tabulate_polynomials(PolynomialType.legendre, CellType.triangle, 1, pts),
+)
+x_coord = pts[:, 0]
+y_coord = pts[:, 1]
 for i in range(3):
-    wcoeffs[2, i] = sum(x * poly[i, :] * wts)
-    wcoeffs[2, 3 + i] = sum(y * poly[i, :] * wts)
+    wcoeffs[2, i] = sum(x_coord * poly[i, :] * wts)
+    wcoeffs[2, 3 + i] = sum(y_coord * poly[i, :] * wts)
 
 # Interpolation
 # -------------
@@ -228,11 +246,11 @@ for i in range(3):
 # the element are integrals. We begin by defining a degree 1 quadrature rule on an interval.
 # This quadrature rule will be used to integrate on the edges of the triangle.
 
-pts, wts = basix.make_quadrature(CellType.interval, 1)
+pts, wts = typing.cast(QuadratureRule, basix.make_quadrature(CellType.interval, 1))
 
 # The points associated with each edge are calculated by mapping the quadrature points to each edge.
 
-x = [[], [], [], []]
+x = typing.cast(list[list[FloatingArray]], [[], [], [], []])
 for _ in range(3):
     x[0].append(np.zeros((0, 2)))
 x[1].append(np.array([[1 - p[0], p[0]] for p in pts]))
@@ -245,7 +263,7 @@ x[2].append(np.zeros((0, 2)))
 # edge, and no extra derivatives are used. The entries of these matrices are the quadrature weights
 # multiplied by the normal directions.
 
-M = [[], [], [], []]
+M = typing.cast(list[list[FloatingArray]], [[], [], [], []])
 for _ in range(3):
     M[0].append(np.zeros((0, 2, 0, 1)))
 for normal in [[-1, -1], [-1, 0], [0, 1]]:
@@ -260,7 +278,7 @@ M[2].append(np.zeros((0, 2, 0, 1)))
 
 element = basix.create_custom_element(
     CellType.triangle,
-    [2],
+    (2,),
     wcoeffs,
     x,
     M,
@@ -278,5 +296,8 @@ element = basix.create_custom_element(
 
 rt = basix.create_element(basix.ElementFamily.RT, CellType.triangle, 1)
 
-points = basix.create_lattice(CellType.triangle, 1, LatticeType.equispaced, True)
+points = typing.cast(
+    FloatArray,
+    basix.create_lattice(CellType.triangle, 1, LatticeType.equispaced, True),
+)
 assert np.allclose(rt.tabulate(0, points), element.tabulate(0, points))

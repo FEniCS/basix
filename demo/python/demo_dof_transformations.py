@@ -27,6 +27,16 @@ import numpy as np
 import basix
 from basix import CellType, ElementFamily, LagrangeVariant, LatticeType
 
+# Imports for type checking
+
+import typing
+import numpy.typing as npt
+
+# Aliases for type casting to maintain readability
+
+FloatArray = npt.NDArray[np.float64]
+IntArray = npt.NDArray[np.int_]
+
 # Degree 5 Lagrange element
 # =========================
 #
@@ -129,7 +139,10 @@ print(nedelec.entity_transformations())
 # To demonstrate how these transformations can be used, we create a
 # lattice of points where we will tabulate the element.
 
-points = basix.create_lattice(CellType.tetrahedron, 5, LatticeType.equispaced, True)
+points = typing.cast(
+    FloatArray,
+    basix.create_lattice(CellType.tetrahedron, 5, LatticeType.equispaced, True),
+)
 
 # If (for example) the direction of edge 2 in the physical cell does
 # not match its direction on the reference, then we need to adjust the
@@ -145,10 +158,10 @@ points = basix.create_lattice(CellType.tetrahedron, 5, LatticeType.equispaced, T
 # and over the value size. For each of these values, we apply the
 # transformation matrix to the relevant DOFs.
 
-data = nedelec.tabulate(0, points)
+data = typing.cast(FloatArray, nedelec.tabulate(0, points))
 
-transformation = nedelec.entity_transformations()["interval"][0]
-dofs = nedelec.entity_dofs[1][2]
+transformation = typing.cast(FloatArray, nedelec.entity_transformations()["interval"][0])
+dofs = typing.cast(IntArray, np.asarray(nedelec.entity_dofs[1][2]))
 
 for point in range(data.shape[1]):
     for dim in range(data.shape[3]):

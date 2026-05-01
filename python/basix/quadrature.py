@@ -43,7 +43,7 @@ def make_quadrature(
     degree: int,
     rule: QuadratureType = QuadratureType.default,
     polyset_type: PolysetType = PolysetType.standard,
-) -> tuple[_npt.ArrayLike, _npt.ArrayLike]:
+) -> tuple[_npt.NDArray[_np.float64], _npt.NDArray[_np.float64]]:
     """Create a quadrature rule.
 
     Args:

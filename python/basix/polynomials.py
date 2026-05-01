@@ -160,8 +160,8 @@ def dim(ptype: PolynomialType, celltype: CellType, degree: int) -> int:
 
 
 def tabulate_polynomials(
-    ptype: PolynomialType, celltype: CellType, degree: int, pts: npt.NDArray
-) -> npt.ArrayLike:
+    ptype: PolynomialType, celltype: CellType, degree: int, pts: npt.NDArray[np.float64]
+) -> npt.NDArray[np.float64]:
     """Tabulate a set of polynomials on a reference cell.
 
     Args:

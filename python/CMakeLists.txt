@@ -113,11 +113,9 @@ else()
 endif()
 
 # and the nanobind typing stubs.
-# We cannot rely on import without installing the package for cross compilation of wheels.
-# This *must* be called prior to nanobind_add_stub
 install(TARGETS _basixcpp LIBRARY DESTINATION basix)
 
-# DEPENDS is redundant in INSTALL_TIME mode - _basixcpp must be installed.
+# Note: install time mode required for wheel cross compilation.
 nanobind_add_stub(
   _basixcpp_stub
   MODULE basix._basixcpp

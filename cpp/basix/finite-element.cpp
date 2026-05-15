@@ -922,9 +922,17 @@ FiniteElement<T> basix::create_custom_element(
 
   // Check that wcoeffs have the correct shape
   if (wcoeffs.extent(1) != psize * value_size)
-    throw std::runtime_error("wcoeffs has the wrong number of columns");
+    throw std::runtime_error("wcoeffs has incorrect number of columns ("
+                             + std::to_string(wcoeffs.extent(1))
+                             + "): should be equal to number of polynomials ("
+                             + std::to_string(psize)
+                             + ") multiplied by value size ("
+                             + std::to_string(value_size) + ")");
   if (wcoeffs.extent(0) != ndofs)
-    throw std::runtime_error("wcoeffs has the wrong number of rows");
+    throw std::runtime_error("wcoeffs has incorrect number of rows ("
+                             + std::to_string(wcoeffs.extent(0))
+                             + "): should be equal to number of DOFs ("
+                             + std::to_string(ndofs) + ")");
 
   std::vector<T> wcoeffs_ortho_b(wcoeffs.extent(0) * wcoeffs.extent(1));
   { // scope
@@ -945,13 +953,15 @@ FiniteElement<T> basix::create_custom_element(
                      : static_cast<std::size_t>(
                            cell::num_sub_entities(cell_type, i))))
     {
-      throw std::runtime_error("x has the wrong number of entities");
+      throw std::runtime_error(
+          "x has incorrect number of entities of dimension "
+          + std::to_string(i));
     }
 
     for (const auto& xj : x[i])
     {
       if (xj.extent(1) != tdim)
-        throw std::runtime_error("x has a point with the wrong tdim");
+        throw std::runtime_error("x has a point with incorrect tdim");
     }
   }
 
@@ -962,23 +972,31 @@ FiniteElement<T> basix::create_custom_element(
         != (i > tdim ? 0
                      : static_cast<std::size_t>(
                            cell::num_sub_entities(cell_type, i))))
-      throw std::runtime_error("M has the wrong number of entities");
+      throw std::runtime_error("M has incorrect number of entities");
     for (std::size_t j = 0; j < M[i].size(); ++j)
     {
       if (M[i][j].extent(2) != x[i][j].extent(0))
       {
         throw std::runtime_error(
-            "M has the wrong shape (dimension 2 is wrong)");
+            "M has incorrect shape: dimension 2 is "
+            + std::to_string(M[i][j].extent(2))
+            + ", should be equal to number of points in x ("
+            + std::to_string(x[i][j].extent(0)) + ")");
       }
       if (M[i][j].extent(1) != value_size)
       {
-        throw std::runtime_error(
-            "M has the wrong shape (dimension 1 is wrong)");
+        throw std::runtime_error("M has incorrect shape: dimension 1 is "
+                                 + std::to_string(M[i][j].extent(1))
+                                 + ", should be equal to value size ("
+                                 + std::to_string(value_size) + ")");
       }
       if (M[i][j].extent(3) != deriv_count)
       {
         throw std::runtime_error(
-            "M has the wrong shape (dimension 3 is wrong)");
+            "M has incorrect shape: dimension 3 is "
+            + std::to_string(M[i][j].extent(3))
+            + ", should be equal to number of derivatives ("
+            + std::to_string(deriv_count) + ")");
       }
     }
   }

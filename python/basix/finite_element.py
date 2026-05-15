@@ -691,9 +691,9 @@ def create_custom_element(
     for i in x:
         for j in i:
             if j.shape[1] != tdim:
-                raise RuntimeError("x has a point with the wrong tdim")
+                raise RuntimeError("x has a point with incorrect tdim")
             if len(j.shape) != 2:
-                raise ValueError("x has the wrong dimension")
+                raise ValueError("x has incorrect dimension")
 
     # Warn if points are not inside the cell
     geo = geometry(cell_type)

@@ -32,3 +32,6 @@ Table of contents
    :recursive:
 
    basix
+
+.. toctree::
+   polyset-order

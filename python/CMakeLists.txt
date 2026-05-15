@@ -114,11 +114,9 @@ endif()
 
 # and the nanobind typing stubs.
 # We cannot rely on import without installing the package for cross compilation of wheels.
-
 # This *must* be called prior to nanobind_add_stub
 install(TARGETS _basixcpp LIBRARY DESTINATION basix)
-# nanobind automatically installs into ${CMAKE_INSTALL_PREFIX} in
-# INSTALL_TIME mode.
+
 # DEPENDS is redundant in INSTALL_TIME mode - _basixcpp must be installed.
 nanobind_add_stub(
   _basixcpp_stub
@@ -127,5 +125,5 @@ nanobind_add_stub(
   MARKER_FILE basix/py.typed
   VERBOSE
   OUTPUT
-    basix/_basixcpp.pyi
+    ${CMAKE_INSTALL_PREFIX}/basix/_basixcpp.pyi
 )

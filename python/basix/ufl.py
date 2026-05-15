@@ -259,11 +259,6 @@ class _ElementBase(_AbstractFiniteElement):
 
     @property
     @_abstractmethod
-    def num_global_support_dofs(self) -> int:
-        """Get the number of global support DOFs."""
-
-    @property
-    @_abstractmethod
     def reference_topology(self) -> list[list[list[int]]]:
         """Topology of the reference element."""
 
@@ -353,6 +348,11 @@ class _ElementBase(_AbstractFiniteElement):
         return 1
 
     @property
+    def block_shape(self) -> tuple[int, ...]:
+        """The block shape of the element."""
+        return ()
+
+    @property
     def _wcoeffs(self) -> _npt.ArrayLike:
         """The coefficients used to define the polynomial set."""
         raise NotImplementedError()
@@ -400,6 +400,11 @@ class _ElementBase(_AbstractFiniteElement):
     @property
     def is_symmetric(self) -> bool:
         """Is the element a symmetric 2-tensor?"""
+        return False
+
+    @property
+    def is_real(self) -> bool:
+        """Is this a real element?"""
         return False
 
 
@@ -489,10 +494,6 @@ class _BasixElement(_ElementBase):
     @property
     def entity_closure_dofs(self) -> list[list[list[int]]]:
         return self._element.entity_closure_dofs
-
-    @property
-    def num_global_support_dofs(self) -> int:
-        return 0
 
     @property
     def reference_topology(self) -> list[list[list[int]]]:
@@ -656,10 +657,6 @@ class _ComponentElement(_ElementBase):
         raise NotImplementedError()
 
     @property
-    def num_global_support_dofs(self) -> int:
-        raise NotImplementedError()
-
-    @property
     def family_name(self) -> str:
         raise NotImplementedError()
 
@@ -728,6 +725,11 @@ class _MixedElement(_ElementBase):
 
     def __init__(self, sub_elements: list[_ElementBase]):
         """Initialise the element."""
+        for e in sub_elements:
+            if e.is_real:
+                raise NotImplementedError(
+                    "Real elements inside mixed elements are not currently supported"
+                )
         assert len(sub_elements) > 0
         self._sub_elements = sub_elements
         pullback = (
@@ -868,10 +870,6 @@ class _MixedElement(_ElementBase):
                     dofs[tdim][entity_n] += [start_dof + i for i in entity_dofs]
             start_dof += e.dim
         return dofs
-
-    @property
-    def num_global_support_dofs(self) -> int:
-        return sum(e.num_global_support_dofs for e in self._sub_elements)
 
     @property
     def family_name(self) -> str:
@@ -1038,6 +1036,10 @@ class _BlockedElement(_ElementBase):
     def is_quadrature(self) -> bool:
         return self._sub_element.is_quadrature
 
+    @property
+    def is_real(self) -> bool:
+        return self._sub_element.is_real
+
     def tabulate(self, nderivs: int, points: _npt.NDArray[np.floating]) -> _npt.ArrayLike:
         assert len(self._block_shape) == 1  # TODO: block shape
         assert self.reference_value_size == self._block_size  # TODO: remove this assumption
@@ -1069,6 +1071,10 @@ class _BlockedElement(_ElementBase):
     @property
     def block_size(self) -> int:
         return self._block_size
+
+    @property
+    def block_shape(self) -> tuple[int, ...]:
+        return self._block_shape
 
     @property
     def reference_value_shape(self) -> tuple[int, ...]:
@@ -1113,10 +1119,6 @@ class _BlockedElement(_ElementBase):
             [[k * self._block_size + b for k in j for b in range(self._block_size)] for j in i]
             for i in self._sub_element.entity_closure_dofs
         ]
-
-    @property
-    def num_global_support_dofs(self) -> int:
-        return self._sub_element.num_global_support_dofs * self._block_size
 
     @property
     def family_name(self) -> str:
@@ -1330,10 +1332,6 @@ class _QuadratureElement(_ElementBase):
         return self.entity_dofs
 
     @property
-    def num_global_support_dofs(self) -> int:
-        return 0
-
-    @property
     def reference_topology(self) -> list[list[list[int]]]:
         raise NotImplementedError()
 
@@ -1389,12 +1387,18 @@ class _QuadratureElement(_ElementBase):
 class _RealElement(_ElementBase):
     """A real element."""
 
-    def __init__(self, cell: _basix.CellType, value_shape: tuple[int, ...]):
+    def __init__(
+        self,
+        cell: _basix.CellType,
+        dtype: _npt.DTypeLike | None,
+    ):
         """Initialise the element."""
         self._cell_type = cell
         tdim = len(_basix.topology(cell)) - 1
 
-        super().__init__(f"RealElement({cell.name}, {value_shape})", cell.name, value_shape, 0)
+        super().__init__(
+            f"RealElement({cell.name})", cell.name, (), 0, pullback=_ufl.identity_pullback
+        )
 
         self._entity_counts = []
         if tdim >= 1:
@@ -1404,13 +1408,10 @@ class _RealElement(_ElementBase):
         if tdim >= 3:
             self._entity_counts.append(self.cell.num_facets)
         self._entity_counts.append(1)
+        self._dtype = dtype
 
     def __eq__(self, other) -> bool:
-        return (
-            isinstance(other, _RealElement)
-            and self._cell_type == other._cell_type
-            and self._reference_value_shape == other._reference_value_shape
-        )
+        return isinstance(other, _RealElement) and self._cell_type == other._cell_type
 
     def __hash__(self) -> int:
         return super().__hash__()
@@ -1431,7 +1432,7 @@ class _RealElement(_ElementBase):
 
     @property
     def dim(self) -> int:
-        return 0
+        return 1
 
     @property
     def embedded_superdegree(self) -> int:
@@ -1469,10 +1470,6 @@ class _RealElement(_ElementBase):
     @property
     def entity_closure_dofs(self) -> list[list[list[int]]]:
         return self.entity_dofs
-
-    @property
-    def num_global_support_dofs(self) -> int:
-        return 1
 
     @property
     def reference_topology(self) -> list[list[list[int]]]:
@@ -1516,7 +1513,17 @@ class _RealElement(_ElementBase):
 
     @property
     def polyset_type(self) -> _basix.PolysetType:
-        raise NotImplementedError()
+        return _basix.PolysetType.standard
+
+    @property
+    def is_real(self) -> bool:
+        return True
+
+    @property
+    def basix_element(self):
+        return _basix.create_element(
+            _basix.ElementFamily.P, self.cell_type, 0, discontinuous=True, dtype=self._dtype
+        )
 
 
 def _compute_signature(element: _basix.finite_element.FiniteElement) -> str:
@@ -1636,7 +1643,7 @@ def element(
         dpc_variant,
         discontinuous,
         dof_ordering=dof_ordering,
-        dtype=dtype,
+        dtype=dtype,  # type: ignore
     )
     ufl_e = _BasixElement(e)
 
@@ -1802,7 +1809,7 @@ def custom_element(
         embedded_subdegree,
         embedded_superdegree,
         polyset_type,
-        dtype=dtype,
+        dtype=dtype,  # type: ignore
     )
     return _BasixElement(e)
 
@@ -1876,7 +1883,10 @@ def quadrature_element(
 
 
 def real_element(
-    cell: _typing.Union[_basix.CellType, str], value_shape: tuple[int, ...]
+    cell: _typing.Union[_basix.CellType, str],
+    value_shape: tuple[int, ...] = (),
+    symmetry: _typing.Optional[bool] = None,
+    dtype: _typing.Optional[_npt.DTypeLike] = None,
 ) -> _ElementBase:
     """Create a real element.
 
@@ -1891,7 +1901,12 @@ def real_element(
     if isinstance(cell, str):
         cell = _basix.CellType[cell]
 
-    return _RealElement(cell, value_shape)
+    e = _RealElement(cell, dtype=dtype)
+    if value_shape == ():
+        if symmetry is not None:
+            raise ValueError("Cannot pass a symmetry argument to this element.")
+        return e
+    return blocked_element(e, shape=value_shape, symmetry=symmetry)
 
 
 def blocked_element(

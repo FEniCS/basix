@@ -14,6 +14,7 @@ cpp/basix/version.h
 doc/python/build
 doc/python/source/generated
 python/testing_build/
+python/basix/py.typed
 doc/cpp/html
 doc/cpp/latex
 doc/web/html

@@ -31,7 +31,7 @@ jobs:
       - name: Install dependencies (non-Python)
         run: brew install ninja
       - name: Install Basix
-        run: pip -v install .[test]
+        run: pip -v install -Ccmake.build-type="Developer" .[test]
       - name: Run units tests
         run: |
           pip install pytest-xdist

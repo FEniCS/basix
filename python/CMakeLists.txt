@@ -7,7 +7,7 @@ endif()
 
 project(basix_nanobind VERSION "0.9.0.0" LANGUAGES CXX)
 
-if (WIN32)
+if(WIN32)
     # Windows requires all symbols to be manually exported.
     # This flag exports all symbols automatically, as in Unix.
     set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS TRUE)
@@ -53,14 +53,46 @@ target_link_libraries(_basixcpp PRIVATE Basix::basix)
 
 # Add strict compiler flags
 include(CheckCXXCompilerFlag)
-check_cxx_compiler_flag("-Wall -Werror -Wextra -pedantic" HAVE_PEDANTIC)
+
+# Add some strict compiler checks
+check_cxx_compiler_flag("-Wall -Werror -Wextra -pedantic -Wno-comment" HAVE_PEDANTIC)
+
 if(HAVE_PEDANTIC)
-  target_compile_options(_basixcpp PRIVATE -Wall;-Werror;-Wextra;-Wno-comment;-pedantic)
-  # Intel's complex header uses #include_next which is not allowed with -Wall
-  if (CMAKE_CXX_COMPILER_ID STREQUAL "IntelLLVM")
-    target_compile_options(_basixcpp PRIVATE -Wno-gnu-include-next)
-  endif()
+	list(APPEND BASIX_PY_CXX_DEVELOPER_FLAGS -Wall;-Werror;-Wextra;-pedantic;-Wno-comment)
 endif()
+
+# Debug flags
+check_cxx_compiler_flag(-g HAVE_DEBUG)
+if(HAVE_DEBUG)
+  list(APPEND BASIX_PY_CXX_DEVELOPER_FLAGS -g)
+endif()
+
+# Optimisation
+check_cxx_compiler_flag(-O2 HAVE_O2_OPTIMISATION)
+if(HAVE_O2_OPTIMISATION)
+  list(APPEND BASIX_PY_CXX_DEVELOPER_FLAGS -O2)
+endif()
+
+# Enable C++ standard library debugging
+include(CheckCXXSymbolExists)
+
+check_cxx_symbol_exists(_LIBCPP_VERSION "version" LIBCPP)
+check_cxx_symbol_exists(__GLIBCXX__ "version" GLIBCXX)
+
+if(LIBCPP)
+  list(APPEND BASIX_PY_CXX_DEVELOPER_DEFINITIONS _LIBCPP_HARDENING_MODE=_LIBCPP_HARDENING_MODE_DEBUG)
+endif()
+
+if(GLIBCXX)
+  list(APPEND BASIX_PY_CXX_DEVELOPER_DEFINITIONS _GLIBCXX_ASSERTIONS)
+endif()
+
+target_compile_options(
+  _basixcpp PRIVATE $<$<CONFIG:Developer>:${BASIX_PY_CXX_DEVELOPER_FLAGS}>
+)
+target_compile_definitions(
+  _basixcpp PRIVATE $<$<CONFIG:Developer>:${BASIX_PY_CXX_DEVELOPER_DEFINITIONS}>
+)
 
 # TODO: remove after issue https://github.com/FEniCS/basix/issues/842 is resolved
 target_compile_definitions(_basixcpp PRIVATE MDSPAN_USE_PAREN_OPERATOR=1)
@@ -80,4 +112,43 @@ else()
   set_target_properties(_basixcpp PROPERTIES INSTALL_RPATH ${_basix_dir})
 endif()
 
-install(TARGETS _basixcpp LIBRARY DESTINATION basix)
+# and the nanobind typing stubs.
+if (WIN32)
+  # On Windows we cannot import basix._basixcpp without installing the package
+  # alongside its external dlls.
+
+  # This *must* be called prior to nanobind_add_stub
+  install(TARGETS _basixcpp LIBRARY DESTINATION basix)
+  # nanobind automatically installs into ${CMAKE_INSTALL_PREFIX} in
+  # INSTALL_TIME mode.
+  # DEPENDS is redundant in INSTALL_TIME mode - _basixcpp must be installed.
+  nanobind_add_stub(
+    _basixcpp_stub
+    MODULE basix._basixcpp
+    INSTALL_TIME
+    MARKER_FILE basix/py.typed
+    VERBOSE
+    OUTPUT
+      basix/_basixcpp.pyi
+  )
+else()
+  # On UNIX-like systems we can import the cpp compiled module before
+  # installing and rely on dynamic linking at import time.
+  nanobind_add_stub(
+    _basixcpp_stub
+    MODULE _basixcpp
+    PYTHON_PATH $<TARGET_FILE_DIR:_basixcpp>
+    DEPENDS _basixcpp
+    MARKER_FILE ${CMAKE_CURRENT_SOURCE_DIR}/basix/py.typed
+    VERBOSE
+    OUTPUT
+      _basixcpp.pyi
+  )
+
+  install(TARGETS _basixcpp LIBRARY DESTINATION basix)
+  install(FILES
+    ${CMAKE_CURRENT_SOURCE_DIR}/basix/py.typed
+    ${CMAKE_CURRENT_BINARY_DIR}/_basixcpp.pyi
+    DESTINATION basix
+  )
+endif()

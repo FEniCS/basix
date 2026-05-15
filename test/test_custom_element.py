@@ -3,6 +3,7 @@
 # SPDX-License-Identifier: MIT
 
 import re
+
 import numpy as np
 import pytest
 

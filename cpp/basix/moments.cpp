@@ -438,7 +438,7 @@ moments::make_normal_integral_moments(const FiniteElement<T>& V,
   return {pb, pshape, Db, Dshape};
 }
 //----------------------------------------------------------------------------
-/// @cond
+/// @cond DOXYGEN_SHOULD_SKIP_THIS
 template std::tuple<std::vector<std::vector<float>>, std::array<std::size_t, 2>,
                     std::vector<std::vector<float>>, std::array<std::size_t, 4>>
 moments::make_integral_moments(const FiniteElement<float>&, cell::type,

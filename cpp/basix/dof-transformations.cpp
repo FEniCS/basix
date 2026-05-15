@@ -535,7 +535,7 @@ doftransforms::compute_entity_transformations(
   return out;
 }
 //-----------------------------------------------------------------------------
-/// @cond
+/// @cond DOXYGEN_SHOULD_SKIP_THIS
 template std::map<cell::type,
                   std::pair<std::vector<float>, std::array<std::size_t, 3>>>
 doftransforms::compute_entity_transformations(

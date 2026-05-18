@@ -53,7 +53,7 @@ test-command = [
 ]
 test-requires = ["pytest-xdist"]
 test-extras = ["test"]
-# llvmlite (numba) not being built for x86_64 on macOS
+# llvmlite (numba) not being built for these platforms
 test-skip = "*-macosx_x86_64 *-win_arm64"
 
 [tool.cibuildwheel.windows]

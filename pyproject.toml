@@ -43,6 +43,7 @@ build = [
     "cp3{11,12,13,14}-macosx_x86_64",
     "cp3{11,12,13,14}-macosx_arm64",
     "cp3{11,12,13,14}-win_amd64",
+    "cp3{11,12,13,14}-win_arm64",
 ]
 test-command = [
     "cmake -G Ninja -DPython3_EXECUTABLE=$(which python) -B build-dir -S {project}/test/test_cmake",

@@ -7,7 +7,7 @@ name = "fenics-basix"
 version = "0.11.0.dev0"
 description = "Basix Python interface"
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 license = { file = "LICENSE" }
 authors = [
     { email = "fenics-steering-council@googlegroups.com" },
@@ -38,11 +38,11 @@ build-frontend = { name = "pip", args = [
     "--config-settings=wheel.py-api=cp312",
 ] }
 build = [
-    "cp3{10,11,12,13}-manylinux_x86_64",
-    "cp3{10,11,12,13}-manylinux_aarch64",
-    "cp3{10,11,12,13}-macosx_x86_64",
-    "cp3{10,11,12,13}-macosx_arm64",
-    "cp3{10,11,12,13}-win_amd64",
+    "cp3{11,12,13,14}-manylinux_x86_64",
+    "cp3{11,12,13,14}-manylinux_aarch64",
+    "cp3{11,12,13,14}-macosx_x86_64",
+    "cp3{11,12,13,14}-macosx_arm64",
+    "cp3{11,12,13,14}-win_amd64",
 ]
 test-command = [
     "cmake -G Ninja -DPython3_EXECUTABLE=$(which python) -B build-dir -S {project}/test/test_cmake",
@@ -64,7 +64,7 @@ build-frontend = { name = "pip", args = [
 test-command = ["python -m pytest -n auto --durations 20 {project}/test/"]
 
 [[tool.cibuildwheel.overrides]]
-select = "cp3{12,13}-win_amd64"
+select = "cp3{12,13,14}-win_amd64"
 repair-wheel-command = [
     "copy {wheel} {dest_dir}",
     "pipx run abi3audit --verbose --strict --report {wheel}",
@@ -77,7 +77,7 @@ archs = [
 before-build = "yum -y update && yum install -y epel-release && yum install -y openblas-devel ninja-build"
 
 [[tool.cibuildwheel.overrides]]
-select = "cp3{12,13}-manylinux*"
+select = "cp3{12,13,14}-manylinux*"
 repair-wheel-command = [
     "auditwheel repair -w {dest_dir} {wheel}",
     "pipx run abi3audit --verbose --strict --report {wheel}",
@@ -86,13 +86,11 @@ repair-wheel-command = [
 [tool.cibuildwheel.macos]
 environment = { "MACOSX_DEPLOYMENT_TARGET" = "10.14" }
 archs = [
-    "x86_64",
-    "arm64",
-] # Forces x86_64 build on arm64 runner using cross-compilation (and vice-versa).
-before-build = "export HOMEBREW_AUTO_UPDATING=0 && brew update && brew install ninja"
+    "native",
+]
 
 [[tool.cibuildwheel.overrides]]
-select = "cp3{12,13}-macosx*"
+select = "cp3{12,13,14}-macosx*"
 repair-wheel-command = [
     "delocate-wheel --require-archs {delocate_archs} -w {dest_dir} -v {wheel}",
     "pipx run abi3audit --verbose --strict --report {wheel}",

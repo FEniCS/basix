@@ -65,7 +65,7 @@ build-frontend = { name = "pip", args = [
 test-command = ["python -m pytest -n auto --durations 20 {project}/test/"]
 
 [[tool.cibuildwheel.overrides]]
-select = "cp3{12,13,14}-win_amd64"
+select = "cp3{12,13,14}-win*"
 repair-wheel-command = [
     "copy {wheel} {dest_dir}",
     "pipx run abi3audit --verbose --strict --report {wheel}",

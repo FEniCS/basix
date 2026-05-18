@@ -327,6 +327,7 @@ FiniteElement<T> basix::element::create_nce(cell::type celltype, int degree,
       lvariant, element::dpc_variant::unset);
 }
 //-----------------------------------------------------------------------------
+/// @cond DOXYGEN_SHOULD_SKIP_THIS
 template FiniteElement<float>
 basix::element::create_rtc(cell::type, int, element::lagrange_variant, bool);
 template FiniteElement<double>
@@ -336,4 +337,5 @@ template FiniteElement<float>
 basix::element::create_nce(cell::type, int, element::lagrange_variant, bool);
 template FiniteElement<double>
 basix::element::create_nce(cell::type, int, element::lagrange_variant, bool);
+/// @endcond
 //-----------------------------------------------------------------------------

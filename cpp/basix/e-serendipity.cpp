@@ -1447,6 +1447,7 @@ FiniteElement<T> element::create_serendipity_curl(
       dvariant);
 }
 //-----------------------------------------------------------------------------
+/// @cond DOXYGEN_SHOULD_SKIP_THIS
 template FiniteElement<float>
 element::create_serendipity(cell::type, int, element::lagrange_variant,
                             element::dpc_variant, bool);
@@ -1472,4 +1473,5 @@ element::create_serendipity_curl(cell::type, int, element::lagrange_variant,
 template FiniteElement<double>
 element::create_serendipity_curl(cell::type, int, element::lagrange_variant,
                                  element::dpc_variant, bool);
+/// @endcond
 //-----------------------------------------------------------------------------

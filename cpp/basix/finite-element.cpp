@@ -2023,7 +2023,7 @@ std::string basix::version()
   return version_str;
 }
 //-----------------------------------------------------------------------------
-/// @cond
+/// @cond DOXYGEN_SHOULD_SKIP_THIS
 template class basix::FiniteElement<float>;
 template class basix::FiniteElement<double>;
 /// @endcond

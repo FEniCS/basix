@@ -40,8 +40,8 @@ build-frontend = { name = "pip", args = [
 build = [
     "cp3{10,11,12,13}-manylinux_x86_64",
     "cp3{10,11,12,13}-manylinux_aarch64",
-    "cp3{10,11,12,13}-macosx_x86_64",
-    "cp3{10,11,12,13}-macosx_arm64",
+    "cp3{14}-macosx_x86_64",
+    "cp3{14}-macosx_arm64",
     "cp3{10,11,12,13}-win_amd64",
 ]
 test-command = [

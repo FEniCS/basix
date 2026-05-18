@@ -15,7 +15,7 @@ If you want to contribute, but are unsure where to start, have a look at the
 On opening a pull request, unit tests will run on GitHub Actions. You can click on these in the pull request
 to see where (if anywhere) the tests are failing.
 
-The GitHub Actions runs include ruff formatting and checking. Before opening a PR, you can
+The GitHub Actions runs include `ruff` formatting and checking. Before opening a PR, you can
 run `ruff format` locally to reformat your code and `ruff check` to locally check for code
 suggestion that the CI run will pick up on.
 

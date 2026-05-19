@@ -13,7 +13,7 @@ authors = [
     { email = "fenics-steering-council@googlegroups.com" },
     { name = "FEniCS Steering Council" },
 ]
-dependencies = ["numpy>=1.21"]
+dependencies = ["numpy>=2"]
 
 [project.urls]
 homepage = "https://fenicsproject.org"

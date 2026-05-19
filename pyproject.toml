@@ -13,7 +13,7 @@ authors = [
     { email = "fenics-steering-council@googlegroups.com" },
     { name = "FEniCS Steering Council" },
 ]
-dependencies = ["numpy>=1.21"]
+dependencies = ["numpy>=2"]
 
 [project.urls]
 homepage = "https://fenicsproject.org"
@@ -43,6 +43,7 @@ build = [
     "cp3{11,12,13,14}-macosx_x86_64",
     "cp3{11,12,13,14}-macosx_arm64",
     "cp3{11,12,13,14}-win_amd64",
+    "cp3{11,12,13,14}-win_arm64",
 ]
 test-command = [
     "cmake -G Ninja -DPython3_EXECUTABLE=$(which python) -B build-dir -S {project}/test/test_cmake",
@@ -52,8 +53,8 @@ test-command = [
 ]
 test-requires = ["pytest-xdist"]
 test-extras = ["test"]
-# llvmlite (numba) not being built for x86_64 on macOS
-test-skip = "*-macosx_x86_64"
+# llvmlite (numba) not being built for these platforms
+test-skip = "*-macosx_x86_64 *-win_arm64"
 
 [tool.cibuildwheel.windows]
 build-frontend = { name = "pip", args = [
@@ -64,7 +65,7 @@ build-frontend = { name = "pip", args = [
 test-command = ["python -m pytest -n auto --durations 20 {project}/test/"]
 
 [[tool.cibuildwheel.overrides]]
-select = "cp3{12,13,14}-win_amd64"
+select = "cp3{12,13,14}-win*"
 repair-wheel-command = [
     "copy {wheel} {dest_dir}",
     "pipx run abi3audit --verbose --strict --report {wheel}",

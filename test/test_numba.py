@@ -12,10 +12,10 @@ from basix import CellType
 
 pytest.importorskip("numba")
 
-from numba.core import types  # noqa: E402
-from numba.typed import Dict  # noqa: E402
+from numba.core import types
+from numba.typed import Dict
 
-from basix import numba_helpers  # noqa: E402
+from basix import numba_helpers
 
 
 @pytest.mark.parametrize(

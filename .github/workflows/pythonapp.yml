@@ -74,14 +74,16 @@ jobs:
         run: pytest demo/python/test.py
       - name: Run C++ demos
         run: pytest demo/cpp/test.py
-      - name: Build documentation
+      - name: Build C++ documentation
         run: |
           export BASIX_VERSION=`python3 -c "import basix; print(basix.__version__)"`
           cd doc/cpp
           doxygen
-          cd ../python
+      - name: Build Python documentation
+        run: |
+          export BASIX_VERSION=`python3 -c "import basix; print(basix.__version__)"`
+          cd doc/python
           python -m sphinx -W -b html source build/html
-          rm -rf build/html/.doctrees
       - name: Upload C++ documentation artifact
         uses: actions/upload-artifact@v7
         with:
@@ -98,36 +100,20 @@ jobs:
             doc/python/build/html
           retention-days: 2
           if-no-files-found: error
-      - name: Build website documentation
-        run: |
-          sudo apt-get install -y ruby-bundler ruby-dev
-          export BASIX_VERSION=`python3 -c "import basix; print(basix.__version__)"`
-          cd doc/web
-          python make_html.py
+
       - name: Set version name
         if: ${{ github.repository == 'FEniCS/basix' && ( github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/') ) && matrix.python-version == '3.11' }}
         run: |
           echo "VERSION_NAME=${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
-      - name: Build documentation to upload
-        if: ${{ github.repository == 'FEniCS/basix' && ( github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/') ) && matrix.python-version == '3.11' }}
-        run: |
-          export BASIX_VERSION=`python3 -c "import basix; print(basix.__version__)"`
-          cd doc/web
-          python make_html.py --url https://docs.fenicsproject.org/basix/${{ env.VERSION_NAME }}
-      - name: Checkout FEniCS/docs
-        if: ${{ github.repository == 'FEniCS/basix' && ( github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/') ) && matrix.python-version == '3.11' }}
-        uses: actions/checkout@v6
-        with:
-          repository: "FEniCS/docs"
-          path: "docs"
-          ssh-key: "${{ secrets.SSH_GITHUB_DOCS_PRIVATE_KEY }}"
+
       - name: Copy documentation into repository
         if: ${{ github.repository == 'FEniCS/basix' && ( github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/') ) && matrix.python-version == '3.11' }}
         run: |
           cd docs
           git rm -r --ignore-unmatch basix/${{ env.VERSION_NAME }}
           mkdir -p basix/${{ env.VERSION_NAME }}
-          cp -r ../doc/web/html/* basix/${{ env.VERSION_NAME }}
+          cp -r ../doc/cpp/html basix/${{ env.VERSION_NAME }}/cpp
+          cp -r ../doc/python/build/html basix/${{ env.VERSION_NAME }}/python
       - name: Commit and push documentation to FEniCS/docs
         if: ${{ github.repository == 'FEniCS/basix' && ( github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/') ) && matrix.python-version == '3.11' }}
         run: |

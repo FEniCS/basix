@@ -56,10 +56,10 @@ test-requires = ["pytest-xdist"]
 test-extras = ["test"]
 
 [tool.cibuildwheel.windows]
-build-frontend = { name = "pip", args = [
-    "--config-settings=wheel.py-api=cp312",
-    "--config-settings=cmake.args=-DINSTALL_RUNTIME_DEPENDENCIES=ON",
-    "--config-settings=cmake.args=-DCMAKE_TOOLCHAIN_FILE=C:/vcpkg/scripts/buildsystems/vcpkg.cmake",
+build-frontend = { name = "build", args = [
+    "-Cwheel.py-api=cp312",
+    "-Ccmake.args=-DINSTALL_RUNTIME_DEPENDENCIES=ON",
+    "-Ccmake.args=-DCMAKE_TOOLCHAIN_FILE=C:/vcpkg/scripts/buildsystems/vcpkg.cmake",
 ] }
 test-command = ["python -m pytest -n auto --durations 20 {project}/test/"]
 

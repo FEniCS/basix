@@ -289,3 +289,16 @@ def test_dof_ordering():
 
     for i, j in enumerate([1, 2, 0]):
         assert np.allclose(table[:, i], table2[:, j])
+
+
+@pytest.mark.parametrize(
+    "e",
+    [
+        basix.ufl.element(basix.ElementFamily.P, basix.CellType.triangle, 1, shape=(4,)),
+        basix.ufl.element(basix.ElementFamily.P, basix.CellType.triangle, 1, shape=(2, 2)),
+        basix.ufl.quadrature_element(basix.CellType.triangle, (4,), degree=2),
+        basix.ufl.quadrature_element(basix.CellType.triangle, (2, 2), degree=2),
+    ],
+)
+def test_blocked_elements(e):
+    assert len(e.sub_elements) == 4

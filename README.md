@@ -27,12 +27,11 @@ Basix is one of the components of FEniCSx, alongside
 
 ## Installation
 
-To install Basix:
+To install Basix from [PyPi](https://pypi.org/project/fenics-basix/):
+
 ```console
 pip install fenics-basix
 ```
-We currently build binary wheels for Python 3.8 to 3.12 for Linux 
-(x86-64, aarch64), macOS (x86-64, arm64) and Windows (x86-64).
 
 For advanced and developer installation instructions see the more
 detailed [install instructions](INSTALL.md)

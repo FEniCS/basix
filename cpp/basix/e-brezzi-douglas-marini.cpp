@@ -104,8 +104,10 @@ FiniteElement<T> element::create_bdm(cell::type celltype, int degree,
       degree, lvariant, element::dpc_variant::unset);
 }
 //-----------------------------------------------------------------------------
+/// @cond DOXYGEN_SHOULD_SKIP_THIS
 template FiniteElement<float> element::create_bdm(cell::type, int,
                                                   lagrange_variant, bool);
 template FiniteElement<double> element::create_bdm(cell::type, int,
                                                    lagrange_variant, bool);
+/// @endcond
 //-----------------------------------------------------------------------------

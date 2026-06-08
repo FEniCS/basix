@@ -1,19 +1,20 @@
 [build-system]
-requires = ["scikit-build-core[pyproject]>=0.10.0", "nanobind>=2.5.0"]
+requires = ["scikit-build-core[pyproject]>=0.11", "nanobind>=2.5.0"]
 build-backend = "scikit_build_core.build"
 
 [project]
 name = "fenics-basix"
-version = "0.10.0.post0"
+version = "0.11.0.dev0"
 description = "Basix Python interface"
 readme = "README.md"
-requires-python = ">=3.10"
-license = { file = "LICENSE" }
+requires-python = ">=3.11"
+license = "MIT"
+license-files = ["LICENSE"]
 authors = [
     { email = "fenics-steering-council@googlegroups.com" },
     { name = "FEniCS Steering Council" },
 ]
-dependencies = ["numpy>=1.21"]
+dependencies = ["numpy>=2"]
 
 [project.urls]
 homepage = "https://fenicsproject.org"
@@ -21,10 +22,11 @@ repository = "https://github.com/fenics/basix.git"
 documentation = "https://docs.fenicsproject.org"
 
 [project.optional-dependencies]
-docs = ["markdown", "pylit3", "pyyaml", "sphinx", "sphinx_rtd_theme"]
+docs = ["markdown", "pylit3", "pyyaml", "sphinx", "pydata-sphinx-theme"]
 lint = ["ruff"]
-optional = ["numba", "fenics-ufl>=2025.2.0,<2025.3.0"]
+optional = ["numba", "fenics-ufl@git+https://github.com/fenics/ufl"]
 test = ["pytest", "sympy", "scipy", "matplotlib", "fenics-basix[optional]"]
+test-no-numba = ["pytest", "sympy", "scipy", "matplotlib", "fenics-ufl@git+https://github.com/fenics/ufl"]
 ci = ["mypy", "pytest-xdist", "fenics-basix[docs,lint,test,optional]"]
 
 [tool.pytest.ini_options]
@@ -34,15 +36,16 @@ testpaths = ["test"]
 wheel.packages = ["python/basix"]
 
 [tool.cibuildwheel]
-build-frontend = { name = "pip", args = [
-    "--config-settings=wheel.py-api=cp312",
+build-frontend = { name = "build", args = [
+    "-Cwheel.py-api=cp312",
 ] }
 build = [
-    "cp3{10,11,12,13}-manylinux_x86_64",
-    "cp3{10,11,12,13}-manylinux_aarch64",
-    "cp3{10,11,12,13}-macosx_x86_64",
-    "cp3{10,11,12,13}-macosx_arm64",
-    "cp3{10,11,12,13}-win_amd64",
+    "cp3{11,12,13,14}-manylinux_x86_64",
+    "cp3{11,12,13,14}-manylinux_aarch64",
+    "cp3{11,12,13,14}-macosx_x86_64",
+    "cp3{11,12,13,14}-macosx_arm64",
+    "cp3{11,12,13,14}-win_amd64",
+    "cp3{11,12,13,14}-win_arm64",
 ]
 test-command = [
     "cmake -G Ninja -DPython3_EXECUTABLE=$(which python) -B build-dir -S {project}/test/test_cmake",
@@ -52,51 +55,31 @@ test-command = [
 ]
 test-requires = ["pytest-xdist"]
 test-extras = ["test"]
-test-skip = "*-*linux_aarch64"
 
 [tool.cibuildwheel.windows]
-build-frontend = { name = "pip", args = [
-    "--config-settings=wheel.py-api=cp312",
-    "--config-settings=cmake.args=-DINSTALL_RUNTIME_DEPENDENCIES=ON",
-    "--config-settings=cmake.args=-DCMAKE_TOOLCHAIN_FILE=C:/vcpkg/scripts/buildsystems/vcpkg.cmake",
+build-frontend = { name = "build", args = [
+    "-Cwheel.py-api=cp312",
+    "-Ccmake.args=-DINSTALL_RUNTIME_DEPENDENCIES=ON",
+    "-Ccmake.args=-DCMAKE_TOOLCHAIN_FILE=C:/vcpkg/scripts/buildsystems/vcpkg.cmake",
 ] }
 test-command = ["python -m pytest -n auto --durations 20 {project}/test/"]
 
-[[tool.cibuildwheel.overrides]]
-select = "cp3{12,13}-win_amd64"
-repair-wheel-command = [
-    "copy {wheel} {dest_dir}",
-    "pipx run abi3audit --verbose --strict --report {wheel}",
-]
-
 [tool.cibuildwheel.linux]
 archs = [
-    "x86_64",
-    "aarch64",
-] # Forces arm64 build on x86_64 runner using emulation (and vice-versa).
-before-build = "yum -y update && yum install -y epel-release && yum install -y openblas-devel ninja-build"
-
-[[tool.cibuildwheel.overrides]]
-select = "cp3{12,13}-manylinux*"
-repair-wheel-command = [
-    "auditwheel repair -w {dest_dir} {wheel}",
-    "pipx run abi3audit --verbose --strict --report {wheel}",
+    "native"
 ]
+before-build = "yum -y update && yum install -y epel-release && yum install -y openblas-devel ninja-build"
 
 [tool.cibuildwheel.macos]
 environment = { "MACOSX_DEPLOYMENT_TARGET" = "10.14" }
 archs = [
-    "x86_64",
-    "arm64",
-] # Forces x86_64 build on arm64 runner using cross-compilation (and vice-versa).
-before-build = "export HOMEBREW_AUTO_UPDATING=0 && brew update && brew install ninja"
-
-[[tool.cibuildwheel.overrides]]
-select = "cp3{12,13}-macosx*"
-repair-wheel-command = [
-    "delocate-wheel --require-archs {delocate_archs} -w {dest_dir} -v {wheel}",
-    "pipx run abi3audit --verbose --strict --report {wheel}",
+    "native",
 ]
+
+# llvmlite (numba) is not built for x86_64 on macOS or arm64 on Windows.
+[[tool.cibuildwheel.overrides]]
+select = ["*-macosx_x86_64", "*-win_arm64"]
+test-extras = ["test-no-numba"]
 
 [tool.mypy]
 ignore_missing_imports = true

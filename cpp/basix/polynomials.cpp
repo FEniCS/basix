@@ -316,7 +316,7 @@ int polynomials::dim(polynomials::type ptype, cell::type celltype, int d)
   return polyset::dim(celltype, polyset::type::standard, d);
 }
 //-----------------------------------------------------------------------------
-/// @cond
+/// @cond DOXYGEN_SHOULD_SKIP_THIS
 template std::pair<std::vector<float>, std::array<std::size_t, 2>>
 polynomials::tabulate(polynomials::type, cell::type, int,
                       md::mdspan<const float, md::dextents<std::size_t, 2>>);

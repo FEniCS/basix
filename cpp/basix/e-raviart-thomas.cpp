@@ -151,8 +151,10 @@ FiniteElement<T> basix::element::create_rt(cell::type celltype, int degree,
       lvariant, element::dpc_variant::unset);
 }
 //-----------------------------------------------------------------------------
+/// @cond DOXYGEN_SHOULD_SKIP_THIS
 template FiniteElement<float>
 element::create_rt(cell::type, int, element::lagrange_variant, bool);
 template FiniteElement<double>
 element::create_rt(cell::type, int, element::lagrange_variant, bool);
+/// @endcond
 //-----------------------------------------------------------------------------

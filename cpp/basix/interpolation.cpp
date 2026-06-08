@@ -93,7 +93,7 @@ basix::compute_interpolation_operator(const FiniteElement<T>& element_from,
   }
 }
 //----------------------------------------------------------------------------
-/// @cond
+/// @cond DOXYGEN_SHOULD_SKIP_THIS
 template std::pair<std::vector<float>, std::array<std::size_t, 2>>
 basix::compute_interpolation_operator(const FiniteElement<float>&,
                                       const FiniteElement<float>&);

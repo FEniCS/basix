@@ -403,6 +403,7 @@ FiniteElement<T> element::create_nedelec2(cell::type celltype, int degree,
       discontinuous, degree, degree, lvariant, element::dpc_variant::unset);
 }
 //-----------------------------------------------------------------------------
+/// @cond DOXYGEN_SHOULD_SKIP_THIS
 template FiniteElement<float> element::create_nedelec(cell::type, int,
                                                       lagrange_variant, bool);
 template FiniteElement<double> element::create_nedelec(cell::type, int,
@@ -412,4 +413,5 @@ template FiniteElement<float> element::create_nedelec2(cell::type, int,
                                                        lagrange_variant, bool);
 template FiniteElement<double> element::create_nedelec2(cell::type, int,
                                                         lagrange_variant, bool);
+/// @endcond
 //-----------------------------------------------------------------------------

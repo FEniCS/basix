@@ -23,6 +23,8 @@
 #include <concepts>
 #include <limits>
 #include <numeric>
+#include <optional>
+#include <stdexcept>
 
 #define str_macro(X) #X
 #define str(X) str_macro(X)
@@ -328,10 +330,15 @@ basix::create_tp_element(element::family family, cell::type cell, int degree,
                          element::lagrange_variant lvariant,
                          element::dpc_variant dvariant, bool discontinuous)
 {
-  std::vector<int> dof_ordering = tp_dof_ordering(
+  std::optional<std::vector<int>> dof_ordering = tp_dof_ordering(
       family, cell, degree, lvariant, dvariant, discontinuous);
+
+  if (!dof_ordering.has_value())
+    throw std::runtime_error(
+        "Element does not have tensor product factorisation.");
+
   return create_element<T>(family, cell, degree, lvariant, dvariant,
-                           discontinuous, dof_ordering);
+                           discontinuous, *dof_ordering);
 }
 //-----------------------------------------------------------------------------
 template basix::FiniteElement<float>
@@ -342,60 +349,54 @@ basix::create_tp_element(element::family, cell::type, int,
                          element::lagrange_variant, element::dpc_variant, bool);
 //-----------------------------------------------------------------------------
 template <std::floating_point T>
-std::vector<std::vector<FiniteElement<T>>>
+std::optional<std::vector<std::vector<FiniteElement<T>>>>
 basix::tp_factors(element::family family, cell::type cell, int degree,
                   element::lagrange_variant lvariant,
                   element::dpc_variant dvariant, bool discontinuous,
                   const std::vector<int>& dof_ordering)
 {
-  std::vector<int> tp_dofs = tp_dof_ordering(family, cell, degree, lvariant,
-                                             dvariant, discontinuous);
-  if (!tp_dofs.empty() && tp_dofs == dof_ordering)
+  std::optional<std::vector<int>> tp_dofs = tp_dof_ordering(
+      family, cell, degree, lvariant, dvariant, discontinuous);
+  if (!tp_dofs.has_value() || tp_dofs->empty()
+      || tp_dofs.value() != dof_ordering)
+    return std::nullopt;
+
+  switch (family)
   {
-    switch (family)
+  case element::family::P:
+  {
+    FiniteElement<T> sub_element
+        = create_element<T>(element::family::P, cell::type::interval, degree,
+                            lvariant, dvariant, true);
+    switch (cell)
     {
-    case element::family::P:
-    {
-      FiniteElement<T> sub_element
-          = create_element<T>(element::family::P, cell::type::interval, degree,
-                              lvariant, dvariant, true);
-      switch (cell)
-      {
-      case cell::type::quadrilateral:
-      {
-        return {{sub_element, sub_element}};
-      }
-      case cell::type::hexahedron:
-      {
-        return {{sub_element, sub_element, sub_element}};
-      }
-      default:
-      {
-        throw std::runtime_error("Invalid celltype.");
-      }
-      }
-      break;
-    }
+    case cell::type::quadrilateral:
+      return {{{sub_element, sub_element}}};
+    case cell::type::hexahedron:
+      return {{{sub_element, sub_element, sub_element}}};
     default:
-    {
-      throw std::runtime_error("Invalid family.");
+      return std::nullopt;
     }
-    }
+    break;
   }
-  throw std::runtime_error(
-      "Element does not have tensor product factorisation.");
+  default:
+    return std::nullopt;
+  }
+  // C++ 23:
+  // std::unreachable()
+  return std::nullopt;
 }
 //-----------------------------------------------------------------------------
-template std::vector<std::vector<basix::FiniteElement<float>>>
+template std::optional<std::vector<std::vector<basix::FiniteElement<float>>>>
 basix::tp_factors(element::family, cell::type, int, element::lagrange_variant,
                   element::dpc_variant, bool, const std::vector<int>&);
-template std::vector<std::vector<basix::FiniteElement<double>>>
+template std::optional<std::vector<std::vector<basix::FiniteElement<double>>>>
 basix::tp_factors(element::family, cell::type, int, element::lagrange_variant,
                   element::dpc_variant, bool, const std::vector<int>&);
 //-----------------------------------------------------------------------------
-std::vector<int> basix::tp_dof_ordering(element::family family, cell::type cell,
-                                        int degree, element::lagrange_variant,
-                                        element::dpc_variant, bool)
+std::optional<std::vector<int>>
+basix::tp_dof_ordering(element::family family, cell::type cell, int degree,
+                       element::lagrange_variant, element::dpc_variant, bool)
 {
   std::vector<int> dof_ordering;
   std::vector<int> perm;
@@ -488,21 +489,17 @@ std::vector<int> basix::tp_dof_ordering(element::family family, cell::type cell,
       break;
     }
     default:
-    {
-    }
+      return std::nullopt;
     }
     break;
   }
   default:
-  {
-  }
+    return std::nullopt;
   }
 
   if (perm.size() == 0)
-  {
-    throw std::runtime_error(
-        "Element does not have tensor product factorisation.");
-  }
+    return std::nullopt;
+
   dof_ordering.resize(perm.size());
   for (std::size_t i = 0; i < perm.size(); ++i)
     dof_ordering[perm[i]] = i;
@@ -925,9 +922,17 @@ FiniteElement<T> basix::create_custom_element(
 
   // Check that wcoeffs have the correct shape
   if (wcoeffs.extent(1) != psize * value_size)
-    throw std::runtime_error("wcoeffs has the wrong number of columns");
+    throw std::runtime_error("wcoeffs has incorrect number of columns ("
+                             + std::to_string(wcoeffs.extent(1))
+                             + "): should be equal to number of polynomials ("
+                             + std::to_string(psize)
+                             + ") multiplied by value size ("
+                             + std::to_string(value_size) + ")");
   if (wcoeffs.extent(0) != ndofs)
-    throw std::runtime_error("wcoeffs has the wrong number of rows");
+    throw std::runtime_error("wcoeffs has incorrect number of rows ("
+                             + std::to_string(wcoeffs.extent(0))
+                             + "): should be equal to number of DOFs ("
+                             + std::to_string(ndofs) + ")");
 
   std::vector<T> wcoeffs_ortho_b(wcoeffs.extent(0) * wcoeffs.extent(1));
   { // scope
@@ -948,13 +953,15 @@ FiniteElement<T> basix::create_custom_element(
                      : static_cast<std::size_t>(
                            cell::num_sub_entities(cell_type, i))))
     {
-      throw std::runtime_error("x has the wrong number of entities");
+      throw std::runtime_error(
+          "x has incorrect number of entities of dimension "
+          + std::to_string(i));
     }
 
     for (const auto& xj : x[i])
     {
       if (xj.extent(1) != tdim)
-        throw std::runtime_error("x has a point with the wrong tdim");
+        throw std::runtime_error("x has a point with incorrect tdim");
     }
   }
 
@@ -965,23 +972,31 @@ FiniteElement<T> basix::create_custom_element(
         != (i > tdim ? 0
                      : static_cast<std::size_t>(
                            cell::num_sub_entities(cell_type, i))))
-      throw std::runtime_error("M has the wrong number of entities");
+      throw std::runtime_error("M has incorrect number of entities");
     for (std::size_t j = 0; j < M[i].size(); ++j)
     {
       if (M[i][j].extent(2) != x[i][j].extent(0))
       {
         throw std::runtime_error(
-            "M has the wrong shape (dimension 2 is wrong)");
+            "M has incorrect shape: dimension 2 is "
+            + std::to_string(M[i][j].extent(2))
+            + ", should be equal to number of points in x ("
+            + std::to_string(x[i][j].extent(0)) + ")");
       }
       if (M[i][j].extent(1) != value_size)
       {
-        throw std::runtime_error(
-            "M has the wrong shape (dimension 1 is wrong)");
+        throw std::runtime_error("M has incorrect shape: dimension 1 is "
+                                 + std::to_string(M[i][j].extent(1))
+                                 + ", should be equal to value size ("
+                                 + std::to_string(value_size) + ")");
       }
       if (M[i][j].extent(3) != deriv_count)
       {
         throw std::runtime_error(
-            "M has the wrong shape (dimension 3 is wrong)");
+            "M has incorrect shape: dimension 3 is "
+            + std::to_string(M[i][j].extent(3))
+            + ", should be equal to number of derivatives ("
+            + std::to_string(deriv_count) + ")");
       }
     }
   }
@@ -1037,7 +1052,7 @@ FiniteElement<F>::FiniteElement(
       _embedded_superdegree(embedded_superdegree),
       _embedded_subdegree(embedded_subdegree), _value_shape(value_shape),
       _map_type(map_type), _sobolev_space(sobolev_space),
-      _discontinuous(discontinuous), _dof_ordering(dof_ordering)
+      _discontinuous(discontinuous), _dof_ordering(std::move(dof_ordering))
 {
   // Check that discontinuous elements only have DOFs on interior
   if (discontinuous)
@@ -1055,14 +1070,10 @@ FiniteElement<F>::FiniteElement(
     }
   }
 
-  try
-  {
-    _tensor_factors = tp_factors<F>(family, cell_type, degree, lvariant,
-                                    dvariant, discontinuous, dof_ordering);
-  }
-  catch (...)
-  {
-  }
+  auto factors = tp_factors<F>(family, cell_type, degree, lvariant, dvariant,
+                               discontinuous, _dof_ordering);
+  if (factors.has_value())
+    _tensor_factors = factors.value();
 
   std::vector<F> wcoeffs_b(wcoeffs.extent(0) * wcoeffs.extent(1));
   std::copy(wcoeffs.data_handle(), wcoeffs.data_handle() + wcoeffs.size(),
@@ -2030,7 +2041,7 @@ std::string basix::version()
   return version_str;
 }
 //-----------------------------------------------------------------------------
-/// @cond
+/// @cond DOXYGEN_SHOULD_SKIP_THIS
 template class basix::FiniteElement<float>;
 template class basix::FiniteElement<double>;
 /// @endcond

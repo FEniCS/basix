@@ -3,7 +3,6 @@
 # SPDX-License-Identifier: MIT
 
 import re
-from importlib.metadata import version
 
 import pytest
 
@@ -23,7 +22,7 @@ def is_canonical(version):
     )
 
 
-def test_version(python_version=version("fenics-basix"), cpp_version=basix.__version__):
+def test_version(python_version=basix.__version__, cpp_version=basix._basixcpp.__version__):
     assert is_canonical(python_version)
 
     # Strip Python-specific versioning (dev, post) and compare with C++

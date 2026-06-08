@@ -809,7 +809,7 @@ lattice::create(cell::type celltype, int n, lattice::type type, bool exterior,
   }
 }
 //-----------------------------------------------------------------------------
-/// @cond
+/// @cond DOXYGEN_SHOULD_SKIP_THIS
 // Explicit instantiation for double and float
 template std::pair<std::vector<float>, std::array<std::size_t, 2>>
 lattice::create(cell::type, int, lattice::type, bool, lattice::simplex_method);

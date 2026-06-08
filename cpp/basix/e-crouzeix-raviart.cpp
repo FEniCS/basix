@@ -181,6 +181,8 @@ FiniteElement<T> basix::element::create_cr(cell::type celltype, int degree,
   }
 }
 //-----------------------------------------------------------------------------
+/// @cond DOXYGEN_SHOULD_SKIP_THIS
 template FiniteElement<float> element::create_cr(cell::type, int, bool);
 template FiniteElement<double> element::create_cr(cell::type, int, bool);
+/// @endcond
 //-----------------------------------------------------------------------------

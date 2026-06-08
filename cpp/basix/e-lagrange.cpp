@@ -800,6 +800,7 @@ FiniteElement<T> basix::element::create_iso(cell::type celltype, int degree,
       variant, dpc_variant::unset);
 }
 //-----------------------------------------------------------------------------
+/// @cond DOXYGEN_SHOULD_SKIP_THIS
 template FiniteElement<float> element::create_lagrange(cell::type, int,
                                                        lagrange_variant, bool,
                                                        std::vector<int>);
@@ -810,4 +811,5 @@ template FiniteElement<float> element::create_iso(cell::type, int,
                                                   lagrange_variant, bool);
 template FiniteElement<double> element::create_iso(cell::type, int,
                                                    lagrange_variant, bool);
+/// @endcond
 //-----------------------------------------------------------------------------

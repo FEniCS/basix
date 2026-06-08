@@ -154,6 +154,29 @@ def test_quadrature_element(cell, degree, shape):
 
 
 @pytest.mark.parametrize(
+    "cell",
+    [
+        basix.CellType.triangle,
+        basix.CellType.quadrilateral,
+        basix.CellType.tetrahedron,
+        basix.CellType.prism,
+    ],
+)
+@pytest.mark.parametrize("shape", [(), (1,), (2,), (3,), (5,), (2, 2), (3, 3), (4, 1), (5, 1, 7)])
+def test_real_element(cell, shape):
+    scalar_e = basix.ufl.real_element(cell)
+    e = basix.ufl.real_element(cell, shape)
+
+    size = 1
+    for i in shape:
+        size *= i
+
+    assert e.reference_value_size == scalar_e.reference_value_size * size
+    assert scalar_e.dim == 1
+    assert e.dim == scalar_e.dim * size
+
+
+@pytest.mark.parametrize(
     "family,cell,degree,shape",
     [
         ("Lagrange", "triangle", 1, None),
@@ -266,3 +289,16 @@ def test_dof_ordering():
 
     for i, j in enumerate([1, 2, 0]):
         assert np.allclose(table[:, i], table2[:, j])
+
+
+@pytest.mark.parametrize(
+    "e",
+    [
+        basix.ufl.element(basix.ElementFamily.P, basix.CellType.triangle, 1, shape=(4,)),
+        basix.ufl.element(basix.ElementFamily.P, basix.CellType.triangle, 1, shape=(2, 2)),
+        basix.ufl.quadrature_element(basix.CellType.triangle, (4,), degree=2),
+        basix.ufl.quadrature_element(basix.CellType.triangle, (2, 2), degree=2),
+    ],
+)
+def test_blocked_elements(e):
+    assert len(e.sub_elements) == 4

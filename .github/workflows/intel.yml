@@ -34,9 +34,9 @@ jobs:
           apt-get -y update
           apt-get -y install binutils libstdc++-14-dev
 
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
 
-      - uses: conda-incubator/setup-miniconda@v3
+      - uses: conda-incubator/setup-miniconda@v4
         with:
           activate-environment: oneapi
           python-version: 3.13
@@ -51,10 +51,10 @@ jobs:
 
       - name: Install Basix
         run: |
-          pip -v install --no-build-isolation .
+          pip -v install --no-build-isolation -Ccmake.build-type="Developer" .
       - name: Run units tests
         run: |
-          pip -v install --no-build-isolation git+https://github.com/FEniCS/ufl.git
+          pip -v install git+https://github.com/FEniCS/ufl.git
           pytest -n auto --durations 20 test/
       - name: Run Python demos
         run: |

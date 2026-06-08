@@ -10,6 +10,13 @@ import pytest
 import basix
 from basix import CellType
 
+pytest.importorskip("numba")
+
+from numba.core import types
+from numba.typed import Dict
+
+from basix import numba_helpers
+
 
 @pytest.mark.parametrize(
     "cell",
@@ -30,15 +37,6 @@ from basix import CellType
 )
 @pytest.mark.parametrize("block_size", [1, 2, 4])
 def test_dof_transformations(cell, element, degree, element_args, block_size):
-    try:
-        import numba  # noqa: F401
-    except ImportError:
-        pytest.skip("Numba must be installed to run this test.")
-
-    from numba.core import types
-    from numba.typed import Dict
-
-    from basix import numba_helpers
 
     transform_functions = {
         CellType.triangle: numba_helpers.T_apply_triangle,
@@ -96,16 +94,6 @@ def test_dof_transformations(cell, element, degree, element_args, block_size):
 )
 @pytest.mark.parametrize("block_size", [1, 2, 4])
 def test_dof_transformations_to_transpose(cell, element, degree, block_size, element_args):
-    try:
-        import numba  # noqa: F401
-    except ImportError:
-        pytest.skip("Numba must be installed to run this test.")
-
-    from numba.core import types
-    from numba.typed import Dict
-
-    from basix import numba_helpers
-
     transform_functions = {
         CellType.triangle: numba_helpers.Tt_apply_right_triangle,
         CellType.quadrilateral: numba_helpers.Tt_apply_right_quadrilateral,

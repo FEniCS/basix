@@ -106,6 +106,8 @@ FiniteElement<T> basix::element::create_hermite(cell::type celltype, int degree,
       element::lagrange_variant::unset, element::dpc_variant::unset);
 }
 //-----------------------------------------------------------------------------
+/// @cond DOXYGEN_SHOULD_SKIP_THIS
 template FiniteElement<float> element::create_hermite(cell::type, int, bool);
 template FiniteElement<double> element::create_hermite(cell::type, int, bool);
+/// @endcond
 //-----------------------------------------------------------------------------

@@ -10,8 +10,7 @@ from warnings import warn
 import numpy as np
 import numpy.typing as npt
 
-from basix import MapType
-from basix._basixcpp import DPCVariant, ElementFamily, LagrangeVariant
+from basix._basixcpp import DPCVariant, ElementFamily, LagrangeVariant, MapType
 from basix._basixcpp import FiniteElement_float32 as _FiniteElement_float32
 from basix._basixcpp import FiniteElement_float64 as _FiniteElement_float64
 from basix._basixcpp import (

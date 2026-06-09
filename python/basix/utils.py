@@ -5,12 +5,10 @@
 # SPDX-License-Identifier:    MIT
 """Utility funcitons."""
 
-import typing
-
 from basix._basixcpp import index as _index
 
 
-def index(p: int, q: typing.Optional[int] = None, r: typing.Optional[int] = None) -> int:
+def index(p: int, q: int | None = None, r: int | None = None) -> int:
     """Compute the indexing in a 1D, 2D or 3D simplex.
 
     Args:

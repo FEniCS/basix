@@ -13,6 +13,8 @@ from warnings import warn as _warn
 
 import numpy as np
 import numpy.typing as _npt
+
+import basix as _basix
 import ufl as _ufl
 from ufl.finiteelement import AbstractFiniteElement as _AbstractFiniteElement
 from ufl.pullback import AbstractPullback as _AbstractPullback
@@ -21,16 +23,14 @@ from ufl.pullback import MixedPullback as _MixedPullback
 from ufl.pullback import SymmetricPullback as _SymmetricPullback
 from ufl.pullback import UndefinedPullback as _UndefinedPullback
 
-import basix as _basix
-
 __all__ = [
+    "blocked_element",
+    "custom_element",
     "element",
     "enriched_element",
-    "custom_element",
     "mixed_element",
     "quadrature_element",
     "real_element",
-    "blocked_element",
     "wrap_element",
 ]
 
@@ -122,7 +122,7 @@ class _ElementBase(_AbstractFiniteElement):
         """Return a hash."""
         return hash("basix" + self._repr)
 
-    def basix_hash(self) -> _typing.Optional[int]:
+    def basix_hash(self) -> int | None:
         """Hash of the Basix element (if this is a standard Basix element).
 
         Returns:
@@ -274,17 +274,17 @@ class _ElementBase(_AbstractFiniteElement):
 
     @property
     @_abstractmethod
-    def element_family(self) -> _typing.Union[_basix.ElementFamily, None]:
+    def element_family(self) -> _basix.ElementFamily | None:
         """Basix element family used to initialise the element."""
 
     @property
     @_abstractmethod
-    def lagrange_variant(self) -> _typing.Union[_basix.LagrangeVariant, None]:
+    def lagrange_variant(self) -> _basix.LagrangeVariant | None:
         """Basix Lagrange variant used to initialise the element."""
 
     @property
     @_abstractmethod
-    def dpc_variant(self) -> _typing.Union[_basix.DPCVariant, None]:
+    def dpc_variant(self) -> _basix.DPCVariant | None:
         """Basix DPC variant used to initialise the element."""
 
     @property
@@ -450,7 +450,7 @@ class _BasixElement(_ElementBase):
     def __hash__(self) -> int:
         return super().__hash__()
 
-    def basix_hash(self) -> _typing.Optional[int]:
+    def basix_hash(self) -> int | None:
         return self._element.hash()
 
     def tabulate(self, nderivs: int, points: _npt.NDArray[np.floating]) -> _npt.ArrayLike:
@@ -508,15 +508,15 @@ class _BasixElement(_ElementBase):
         return self._element.family.name
 
     @property
-    def element_family(self) -> _typing.Union[_basix.ElementFamily, None]:
+    def element_family(self) -> _basix.ElementFamily | None:
         return self._element.family
 
     @property
-    def lagrange_variant(self) -> _typing.Union[_basix.LagrangeVariant, None]:
+    def lagrange_variant(self) -> _basix.LagrangeVariant | None:
         return self._element.lagrange_variant
 
     @property
-    def dpc_variant(self) -> _typing.Union[_basix.DPCVariant, None]:
+    def dpc_variant(self) -> _basix.DPCVariant | None:
         return self._element.dpc_variant
 
     @property
@@ -669,15 +669,15 @@ class _ComponentElement(_ElementBase):
         raise NotImplementedError()
 
     @property
-    def element_family(self) -> _typing.Union[_basix.ElementFamily, None]:
+    def element_family(self) -> _basix.ElementFamily | None:
         return self._element.element_family
 
     @property
-    def lagrange_variant(self) -> _typing.Union[_basix.LagrangeVariant, None]:
+    def lagrange_variant(self) -> _basix.LagrangeVariant | None:
         return self._element.lagrange_variant
 
     @property
-    def dpc_variant(self) -> _typing.Union[_basix.DPCVariant, None]:
+    def dpc_variant(self) -> _basix.DPCVariant | None:
         return self._element.dpc_variant
 
     @property
@@ -884,15 +884,15 @@ class _MixedElement(_ElementBase):
         return self._sub_elements[0].reference_geometry
 
     @property
-    def lagrange_variant(self) -> _typing.Union[_basix.LagrangeVariant, None]:
+    def lagrange_variant(self) -> _basix.LagrangeVariant | None:
         return None
 
     @property
-    def dpc_variant(self) -> _typing.Union[_basix.DPCVariant, None]:
+    def dpc_variant(self) -> _basix.DPCVariant | None:
         return None
 
     @property
-    def element_family(self) -> _typing.Union[_basix.ElementFamily, None]:
+    def element_family(self) -> _basix.ElementFamily | None:
         return None
 
     @property
@@ -958,7 +958,7 @@ class _BlockedElement(_ElementBase):
         self,
         sub_element: _ElementBase,
         shape: tuple[int, ...],
-        symmetry: _typing.Optional[bool] = None,
+        symmetry: bool | None = None,
     ):
         """Initialise the element."""
         if sub_element.reference_value_size != 1:
@@ -1021,7 +1021,7 @@ class _BlockedElement(_ElementBase):
     def __hash__(self) -> int:
         return super().__hash__()
 
-    def basix_hash(self) -> _typing.Optional[int]:
+    def basix_hash(self) -> int | None:
         return self._sub_element.basix_hash()
 
     @property
@@ -1133,15 +1133,15 @@ class _BlockedElement(_ElementBase):
         return self._sub_element.reference_geometry
 
     @property
-    def lagrange_variant(self) -> _typing.Union[_basix.LagrangeVariant, None]:
+    def lagrange_variant(self) -> _basix.LagrangeVariant | None:
         return self._sub_element.lagrange_variant
 
     @property
-    def dpc_variant(self) -> _typing.Union[_basix.DPCVariant, None]:
+    def dpc_variant(self) -> _basix.DPCVariant | None:
         return self._sub_element.dpc_variant
 
     @property
-    def element_family(self) -> _typing.Union[_basix.ElementFamily, None]:
+    def element_family(self) -> _basix.ElementFamily | None:
         return self._sub_element.element_family
 
     @property
@@ -1239,8 +1239,8 @@ class _QuadratureElement(_ElementBase):
         points: _npt.NDArray[np.floating],
         weights: _npt.NDArray[np.floating],
         pullback: _AbstractPullback,
-        degree: _typing.Optional[int] = None,
-        dtype: _typing.Optional[_npt.DTypeLike] = np.float64,
+        degree: int | None = None,
+        dtype: _npt.DTypeLike | None = np.float64,
     ):
         """Initialise the element."""
         self._points = points.astype(dtype)
@@ -1344,15 +1344,15 @@ class _QuadratureElement(_ElementBase):
         return "quadrature"
 
     @property
-    def lagrange_variant(self) -> _typing.Union[_basix.LagrangeVariant, None]:
+    def lagrange_variant(self) -> _basix.LagrangeVariant | None:
         return None
 
     @property
-    def dpc_variant(self) -> _typing.Union[_basix.DPCVariant, None]:
+    def dpc_variant(self) -> _basix.DPCVariant | None:
         return None
 
     @property
-    def element_family(self) -> _typing.Union[_basix.ElementFamily, None]:
+    def element_family(self) -> _basix.ElementFamily | None:
         return None
 
     @property
@@ -1484,15 +1484,15 @@ class _RealElement(_ElementBase):
         return "real"
 
     @property
-    def lagrange_variant(self) -> _typing.Union[_basix.LagrangeVariant, None]:
+    def lagrange_variant(self) -> _basix.LagrangeVariant | None:
         return None
 
     @property
-    def dpc_variant(self) -> _typing.Union[_basix.DPCVariant, None]:
+    def dpc_variant(self) -> _basix.DPCVariant | None:
         return None
 
     @property
-    def element_family(self) -> _typing.Union[_basix.ElementFamily, None]:
+    def element_family(self) -> _basix.ElementFamily | None:
         return None
 
     @property
@@ -1564,16 +1564,16 @@ def _compute_signature(element: _basix.finite_element.FiniteElement) -> str:
 
 
 def element(
-    family: _typing.Union[_basix.ElementFamily, str],
-    cell: _typing.Union[_basix.CellType, str],
+    family: _basix.ElementFamily | str,
+    cell: _basix.CellType | str,
     degree: int,
     lagrange_variant: _basix.LagrangeVariant = _basix.LagrangeVariant.unset,
     dpc_variant: _basix.DPCVariant = _basix.DPCVariant.unset,
     discontinuous: bool = False,
-    shape: _typing.Optional[tuple[int, ...]] = None,
-    symmetry: _typing.Optional[bool] = None,
-    dof_ordering: _typing.Optional[list[int]] = None,
-    dtype: _typing.Optional[_npt.DTypeLike] = None,
+    shape: tuple[int, ...] | None = None,
+    symmetry: bool | None = None,
+    dof_ordering: list[int] | None = None,
+    dtype: _npt.DTypeLike | None = None,
 ) -> _ElementBase:
     """Create a UFL compatible element using Basix.
 
@@ -1657,7 +1657,7 @@ def element(
 
 def enriched_element(
     elements: list[_ElementBase],
-    map_type: _typing.Optional[_basix.MapType] = None,
+    map_type: _basix.MapType | None = None,
 ) -> _ElementBase:
     """Create an UFL compatible enriched element from a list of elements.
 
@@ -1752,7 +1752,7 @@ def enriched_element(
 
 def custom_element(
     cell_type: _basix.CellType,
-    reference_value_shape: _typing.Union[list[int], tuple[int, ...]],
+    reference_value_shape: list[int] | tuple[int, ...],
     wcoeffs: _npt.NDArray[np.floating],
     x: list[list[_npt.NDArray[np.floating]]],
     M: list[list[_npt.NDArray[np.floating]]],
@@ -1763,7 +1763,7 @@ def custom_element(
     embedded_subdegree: int,
     embedded_superdegree: int,
     polyset_type: _basix.PolysetType = _basix.PolysetType.standard,
-    dtype: _typing.Optional[_npt.DTypeLike] = None,
+    dtype: _npt.DTypeLike | None = None,
 ) -> _ElementBase:
     """Create a UFL compatible custom Basix element.
 
@@ -1827,15 +1827,15 @@ def mixed_element(elements: list[_ElementBase]) -> _ElementBase:
 
 
 def quadrature_element(
-    cell: _typing.Union[str, _basix.CellType],
+    cell: str | _basix.CellType,
     value_shape: tuple[int, ...] = (),
-    scheme: _typing.Optional[str] = None,
-    degree: _typing.Optional[int] = None,
-    points: _typing.Optional[_npt.NDArray[np.floating]] = None,
-    weights: _typing.Optional[_npt.NDArray[np.floating]] = None,
+    scheme: str | None = None,
+    degree: int | None = None,
+    points: _npt.NDArray[np.floating] | None = None,
+    weights: _npt.NDArray[np.floating] | None = None,
     pullback: _AbstractPullback = _ufl.identity_pullback,
-    symmetry: _typing.Optional[bool] = None,
-    dtype: _typing.Optional[_npt.DTypeLike] = None,
+    symmetry: bool | None = None,
+    dtype: _npt.DTypeLike | None = None,
 ) -> _ElementBase:
     """Create a quadrature element.
 
@@ -1883,10 +1883,10 @@ def quadrature_element(
 
 
 def real_element(
-    cell: _typing.Union[_basix.CellType, str],
+    cell: _basix.CellType | str,
     value_shape: tuple[int, ...] = (),
-    symmetry: _typing.Optional[bool] = None,
-    dtype: _typing.Optional[_npt.DTypeLike] = None,
+    symmetry: bool | None = None,
+    dtype: _npt.DTypeLike | None = None,
 ) -> _ElementBase:
     """Create a real element.
 
@@ -1912,7 +1912,7 @@ def real_element(
 def blocked_element(
     sub_element: _ElementBase,
     shape: tuple[int, ...],
-    symmetry: _typing.Optional[bool] = None,
+    symmetry: bool | None = None,
 ) -> _ElementBase:
     """Create a UFL compatible blocked element.
 

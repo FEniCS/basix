@@ -5,16 +5,16 @@
 # SPDX-License-Identifier:    MIT
 """Functions to manipulate quadrature types."""
 
-import numpy as _np
+import numpy as _np  # noqa: ICN001
 import numpy.typing as _npt
 
 from basix._basixcpp import QuadratureType
-from basix._basixcpp import make_quadrature as _mq
 from basix._basixcpp import gauss_jacobi_rule as _gjr
+from basix._basixcpp import make_quadrature as _mq
 from basix.cell import CellType
 from basix.polynomials import PolysetType
 
-__all__ = ["string_to_type", "make_quadrature"]
+__all__ = ["make_quadrature", "string_to_type"]
 
 
 def string_to_type(rule: str) -> QuadratureType:

@@ -12,7 +12,7 @@ from abc import abstractmethod as _abstractmethod
 from warnings import warn as _warn
 
 import numpy as np
-import numpy.typing as _npt
+import numpy.typing as _npt  # noqa: ICN001
 
 import basix as _basix
 import ufl as _ufl
@@ -1893,6 +1893,8 @@ def real_element(
     Args:
         cell: Cell to create the element on.
         value_shape: Value shape of the element.
+        symmetry: Is symmetric?
+        dtype: dtype of scalar value represented by real element.
 
     Returns:
         A 'real' finite element.

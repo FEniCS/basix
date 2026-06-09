@@ -6,7 +6,7 @@
 """Functions to manipulate quadrature types."""
 
 import numpy as _np  # noqa: ICN001
-import numpy.typing as _npt
+import numpy.typing as _npt  # noqa: ICN001
 
 from basix._basixcpp import QuadratureType
 from basix._basixcpp import gauss_jacobi_rule as _gjr
@@ -64,8 +64,9 @@ def gauss_jacobi_rule(
     alpha: _np.floating,
     npoints: int,
 ) -> tuple[_npt.ArrayLike, _npt.ArrayLike]:
-    """Create a Gauss-Jacobi quadrature rule for integrating f(x)*(1-x)**alpha
-    on the interval [0, 1].
+    """Create a Gauss-Jacobi quadrature rule for integrating f(x)*(1-x)**alpha.
+
+    Rule is defined on the interval [0, 1].
 
     Args:
         alpha: The exponent alpha

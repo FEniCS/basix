@@ -5,11 +5,14 @@
 # SPDX-License-Identifier:    MIT
 """Functions for creating finite elements."""
 
-import typing
+from typing import TYPE_CHECKING
 from warnings import warn
 
 import numpy as np
 import numpy.typing as npt
+
+if TYPE_CHECKING:
+    from basix import MapType
 
 from basix._basixcpp import DPCVariant, ElementFamily, LagrangeVariant
 from basix._basixcpp import FiniteElement_float32 as _FiniteElement_float32
@@ -22,32 +25,31 @@ from basix._basixcpp import (
 )
 from basix._basixcpp import create_element as _create_element
 from basix._basixcpp import create_tp_element as _create_tp_element
-from basix._basixcpp import tp_dof_ordering as _tp_dof_ordering
 from basix._basixcpp import lex_dof_ordering as _lex_dof_ordering
+from basix._basixcpp import tp_dof_ordering as _tp_dof_ordering
 from basix._basixcpp import tp_factors as _tp_factors
-from basix.cell import CellType, geometry, topology, facet_outward_normals
-from basix import MapType
+from basix.cell import CellType, facet_outward_normals, geometry, topology
 from basix.polynomials import PolysetType
 from basix.sobolev_spaces import SobolevSpace
 
 __all__ = [
     "FiniteElement",
-    "create_element",
     "create_custom_element",
+    "create_element",
     "create_tp_element",
     "lex_dof_ordering",
     "string_to_family",
-    "tp_factors",
     "tp_dof_ordering",
+    "tp_factors",
 ]
 
 
 class FiniteElement:
     """Finite element class."""
 
-    _e: typing.Union[_FiniteElement_float32, _FiniteElement_float64]
+    _e: _FiniteElement_float32 | _FiniteElement_float64
 
-    def __init__(self, e: typing.Union[_FiniteElement_float32, _FiniteElement_float64]):
+    def __init__(self, e: _FiniteElement_float32 | _FiniteElement_float64):
         """Initialise a finite element wrapper.
 
         Note:
@@ -317,7 +319,7 @@ class FiniteElement:
         indices: npt.NDArray,
         cell_or_entity_info: int,
         entity_type: CellType,
-        entity_index: typing.Optional[int] = None,
+        entity_index: int | None = None,
     ) -> npt.NDArray:
         """Permute DOF indices on the closure of a sub-entity.
 
@@ -344,7 +346,7 @@ class FiniteElement:
         indices: npt.NDArray,
         cell_or_entity_info: int,
         entity_type: CellType,
-        entity_index: typing.Optional[int] = None,
+        entity_index: int | None = None,
     ) -> npt.NDArray:
         """Apply inverse permutation to DOF indices on the closure of a sub-entity.
 
@@ -497,7 +499,7 @@ class FiniteElement:
         return self._e.interpolation_is_identity
 
     @property
-    def map_type(self) -> MapType:
+    def map_type(self) -> "MapType":
         """Map type for this element."""
         return self._e.map_type
 
@@ -592,7 +594,7 @@ def create_element(
     lagrange_variant: LagrangeVariant = LagrangeVariant.unset,
     dpc_variant: DPCVariant = DPCVariant.unset,
     discontinuous: bool = False,
-    dof_ordering: typing.Optional[list[int]] = None,
+    dof_ordering: list[int] | None = None,
     dtype: npt.DTypeLike | None = np.float64,
 ) -> FiniteElement:
     """Create a finite element.
@@ -634,7 +636,7 @@ def create_custom_element(
     x: list[list[npt.NDArray[np.floating]]],
     M: list[list[npt.NDArray[np.floating]]],
     interpolation_nderivs: int,
-    map_type: MapType,
+    map_type: "MapType",
     sobolev_space: SobolevSpace,
     discontinuous: bool,
     embedded_subdegree: int,
@@ -776,9 +778,9 @@ def tp_factors(
     lagrange_variant: LagrangeVariant = LagrangeVariant.unset,
     dpc_variant: DPCVariant = DPCVariant.unset,
     discontinuous: bool = False,
-    dof_ordering: typing.Optional[list[int]] = None,
+    dof_ordering: list[int] | None = None,
     dtype: npt.DTypeLike = np.float64,
-) -> typing.Optional[list[list[FiniteElement]]]:
+) -> list[list[FiniteElement]] | None:
     """Elements in the tensor product factorisation of an element.
 
     If the element has no factorisation, raises a RuntimeError.
@@ -823,7 +825,7 @@ def tp_dof_ordering(
     lagrange_variant: LagrangeVariant = LagrangeVariant.unset,
     dpc_variant: DPCVariant = DPCVariant.unset,
     discontinuous: bool = False,
-) -> typing.Optional[list[int]]:
+) -> list[int] | None:
     """Tensor product DOF ordering for an element.
 
     This DOF ordering can be passed into create_element to create the

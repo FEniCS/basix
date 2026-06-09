@@ -16,20 +16,21 @@ authors = [
 ]
 dependencies = ["numpy>=2"]
 
+[project.urls]
+homepage = "https://fenicsproject.org"
+repository = "https://github.com/fenics/basix.git"
+documentation = "https://docs.fenicsproject.org"
+
 [project.optional-dependencies]
-docs = ["markdown", "pylit3", "pyyaml", "sphinx", "sphinx_rtd_theme"]
+docs = ["markdown", "pylit3", "pyyaml", "sphinx", "pydata-sphinx-theme"]
 lint = ["ruff"]
 optional = ["numba", "fenics-ufl@git+https://github.com/fenics/ufl"]
 test = ["pytest", "sympy", "scipy", "matplotlib", "fenics-basix[optional]"]
+test-no-numba = ["pytest", "sympy", "scipy", "matplotlib", "fenics-ufl@git+https://github.com/fenics/ufl"]
 ci = ["mypy", "pytest-xdist", "fenics-basix[docs,lint,test,optional]"]
 
 [tool.mypy]
 ignore_missing_imports = true
-
-[tool.ruff]
-line-length = 100
-indent-width = 4
-extend-exclude = ["_basixcpp.pyi"]
 
 [tool.scikit-build]
 wheel.packages = ["basix"]

@@ -12,8 +12,10 @@ functionality can be used via this Python interface.
 # Template placeholder for injecting Windows dll directories in CI
 # WINDOWSDLL
 
-from basix._basixcpp import MapType
+from importlib.metadata import metadata
+
 from basix import cell, finite_element, lattice, polynomials, quadrature, sobolev_spaces
+from basix._basixcpp import MapType
 from basix.cell import CellType, geometry, topology
 from basix.finite_element import (
     DPCVariant,
@@ -32,17 +34,9 @@ from basix.quadrature import QuadratureType, make_quadrature
 from basix.sobolev_spaces import SobolevSpace
 from basix.utils import index
 
-from importlib.metadata import metadata
-
 __version__ = metadata("fenics-basix")["Version"]
 
 __all__ = [
-    "cell",
-    "finite_element",
-    "lattice",
-    "polynomials",
-    "quadrature",
-    "sobolev_spaces",
     "CellType",
     "DPCVariant",
     "ElementFamily",
@@ -55,16 +49,22 @@ __all__ = [
     "QuadratureType",
     "SobolevSpace",
     "__version__",
-    "create_lattice",
-    "geometry",
-    "index",
-    "polyset_restriction",
-    "polyset_superset",
-    "tabulate_polynomials",
-    "topology",
+    "cell",
+    "compute_interpolation_operator",
     "create_custom_element",
     "create_element",
+    "create_lattice",
     "create_tp_element",
+    "finite_element",
+    "geometry",
+    "index",
+    "lattice",
     "make_quadrature",
-    "compute_interpolation_operator",
+    "polynomials",
+    "polyset_restriction",
+    "polyset_superset",
+    "quadrature",
+    "sobolev_spaces",
+    "tabulate_polynomials",
+    "topology",
 ]

@@ -16,21 +16,21 @@ import numpy.typing as npt
 
 __all__ = [
     "T_apply",
-    "T_apply_interval",
-    "T_apply_triangle",
-    "T_apply_quadrilateral",
-    "T_apply_tetrahedron",
     "T_apply_hexahedron",
+    "T_apply_interval",
     "T_apply_prism",
     "T_apply_pyramid",
+    "T_apply_quadrilateral",
+    "T_apply_tetrahedron",
+    "T_apply_triangle",
     "Tt_apply_right",
-    "Tt_apply_right_interval",
-    "Tt_apply_right_triangle",
-    "Tt_apply_right_quadrilateral",
-    "Tt_apply_right_tetrahedron",
     "Tt_apply_right_hexahedron",
+    "Tt_apply_right_interval",
     "Tt_apply_right_prism",
     "Tt_apply_right_pyramid",
+    "Tt_apply_right_quadrilateral",
+    "Tt_apply_right_tetrahedron",
+    "Tt_apply_right_triangle",
 ]
 
 

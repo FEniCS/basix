@@ -9,29 +9,29 @@ import numpy as np
 import numpy.typing as npt
 
 from basix._basixcpp import CellType
-from basix._basixcpp import cell_facet_jacobians as _fj
 from basix._basixcpp import cell_edge_jacobians as _ej
+from basix._basixcpp import cell_facet_jacobians as _fj
 from basix._basixcpp import cell_facet_normals as _fn
 from basix._basixcpp import cell_facet_orientations as _fo
 from basix._basixcpp import cell_facet_outward_normals as _fon
 from basix._basixcpp import cell_facet_reference_volumes as _frv
 from basix._basixcpp import cell_volume as _v
 from basix._basixcpp import geometry as _geometry
-from basix._basixcpp import subentity_types as _sut
 from basix._basixcpp import sub_entity_connectivity as _sec
 from basix._basixcpp import sub_entity_type as _set
+from basix._basixcpp import subentity_types as _sut
 from basix._basixcpp import topology as _topology
 
 __all__ = [
-    "sub_entity_connectivity",
-    "subentity_types",
-    "volume",
     "edge_jacobians",
     "facet_jacobians",
     "facet_normals",
     "facet_orientations",
     "facet_outward_normals",
     "facet_reference_volumes",
+    "sub_entity_connectivity",
+    "subentity_types",
+    "volume",
 ]
 
 

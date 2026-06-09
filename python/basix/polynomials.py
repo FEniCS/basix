@@ -10,16 +10,20 @@ from typing import TypeVar
 import numpy as np
 import numpy.typing as npt
 
-from basix._basixcpp import PolynomialType, PolysetType
+from basix._basixcpp import (
+    PolynomialType,
+    PolysetType,
+    tabulate_polynomial_set_float32,
+    tabulate_polynomial_set_float64,
+)
 from basix._basixcpp import polynomials_dim as _pd
 from basix._basixcpp import restriction as _restriction
 from basix._basixcpp import superset as _superset
-from basix._basixcpp import tabulate_polynomial_set_float32, tabulate_polynomial_set_float64
 from basix._basixcpp import tabulate_polynomials as _tabulate_polynomials
 from basix.cell import CellType
 from basix.utils import index
 
-__all__ = ["reshape_coefficients", "dim", "tabulate_polynomial_set"]
+__all__ = ["dim", "reshape_coefficients", "tabulate_polynomial_set"]
 
 
 T = TypeVar("T", np.float32, np.float64)

@@ -5,12 +5,16 @@
 # SPDX-License-Identifier:    MIT
 """Functions for creating finite elements."""
 
+from typing import TYPE_CHECKING
 from warnings import warn
 
 import numpy as np
 import numpy.typing as npt
 
-from basix._basixcpp import DPCVariant, ElementFamily, LagrangeVariant, MapType
+if TYPE_CHECKING:
+    from basix import MapType
+
+from basix._basixcpp import DPCVariant, ElementFamily, LagrangeVariant
 from basix._basixcpp import FiniteElement_float32 as _FiniteElement_float32
 from basix._basixcpp import FiniteElement_float64 as _FiniteElement_float64
 from basix._basixcpp import (
@@ -495,7 +499,7 @@ class FiniteElement:
         return self._e.interpolation_is_identity
 
     @property
-    def map_type(self) -> MapType:
+    def map_type(self) -> "MapType":
         """Map type for this element."""
         return self._e.map_type
 
@@ -632,7 +636,7 @@ def create_custom_element(
     x: list[list[npt.NDArray[np.floating]]],
     M: list[list[npt.NDArray[np.floating]]],
     interpolation_nderivs: int,
-    map_type: MapType,
+    map_type: "MapType",
     sobolev_space: SobolevSpace,
     discontinuous: bool,
     embedded_subdegree: int,

@@ -24,9 +24,9 @@ documentation = "https://docs.fenicsproject.org"
 [project.optional-dependencies]
 docs = ["markdown", "pylit3", "pyyaml", "sphinx", "pydata-sphinx-theme"]
 lint = ["ruff"]
-optional = ["numba", "fenics-ufl>=2026.1.0,<2026.2.0"]
+optional = ["numba", "fenics-ufl@git+https://github.com/fenics/ufl"]
 test = ["pytest", "sympy", "scipy", "matplotlib", "fenics-basix[optional]"]
-test-no-numba = ["pytest", "sympy", "scipy", "matplotlib", "fenics-ufl>=2026.1.0,<2026.2.0"]
+test-no-numba = ["pytest", "sympy", "scipy", "matplotlib", "fenics-ufl@git+https://github.com/fenics/ufl"]
 ci = ["mypy", "pytest-xdist", "fenics-basix[docs,lint,test,optional]"]
 
 [tool.mypy]

@@ -25,10 +25,17 @@
 #
 # We begin by importing Basix and Numpy.
 
+import typing  # For type checking
+
 import numpy as np
+import numpy.typing as npt
 
 import basix
 from basix import CellType, ElementFamily, LagrangeVariant, LatticeType
+
+# Alias for type casting
+
+FloatArray = npt.NDArray[np.float64]
 
 # In this demo, we consider Lagrange elements defined on a triangle. We start
 # by creating a degree 15 Lagrange element that uses equally spaced points.
@@ -55,8 +62,11 @@ lagrange = basix.create_element(ElementFamily.P, CellType.triangle, 15, Lagrange
 #
 # As expected, the value is large.
 
-points = basix.create_lattice(CellType.triangle, 50, LatticeType.equispaced, True)
-tab = lagrange.tabulate(0, points)[0]
+points = typing.cast(
+    FloatArray,
+    basix.create_lattice(CellType.triangle, 50, LatticeType.equispaced, True),
+)
+tab = typing.cast(FloatArray, lagrange.tabulate(0, points))[0]
 print(max(np.sum(np.abs(tab), axis=0)))
 
 # A Lagrange element with a lower Lebesgue constant can be created by placing
@@ -70,7 +80,8 @@ print(max(np.sum(np.abs(tab), axis=0)))
 # for the equally spaced element.
 
 gll = basix.create_element(ElementFamily.P, CellType.triangle, 15, LagrangeVariant.gll_warped)
-print(max(np.sum(np.abs(gll.tabulate(0, points)[0]), axis=0)))
+gll_tab = typing.cast(FloatArray, gll.tabulate(0, points))[0]
+print(max(np.sum(np.abs(gll_tab), axis=0)))
 
 # An even lower Lebesgue constant can be obtained by placing the DOF points
 # at GLL points mapped onto a triangle following the method proposed in
@@ -78,4 +89,5 @@ print(max(np.sum(np.abs(gll.tabulate(0, points)[0]), axis=0)))
 # Simplices (Isaac, 2020) <https://doi.org/10.1137/20M1321802>`_.
 
 gll2 = basix.create_element(ElementFamily.P, CellType.triangle, 15, LagrangeVariant.gll_isaac)
-print(max(np.sum(np.abs(gll2.tabulate(0, points)[0]), axis=0)))
+gll2_tab = typing.cast(FloatArray, gll2.tabulate(0, points))[0]
+print(max(np.sum(np.abs(gll2_tab), axis=0)))

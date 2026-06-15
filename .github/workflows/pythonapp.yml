@@ -39,7 +39,7 @@ jobs:
         run: |
           pip install mypy numpy
           pip install git+https://github.com/FEniCS/ufl.git
-          mypy python/basix
+          mypy python/basix demo/python
 
   build:
     name: Build and test

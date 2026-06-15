@@ -5,7 +5,7 @@ if(APPLE)
   set(CMAKE_OSX_DEPLOYMENT_TARGET "10.14")
 endif()
 
-project(basix_nanobind VERSION "0.9.0.0" LANGUAGES CXX)
+project(basix_nanobind VERSION LANGUAGES CXX)
 
 if(WIN32)
     # Windows requires all symbols to be manually exported.

@@ -30,6 +30,8 @@ jobs:
         with:
           python-version: "3.13"
       - uses: actions/checkout@v6
+      - name: Load environment variables
+        run: cat .github/workflows/fenicsx-refs.env >> $GITHUB_ENV
       - name: Ruff check
         run: |
           pip install ruff
@@ -38,7 +40,7 @@ jobs:
       - name: MyPy check
         run: |
           pip install mypy numpy
-          pip install git+https://github.com/FEniCS/ufl.git
+          pip install git+https://github.com/${{ env.ufl_repository }}.git@${{ env.ufl_ref }}
           mypy python/basix
       - name: Gersemi check
         run: |
@@ -55,6 +57,8 @@ jobs:
         python-version: ["3.11", "3.12", "3.13", "3.14"]
     steps:
       - uses: actions/checkout@v6
+      - name: Load environment variables
+        run: cat .github/workflows/fenicsx-refs.env >> $GITHUB_ENV
       - name: Set up Python
         uses: actions/setup-python@v6
         with:
@@ -63,8 +67,8 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y doxygen graphviz libopenblas-dev liblapack-dev ninja-build
-      - name: Install UFL branch
-        run: pip -v install git+https://github.com/FEniCS/ufl.git
+      - name: Install UFL
+        run: pip -v install git+https://github.com/${{ env.ufl_repository }}.git@${{ env.ufl_ref }}
       - name: Install Basix
         run: pip -v install -Ccmake.build-type="Developer" .[ci]
       - name: Run units tests

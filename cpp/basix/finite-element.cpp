@@ -561,7 +561,7 @@ std::vector<int> basix::lex_dof_ordering(element::family family, cell::type cell
       {
         int n = degree - 1;
         for (int i = 0; i < n; ++i)
-          perm.push_back(3 + 2 * n + i);
+          perm.push_back(3 + i);
         perm.push_back(1);
         int dof = 3 + 3 * n;
         for (int i = 0; i < n; ++i)
@@ -569,7 +569,7 @@ std::vector<int> basix::lex_dof_ordering(element::family family, cell::type cell
           perm.push_back(3 + n + i);
           for (int j = 0; j < n - 1 - i; ++j)
             perm.push_back(dof++);
-          perm.push_back(3 + i);
+          perm.push_back(3 + 2 * n + i);
         }
         perm.push_back(2);
       }
@@ -648,30 +648,30 @@ std::vector<int> basix::lex_dof_ordering(element::family family, cell::type cell
         int face3 = 4 + 6 * n + n * (n - 1) * 3 / 2;
         int interior = 4 + 6 * n + n * (n - 1) * 2;
         for (int i = 0; i < n; ++i)
-          perm.push_back(4 + 5 * n + i);
+          perm.push_back(4 + i);
         perm.push_back(1);
         for (int i = 0; i < n; ++i)
         {
-          perm.push_back(4 + 4 * n + i);
+          perm.push_back(4 + n + i);
           for (int j = 0; j < n - 1 - i; ++j)
-            perm.push_back(face3++);
-          perm.push_back(4 + 2 * n + i);
+            perm.push_back(face0++);
+          perm.push_back(4 + 3 * n + i);
         }
         perm.push_back(2);
         for (int i = 0; i < n; ++i)
         {
-          perm.push_back(4 + 3 * n + i);
+          perm.push_back(4 + 2 * n + i);
           for (int j = 0; j < n - 1 - i; ++j)
-            perm.push_back(face2++);
-          perm.push_back(4 + n + i);
+            perm.push_back(face1++);
+          perm.push_back(4 + 4 * n + i);
           for (int j = 0; j < n - 1 - i; ++j)
           {
-            perm.push_back(face1++);
+            perm.push_back(face2++);
             for (int k = 0; k < n - 2 - i - j; ++k)
               perm.push_back(interior++);
-            perm.push_back(face0++);
+            perm.push_back(face3++);
           }
-          perm.push_back(4 + i);
+          perm.push_back(4 + 5 * n + i);
         }
         perm.push_back(3);
       }

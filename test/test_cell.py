@@ -7,21 +7,22 @@ import pytest
 
 import basix
 
-cells = ["triangle", "quadrilateral", "tetrahedron", "hexahedron", "pyramid", "prism"]
+cells = ["interval", "triangle", "quadrilateral", "tetrahedron", "hexahedron", "pyramid", "prism"]
 
 
-@pytest.mark.parametrize("cell", cells)
-def test_volume(cell):
+@pytest.mark.parametrize(("cell", "volume"), [
+    ("point", 0),
+    ("interval", 1),
+    ("triangle", 1 / 2),
+    ("quadrilateral", 1),
+    ("tetrahedron", 1 / 6),
+    ("hexahedron", 1),
+    ("pyramid", 1 / 3),
+    ("prism", 1 / 2),
+])
+def test_volume(cell, volume):
     cell_type = getattr(basix.CellType, cell)
-    volumes = {
-        "triangle": 1 / 2,
-        "quadrilateral": 1,
-        "tetrahedron": 1 / 6,
-        "hexahedron": 1,
-        "pyramid": 1 / 3,
-        "prism": 1 / 2,
-    }
-    assert np.isclose(basix.cell.volume(cell_type), volumes[cell])
+    assert np.isclose(basix.cell.volume(cell_type), volume)
 
 
 @pytest.mark.parametrize("cell", cells)
@@ -141,3 +142,21 @@ def test_edge_jacobian_3D_simplex(cell):
         points = geom[edge]
         reference_edge_jacobian = (points[1:2, :] - points[0:1, :]).T
         np.testing.assert_allclose(reference_edge_jacobian, edge_jacobian[i])
+
+
+@pytest.mark.parametrize("cell", cells)
+def test_cell_ordering_conventions(cell):
+    cell_type = getattr(basix.CellType, cell)
+
+    # Assert that points in geometry are ordered following a consistent convention
+    geometry = basix.geometry(cell_type)
+    for i, pt in enumerate(geometry):
+        for pt2 in geometry[i + 1:]:
+            assert tuple(pt[::-1]) < tuple(pt2[::-1])
+
+    # Assert that entities in topology are ordered following a consistent convention
+    topology = basix.topology(cell_type)
+    for entities in topology:
+        for i, e in enumerate(entities):
+            for e2 in entities[i + 1:]:
+                assert tuple(e) < tuple(e2)

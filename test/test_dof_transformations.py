@@ -144,10 +144,10 @@ def test_transformation_of_tabulated_data_triangle(element_type, degree, element
     points = np.array([[i / N, j / N] for i in range(N + 1) for j in range(N + 1 - i)])
     values = e.tabulate(0, points)[0]
 
-    start = sum(e.num_entity_dofs[0])
-    ndofs = e.num_entity_dofs[1][0]
+    start = sum(e.num_entity_dofs[0]) + sum(e.num_entity_dofs[1][:2])
+    ndofs = e.num_entity_dofs[1][2]
     if ndofs != 0:
-        # Check that the 0th transformation undoes the effect of reflecting edge 0
+        # Check that the 2nd transformation undoes the effect of reflecting edge 2
         reflected_points = np.array([[p[1], p[0]] for p in points])
         reflected_values = e.tabulate(0, reflected_points)[0]
 
@@ -161,7 +161,7 @@ def test_transformation_of_tabulated_data_triangle(element_type, degree, element
                 i_slice = i[:, d]
                 j_slice = j[:, d]
                 assert np.allclose(
-                    (bt[0].dot(i_slice))[start : start + ndofs], j_slice[start : start + ndofs]
+                    (bt[2].dot(i_slice))[start : start + ndofs], j_slice[start : start + ndofs]
                 )
 
 
@@ -211,11 +211,11 @@ def test_transformation_of_tabulated_data_tetrahedron(element_type, degree, elem
     )
     values = e.tabulate(0, points)[0]
 
-    start = sum(e.num_entity_dofs[0])
-    ndofs = e.num_entity_dofs[1][0]
+    start = sum(e.num_entity_dofs[0]) + sum(e.num_entity_dofs[1][:5])
+    ndofs = e.num_entity_dofs[1][5]
     if ndofs != 0:
-        # Check that the 0th transformation undoes the effect of
-        # reflecting edge 0
+        # Check that the 5th transformation undoes the effect of
+        # reflecting edge 5
         reflected_points = np.array([[p[0], p[2], p[1]] for p in points])
         reflected_values = e.tabulate(0, reflected_points)[0]
         _J = np.array([[1, 0, 0], [0, 0, 1], [0, 1, 0]])
@@ -228,14 +228,14 @@ def test_transformation_of_tabulated_data_tetrahedron(element_type, degree, elem
                 i_slice = i[:, d]
                 j_slice = j[:, d]
                 assert np.allclose(
-                    (bt[0].dot(i_slice))[start : start + ndofs], j_slice[start : start + ndofs]
+                    (bt[5].dot(i_slice))[start : start + ndofs], j_slice[start : start + ndofs]
                 )
 
-    start = sum(e.num_entity_dofs[0]) + sum(e.num_entity_dofs[1])
-    ndofs = e.num_entity_dofs[2][0]
+    start = sum(e.num_entity_dofs[0]) + sum(e.num_entity_dofs[1]) + sum(e.num_entity_dofs[2][:3])
+    ndofs = e.num_entity_dofs[2][3]
     if ndofs != 0:
-        # Check that the 6th transformation undoes the effect of
-        # rotating face 0
+        # Check that the 12th transformation undoes the effect of
+        # rotating face 3
         rotated_points = np.array([[p[2], p[0], p[1]] for p in points])
         rotated_values = e.tabulate(0, rotated_points)[0]
 
@@ -249,11 +249,11 @@ def test_transformation_of_tabulated_data_tetrahedron(element_type, degree, elem
                 i_slice = i[:, d]
                 j_slice = j[:, d]
                 assert np.allclose(
-                    bt[6].dot(i_slice)[start : start + ndofs], j_slice[start : start + ndofs]
+                    bt[12].dot(i_slice)[start : start + ndofs], j_slice[start : start + ndofs]
                 )
 
     if ndofs != 0:
-        # Check that the 7th transformation undoes the effect of reflecting face 0
+        # Check that the 13th transformation undoes the effect of reflecting face 3
         reflected_points = np.array([[p[0], p[2], p[1]] for p in points])
         reflected_values = e.tabulate(0, reflected_points)[0]
         _J = np.array([[1, 0, 0], [0, 0, 1], [0, 1, 0]])
@@ -266,7 +266,7 @@ def test_transformation_of_tabulated_data_tetrahedron(element_type, degree, elem
                 i_slice = i[:, d]
                 j_slice = j[:, d]
                 assert np.allclose(
-                    (bt[7].dot(i_slice))[start : start + ndofs], j_slice[start : start + ndofs]
+                    (bt[13].dot(i_slice))[start : start + ndofs], j_slice[start : start + ndofs]
                 )
 
 

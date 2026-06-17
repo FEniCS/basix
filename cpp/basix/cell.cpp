@@ -63,7 +63,7 @@ std::vector<std::vector<std::vector<int>>> cell::topology(cell::type celltype)
     // Vertices
     t[0] = {{0}, {1}, {2}};
     // Edges
-    t[1] = {{1, 2}, {0, 2}, {0, 1}};
+    t[1] = {{0, 1}, {0, 2}, {1, 2}};
     // Cell
     t[2] = {{0, 1, 2}};
     return t;
@@ -159,9 +159,9 @@ cell::sub_entity_connectivity(cell::type celltype)
   {
     std::vector<std::vector<std::vector<std::vector<int>>>> t(3);
     // Vertices
-    t[0] = {{{0}, {1, 2}, {0}}, {{1}, {0, 2}, {0}}, {{2}, {0, 1}, {0}}};
+    t[0] = {{{0}, {0, 1}, {0}}, {{1}, {0, 2}, {0}}, {{2}, {1, 2}, {0}}};
     // Edges
-    t[1] = {{{1, 2}, {0}, {0}}, {{0, 2}, {1}, {0}}, {{0, 1}, {2}, {0}}};
+    t[1] = {{{0, 1}, {0}, {0}}, {{0, 2}, {1}, {0}}, {{1, 2}, {2}, {0}}};
     // Face
     t[2] = {{{0, 1, 2}, {0, 1, 2}, {0}}};
     return t;

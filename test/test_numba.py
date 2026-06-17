@@ -37,7 +37,6 @@ from basix import numba_helpers
 )
 @pytest.mark.parametrize("block_size", [1, 2, 4])
 def test_dof_transformations(cell, element, degree, element_args, block_size):
-
     transform_functions = {
         CellType.triangle: numba_helpers.T_apply_triangle,
         CellType.quadrilateral: numba_helpers.T_apply_quadrilateral,

@@ -10,16 +10,19 @@ import basix
 cells = ["interval", "triangle", "quadrilateral", "tetrahedron", "hexahedron", "pyramid", "prism"]
 
 
-@pytest.mark.parametrize(("cell", "volume"), [
-    ("point", 0),
-    ("interval", 1),
-    ("triangle", 1 / 2),
-    ("quadrilateral", 1),
-    ("tetrahedron", 1 / 6),
-    ("hexahedron", 1),
-    ("pyramid", 1 / 3),
-    ("prism", 1 / 2),
-])
+@pytest.mark.parametrize(
+    ("cell", "volume"),
+    [
+        ("point", 0),
+        ("interval", 1),
+        ("triangle", 1 / 2),
+        ("quadrilateral", 1),
+        ("tetrahedron", 1 / 6),
+        ("hexahedron", 1),
+        ("pyramid", 1 / 3),
+        ("prism", 1 / 2),
+    ],
+)
 def test_volume(cell, volume):
     cell_type = getattr(basix.CellType, cell)
     assert np.isclose(basix.cell.volume(cell_type), volume)
@@ -95,12 +98,12 @@ def test_sub_entity_type():
 def test_facet_jacobians_2D_simplex():
     cell = basix.cell.CellType.triangle
     facet_jacobian = basix.cell.facet_jacobians(cell)
+    facets = basix.cell.topology(cell)[1]
 
     reference_vertices = np.array([[0.0, 0.0], [1.0, 0.0], [0.0, 1.0]])
     mask = np.zeros(3, dtype=np.bool_)
-    for i in range(3):
-        mask[:] = True
-        mask[i] = False
+    for i, edge in enumerate(facets):
+        mask[:] = [j in edge for j in range(3)]
         facet = reference_vertices[mask]
 
         reference_facet_jacobian = -facet[0:1, :].T + facet[1:2, :].T
@@ -110,15 +113,16 @@ def test_facet_jacobians_2D_simplex():
 def test_facet_jacobians_3D_simplex():
     cell = basix.cell.CellType.tetrahedron
     facet_jacobian = basix.cell.facet_jacobians(cell)
+    facets = basix.cell.topology(cell)[2]
 
     reference_vertices = np.array(
         [[0.0, 0.0, 0.0], [1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]]
     )
     mask = np.zeros(4, dtype=np.bool_)
-    for i in range(4):
-        mask[:] = True
-        mask[i] = False
+    for i, edge in enumerate(facets):
+        mask[:] = [j in edge for j in range(4)]
         facet = reference_vertices[mask]
+        print(facet)
         reference_facet_jacobian = np.array([-facet[0] + facet[1], -facet[0] + facet[2]]).T
         np.testing.assert_allclose(reference_facet_jacobian, facet_jacobian[i])
 
@@ -151,12 +155,12 @@ def test_cell_ordering_conventions(cell):
     # Assert that points in geometry are ordered following a consistent convention
     geometry = basix.geometry(cell_type)
     for i, pt in enumerate(geometry):
-        for pt2 in geometry[i + 1:]:
+        for pt2 in geometry[i + 1 :]:
             assert tuple(pt[::-1]) < tuple(pt2[::-1])
 
     # Assert that entities in topology are ordered following a consistent convention
     topology = basix.topology(cell_type)
     for entities in topology:
         for i, e in enumerate(entities):
-            for e2 in entities[i + 1:]:
+            for e2 in entities[i + 1 :]:
                 assert tuple(e) < tuple(e2)

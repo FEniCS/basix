@@ -139,12 +139,12 @@ mapinfo_t<T> get_mapinfo(cell::type cell_type)
         };
         mdex::mdarray<T, md::extents<std::size_t, 3, 3>> J(
             md::extents<std::size_t, 3, 3>{},
-            {-1., 1., 0., -1., 0., 0., 0., 0., 1.});
+            {0., 1., 0., -1., -1., 0., 0., 0., 1.});
 
         T detJ = 1.0;
         mdex::mdarray<T, md::extents<std::size_t, 3, 3>> K(
             md::extents<std::size_t, 3, 3>{},
-            {0., -1., 0., 1., -1., 0., 0., 0., 1.});
+            {-1., -1., 0., 1., 0., 0., 0., 0., 1.});
         data.push_back(std::tuple(map, J, detJ, K));
       }
       {
@@ -438,7 +438,6 @@ std::pair<std::vector<T>, std::array<std::size_t, 2>> compute_transformation(
       for (std::size_t k1 = 0; k1 < result.extent(0); ++k1)
         tabulated_data(k0, k1, j) = result(k1, k0);
   }
-
   // push forward
   mdarray_t<T, 3> pushed_data(tabulated_data.extents());
   {

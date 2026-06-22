@@ -29,7 +29,7 @@ jobs:
         uses: actions/setup-python@v6
         with:
           python-version: "3.13"
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - name: Load environment variables
         run: cat .github/workflows/fenicsx-refs.env >> $GITHUB_ENV
       - name: Ruff check
@@ -51,7 +51,7 @@ jobs:
         os: [ubuntu-22.04]
         python-version: ["3.11", "3.12", "3.13", "3.14"]
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - name: Load environment variables
         run: cat .github/workflows/fenicsx-refs.env >> $GITHUB_ENV
       - name: Set up Python
@@ -111,7 +111,7 @@ jobs:
           echo "VERSION_NAME=${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
       - name: Checkout FEniCS/docs
         if: ${{ github.repository == 'FEniCS/basix' && ( github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/') ) && matrix.python-version == '3.13' }}
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           repository: "FEniCS/docs"
           path: "docs"
@@ -138,7 +138,7 @@ jobs:
     name: Build Python using '--no-build-isolation'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - name: Set up Python
         uses: actions/setup-python@v6
         with:
@@ -162,7 +162,7 @@ jobs:
     name: Build using C++ and Python parts separately and run tests
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - name: Set up Python
         uses: actions/setup-python@v6
         with:
@@ -192,7 +192,7 @@ jobs:
     name: Build C++ only and run demos
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - name: Install dependencies
         run: sudo apt-get install -y libopenblas-dev liblapack-dev ninja-build
       - name: Install Basix

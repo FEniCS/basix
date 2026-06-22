@@ -98,7 +98,7 @@ target_compile_definitions(
 target_compile_definitions(_basixcpp PRIVATE MDSPAN_USE_PAREN_OPERATOR=1)
 target_compile_definitions(_basixcpp PRIVATE MDSPAN_USE_BRACKET_OPERATOR=0)
 
-# Add relative rpath so _basixcpp can find the Basix::basix library
+# Add relative rpath so _basixcpp can find the bundled Basix::basix library
 # when the build is relocated
 if(BASIX_FULL_SKBUILD)
   if(APPLE)
@@ -106,10 +106,6 @@ if(BASIX_FULL_SKBUILD)
   elseif(UNIX)
     set_target_properties(_basixcpp PROPERTIES INSTALL_RPATH "$ORIGIN/lib")
   endif()
-else()
-  get_target_property(_location Basix::basix LOCATION)
-  get_filename_component(_basix_dir ${_location} DIRECTORY)
-  set_target_properties(_basixcpp PROPERTIES INSTALL_RPATH ${_basix_dir})
 endif()
 
 # and the nanobind typing stubs.

@@ -114,7 +114,7 @@ endif()
 
 target_include_directories(basix PUBLIC
   $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
-  "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR};${CMAKE_CURRENT_SOURCE_DIR}>")
+  "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR};${CMAKE_CURRENT_BINARY_DIR}>")
 
 target_compile_definitions(basix PUBLIC MDSPAN_USE_PAREN_OPERATOR=1)
 target_compile_definitions(basix PUBLIC MDSPAN_USE_BRACKET_OPERATOR=0)
@@ -188,7 +188,7 @@ endif()
 
 # Configure CMake helpers
 include(CMakePackageConfigHelpers)
-write_basic_package_version_file(BasixConfigVersion.cmake VERSION ${PACKAGE_VERSION}
+write_basic_package_version_file(BasixConfigVersion.cmake VERSION ${PROJECT_VERSION}
   COMPATIBILITY AnyNewerVersion)
 configure_package_config_file(BasixConfig.cmake.in ${CMAKE_CURRENT_BINARY_DIR}/BasixConfig.cmake
   INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/basix)

@@ -2,7 +2,7 @@
 
 ## Standard
 
-Basix can be installed using
+Basix can be installed using:
 ```console
 pip install .
 ```
@@ -20,9 +20,11 @@ In the `cpp/` directory:
 cmake -DCMAKE_BUILD_TYPE=Release -B build-dir -S .
 cmake --build build-dir
 cmake --install build-dir
+sudo ldconfig # Often necessary if installing into system path
 ```
-Using the CMake build type `Release` is strongly recommended for
-performance.
+
+Using the CMake build type `Release` or `RelWithDebug` is strongly recommended
+for performance.
 
 
 ### Python interface
@@ -35,10 +37,10 @@ pip install .
 
 For a debug and editable build for development:
 ```console
-pip -v install --check-build-dependencies --config-settings=build-dir="build" --config-settings=cmake.build-type="Debug"  --config-settings=install.strip=false --no-build-isolation -e .
+pip -v install --check-build-dependencies --config-settings=build-dir="build" --config-settings=cmake.build-type="Development"  --config-settings=install.strip=false --no-build-isolation -e .
 ```
-When using the `--no-build-isolation` option all build and runtime
-dependencies must already be installed.
+When using the `--no-build-isolation` option all build dependencies must
+already be installed (see `python/pyproject.toml`).
 
 ## Running the unit tests
 

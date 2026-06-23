@@ -1,10 +1,5 @@
 cmake_minimum_required(VERSION 3.21)
 
-# nanobind uses aligned deallocators only present on macOS > 10.14
-if(APPLE and NOT CMAKE_OSX_DEPLOYMENT_TARGET)
-  set(CMAKE_OSX_DEPLOYMENT_TARGET "10.14")
-endif()
-
 project(basix_nanobind VERSION LANGUAGES CXX)
 
 if(WIN32)

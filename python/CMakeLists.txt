@@ -1,12 +1,12 @@
 cmake_minimum_required(VERSION 3.21)
 
-project(basix_nanobind VERSION LANGUAGES CXX)
+project(basix_nanobind LANGUAGES CXX)
 
 if(WIN32)
     # Windows requires all symbols to be manually exported.
     # This flag exports all symbols automatically, as in Unix.
     set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS TRUE)
-endif(WIN32)
+endif()
 
 # See https://gitlab.kitware.com/cmake/cmake/-/issues/16414
 if(TARGET basix)
@@ -37,7 +37,7 @@ if(NOT "${SKBUILD_SABI_VERSION}" STREQUAL "")
   set(NANOBIND_SABI "STABLE_ABI")
 endif()
 nanobind_add_module(_basixcpp NB_SUPPRESS_WARNINGS ${NANOBIND_SABI} wrapper.cpp)
-target_compile_definitions(_basixcpp PRIVATE cxx_std_20)
+target_compile_features(_basixcpp PRIVATE cxx_std_20)
 
 if(ENABLE_CLANG_TIDY)
   find_program(CLANG_TIDY NAMES clang-tidy REQUIRED)

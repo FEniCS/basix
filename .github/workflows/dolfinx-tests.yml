@@ -31,10 +31,10 @@ jobs:
         run: cat .github/workflows/fenicsx-refs.env >> $GITHUB_ENV
       - name: Install Basix
         run: |
-          cmake -G Ninja -DCMAKE_BUILD_TYPE=Developer -B build-dir -S ./cpp
-          cmake --build build-dir
-          cmake --install build-dir
-          python3 -m pip install --break-system-packages ./python
+          cmake -G Ninja -DCMAKE_BUILD_TYPE=Developer -B build-dir -S cpp/
+          cmake --build build-dir/
+          cmake --install build-dir/ --prefix /usr/local
+          python3 -m pip install --break-system-packages python/
       - name: Install FEniCS Python components
         run: |
           python3 -m pip install --break-system-packages git+https://github.com/${{ env.ufl_repository }}.git@${{ env.ufl_ref }}
@@ -49,7 +49,7 @@ jobs:
         run: |
           cmake -G Ninja -DCMAKE_BUILD_TYPE=Developer -DBUILD_TESTING=true -B build -S dolfinx/cpp/
           cmake --build build
-          cmake --install build
+          cmake --install build --prefix /usr/local
       - name: Run DOLFINx C++ unit tests
         working-directory: build
         run: ctest -V --output-on-failure -R unittests

@@ -182,9 +182,7 @@ jobs:
       - name: Install Basix Python wrapper
         run: |
           cd python
-          pip install scikit-build-core
-          python -m scikit_build_core.build requires | python -c "import sys, json; print(' '.join(json.load(sys.stdin)))" | xargs pip install
-          pip install --no-build-isolation .[test]
+          pip install .[test]
       - name: Run units tests
         run: |
           pip install pytest-xdist # in ci extras, but most not needed.

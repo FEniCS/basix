@@ -33,7 +33,8 @@ jobs:
         run: |
           cmake -G Ninja -DCMAKE_BUILD_TYPE=Developer -B build-dir -S cpp/
           cmake --build build-dir/
-          cmake --install build-dir/ --prefix /usr/local
+          cmake --install build-dir/
+          ldconfig
           python3 -m pip install --break-system-packages python/
       - name: Install FEniCS Python components
         run: |
@@ -49,7 +50,7 @@ jobs:
         run: |
           cmake -G Ninja -DCMAKE_BUILD_TYPE=Developer -DBUILD_TESTING=true -B build -S dolfinx/cpp/
           cmake --build build
-          cmake --install build --prefix /usr/local
+          cmake --install build
       - name: Run DOLFINx C++ unit tests
         working-directory: build
         run: ctest -V --output-on-failure -R unittests

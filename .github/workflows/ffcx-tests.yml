@@ -19,7 +19,7 @@ jobs:
     name: Run FFCx tests
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - name: Load environment variables
         run: cat .github/workflows/fenicsx-refs.env >> $GITHUB_ENV
       - name: Set up Python
@@ -33,7 +33,7 @@ jobs:
       - name: Install Basix
         run: pip -v install .[ci]
       - name: Get FFCx source
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           path: ./ffcx
           repository: ${{ env.ffcx_repository }}

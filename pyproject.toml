@@ -35,6 +35,10 @@ testpaths = ["test"]
 [tool.scikit-build]
 wheel.packages = ["python/basix"]
 
+[tool.scikit-build.cmake.define]
+# Set to OFF to disable all install RPATH adjustments
+BASIX_SET_INSTALL_RPATH = "ON"
+
 [tool.cibuildwheel]
 build-frontend = { name = "build", args = [
     "-Cwheel.py-api=cp312",

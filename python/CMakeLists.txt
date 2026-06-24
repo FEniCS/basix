@@ -23,6 +23,8 @@ include(FeatureSummary)
 option(ENABLE_CLANG_TIDY "Run clang-tidy while building" OFF)
 add_feature_info(ENABLE_CLANG_TIDY ENABLE_CLANG_TIDY "Run clang-tidy while building")
 
+option(BASIX_SET_INSTALL_RPATH "Embed RPATH to installed C++ library." ON)
+
 feature_summary(WHAT ALL)
 
 # Detect the installed nanobind package and import it into CMake
@@ -93,20 +95,29 @@ target_compile_definitions(
 target_compile_definitions(_basixcpp PRIVATE MDSPAN_USE_PAREN_OPERATOR=1)
 target_compile_definitions(_basixcpp PRIVATE MDSPAN_USE_BRACKET_OPERATOR=0)
 
-# Add relative rpath so _basixcpp can find the bundled Basix::basix library
-# when the build is relocated
-if(BASIX_FULL_SKBUILD)
+if(BASIX_FULL_SKBUILD AND BASIX_SET_INSTALL_RPATH)
+  # If building bundled C++ and Python wrapper wheel `pip install .` add relative
+  # rpath so _basixcpp can find the bundled Basix::basix library when the wheel
+  # is relocated.
   if(APPLE)
     set_target_properties(_basixcpp PROPERTIES INSTALL_RPATH "@loader_path/lib")
   elseif(UNIX)
     set_target_properties(_basixcpp PROPERTIES INSTALL_RPATH "$ORIGIN/lib")
   endif()
+elif(BASIX_SET_INSTALL_RPATH)
+  # If building standalone Python wrapper `pip install python/` put absolute
+  # path to Basix C++ on RPATH - can help if Basix::basix is outside a system
+  # directory. This makes the build non-relocatable.
+  get_target_property(_location Basix::basix LOCATION)
+  get_filename_component(_basix_dir ${_location} DIRECTORY)
+  set_target_properties(_basixcpp PROPERTIES INSTALL_RPATH ${_basix_dir})
 endif()
 
 # and the nanobind typing stubs.
 if (WIN32)
-  # On Windows we cannot import basix._basixcpp without installing the package
-  # alongside its external dlls.
+  # On Windows we cannot import basix._basixcpp without bundling in all
+  # external dlls and relying on Windows library search order - effectively a
+  # 'static binary build'.
 
   # This *must* be called prior to nanobind_add_stub
   install(TARGETS _basixcpp LIBRARY DESTINATION basix)

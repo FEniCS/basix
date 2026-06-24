@@ -178,7 +178,6 @@ jobs:
           cmake -DCMAKE_BUILD_TYPE=Developer -B build-dir -S . # Use make (not ninja)
           cmake --build build-dir
           sudo cmake --install build-dir
-          sudo ldconfig # necessary for runtime linking of libbasix.so
       - name: Install Basix Python wrapper
         run: |
           cd python

@@ -34,3 +34,7 @@ ignore_missing_imports = true
 
 [tool.scikit-build]
 wheel.packages = ["basix"]
+
+[tool.scikit-build.cmake.define]
+# Set to OFF to disable all install RPATH adjustments
+BASIX_SET_INSTALL_RPATH = "ON"

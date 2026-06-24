@@ -34,8 +34,9 @@ jobs:
           cmake -G Ninja -DCMAKE_BUILD_TYPE=Developer -B build-dir -S cpp/
           cmake --build build-dir/
           cmake --install build-dir/
+          # This tests non-RPATH based linking.
           ldconfig
-          python3 -m pip install --break-system-packages python/
+          python3 -m pip install -Ccmake.args=-DBASIX_SET_INSTALL_RPATH=OFF --break-system-packages python/
       - name: Install FEniCS Python components
         run: |
           python3 -m pip install --break-system-packages git+https://github.com/${{ env.ufl_repository }}.git@${{ env.ufl_ref }}

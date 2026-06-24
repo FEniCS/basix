@@ -1,68 +1,50 @@
 cmake_minimum_required(VERSION 3.21)
 
-# nanobind uses aligned deallocators only present on macOS > 10.14
-if(APPLE)
-    set(CMAKE_OSX_DEPLOYMENT_TARGET "10.14")
-endif()
-
-project(basix_nanobind VERSION LANGUAGES CXX)
+project(basix_nanobind LANGUAGES CXX)
 
 if(WIN32)
     # Windows requires all symbols to be manually exported.
     # This flag exports all symbols automatically, as in Unix.
     set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS TRUE)
-endif(WIN32)
+endif()
 
 # See https://gitlab.kitware.com/cmake/cmake/-/issues/16414
 if(TARGET basix)
-    add_library(Basix::basix ALIAS basix)
+  add_library(Basix::basix ALIAS basix)
 else()
-    find_package(Basix REQUIRED)
+  find_package(Basix REQUIRED)
 endif()
 
-find_package(
-    Python
-    COMPONENTS Interpreter Development.Module ${SKBUILD_SABI_COMPONENT}
-    REQUIRED
-)
+find_package(Python COMPONENTS Interpreter Development.Module ${SKBUILD_SABI_COMPONENT} REQUIRED)
 
 # Options
 include(FeatureSummary)
 
 option(ENABLE_CLANG_TIDY "Run clang-tidy while building" OFF)
-add_feature_info(
-    ENABLE_CLANG_TIDY
-    ENABLE_CLANG_TIDY
-    "Run clang-tidy while building"
-)
+add_feature_info(ENABLE_CLANG_TIDY ENABLE_CLANG_TIDY "Run clang-tidy while building")
+
+option(BASIX_SET_INSTALL_RPATH "Set rpath of _basixcpp to location of installed C++ library" TRUE)
+add_feature_info(BASIX_SET_INSTALL_RPATH BASIX_SET_INSTALL_RPATH "Set rpath of _basixcpp to location of installed C++ library")
 
 feature_summary(WHAT ALL)
 
 # Detect the installed nanobind package and import it into CMake
 execute_process(
-    COMMAND
-        "${Python_EXECUTABLE}" -c "import nanobind; print(nanobind.cmake_dir())"
-    OUTPUT_STRIP_TRAILING_WHITESPACE
-    OUTPUT_VARIABLE NB_DIR
-)
+  COMMAND "${Python_EXECUTABLE}" -c "import nanobind; print(nanobind.cmake_dir())"
+  OUTPUT_STRIP_TRAILING_WHITESPACE OUTPUT_VARIABLE NB_DIR)
 list(APPEND CMAKE_PREFIX_PATH "${NB_DIR}")
 find_package(nanobind CONFIG REQUIRED)
 
 # Create the binding library
 if(NOT "${SKBUILD_SABI_VERSION}" STREQUAL "")
-    set(NANOBIND_SABI "STABLE_ABI")
+  set(NANOBIND_SABI "STABLE_ABI")
 endif()
 nanobind_add_module(_basixcpp NB_SUPPRESS_WARNINGS ${NANOBIND_SABI} wrapper.cpp)
-target_compile_definitions(_basixcpp PRIVATE cxx_std_20)
+target_compile_features(_basixcpp PRIVATE cxx_std_20)
 
 if(ENABLE_CLANG_TIDY)
-    find_program(CLANG_TIDY NAMES clang-tidy REQUIRED)
-    set_target_properties(
-        _basixcpp
-        PROPERTIES
-            CXX_CLANG_TIDY
-                "${CLANG_TIDY};--config-file=${CMAKE_CURRENT_SOURCE_DIR}/../.clang-tidy"
-    )
+  find_program(CLANG_TIDY NAMES clang-tidy REQUIRED)
+  set_target_properties(_basixcpp PROPERTIES CXX_CLANG_TIDY "${CLANG_TIDY};--config-file=${CMAKE_CURRENT_SOURCE_DIR}/../.clang-tidy")
 endif()
 
 target_link_libraries(_basixcpp PRIVATE Basix::basix)
@@ -71,28 +53,22 @@ target_link_libraries(_basixcpp PRIVATE Basix::basix)
 include(CheckCXXCompilerFlag)
 
 # Add some strict compiler checks
-check_cxx_compiler_flag(
-    "-Wall -Werror -Wextra -pedantic -Wno-comment"
-    HAVE_PEDANTIC
-)
+check_cxx_compiler_flag("-Wall -Werror -Wextra -pedantic -Wno-comment" HAVE_PEDANTIC)
 
 if(HAVE_PEDANTIC)
-    list(
-        APPEND BASIX_PY_CXX_DEVELOPER_FLAGS
-        -Wall;-Werror;-Wextra;-pedantic;-Wno-comment
-    )
+	list(APPEND BASIX_PY_CXX_DEVELOPER_FLAGS -Wall;-Werror;-Wextra;-pedantic;-Wno-comment)
 endif()
 
 # Debug flags
 check_cxx_compiler_flag(-g HAVE_DEBUG)
 if(HAVE_DEBUG)
-    list(APPEND BASIX_PY_CXX_DEVELOPER_FLAGS -g)
+  list(APPEND BASIX_PY_CXX_DEVELOPER_FLAGS -g)
 endif()
 
 # Optimisation
 check_cxx_compiler_flag(-O2 HAVE_O2_OPTIMISATION)
 if(HAVE_O2_OPTIMISATION)
-    list(APPEND BASIX_PY_CXX_DEVELOPER_FLAGS -O2)
+  list(APPEND BASIX_PY_CXX_DEVELOPER_FLAGS -O2)
 endif()
 
 # Enable C++ standard library debugging
@@ -102,84 +78,80 @@ check_cxx_symbol_exists(_LIBCPP_VERSION "version" LIBCPP)
 check_cxx_symbol_exists(__GLIBCXX__ "version" GLIBCXX)
 
 if(LIBCPP)
-    list(
-        APPEND BASIX_PY_CXX_DEVELOPER_DEFINITIONS
-        _LIBCPP_HARDENING_MODE=_LIBCPP_HARDENING_MODE_DEBUG
-    )
+  list(APPEND BASIX_PY_CXX_DEVELOPER_DEFINITIONS _LIBCPP_HARDENING_MODE=_LIBCPP_HARDENING_MODE_DEBUG)
 endif()
 
 if(GLIBCXX)
-    list(APPEND BASIX_PY_CXX_DEVELOPER_DEFINITIONS _GLIBCXX_ASSERTIONS)
+  list(APPEND BASIX_PY_CXX_DEVELOPER_DEFINITIONS _GLIBCXX_ASSERTIONS)
 endif()
 
 target_compile_options(
-    _basixcpp
-    PRIVATE $<$<CONFIG:Developer>:${BASIX_PY_CXX_DEVELOPER_FLAGS}>
+  _basixcpp PRIVATE $<$<CONFIG:Developer>:${BASIX_PY_CXX_DEVELOPER_FLAGS}>
 )
 target_compile_definitions(
-    _basixcpp
-    PRIVATE $<$<CONFIG:Developer>:${BASIX_PY_CXX_DEVELOPER_DEFINITIONS}>
+  _basixcpp PRIVATE $<$<CONFIG:Developer>:${BASIX_PY_CXX_DEVELOPER_DEFINITIONS}>
 )
 
 # TODO: remove after issue https://github.com/FEniCS/basix/issues/842 is resolved
 target_compile_definitions(_basixcpp PRIVATE MDSPAN_USE_PAREN_OPERATOR=1)
 target_compile_definitions(_basixcpp PRIVATE MDSPAN_USE_BRACKET_OPERATOR=0)
 
-# Add relative rpath so _basixcpp can find the Basix::basix library
-# when the build is relocated
-if(BASIX_FULL_SKBUILD)
-    if(APPLE)
-        set_target_properties(
-            _basixcpp
-            PROPERTIES INSTALL_RPATH "@loader_path/lib"
-        )
-    elseif(UNIX)
-        set_target_properties(_basixcpp PROPERTIES INSTALL_RPATH "$ORIGIN/lib")
-    endif()
-else()
-    get_target_property(_location Basix::basix LOCATION)
-    get_filename_component(_basix_dir ${_location} DIRECTORY)
-    set_target_properties(_basixcpp PROPERTIES INSTALL_RPATH ${_basix_dir})
+if(BASIX_FULL_SKBUILD AND BASIX_SET_INSTALL_RPATH)
+  # If building bundled C++ and Python wrapper wheel `pip install .` add relative
+  # rpath so _basixcpp can find the bundled Basix::basix library when the wheel
+  # is relocated.
+  if(APPLE)
+    set_target_properties(_basixcpp PROPERTIES INSTALL_RPATH "@loader_path/lib")
+  elseif(UNIX)
+    set_target_properties(_basixcpp PROPERTIES INSTALL_RPATH "$ORIGIN/lib")
+  endif()
+elseif(BASIX_SET_INSTALL_RPATH)
+  # If building standalone Python wrapper `pip install python/` put absolute
+  # path to Basix C++ library on rpath - can help linking if it is outside a
+  # system directory. The build is non-relocatable.
+  get_target_property(_location Basix::basix LOCATION)
+  get_filename_component(_basix_dir ${_location} DIRECTORY)
+  set_target_properties(_basixcpp PROPERTIES INSTALL_RPATH ${_basix_dir})
 endif()
 
 # and the nanobind typing stubs.
-if(WIN32)
-    # On Windows we cannot import basix._basixcpp without installing the package
-    # alongside its external dlls.
+if (WIN32)
+  # On Windows we cannot import basix._basixcpp without bundling in all
+  # external dlls and relying on Windows library search order - effectively a
+  # 'static binary build'.
 
-    # This *must* be called prior to nanobind_add_stub
-    install(TARGETS _basixcpp LIBRARY DESTINATION basix)
-    # nanobind automatically installs into ${CMAKE_INSTALL_PREFIX} in
-    # INSTALL_TIME mode.
-    # DEPENDS is redundant in INSTALL_TIME mode - _basixcpp must be installed.
-    nanobind_add_stub(
-      _basixcpp_stub
-      MODULE basix._basixcpp
-      INSTALL_TIME
-      MARKER_FILE basix/py.typed
-      VERBOSE
-      OUTPUT
-        basix/_basixcpp.pyi
-    )
+  # This *must* be called prior to nanobind_add_stub
+  install(TARGETS _basixcpp LIBRARY DESTINATION basix)
+  # nanobind automatically installs into ${CMAKE_INSTALL_PREFIX} in
+  # INSTALL_TIME mode.
+  # DEPENDS is redundant in INSTALL_TIME mode - _basixcpp must be installed.
+  nanobind_add_stub(
+    _basixcpp_stub
+    MODULE basix._basixcpp
+    INSTALL_TIME
+    MARKER_FILE basix/py.typed
+    VERBOSE
+    OUTPUT
+      basix/_basixcpp.pyi
+  )
 else()
-    # On UNIX-like systems we can import the cpp compiled module before
-    # installing and rely on dynamic linking at import time.
-    nanobind_add_stub(
-      _basixcpp_stub
-      MODULE _basixcpp
-      PYTHON_PATH $<TARGET_FILE_DIR:_basixcpp>
-      DEPENDS _basixcpp
-      MARKER_FILE ${CMAKE_CURRENT_SOURCE_DIR}/basix/py.typed
-      VERBOSE
-      OUTPUT
-        _basixcpp.pyi
-    )
+  # On UNIX-like systems we can import the cpp compiled module before
+  # installing and rely on dynamic linking at import time.
+  nanobind_add_stub(
+    _basixcpp_stub
+    MODULE _basixcpp
+    PYTHON_PATH $<TARGET_FILE_DIR:_basixcpp>
+    DEPENDS _basixcpp
+    MARKER_FILE ${CMAKE_CURRENT_SOURCE_DIR}/basix/py.typed
+    VERBOSE
+    OUTPUT
+      _basixcpp.pyi
+  )
 
-    install(TARGETS _basixcpp LIBRARY DESTINATION basix)
-    install(
-        FILES
-            ${CMAKE_CURRENT_SOURCE_DIR}/basix/py.typed
-            ${CMAKE_CURRENT_BINARY_DIR}/_basixcpp.pyi
-        DESTINATION basix
-    )
+  install(TARGETS _basixcpp LIBRARY DESTINATION basix)
+  install(FILES
+    ${CMAKE_CURRENT_SOURCE_DIR}/basix/py.typed
+    ${CMAKE_CURRENT_BINARY_DIR}/_basixcpp.pyi
+    DESTINATION basix
+  )
 endif()

@@ -42,6 +42,11 @@ jobs:
           pip install mypy numpy
           pip install git+https://github.com/${{ env.ufl_repository }}.git@${{ env.ufl_ref }}
           mypy python/basix
+      - name: Gersemi check
+        run: |
+          pip install gersemi
+          gersemi --check cpp/CMakeLists.txt cpp/*.cmake.in python/CMakeLists.txt
+
 
   build:
     name: Build and test

@@ -41,9 +41,8 @@ pip -v install --check-build-dependencies -Cbuild-dir="build" -Ccmake.build-type
 When using the `--no-build-isolation` option all build dependencies must
 already be installed (see `python/pyproject.toml`).
 
-When Basix C++ was installed into a non-standard prefix, passing
-`-Ccmake.args="-DCMAKE_INSTALL_RPATH_USE_LINK_PATH=ON"` to pip ensures the
-extension module can locate its runtime dependencies.
+RPATH manipulation can be disabled by passing
+`-Ccmake.args=-DBASIX_SET_INSTALL_RPATH=FALSE`.
 
 ## Running the unit tests
 

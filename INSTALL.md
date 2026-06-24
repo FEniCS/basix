@@ -20,7 +20,6 @@ In the `cpp/` directory:
 cmake -DCMAKE_BUILD_TYPE=Release -B build-dir -S .
 cmake --build build-dir
 cmake --install build-dir
-sudo ldconfig # Often necessary if installing into system path
 ```
 
 Using the CMake build type `Release` or `RelWithDebug` is strongly recommended
@@ -37,7 +36,7 @@ pip install .
 
 For a debug and editable build for development:
 ```console
-pip -v install --check-build-dependencies -Cbuild-dir="build" -Ccmake.build-type="Development" -Ccmake.args="-DCMAKE_INSTALL_RPATH_USE_LINK_PATH=ON" -Cinstall.strip=false --no-build-isolation -e .
+pip -v install --check-build-dependencies -Cbuild-dir="build" -Ccmake.build-type="Development" -Cinstall.strip=false --no-build-isolation -e .
 ```
 When using the `--no-build-isolation` option all build dependencies must
 already be installed (see `python/pyproject.toml`).

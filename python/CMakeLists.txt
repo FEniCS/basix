@@ -23,7 +23,8 @@ include(FeatureSummary)
 option(ENABLE_CLANG_TIDY "Run clang-tidy while building" OFF)
 add_feature_info(ENABLE_CLANG_TIDY ENABLE_CLANG_TIDY "Run clang-tidy while building")
 
-option(BASIX_SET_INSTALL_RPATH "Embed RPATH to installed C++ library." ON)
+option(BASIX_SET_INSTALL_RPATH "Set RPATH to location of installed C++ library" ON)
+add_feature_info(BASIX_SET_INSTALL_RPATH BASIX_SET_INSTALL_RPATH "Set RPATH to location of installed C++ library")
 
 feature_summary(WHAT ALL)
 
@@ -104,10 +105,10 @@ if(BASIX_FULL_SKBUILD AND BASIX_SET_INSTALL_RPATH)
   elseif(UNIX)
     set_target_properties(_basixcpp PROPERTIES INSTALL_RPATH "$ORIGIN/lib")
   endif()
-elif(BASIX_SET_INSTALL_RPATH)
+elseif(BASIX_SET_INSTALL_RPATH)
   # If building standalone Python wrapper `pip install python/` put absolute
-  # path to Basix C++ on RPATH - can help if Basix::basix is outside a system
-  # directory. This makes the build non-relocatable.
+  # path to Basix C++ library on rpath - can help linking if it is outside a
+  # system directory. The build is non-relocatable.
   get_target_property(_location Basix::basix LOCATION)
   get_filename_component(_basix_dir ${_location} DIRECTORY)
   set_target_properties(_basixcpp PROPERTIES INSTALL_RPATH ${_basix_dir})

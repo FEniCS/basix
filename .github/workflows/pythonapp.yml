@@ -45,7 +45,7 @@ jobs:
       - name: Gersemi check
         run: |
           pip install gersemi
-          gersemi --check --indent 2 .
+          gersemi --check .
 
 
   build:

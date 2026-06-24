@@ -23,8 +23,8 @@ include(FeatureSummary)
 option(ENABLE_CLANG_TIDY "Run clang-tidy while building" OFF)
 add_feature_info(ENABLE_CLANG_TIDY ENABLE_CLANG_TIDY "Run clang-tidy while building")
 
-option(BASIX_SET_INSTALL_RPATH "Set RPATH to location of installed C++ library" ON)
-add_feature_info(BASIX_SET_INSTALL_RPATH BASIX_SET_INSTALL_RPATH "Set RPATH to location of installed C++ library")
+option(BASIX_SET_INSTALL_RPATH "Set rpath of _basixcpp to location of installed C++ library" TRUE)
+add_feature_info(BASIX_SET_INSTALL_RPATH BASIX_SET_INSTALL_RPATH "Set rpath of _basixcpp to location of installed C++ library")
 
 feature_summary(WHAT ALL)
 

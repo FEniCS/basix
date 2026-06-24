@@ -45,7 +45,7 @@ jobs:
       - name: Gersemi check
         run: |
           pip install gersemi
-          gersemi --check .
+          gersemi --check cpp/CMakeLists.txt cpp/*.cmake.in python/CMakeLists.txt
 
 
   build:

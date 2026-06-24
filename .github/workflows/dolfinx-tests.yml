@@ -26,7 +26,7 @@ jobs:
       OMPI_MCA_rmaps_base_oversubscribe: true                 # Older OpenMPI
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - name: Load environment variables
         run: cat .github/workflows/fenicsx-refs.env >> $GITHUB_ENV
       - name: Install Basix
@@ -42,7 +42,7 @@ jobs:
           python3 -m pip install --break-system-packages git+https://github.com/${{ env.ufl_repository }}.git@${{ env.ufl_ref }}
           python3 -m pip install --break-system-packages git+https://github.com/${{ env.ffcx_repository }}.git@${{ env.ffcx_ref }}
       - name: Get DOLFINx
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           path: ./dolfinx
           repository: ${{ env.dolfinx_repository }}

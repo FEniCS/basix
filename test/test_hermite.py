@@ -176,10 +176,10 @@ def test_hermite_tetrahedron():
         + 2 * y * z
         + z**3
         - z**2,
-        27 * x * y * z,
-        -27 * x * y * z - 27 * y**2 * z - 27 * y * z**2 + 27 * y * z,
-        -27 * x**2 * z - 27 * x * y * z - 27 * x * z**2 + 27 * x * z,
         -27 * x**2 * y - 27 * x * y**2 - 27 * x * y * z + 27 * x * y,
+        -27 * x**2 * z - 27 * x * y * z - 27 * x * z**2 + 27 * x * z,
+        -27 * x * y * z - 27 * y**2 * z - 27 * y * z**2 + 27 * y * z,
+        27 * x * y * z,
     ]
 
     pts = basix.create_lattice(basix.CellType.tetrahedron, 3, basix.LatticeType.equispaced, True)

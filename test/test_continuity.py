@@ -72,7 +72,7 @@ def test_continuity_interval_facet(degree, element, variant):
         [
             np.array([0, 0]),
             np.array([1, 0]),
-            {basix.CellType.triangle: 2, basix.CellType.quadrilateral: 0},
+            {basix.CellType.triangle: 0, basix.CellType.quadrilateral: 0},
         ],
         [
             np.array([0, 0]),
@@ -114,19 +114,19 @@ def test_continuity_triangle_facet(degree, element, variant):
             np.array([0, 0, 0]),
             np.array([1, 0, 0]),
             np.array([0, 1, 0]),
-            {basix.CellType.tetrahedron: 3, basix.CellType.prism: 0},
+            {basix.CellType.tetrahedron: 0, basix.CellType.prism: 0},
         ],
         [
             np.array([0, 0, 0]),
             np.array([1, 0, 0]),
             np.array([0, 0, 1]),
-            {basix.CellType.tetrahedron: 2, basix.CellType.pyramid: 1},
+            {basix.CellType.tetrahedron: 1, basix.CellType.pyramid: 1},
         ],
         [
             np.array([0, 0, 0]),
             np.array([0, 1, 0]),
             np.array([0, 0, 1]),
-            {basix.CellType.tetrahedron: 1, basix.CellType.pyramid: 2},
+            {basix.CellType.tetrahedron: 2, basix.CellType.pyramid: 2},
         ],
     ]
 

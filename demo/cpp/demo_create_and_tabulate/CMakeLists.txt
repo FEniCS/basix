@@ -8,7 +8,8 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 # Use Python for detecting Basix when installed using combined build
 find_package(Python3 COMPONENTS Interpreter)
 if(${Python3_FOUND})
-  execute_process(COMMAND
+  execute_process(
+    COMMAND
       ${Python3_EXECUTABLE} -c
       "import basix, os, sys; sys.stdout.write(os.path.dirname(basix.__file__))"
     OUTPUT_VARIABLE BASIX_PY_DIR

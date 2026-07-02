@@ -8,6 +8,7 @@
 # First, we import Basix and Numpy.
 
 import numpy as np
+from numpy import typing as npt
 
 import basix
 from basix import CellType, LatticeType, MapType, PolynomialType, PolysetType, SobolevSpace
@@ -121,7 +122,7 @@ for _ in range(4):
 # The shape of each matrix is (number of DOFs, value size, number of
 # points, number of derivatives).
 
-M = [[], [], [], []]
+M: list[list[npt.NDArray[np.floating]]] = [[], [], [], []]
 for _ in range(4):
     M[0].append(np.array([[[[1.0]]]]))
 M[2].append(np.array([[[[1.0]]]]))

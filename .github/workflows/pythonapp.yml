@@ -42,6 +42,7 @@ jobs:
           pip install mypy numpy
           pip install git+https://github.com/${{ env.ufl_repository }}.git@${{ env.ufl_ref }}
           mypy python/basix
+          mypy demo/python
       - name: Gersemi check
         run: |
           pip install gersemi

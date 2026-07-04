@@ -157,7 +157,7 @@ for _ in range(4):
 
 element = basix.create_custom_element(
     CellType.quadrilateral,
-    [],
+    (),
     wcoeffs,
     x,
     M,
@@ -261,7 +261,7 @@ M[2].append(np.zeros((0, 2, 0, 1)))
 
 element = basix.create_custom_element(
     CellType.triangle,
-    [2],
+    (2,),
     wcoeffs,
     x,
     M,

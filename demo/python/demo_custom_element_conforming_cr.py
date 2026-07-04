@@ -51,7 +51,7 @@ def create_ccr_triangle(degree):
 
         return basix.create_custom_element(
             CellType.triangle,
-            [],
+            (),
             wcoeffs,
             x,
             M,
@@ -105,7 +105,7 @@ def create_ccr_triangle(degree):
 
     return basix.create_custom_element(
         CellType.triangle,
-        [],
+        (),
         wcoeffs,
         x,
         M,

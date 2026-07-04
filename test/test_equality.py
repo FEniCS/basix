@@ -61,7 +61,7 @@ def cr_custom():
 
     return basix.create_custom_element(
         basix.CellType.triangle,
-        [],
+        (),
         wcoeffs,
         x,
         M,

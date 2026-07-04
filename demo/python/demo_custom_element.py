@@ -101,7 +101,7 @@ for i in range(9):
 #
 # The shape of each of the point lists is (number of points, dimension).
 
-x: list[list[npt.NDArray[np.floating]]] = [[], [], [], []]
+x: list[list[npt.NDArray[np.float64]]] = [[], [], [], []]
 x[0].append(np.array([[0.0, 0.0]]))
 x[0].append(np.array([[1.0, 0.0]]))
 x[0].append(np.array([[0.0, 1.0]]))
@@ -122,7 +122,7 @@ for _ in range(4):
 # The shape of each matrix is (number of DOFs, value size, number of
 # points, number of derivatives).
 
-M: list[list[npt.NDArray[np.floating]]] = [[], [], [], []]
+M: list[list[npt.NDArray[np.float64]]] = [[], [], [], []]
 for _ in range(4):
     M[0].append(np.array([[[[1.0]]]]))
 M[2].append(np.array([[[[1.0]]]]))

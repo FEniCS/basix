@@ -634,9 +634,9 @@ def create_element(
 def create_custom_element(
     cell_type: CellType,
     value_shape: Sequence[int],
-    wcoeffs: npt.NDArray[np.floating],
-    x: list[list[npt.NDArray[np.floating]]],
-    M: list[list[npt.NDArray[np.floating]]],
+    wcoeffs: npt.NDArray[T],
+    x: list[list[npt.NDArray[T]]],
+    M: list[list[npt.NDArray[T]]],
     interpolation_nderivs: int,
     map_type: "MapType",
     sobolev_space: SobolevSpace,
@@ -645,7 +645,7 @@ def create_custom_element(
     embedded_superdegree: int,
     poly_type: PolysetType,
     dtype: npt.DTypeLike | None = np.float64,
-) -> FiniteElement:
+) -> FiniteElement[T]:
     """Create a custom finite element.
 
     Args:
@@ -720,9 +720,9 @@ def create_custom_element(
         _create_custom_element(
             cell_type,
             tuple(value_shape),
-            wcoeffs,
-            x,
-            M,
+            wcoeffs,  # type: ignore
+            x,  # type: ignore
+            M,  # type: ignore
             interpolation_nderivs,
             map_type,
             sobolev_space,

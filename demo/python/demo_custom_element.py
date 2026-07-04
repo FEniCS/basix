@@ -79,9 +79,9 @@ wcoeffs[3, 4] = 1
 
 pts, wts = basix.make_quadrature(CellType.quadrilateral, 4)
 poly = basix.tabulate_polynomials(PolynomialType.legendre, CellType.quadrilateral, 2, pts)
-x = pts[:, 0]
+_x = pts[:, 0]
 y = pts[:, 1]
-f = x * (1 - x) * y * (1 - y)
+f = _x * (1 - _x) * y * (1 - y)
 for i in range(9):
     wcoeffs[4, i] = sum(f * poly[i, :] * wts)
 
@@ -101,7 +101,7 @@ for i in range(9):
 #
 # The shape of each of the point lists is (number of points, dimension).
 
-x = [[], [], [], []]
+x: list[list[npt.NDArray[np.floating]]] = [[], [], [], []]
 x[0].append(np.array([[0.0, 0.0]]))
 x[0].append(np.array([[1.0, 0.0]]))
 x[0].append(np.array([[0.0, 1.0]]))
@@ -216,10 +216,10 @@ wcoeffs[1, 3] = 1
 
 pts, wts = basix.make_quadrature(CellType.triangle, 2)
 poly = basix.tabulate_polynomials(PolynomialType.legendre, CellType.triangle, 1, pts)
-x = pts[:, 0]
+_x = pts[:, 0]
 y = pts[:, 1]
 for i in range(3):
-    wcoeffs[2, i] = sum(x * poly[i, :] * wts)
+    wcoeffs[2, i] = sum(_x * poly[i, :] * wts)
     wcoeffs[2, 3 + i] = sum(y * poly[i, :] * wts)
 
 # Interpolation

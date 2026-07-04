@@ -5,6 +5,7 @@
 # SPDX-License-Identifier:    MIT
 """Functions to manipulate lattice types."""
 
+import numpy as np
 import numpy.typing as npt
 
 from basix._basixcpp import LatticeSimplexMethod, LatticeType
@@ -20,7 +21,7 @@ def create_lattice(
     ltype: LatticeType,
     exterior: bool,
     method: LatticeSimplexMethod = LatticeSimplexMethod.none,
-) -> npt.ArrayLike:
+) -> npt.NDArray[np.float64]:
     """Create a lattice of points on a reference cell.
 
     Args:

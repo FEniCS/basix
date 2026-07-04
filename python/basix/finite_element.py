@@ -5,7 +5,7 @@
 # SPDX-License-Identifier:    MIT
 """Functions for creating finite elements."""
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Sequence
 from warnings import warn
 
 import numpy as np
@@ -57,7 +57,7 @@ class FiniteElement:
         """
         self._e = e
 
-    def tabulate(self, n: int, x: npt.NDArray) -> npt.ArrayLike:
+    def tabulate(self, n: int, x: npt.NDArray[np.floating]) -> npt.NDArray[np.floating]:
         """Compute basis values and derivatives at set of points.
 
         Note:
@@ -631,7 +631,7 @@ def create_element(
 
 def create_custom_element(
     cell_type: CellType,
-    value_shape: tuple[int, ...],
+    value_shape: Sequence[int],
     wcoeffs: npt.NDArray[np.floating],
     x: list[list[npt.NDArray[np.floating]]],
     M: list[list[npt.NDArray[np.floating]]],
@@ -717,7 +717,7 @@ def create_custom_element(
     return FiniteElement(
         _create_custom_element(
             cell_type,
-            value_shape,
+            tuple(value_shape),
             wcoeffs,
             x,
             M,

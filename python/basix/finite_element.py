@@ -5,7 +5,8 @@
 # SPDX-License-Identifier:    MIT
 """Functions for creating finite elements."""
 
-from typing import TYPE_CHECKING, Generic, Sequence, TypeVar
+from collections.abc import Sequence
+from typing import TYPE_CHECKING, Generic, TypeVar
 from warnings import warn
 
 import numpy as np

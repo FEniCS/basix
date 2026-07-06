@@ -24,7 +24,7 @@ documentation = "https://docs.fenicsproject.org"
 [project.optional-dependencies]
 docs = ["markdown", "pylit3", "pyyaml", "sphinx", "pydata-sphinx-theme"]
 lint = ["ruff", "gersemi"]
-# llvmlite (numba) is not built for x86_64 on macOS or arm64 on Windows.
+# llvmlite (numba) is not built for x86_64 on macOS or arm64 on Windows - advanced users can install manually.
 optional = ["numba; (sys_platform != 'darwin' or platform_machine != 'x86_64') and (sys_platform != 'win32' or platform_machine != 'ARM64')", "fenics-ufl@git+https://github.com/fenics/ufl"]
 test = ["pytest", "sympy", "scipy", "matplotlib", "fenics-basix[optional]"]
 ci = ["mypy", "pytest-xdist", "fenics-basix[docs,lint,test,optional]"]

@@ -2,12 +2,6 @@ cmake_minimum_required(VERSION 3.21)
 
 project(basix_nanobind LANGUAGES CXX)
 
-if(WIN32)
-  # Windows requires all symbols to be manually exported.
-  # This flag exports all symbols automatically, as in Unix.
-  set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS TRUE)
-endif()
-
 # See https://gitlab.kitware.com/cmake/cmake/-/issues/16414
 if(TARGET basix)
   add_library(Basix::basix ALIAS basix)
@@ -34,7 +28,7 @@ add_feature_info(
 option(
   BASIX_SET_INSTALL_RPATH
   "Set rpath of _basixcpp to location of installed C++ library"
-  TRUE
+  ON
 )
 add_feature_info(
   BASIX_SET_INSTALL_RPATH
@@ -61,6 +55,10 @@ endif()
 nanobind_add_module(_basixcpp NB_SUPPRESS_WARNINGS ${NANOBIND_SABI} wrapper.cpp)
 target_compile_features(_basixcpp PRIVATE cxx_std_20)
 
+# Windows requires all symbols to be manually exported; this exports them
+# automatically as on Unix. No-op on other platforms.
+set_target_properties(_basixcpp PROPERTIES WINDOWS_EXPORT_ALL_SYMBOLS TRUE)
+
 if(ENABLE_CLANG_TIDY)
   find_program(CLANG_TIDY NAMES clang-tidy REQUIRED)
   set_target_properties(
@@ -75,6 +73,9 @@ target_link_libraries(_basixcpp PRIVATE Basix::basix)
 
 # Add strict compiler flags
 include(CheckCXXCompilerFlag)
+
+set(BASIX_PY_CXX_DEVELOPER_FLAGS "")
+set(BASIX_PY_CXX_DEVELOPER_DEFINITIONS "")
 
 # Add some strict compiler checks
 check_cxx_compiler_flag(
@@ -99,6 +100,12 @@ endif()
 check_cxx_compiler_flag(-O2 HAVE_O2_OPTIMISATION)
 if(HAVE_O2_OPTIMISATION)
   list(APPEND BASIX_PY_CXX_DEVELOPER_FLAGS -O2)
+endif()
+
+# Pipe
+check_cxx_compiler_flag(-pipe HAVE_PIPE)
+if(HAVE_PIPE)
+  list(APPEND BASIX_PY_CXX_DEVELOPER_FLAGS -pipe)
 endif()
 
 # Enable C++ standard library debugging
@@ -128,8 +135,9 @@ target_compile_definitions(
 )
 
 # TODO: remove after issue https://github.com/FEniCS/basix/issues/842 is resolved
-target_compile_definitions(_basixcpp PRIVATE MDSPAN_USE_PAREN_OPERATOR=1)
-target_compile_definitions(_basixcpp PRIVATE MDSPAN_USE_BRACKET_OPERATOR=0)
+target_compile_definitions(
+  _basixcpp PRIVATE MDSPAN_USE_PAREN_OPERATOR=1 MDSPAN_USE_BRACKET_OPERATOR=0
+)
 
 if(BASIX_FULL_SKBUILD AND BASIX_SET_INSTALL_RPATH)
   # If building bundled C++ and Python wrapper wheel `pip install .` add relative
@@ -145,7 +153,7 @@ elseif(BASIX_SET_INSTALL_RPATH)
   # path to Basix C++ library on rpath - can help linking if it is outside a
   # system directory. The build is non-relocatable.
   get_target_property(_location Basix::basix LOCATION)
-  get_filename_component(_basix_dir ${_location} DIRECTORY)
+  cmake_path(GET _location PARENT_PATH _basix_dir)
   set_target_properties(_basixcpp PROPERTIES INSTALL_RPATH ${_basix_dir})
 endif()
 

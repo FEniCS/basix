@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.21)
 
 # Set the version
-project(Basix VERSION "0.12.0.0" LANGUAGES CXX)
+project(Basix VERSION 0.12.0.0 LANGUAGES CXX)
 include(GNUInstallDirs)
 
 if(SKBUILD AND UNIX)
@@ -49,84 +49,87 @@ find_package(LAPACK REQUIRED)
 
 feature_summary(WHAT ALL)
 
-if(WIN32)
-  # Windows requires all symbols to be manually exported.
-  # This flag exports all symbols automatically, as in Unix.
-  set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS TRUE)
-endif()
-
 # Source files
 add_library(basix)
+
+# Windows requires all symbols to be manually exported; this exports them
+# automatically as on Unix. No-op on other platforms.
+set_target_properties(basix PROPERTIES WINDOWS_EXPORT_ALL_SYMBOLS TRUE)
 
 # Set the C++ standard
 target_compile_features(basix PUBLIC cxx_std_20)
 
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/basix/version.h.in basix/version.h)
-target_include_directories(basix PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
 
 set(
   HEADERS_basix
-  ${CMAKE_CURRENT_SOURCE_DIR}/basix/cell.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/basix/dof-transformations.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/basix/element-families.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/basix/finite-element.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/basix/indexing.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/basix/interpolation.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/basix/lattice.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/basix/maps.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/basix/math.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/basix/moments.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/basix/polynomials.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/basix/polyset.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/basix/precompute.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/basix/quadrature.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/basix/sobolev-spaces.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/basix/e-lagrange.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/basix/e-nce-rtc.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/basix/e-brezzi-douglas-marini.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/basix/e-nedelec.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/basix/e-raviart-thomas.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/basix/e-regge.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/basix/e-hhj.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/basix/e-crouzeix-raviart.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/basix/e-bubble.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/basix/e-serendipity.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/basix/e-hermite.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/basix/mdspan.hpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/basix/types.h
+  basix/cell.h
+  basix/dof-transformations.h
+  basix/element-families.h
+  basix/finite-element.h
+  basix/indexing.h
+  basix/interpolation.h
+  basix/lattice.h
+  basix/maps.h
+  basix/math.h
+  basix/moments.h
+  basix/polynomials.h
+  basix/polyset.h
+  basix/precompute.h
+  basix/quadrature.h
+  basix/sobolev-spaces.h
+  basix/e-lagrange.h
+  basix/e-nce-rtc.h
+  basix/e-brezzi-douglas-marini.h
+  basix/e-nedelec.h
+  basix/e-raviart-thomas.h
+  basix/e-regge.h
+  basix/e-hhj.h
+  basix/e-crouzeix-raviart.h
+  basix/e-bubble.h
+  basix/e-serendipity.h
+  basix/e-hermite.h
+  basix/mdspan.hpp
+  basix/types.h
   ${CMAKE_CURRENT_BINARY_DIR}/basix/version.h
 )
 
 target_sources(
   basix
   PRIVATE
-    ${CMAKE_CURRENT_SOURCE_DIR}/basix/cell.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/basix/dof-transformations.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/basix/finite-element.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/basix/interpolation.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/basix/lattice.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/basix/moments.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/basix/polynomials.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/basix/polyset.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/basix/precompute.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/basix/quadrature.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/basix/sobolev-spaces.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/basix/e-lagrange.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/basix/e-nce-rtc.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/basix/e-brezzi-douglas-marini.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/basix/e-nedelec.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/basix/e-raviart-thomas.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/basix/e-regge.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/basix/e-hhj.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/basix/e-crouzeix-raviart.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/basix/e-bubble.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/basix/e-hermite.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/basix/e-serendipity.cpp
+    basix/cell.cpp
+    basix/dof-transformations.cpp
+    basix/finite-element.cpp
+    basix/interpolation.cpp
+    basix/lattice.cpp
+    basix/moments.cpp
+    basix/polynomials.cpp
+    basix/polyset.cpp
+    basix/precompute.cpp
+    basix/quadrature.cpp
+    basix/sobolev-spaces.cpp
+    basix/e-lagrange.cpp
+    basix/e-nce-rtc.cpp
+    basix/e-brezzi-douglas-marini.cpp
+    basix/e-nedelec.cpp
+    basix/e-raviart-thomas.cpp
+    basix/e-regge.cpp
+    basix/e-hhj.cpp
+    basix/e-crouzeix-raviart.cpp
+    basix/e-bubble.cpp
+    basix/e-hermite.cpp
+    basix/e-serendipity.cpp
 )
 
 # Configure the library
-set_target_properties(basix PROPERTIES PUBLIC_HEADER basix/finite-element.h)
-set_target_properties(basix PROPERTIES PRIVATE_HEADER "${HEADERS_basix}")
+set_target_properties(
+  basix
+  PROPERTIES
+    PUBLIC_HEADER basix/finite-element.h
+    PRIVATE_HEADER "${HEADERS_basix}"
+    VERSION ${PROJECT_VERSION}
+    SOVERSION ${PROJECT_VERSION_MAJOR}
+)
 
 if(ENABLE_CLANG_TIDY)
   find_program(CLANG_TIDY NAMES clang-tidy REQUIRED)
@@ -145,14 +148,17 @@ target_include_directories(
     "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR};${CMAKE_CURRENT_BINARY_DIR}>"
 )
 
-target_compile_definitions(basix PUBLIC MDSPAN_USE_PAREN_OPERATOR=1)
-target_compile_definitions(basix PUBLIC MDSPAN_USE_BRACKET_OPERATOR=0)
+target_compile_definitions(
+  basix PUBLIC MDSPAN_USE_PAREN_OPERATOR=1 MDSPAN_USE_BRACKET_OPERATOR=0
+)
 
-target_link_libraries(basix PRIVATE BLAS::BLAS)
-target_link_libraries(basix PRIVATE LAPACK::LAPACK)
+target_link_libraries(basix PRIVATE BLAS::BLAS LAPACK::LAPACK)
 
 # Check for some compiler flags
 include(CheckCXXCompilerFlag)
+
+set(BASIX_CXX_DEVELOPER_FLAGS "")
+set(BASIX_CXX_DEVELOPER_DEFINITIONS "")
 
 # Add some strict compiler checks
 check_cxx_compiler_flag(

@@ -136,7 +136,8 @@ target_compile_definitions(
 
 # TODO: remove after issue https://github.com/FEniCS/basix/issues/842 is resolved
 target_compile_definitions(
-  _basixcpp PRIVATE MDSPAN_USE_PAREN_OPERATOR=1 MDSPAN_USE_BRACKET_OPERATOR=0
+  _basixcpp
+  PRIVATE MDSPAN_USE_PAREN_OPERATOR=1 MDSPAN_USE_BRACKET_OPERATOR=0
 )
 
 if(BASIX_FULL_SKBUILD AND BASIX_SET_INSTALL_RPATH)

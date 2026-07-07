@@ -149,7 +149,8 @@ target_include_directories(
 )
 
 target_compile_definitions(
-  basix PUBLIC MDSPAN_USE_PAREN_OPERATOR=1 MDSPAN_USE_BRACKET_OPERATOR=0
+  basix
+  PUBLIC MDSPAN_USE_PAREN_OPERATOR=1 MDSPAN_USE_BRACKET_OPERATOR=0
 )
 
 target_link_libraries(basix PRIVATE BLAS::BLAS LAPACK::LAPACK)

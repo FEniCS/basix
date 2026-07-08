@@ -6,7 +6,7 @@
 """Functions for creating finite elements."""
 
 from collections.abc import Sequence
-from typing import TYPE_CHECKING, Generic, TypeVar, Self
+from typing import TYPE_CHECKING, Generic, Self, TypeVar
 from warnings import warn
 
 import numpy as np

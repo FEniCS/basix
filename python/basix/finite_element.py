@@ -6,7 +6,7 @@
 """Functions for creating finite elements."""
 
 from collections.abc import Sequence
-from typing import TYPE_CHECKING, Generic, TypeVar
+from typing import TYPE_CHECKING, Generic, TypeVar, Self
 from warnings import warn
 
 import numpy as np
@@ -298,7 +298,7 @@ class FiniteElement(Generic[T]):
         """
         return self._e.entity_transformations()
 
-    def get_tensor_product_representation(self) -> list[list["FiniteElement"]]:
+    def get_tensor_product_representation(self) -> list[list[Self]]:
         """Get the tensor product representation of this element.
 
         Raises an exception if no such factorisation exists.
@@ -315,7 +315,7 @@ class FiniteElement(Generic[T]):
             The tensor product representation
         """
         factors = self._e.get_tensor_product_representation()
-        return [[FiniteElement(e) for e in elements] for elements in factors]
+        return [[type(self)(e) for e in elements] for elements in factors]
 
     def permute_subentity_closure(
         self,

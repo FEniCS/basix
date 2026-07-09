@@ -200,7 +200,7 @@ class _ElementBase(_AbstractFiniteElement):
 
     # Basix specific functions
     @_abstractmethod
-    def tabulate(self, nderivs: int, points: _npt.NDArray[np.floating]) -> _npt.ArrayLike:
+    def tabulate(self, nderivs: int, points: _npt.NDArray[np.floating]) -> _npt.NDArray[np.floating]:
         """Tabulate the basis functions of the element.
 
         Args:

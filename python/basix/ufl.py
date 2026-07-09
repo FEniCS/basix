@@ -200,7 +200,9 @@ class _ElementBase(_AbstractFiniteElement):
 
     # Basix specific functions
     @_abstractmethod
-    def tabulate(self, nderivs: int, points: _npt.NDArray[np.floating]) -> _npt.NDArray[np.floating]:
+    def tabulate(
+        self, nderivs: int, points: _npt.NDArray[np.floating]
+    ) -> _npt.NDArray[np.floating]:
         """Tabulate the basis functions of the element.
 
         Args:
@@ -453,7 +455,9 @@ class _BasixElement(_ElementBase):
     def basix_hash(self) -> int | None:
         return self._element.hash()
 
-    def tabulate(self, nderivs: int, points: _npt.NDArray[np.floating]) -> _npt.NDArray[np.floating]:
+    def tabulate(
+        self, nderivs: int, points: _npt.NDArray[np.floating]
+    ) -> _npt.NDArray[np.floating]:
         tab = self._element.tabulate(nderivs, points)
         # TODO: update FFCx to remove the need for transposing here
         return tab.transpose((0, 1, 3, 2)).reshape((tab.shape[0], tab.shape[1], -1))  # type: ignore

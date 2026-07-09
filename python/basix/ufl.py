@@ -605,7 +605,7 @@ class _ComponentElement(_ElementBase):
     def __hash__(self) -> int:
         return super().__hash__()
 
-    def tabulate(self, nderivs: int, points: _npt.NDArray[np.floating]) -> _npt.ArrayLike:
+    def tabulate(self, nderivs: int, points: _npt.NDArray[np.floating]) -> _npt.NDArray[np.float64]:
         tables = self._element.tabulate(nderivs, points)
         output = []
         for tbl in tables:  # type: ignore
@@ -773,7 +773,7 @@ class _MixedElement(_ElementBase):
     def degree(self) -> int:
         return max((e.degree for e in self._sub_elements), default=-1)
 
-    def tabulate(self, nderivs: int, points: _npt.NDArray[np.floating]) -> _npt.ArrayLike:
+    def tabulate(self, nderivs: int, points: _npt.NDArray[np.floating]) -> _npt.NDArray[np.float64]:
         tables = []
         results = [e.tabulate(nderivs, points) for e in self._sub_elements]
         for deriv_tables in zip(*results):
@@ -1044,7 +1044,7 @@ class _BlockedElement(_ElementBase):
     def is_real(self) -> bool:
         return self._sub_element.is_real
 
-    def tabulate(self, nderivs: int, points: _npt.NDArray[np.floating]) -> _npt.ArrayLike:
+    def tabulate(self, nderivs: int, points: _npt.NDArray[np.floating]) -> _npt.NDArray[np.float64]:
         assert len(self._block_shape) == 1  # TODO: block shape
         assert self.reference_value_size == self._block_size  # TODO: remove this assumption
         output = []
@@ -1281,7 +1281,9 @@ class _QuadratureElement(_ElementBase):
     def __hash__(self) -> int:
         return super().__hash__()
 
-    def tabulate(self, nderivs: int, points: _npt.NDArray[np.floating]) -> _npt.ArrayLike:
+    def tabulate(
+        self, nderivs: int, points: _npt.NDArray[np.floating]
+    ) -> _npt.NDArray[np.floating]:
         if nderivs > 0:
             raise ValueError("Cannot take derivatives of Quadrature element.")
 
@@ -1424,7 +1426,9 @@ class _RealElement(_ElementBase):
     def dtype(self) -> _npt.DTypeLike:
         raise NotImplementedError()
 
-    def tabulate(self, nderivs: int, points: _npt.NDArray[np.floating]) -> _npt.ArrayLike:
+    def tabulate(
+        self, nderivs: int, points: _npt.NDArray[np.floating]
+    ) -> _npt.NDArray[np.floating]:
         out = np.zeros((nderivs + 1, len(points), self.reference_value_size**2))
         for v in range(self.reference_value_size):
             out[0, :, self.reference_value_size * v + v] = 1.0
@@ -1578,7 +1582,7 @@ def element(
     symmetry: bool | None = None,
     dof_ordering: list[int] | None = None,
     dtype: _npt.DTypeLike | None = None,
-) -> _BasixElement:
+) -> _BasixElement | _BlockedElement:
     """Create a UFL compatible element using Basix.
 
     Args:
@@ -1919,7 +1923,7 @@ def blocked_element(
     sub_element: _ElementBase,
     shape: tuple[int, ...],
     symmetry: bool | None = None,
-) -> _ElementBase:
+) -> _BlockedElement:
     """Create a UFL compatible blocked element.
 
     Args:

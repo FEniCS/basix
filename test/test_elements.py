@@ -207,7 +207,7 @@ def test_hash():
     ]
     e5 = basix.create_custom_element(
         basix.CellType.triangle,
-        [],
+        (),
         wcoeffs,
         x,
         M,

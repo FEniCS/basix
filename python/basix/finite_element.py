@@ -5,7 +5,8 @@
 # SPDX-License-Identifier:    MIT
 """Functions for creating finite elements."""
 
-from typing import TYPE_CHECKING, Self
+from collections.abc import Sequence
+from typing import TYPE_CHECKING, Generic, Self, TypeVar
 from warnings import warn
 
 import numpy as np
@@ -43,8 +44,10 @@ __all__ = [
     "tp_factors",
 ]
 
+T = TypeVar("T", np.float32, np.float64)
 
-class FiniteElement:
+
+class FiniteElement(Generic[T]):
     """Finite element class."""
 
     _e: _FiniteElement_float32 | _FiniteElement_float64
@@ -57,7 +60,7 @@ class FiniteElement:
         """
         self._e = e
 
-    def tabulate(self, n: int, x: npt.NDArray) -> npt.ArrayLike:
+    def tabulate(self, n: int, x: npt.NDArray[T]) -> npt.NDArray[T]:
         """Compute basis values and derivatives at set of points.
 
         Note:
@@ -89,7 +92,7 @@ class FiniteElement:
             * The third index is the basis function index one for scalar
                 basis functions.
         """
-        return self._e.tabulate(n, x)
+        return self._e.tabulate(n, x)  # type: ignore
 
     def __eq__(self, other) -> bool:
         """Test element for equality."""
@@ -106,7 +109,7 @@ class FiniteElement:
         """Hash."""
         return self.hash()
 
-    def push_forward(self, U, J, detJ, K) -> npt.ArrayLike:
+    def push_forward(self, U, J, detJ, K) -> npt.NDArray[T]:
         """Map function values from the reference to a physical cell.
 
         This function can perform the mapping for multiple points,
@@ -126,11 +129,11 @@ class FiniteElement:
             The function values on the cell. The indices are ``(Jacobian
             index, point index, components)``.
         """
-        return self._e.push_forward(U, J, detJ, K)
+        return self._e.push_forward(U, J, detJ, K)  # type: ignore
 
     def pull_back(
         self, u: npt.NDArray, J: npt.NDArray, detJ: npt.NDArray, K: npt.NDArray
-    ) -> npt.ArrayLike:
+    ) -> npt.NDArray[T]:
         """Map function values from a physical cell to the reference.
 
         Args:
@@ -143,7 +146,7 @@ class FiniteElement:
             The function values on the reference. The indices are
             ``(Jacobian index, point index, components``).
         """
-        return self._e.pull_back(u, J, detJ, K)
+        return self._e.pull_back(u, J, detJ, K)  # type: ignore
 
     def T_apply(self, data, block_size, cell_info) -> None:
         """Apply DOF transformations to some data in-place.
@@ -188,7 +191,7 @@ class FiniteElement:
         """
         self._e.Tt_inv_apply(data, block_size, cell_info)
 
-    def base_transformations(self) -> npt.ArrayLike:
+    def base_transformations(self) -> npt.NDArray[T]:
         r"""Get the base transformations.
 
         The base transformations represent the effect of rotating or
@@ -284,7 +287,7 @@ class FiniteElement:
             The base transformations for this element. The shape is
             ``(ntranformations, ndofs, ndofs)``.
         """
-        return self._e.base_transformations()
+        return self._e.base_transformations()  # type: ignore
 
     def entity_transformations(self) -> dict:
         """Entity dof transformation matrices.
@@ -320,7 +323,7 @@ class FiniteElement:
         cell_or_entity_info: int,
         entity_type: CellType,
         entity_index: int | None = None,
-    ) -> npt.NDArray:
+    ) -> npt.NDArray[T]:
         """Permute DOF indices on the closure of a sub-entity.
 
         Args:
@@ -347,7 +350,7 @@ class FiniteElement:
         cell_or_entity_info: int,
         entity_type: CellType,
         entity_index: int | None = None,
-    ) -> npt.NDArray:
+    ) -> npt.NDArray[T]:
         """Apply inverse permutation to DOF indices on the closure of a sub-entity.
 
         Args:
@@ -509,62 +512,62 @@ class FiniteElement:
         return self._e.sobolev_space
 
     @property
-    def points(self) -> npt.ArrayLike:
+    def points(self) -> npt.NDArray[T]:
         """Interpolation points.
 
         Coordinates on the reference element where a function need to be
         evaluated in order to interpolate it in the finite element
         space. Shape is ``(num_points, tdim)``.
         """
-        return self._e.points
+        return self._e.points  # type: ignore
 
     @property
-    def interpolation_matrix(self) -> npt.ArrayLike:
+    def interpolation_matrix(self) -> npt.NDArray[T]:
         """Interpolation points.
 
         Coordinates on the reference element where a function need to be
         evaluated in order to interpolate it in the finite element
         space.
         """
-        return self._e.interpolation_matrix
+        return self._e.interpolation_matrix  # type: ignore
 
     @property
-    def dual_matrix(self) -> npt.ArrayLike:
+    def dual_matrix(self) -> npt.NDArray[T]:
         """Matrix $BD^{T}$.
 
         See C++ documentation.
         """
-        return self._e.dual_matrix
+        return self._e.dual_matrix  # type: ignore
 
     @property
-    def coefficient_matrix(self) -> npt.ArrayLike:
+    def coefficient_matrix(self) -> npt.NDArray[T]:
         """Matrix of coefficients."""
-        return self._e.coefficient_matrix
+        return self._e.coefficient_matrix  # type: ignore
 
     @property
-    def wcoeffs(self) -> npt.ArrayLike:
+    def wcoeffs(self) -> npt.NDArray[T]:
         """Coefficients that define the polynomial set in terms of the orthonormal polynomials.
 
         See C++ documentation for details.
         """
-        return self._e.wcoeffs
+        return self._e.wcoeffs  # type: ignore
 
     @property
-    def M(self) -> list[list[npt.NDArray]]:
+    def M(self) -> list[list[npt.NDArray[T]]]:
         """Interpolation matrices for each sub-entity.
 
         See C++ documentation for details.
         """
-        return self._e.M
+        return self._e.M  # type: ignore
 
     @property
-    def x(self) -> list[list[npt.NDArray]]:
+    def x(self) -> list[list[npt.NDArray[T]]]:
         """Interpolation points for each sub-entity.
 
         The indices of this data are ``(tdim, entity index, point index,
         dim)``.
         """
-        return self._e.x
+        return self._e.x  # type: ignore
 
     @property
     def has_tensor_product_factorisation(self) -> bool:
@@ -631,10 +634,10 @@ def create_element(
 
 def create_custom_element(
     cell_type: CellType,
-    value_shape: tuple[int, ...],
-    wcoeffs: npt.NDArray[np.floating],
-    x: list[list[npt.NDArray[np.floating]]],
-    M: list[list[npt.NDArray[np.floating]]],
+    value_shape: Sequence[int],
+    wcoeffs: npt.NDArray[T],
+    x: list[list[npt.NDArray[T]]],
+    M: list[list[npt.NDArray[T]]],
     interpolation_nderivs: int,
     map_type: "MapType",
     sobolev_space: SobolevSpace,
@@ -643,7 +646,7 @@ def create_custom_element(
     embedded_superdegree: int,
     poly_type: PolysetType,
     dtype: npt.DTypeLike | None = np.float64,
-) -> FiniteElement:
+) -> FiniteElement[T]:
     """Create a custom finite element.
 
     Args:
@@ -717,10 +720,10 @@ def create_custom_element(
     return FiniteElement(
         _create_custom_element(
             cell_type,
-            value_shape,
-            wcoeffs,
-            x,
-            M,
+            tuple(value_shape),
+            wcoeffs,  # type: ignore
+            x,  # type: ignore
+            M,  # type: ignore
             interpolation_nderivs,
             map_type,
             sobolev_space,

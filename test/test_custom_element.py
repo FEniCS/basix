@@ -31,7 +31,7 @@ def test_lagrange_custom_triangle_degree1():
     lagrange = basix.create_element(basix.ElementFamily.P, CellType.triangle, 1)
     element = basix.create_custom_element(
         CellType.triangle,
-        [],
+        (),
         wcoeffs,
         x,
         M,
@@ -65,7 +65,7 @@ def test_lagrange_custom_triangle_degree1_l2piola():
     lagrange = basix.create_element(basix.ElementFamily.P, CellType.triangle, 1)
     element = basix.create_custom_element(
         CellType.triangle,
-        [],
+        (),
         wcoeffs,
         x,
         M,
@@ -108,7 +108,7 @@ def test_lagrange_custom_triangle_degree4():
     )
     element = basix.create_custom_element(
         CellType.triangle,
-        [],
+        (),
         wcoeffs,
         x,
         M,
@@ -157,7 +157,7 @@ def test_lagrange_custom_quadrilateral_degree1():
     lagrange = basix.create_element(basix.ElementFamily.P, CellType.quadrilateral, 1)
     element = basix.create_custom_element(
         CellType.quadrilateral,
-        [],
+        (),
         wcoeffs,
         x,
         M,
@@ -212,7 +212,7 @@ def test_raviart_thomas_triangle_degree1():
 
     element = basix.create_custom_element(
         CellType.triangle,
-        [2],
+        (2,),
         wcoeffs,
         x,
         M,
@@ -562,7 +562,7 @@ def test_point_outside_cell_gives_warning(dim, component):
     with pytest.warns(UserWarning):
         basix.create_custom_element(
             CellType.tetrahedron,
-            [],
+            (),
             wcoeffs,
             x,
             M,

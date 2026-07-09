@@ -1,0 +1,14 @@
+# pkg-config configuration for Basix
+prefix=@CMAKE_INSTALL_PREFIX@
+exec_prefix=@CMAKE_INSTALL_PREFIX@
+libdir=${exec_prefix}/@CMAKE_INSTALL_LIBDIR@
+includedir=${prefix}/@CMAKE_INSTALL_INCLUDEDIR@
+compiler=@CMAKE_CXX_COMPILER@
+definitions=@PKG_DEFINITIONS@
+
+Name: Basix
+Description: Finite element tabulation library
+Version: @PROJECT_VERSION@
+Conflicts:
+Libs: -L${libdir} -lbasix
+Cflags: @PKG_CXXFLAGS@ ${definitions} -I${includedir}

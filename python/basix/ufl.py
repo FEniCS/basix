@@ -1574,7 +1574,7 @@ def element(
     symmetry: bool | None = None,
     dof_ordering: list[int] | None = None,
     dtype: _npt.DTypeLike | None = None,
-) -> _ElementBase:
+) -> _BasixElement:
     """Create a UFL compatible element using Basix.
 
     Args:

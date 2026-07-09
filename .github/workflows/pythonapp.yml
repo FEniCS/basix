@@ -209,6 +209,10 @@ jobs:
           cmake -G Ninja -DCMAKE_BUILD_TYPE=Developer -B build-dir -S cpp
           cmake --build build-dir
           sudo cmake --install build-dir
+      - name: Run pkg-config integration test
+        run: |
+          cd test/test_pkgconfig
+          make run
       - name: Set up Python
         uses: actions/setup-python@v6
         with:

@@ -23,10 +23,10 @@ documentation = "https://docs.fenicsproject.org"
 
 [project.optional-dependencies]
 docs = ["markdown", "pylit3", "pyyaml", "sphinx", "pydata-sphinx-theme"]
-lint = ["ruff"]
-optional = ["numba", "fenics-ufl@git+https://github.com/fenics/ufl"]
+lint = ["ruff", "gersemi"]
+# llvmlite (numba) is not built for x86_64 on macOS or arm64 on Windows.
+optional = ["numba; (sys_platform != 'darwin' or platform_machine != 'x86_64') and (sys_platform != 'win32' or platform_machine != 'ARM64')", "fenics-ufl@git+https://github.com/fenics/ufl"]
 test = ["pytest", "sympy", "scipy", "matplotlib", "fenics-basix[optional]"]
-test-no-numba = ["pytest", "sympy", "scipy", "matplotlib", "fenics-ufl@git+https://github.com/fenics/ufl"]
 ci = ["mypy", "pytest-xdist", "fenics-basix[docs,lint,test,optional]"]
 
 [tool.mypy]
@@ -34,3 +34,7 @@ ignore_missing_imports = true
 
 [tool.scikit-build]
 wheel.packages = ["basix"]
+
+[tool.scikit-build.cmake.define]
+# Set to FALSE to disable all install RPATH adjustments
+BASIX_SET_INSTALL_RPATH = "TRUE"

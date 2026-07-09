@@ -23,10 +23,10 @@ documentation = "https://docs.fenicsproject.org"
 
 [project.optional-dependencies]
 docs = ["markdown", "pylit3", "pyyaml", "sphinx", "pydata-sphinx-theme"]
-lint = ["ruff"]
-optional = ["numba", "fenics-ufl@git+https://github.com/fenics/ufl"]
+lint = ["ruff", "gersemi"]
+# llvmlite (numba) is not built for x86_64 on macOS or arm64 on Windows - advanced users can install manually.
+optional = ["numba; (sys_platform != 'darwin' or platform_machine != 'x86_64') and (sys_platform != 'win32' or platform_machine != 'ARM64')", "fenics-ufl@git+https://github.com/fenics/ufl"]
 test = ["pytest", "sympy", "scipy", "matplotlib", "fenics-basix[optional]"]
-test-no-numba = ["pytest", "sympy", "scipy", "matplotlib", "fenics-ufl@git+https://github.com/fenics/ufl"]
 ci = ["mypy", "pytest-xdist", "fenics-basix[docs,lint,test,optional]"]
 
 [tool.pytest.ini_options]
@@ -34,6 +34,10 @@ testpaths = ["test"]
 
 [tool.scikit-build]
 wheel.packages = ["python/basix"]
+
+[tool.scikit-build.cmake.define]
+# Set to FALSE to disable install RPATH adjustments
+BASIX_SET_INSTALL_RPATH = "TRUE"
 
 [tool.cibuildwheel]
 build-frontend = { name = "build", args = [
@@ -75,11 +79,6 @@ environment = { "MACOSX_DEPLOYMENT_TARGET" = "10.14" }
 archs = [
     "native",
 ]
-
-# llvmlite (numba) is not built for x86_64 on macOS or arm64 on Windows.
-[[tool.cibuildwheel.overrides]]
-select = ["*-macosx_x86_64", "*-win_arm64"]
-test-extras = ["test-no-numba"]
 
 [tool.mypy]
 ignore_missing_imports = true

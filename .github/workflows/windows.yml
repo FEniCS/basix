@@ -41,14 +41,7 @@ jobs:
             setapikey "${{ secrets.GITHUB_TOKEN }}" `
             -Source "${{ env.FEED_URL }}"
 
-      - uses: actions/checkout@v6
-
-      - name: Export GitHub Actions cache environment variables
-        uses: actions/github-script@v9
-        with:
-          script: |
-            core.exportVariable('ACTIONS_CACHE_URL', process.env.ACTIONS_CACHE_URL || '');
-            core.exportVariable('ACTIONS_RUNTIME_TOKEN', process.env.ACTIONS_RUNTIME_TOKEN || '');
+      - uses: actions/checkout@v7
 
       - name: Set up Python
         uses: actions/setup-python@v6
@@ -58,7 +51,7 @@ jobs:
       - name: Set up CMake
         uses: lukka/get-cmake@latest
         with:
-          cmakeVersion: "~3.30.0"
+          cmakeVersion: "latest"
 
       - name: Install Basix (combined)
         run: |
@@ -77,7 +70,7 @@ jobs:
     env:
       VCPKG_BINARY_SOURCES: "clear;x-gha,readwrite"
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: Insert add_dll_directory calls
         working-directory: python/basix
@@ -100,7 +93,7 @@ jobs:
       - name: Set up CMake
         uses: lukka/get-cmake@latest
         with:
-          cmakeVersion: "~3.30.0"
+          cmakeVersion: "latest"
 
       - name: Install Basix (C++)
         run: |

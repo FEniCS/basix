@@ -5,7 +5,7 @@
 # SPDX-License-Identifier:    MIT
 """Functions for creating finite elements."""
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Self
 from warnings import warn
 
 import numpy as np
@@ -295,7 +295,7 @@ class FiniteElement:
         """
         return self._e.entity_transformations()
 
-    def get_tensor_product_representation(self) -> list[list["FiniteElement"]]:
+    def get_tensor_product_representation(self) -> list[list[Self]]:
         """Get the tensor product representation of this element.
 
         Raises an exception if no such factorisation exists.
@@ -312,7 +312,7 @@ class FiniteElement:
             The tensor product representation
         """
         factors = self._e.get_tensor_product_representation()
-        return [[FiniteElement(e) for e in elements] for elements in factors]
+        return [[type(self)(e) for e in elements] for elements in factors]
 
     def permute_subentity_closure(
         self,

@@ -43,7 +43,7 @@ jobs:
         os: [ubuntu-latest, ubuntu-24.04-arm, macos-26, macos-26-intel, windows-11-arm, windows-2025]
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           ref: ${{ github.event.inputs.basix_ref }}
 
@@ -60,7 +60,7 @@ jobs:
     name: Build source distribution
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           ref: ${{ github.event.inputs.basix_ref }}
 

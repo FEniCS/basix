@@ -1657,7 +1657,7 @@ std::vector<int> lex_dof_ordering(element::family family, cell::type cell,
 /// between cells points of the element. The discontinuous element will have the
 /// same DOFs, but they will all be associated with the interior of the cell.
 /// @param[in] dof_ordering The ordering of the DOFs
-/// @return An optioanl list of lists of finite element factors if family has
+/// @return An optional list of lists of finite element factors if family has
 /// tensor structure
 template <std::floating_point T>
 std::optional<std::vector<std::vector<FiniteElement<T>>>>

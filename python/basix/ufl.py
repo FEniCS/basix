@@ -721,7 +721,7 @@ class _MixedElement(_ElementBase):
     """A mixed element that combines two or more elements.
 
     This can be used when multiple different elements appear in a form.
-    Users should not directly call this class's initilizer, but should
+    Users should not directly call this class's initializer, but should
     use the :func:`mixed_element` function instead.
     """
 
@@ -948,7 +948,7 @@ class _BlockedElement(_ElementBase):
     """Element with a block size that contains multiple copies of a sub element.
 
     This can be used to (for example) create vector and tensor Lagrange
-    elements. Users should not directly call this classes initilizer,
+    elements. Users should not directly call this class's initializer,
     but should use the `blocked_element` function instead.
 
     """

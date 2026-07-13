@@ -12,7 +12,7 @@ Basix allows users to:
 - access geometric and topological information about reference cells;
 - apply push forward and pull back operations to map data between a
   reference cell and a physical cell;
-- permute and transform DOFs to allow higher-order elements to be use on
+- permute and transform DOFs to allow higher-order elements to be used on
   arbitrary meshes; and
 - interpolate into and between finite element spaces.
 

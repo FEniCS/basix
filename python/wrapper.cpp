@@ -105,7 +105,8 @@ void declare_float(nb::module_& m, const std::string& type)
            {
              std::span<std::int32_t> _d(d.data(), d.shape(0));
              self.permute_subentity_closure(_d, entity_info, entity_type);
-           })
+           },
+           "d"_a.noconvert(), "entity_info"_a, "entity_type"_a)
       .def("permute_subentity_closure",
            [](const FiniteElement<T>& self,
               const nb::ndarray<std::int32_t, nb::ndim<1>, nb::c_contig>& d,
@@ -113,7 +114,8 @@ void declare_float(nb::module_& m, const std::string& type)
            {
              std::span<std::int32_t> _d(d.data(), d.shape(0));
              self.permute_subentity_closure(_d, cell_info, entity_type, entity_index);
-           })
+           },
+           "d"_a.noconvert(), "cell_info"_a, "entity_type"_a, "entity_index"_a)
       .def("permute_subentity_closure_inv",
            [](const FiniteElement<T>& self,
               const nb::ndarray<std::int32_t, nb::ndim<1>, nb::c_contig>& d,
@@ -121,7 +123,8 @@ void declare_float(nb::module_& m, const std::string& type)
            {
              std::span<std::int32_t> _d(d.data(), d.shape(0));
              self.permute_subentity_closure_inv(_d, entity_info, entity_type);
-           })
+           },
+           "d"_a.noconvert(), "entity_info"_a, "entity_type"_a)
       .def("permute_subentity_closure_inv",
            [](const FiniteElement<T>& self,
               const nb::ndarray<std::int32_t, nb::ndim<1>, nb::c_contig>& d,
@@ -129,7 +132,8 @@ void declare_float(nb::module_& m, const std::string& type)
            {
              std::span<std::int32_t> _d(d.data(), d.shape(0));
              self.permute_subentity_closure_inv(_d, cell_info, entity_type, entity_index);
-           })
+           },
+           "d"_a.noconvert(), "cell_info"_a, "entity_type"_a, "entity_index"_a)
       .def("push_forward",
            [](const FiniteElement<T>& self,
               nb::ndarray<const T, nb::ndim<3>, nb::c_contig> U,
@@ -167,18 +171,21 @@ void declare_float(nb::module_& m, const std::string& type)
       .def("T_apply", [](const FiniteElement<T>& self,
                          nb::ndarray<T, nb::ndim<1>, nb::c_contig> u, int n,
                          std::uint32_t cell_info)
-           { self.T_apply(std::span(u.data(), u.size()), n, cell_info); })
+           { self.T_apply(std::span(u.data(), u.size()), n, cell_info); },
+           "u"_a.noconvert(), "n"_a, "cell_info"_a)
       .def("Tt_apply_right",
            [](const FiniteElement<T>& self,
               nb::ndarray<T, nb::ndim<1>, nb::c_contig> u, int n,
               std::uint32_t cell_info) {
              self.Tt_apply_right(std::span(u.data(), u.size()), n,
                                 cell_info);
-           })
+           },
+           "u"_a.noconvert(), "n"_a, "cell_info"_a)
       .def("Tt_inv_apply", [](const FiniteElement<T>& self,
                               nb::ndarray<T, nb::ndim<1>, nb::c_contig> u,
                               int n, std::uint32_t cell_info)
-           { self.Tt_inv_apply(std::span(u.data(), u.size()), n, cell_info); })
+           { self.Tt_inv_apply(std::span(u.data(), u.size()), n, cell_info); },
+           "u"_a.noconvert(), "n"_a, "cell_info"_a)
       .def("base_transformations", [](const FiniteElement<T>& self)
            { return as_nbarrayp(self.base_transformations()); })
       .def("entity_transformations",

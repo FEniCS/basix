@@ -88,9 +88,9 @@ def test_lagrange_custom_triangle_degree4():
     x = [
         [np.array([[0.0, 0.0]]), np.array([[1.0, 0.0]]), np.array([[0.0, 1.0]])],
         [
-            np.array([[0.75, 0.25], [0.5, 0.5], [0.25, 0.75]]),
-            np.array([[0.0, 0.25], [0.0, 0.5], [0.0, 0.75]]),
             np.array([[0.25, 0.0], [0.5, 0.0], [0.75, 0.0]]),
+            np.array([[0.0, 0.25], [0.0, 0.5], [0.0, 0.75]]),
+            np.array([[0.75, 0.25], [0.5, 0.5], [0.25, 0.75]]),
         ],
         [np.array([[0.25, 0.25], [0.5, 0.25], [0.25, 0.5]])],
         [],
@@ -195,15 +195,15 @@ def test_raviart_thomas_triangle_degree1():
     x = [[], [], [], []]
     for _ in range(3):
         x[0].append(np.zeros((0, 2)))
-    x[1].append(np.array([[1 - p[0], p[0]] for p in pts]))
-    x[1].append(np.array([[0, p[0]] for p in pts]))
     x[1].append(np.array([[p[0], 0] for p in pts]))
+    x[1].append(np.array([[0, p[0]] for p in pts]))
+    x[1].append(np.array([[1 - p[0], p[0]] for p in pts]))
     x[2].append(np.zeros((0, 2)))
 
     M = [[], [], [], []]
     for _ in range(3):
         M[0].append(np.zeros((0, 2, 0, 1)))
-    for normal in [[-1, -1], [-1, 0], [0, 1]]:
+    for normal in [[0, 1], [-1, 0], [-1, -1]]:
         mat = np.empty((1, 2, len(wts), 1))
         mat[0, 0, :, 0] = normal[0] * wts
         mat[0, 1, :, 0] = normal[1] * wts

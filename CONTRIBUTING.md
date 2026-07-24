@@ -17,7 +17,7 @@ to see where (if anywhere) the tests are failing.
 
 The GitHub Actions runs include `ruff` formatting and checking. Before opening a PR, you can
 run `ruff format` locally to reformat your code and `ruff check` to locally check for code
-suggestion that the CI run will pick up on.
+suggestions that the CI run will pick up on.
 
 ### Code of conduct
 We expect all our contributors to follow the [code of conduct](CODE_OF_CONDUCT.md). Any unacceptable

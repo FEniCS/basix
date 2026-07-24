@@ -244,7 +244,7 @@ int nderivs(cell::type cell, int d);
 /// given cell.
 /// @param[in] cell Cell type
 /// @param[in] type1 First polyset type
-/// @param[in] type2 Decond polyset type
+/// @param[in] type2 Second polyset type
 /// @return Superset type
 polyset::type superset(cell::type cell, polyset::type type1,
                        polyset::type type2);

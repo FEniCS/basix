@@ -269,3 +269,27 @@ install(
   NAMESPACE Basix::
   DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/basix
 )
+
+# Configure and install pkg-config file
+get_target_property(PKG_BASIX_DEFINITIONS basix INTERFACE_COMPILE_DEFINITIONS)
+set(PKG_DEFINITIONS)
+foreach(_def ${PKG_BASIX_DEFINITIONS})
+  set(PKG_DEFINITIONS "${PKG_DEFINITIONS} -D${_def}")
+endforeach()
+
+string(REPLACE ";" " " PKG_CXXFLAGS "${CMAKE_CXX_FLAGS}")
+get_target_property(_cxx_standard basix CXX_STANDARD)
+if(_cxx_standard)
+  string(APPEND PKG_CXXFLAGS " -std=c++${_cxx_standard}")
+endif()
+
+configure_file(
+  ${CMAKE_CURRENT_SOURCE_DIR}/basix.pc.in
+  ${CMAKE_CURRENT_BINARY_DIR}/basix.pc
+  @ONLY
+)
+install(
+  FILES ${CMAKE_CURRENT_BINARY_DIR}/basix.pc
+  DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig
+  COMPONENT Development
+)

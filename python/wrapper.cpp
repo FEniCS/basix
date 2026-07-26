@@ -184,9 +184,16 @@ void declare_float(nb::module_& m, const std::string& type)
       .def("entity_transformations",
            [](const FiniteElement<T>& self)
            {
+             // entity_transformations() now returns a const reference to
+             // internal storage (previously a by-value copy of the whole
+             // map), so each matrix must be copied here rather than moved.
              nb::dict t;
-             for (auto& [key, data] : self.entity_transformations())
-               t[cell_type_to_str(key).c_str()] = as_nbarrayp(std::move(data));
+             for (const auto& [key, data] : self.entity_transformations())
+             {
+               t[cell_type_to_str(key).c_str()] = as_nbarrayp(
+                   std::pair<std::vector<T>, std::array<std::size_t, 3>>(
+                       data));
+             }
              return t;
            })
       .def("get_tensor_product_representation", [](const FiniteElement<T>& self)

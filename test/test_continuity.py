@@ -8,6 +8,8 @@ import pytest
 import basix
 from basix import ElementFamily
 
+from .utils import cached_create_element
+
 elements = [
     (ElementFamily.P, [basix.LagrangeVariant.equispaced]),
     (ElementFamily.P, [basix.LagrangeVariant.gll_warped]),
@@ -61,7 +63,7 @@ def test_continuity_interval_facet(degree, element, variant):
     elements = {}
     for cell in [basix.CellType.triangle, basix.CellType.quadrilateral]:
         try:
-            elements[cell] = basix.create_element(element, cell, degree, *variant)
+            elements[cell] = cached_create_element(element, cell, degree, tuple(variant))
         except RuntimeError:
             pass
 
@@ -102,7 +104,7 @@ def test_continuity_triangle_facet(degree, element, variant):
     # , basix.CellType.pyramid]:
     for cell in [basix.CellType.tetrahedron, basix.CellType.prism]:
         try:
-            elements[cell] = basix.create_element(element, cell, degree, *variant)
+            elements[cell] = cached_create_element(element, cell, degree, tuple(variant))
         except RuntimeError:
             pass
 
@@ -154,7 +156,7 @@ def test_continuity_quadrilateral_facet(degree, element, variant):
     # , basix.CellType.pyramid]:
     for cell in [basix.CellType.hexahedron, basix.CellType.prism]:
         try:
-            elements[cell] = basix.create_element(element, cell, degree, *variant)
+            elements[cell] = cached_create_element(element, cell, degree, tuple(variant))
         except RuntimeError:
             pass
 

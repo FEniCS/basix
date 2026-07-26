@@ -9,12 +9,12 @@ import pytest
 
 import basix
 
-from .utils import parametrize_over_elements
+from .utils import cached_create_element, parametrize_over_elements
 
 
 @parametrize_over_elements(3)
 def test_if_permutations(cell_type, element_type, degree, element_args):
-    e = basix.create_element(element_type, cell_type, degree, *element_args)
+    e = cached_create_element(element_type, cell_type, degree, tuple(element_args))
     for t in e.base_transformations():
         for row in t:
             a = np.argmax(row)
@@ -30,7 +30,7 @@ def test_if_permutations(cell_type, element_type, degree, element_args):
 
 @parametrize_over_elements(3)
 def test_if_identity(cell_type, element_type, degree, element_args):
-    e = basix.create_element(element_type, cell_type, degree, *element_args)
+    e = cached_create_element(element_type, cell_type, degree, tuple(element_args))
     for t in e.base_transformations():
         if not np.allclose(t, np.eye(t.shape[0])):
             assert not e.dof_transformations_are_identity
@@ -40,26 +40,27 @@ def test_if_identity(cell_type, element_type, degree, element_args):
 
 @parametrize_over_elements(5)
 def test_non_zero(cell_type, element_type, degree, element_args):
-    e = basix.create_element(element_type, cell_type, degree, *element_args)
+    e = cached_create_element(element_type, cell_type, degree, tuple(element_args))
     for t in e.base_transformations():
-        for row in t:
-            assert max(abs(i) for i in row) > 1e-6
+        assert np.all(np.max(np.abs(t), axis=1) > 1e-6)
 
 
 @parametrize_over_elements(5)
 def test_apply_right(cell_type, element_type, degree, element_args):
     random.seed(42)
-    e = basix.create_element(element_type, cell_type, degree, *element_args)
+    e = cached_create_element(element_type, cell_type, degree, tuple(element_args))
     size = e.dim
+    base1 = np.arange(size * size, dtype=np.float32)
+    # This is the transpose of base1
+    base2 = base1.reshape(size, size).T.reshape(-1).copy()
     for i in range(10):
         cell_info = random.randrange(2**30)
 
-        data1 = np.array(list(range(size**2)), dtype=np.float32)
+        data1 = base1.copy()
         e.T_apply(data1, size, cell_info)
         data1 = data1.reshape((size, size))
 
-        # This is the transpose of the data used above
-        data2 = np.array([size * j + i for i in range(size) for j in range(size)], dtype=np.float32)
+        data2 = base2.copy()
         e.Tt_apply_right(data2, size, cell_info)
         data2 = data2.reshape((size, size))
 
@@ -68,13 +69,13 @@ def test_apply_right(cell_type, element_type, degree, element_args):
 
 @parametrize_over_elements(5, basix.CellType.interval)
 def test_interval_transformation_size(element_type, degree, element_args):
-    e = basix.create_element(element_type, basix.CellType.interval, degree, *element_args)
+    e = cached_create_element(element_type, basix.CellType.interval, degree, tuple(element_args))
     assert len(e.base_transformations()) == 0
 
 
 @parametrize_over_elements(5, basix.CellType.triangle)
 def test_triangle_transformation_degrees(element_type, degree, element_args):
-    e = basix.create_element(element_type, basix.CellType.triangle, degree, *element_args)
+    e = cached_create_element(element_type, basix.CellType.triangle, degree, tuple(element_args))
     bt = e.base_transformations()
     assert len(bt) == 3
     identity = np.identity(e.dim)
@@ -84,7 +85,7 @@ def test_triangle_transformation_degrees(element_type, degree, element_args):
 
 @parametrize_over_elements(5, basix.CellType.tetrahedron)
 def test_tetrahedron_transformation_degrees(element_type, degree, element_args):
-    e = basix.create_element(element_type, basix.CellType.tetrahedron, degree, *element_args)
+    e = cached_create_element(element_type, basix.CellType.tetrahedron, degree, tuple(element_args))
     bt = e.base_transformations()
     assert len(bt) == 14
     identity = np.identity(e.dim)
@@ -94,7 +95,9 @@ def test_tetrahedron_transformation_degrees(element_type, degree, element_args):
 
 @parametrize_over_elements(5, basix.CellType.quadrilateral)
 def test_quadrilateral_transformation_degrees(element_type, degree, element_args):
-    e = basix.create_element(element_type, basix.CellType.quadrilateral, degree, *element_args)
+    e = cached_create_element(
+        element_type, basix.CellType.quadrilateral, degree, tuple(element_args)
+    )
     bt = e.base_transformations()
     assert len(bt) == 4
     identity = np.identity(e.dim)
@@ -104,7 +107,7 @@ def test_quadrilateral_transformation_degrees(element_type, degree, element_args
 
 @parametrize_over_elements(5, basix.CellType.hexahedron)
 def test_hexahedron_transformation_degrees(element_type, degree, element_args):
-    e = basix.create_element(element_type, basix.CellType.hexahedron, degree, *element_args)
+    e = cached_create_element(element_type, basix.CellType.hexahedron, degree, tuple(element_args))
     bt = e.base_transformations()
     assert len(bt) == 24
     identity = np.identity(e.dim)
@@ -117,7 +120,7 @@ def test_hexahedron_transformation_degrees(element_type, degree, element_args):
 
 @parametrize_over_elements(5, basix.CellType.prism)
 def test_prism_transformation_degrees(element_type, degree, element_args):
-    e = basix.create_element(element_type, basix.CellType.prism, degree, *element_args)
+    e = cached_create_element(element_type, basix.CellType.prism, degree, tuple(element_args))
     bt = e.base_transformations()
     assert len(bt) == 19
     identity = np.identity(e.dim)
@@ -127,7 +130,7 @@ def test_prism_transformation_degrees(element_type, degree, element_args):
 
 @parametrize_over_elements(5, basix.CellType.pyramid)
 def test_pyramid_transformation_degrees(element_type, degree, element_args):
-    e = basix.create_element(element_type, basix.CellType.pyramid, degree, *element_args)
+    e = cached_create_element(element_type, basix.CellType.pyramid, degree, tuple(element_args))
     bt = e.base_transformations()
     assert len(bt) == 18
     identity = np.identity(e.dim)
@@ -137,7 +140,7 @@ def test_pyramid_transformation_degrees(element_type, degree, element_args):
 
 @parametrize_over_elements(5, basix.CellType.triangle)
 def test_transformation_of_tabulated_data_triangle(element_type, degree, element_args):
-    e = basix.create_element(element_type, basix.CellType.triangle, degree, *element_args)
+    e = cached_create_element(element_type, basix.CellType.triangle, degree, tuple(element_args))
     bt = e.base_transformations()
 
     N = 4
@@ -167,7 +170,9 @@ def test_transformation_of_tabulated_data_triangle(element_type, degree, element
 
 @parametrize_over_elements(5, basix.CellType.quadrilateral)
 def test_transformation_of_tabulated_data_quadrilateral(element_type, degree, element_args):
-    e = basix.create_element(element_type, basix.CellType.quadrilateral, degree, *element_args)
+    e = cached_create_element(
+        element_type, basix.CellType.quadrilateral, degree, tuple(element_args)
+    )
     bt = e.base_transformations()
 
     N = 4
@@ -197,7 +202,7 @@ def test_transformation_of_tabulated_data_quadrilateral(element_type, degree, el
 
 @parametrize_over_elements(5, basix.CellType.tetrahedron)
 def test_transformation_of_tabulated_data_tetrahedron(element_type, degree, element_args):
-    e = basix.create_element(element_type, basix.CellType.tetrahedron, degree, *element_args)
+    e = cached_create_element(element_type, basix.CellType.tetrahedron, degree, tuple(element_args))
     bt = e.base_transformations()
 
     N = 4
@@ -278,7 +283,7 @@ def test_transformation_of_tabulated_data_hexahedron(element_type, degree, eleme
             "Lagrange spaces equally spaced points are unstable."
         )
 
-    e = basix.create_element(element_type, basix.CellType.hexahedron, degree, *element_args)
+    e = cached_create_element(element_type, basix.CellType.hexahedron, degree, tuple(element_args))
     bt = e.base_transformations()
 
     N = 4
@@ -348,7 +353,7 @@ def test_transformation_of_tabulated_data_hexahedron(element_type, degree, eleme
 
 @parametrize_over_elements(3, basix.CellType.prism)
 def test_transformation_of_tabulated_data_prism(element_type, degree, element_args):
-    e = basix.create_element(element_type, basix.CellType.prism, degree, *element_args)
+    e = cached_create_element(element_type, basix.CellType.prism, degree, tuple(element_args))
     bt = e.base_transformations()
 
     N = 4
@@ -424,7 +429,7 @@ def test_transformation_of_tabulated_data_prism(element_type, degree, element_ar
 
 @parametrize_over_elements(3, basix.CellType.pyramid)
 def test_transformation_of_tabulated_data_pyramid(element_type, degree, element_args):
-    e = basix.create_element(element_type, basix.CellType.pyramid, degree, *element_args)
+    e = cached_create_element(element_type, basix.CellType.pyramid, degree, tuple(element_args))
     bt = e.base_transformations()
 
     N = 4

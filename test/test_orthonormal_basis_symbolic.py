@@ -2,13 +2,18 @@
 # FEniCS Project
 # SPDX-License-Identifier: MIT
 
+import functools
+
 import numpy as np
 import pytest
 import sympy
 
 import basix
 
+from .utils import cached_create_lattice
 
+
+@functools.cache
 def P_interval(n, x):
     r = []
     for i in range(n + 1):
@@ -24,10 +29,11 @@ def P_interval(n, x):
 @pytest.mark.parametrize("nderiv", range(8))
 def test_symbolic_interval(n, nderiv):
     x = sympy.Symbol("x")
-    wd = P_interval(n, x)
+    # Copy the cached list since the loop below mutates entries in place.
+    wd = list(P_interval(n, x))
 
     cell = basix.CellType.interval
-    pts0 = basix.create_lattice(cell, 10, basix.LatticeType.equispaced, True)
+    pts0 = cached_create_lattice(cell, 10, basix.LatticeType.equispaced, True)
     wtab = basix.polynomials.tabulate_polynomial_set(
         cell, basix.PolysetType.standard, n, nderiv, pts0
     )
@@ -48,11 +54,12 @@ def test_symbolic_quad(n, nderiv):
 
     x = sympy.Symbol("x")
     y = sympy.Symbol("y")
-    w = [wx * wy for wx in P_interval(n, x) for wy in P_interval(n, y)]
+    wy_list = P_interval(n, y)
+    w = [wx * wy for wx in P_interval(n, x) for wy in wy_list]
 
     m = (n + 1) ** 2
     cell = basix.CellType.quadrilateral
-    pts0 = basix.create_lattice(cell, 2, basix.LatticeType.equispaced, True)
+    pts0 = cached_create_lattice(cell, 2, basix.LatticeType.equispaced, True)
     wtab = basix.polynomials.tabulate_polynomial_set(
         cell, basix.PolysetType.standard, n, nderiv, pts0
     )
@@ -171,19 +178,61 @@ def symbolic_pyramid(n):
         raise NotImplementedError()
 
 
+@functools.cache
+def _symbolic_pyramid_derivs(n, kx, ky, kz):
+    """Derivatives of the symbolic pyramid basis, shared across nderiv values.
+
+    For a fixed n, the (kx, ky, kz) combinations used at a lower nderiv are a
+    strict subset of those at a higher nderiv, and test_symbolic_pyramid_nan
+    differentiates the same expressions again at a single point -- caching
+    the differentiation itself (the expensive step) avoids redoing it.
+    """
+    x = sympy.Symbol("x")
+    y = sympy.Symbol("y")
+    z = sympy.Symbol("z")
+    return tuple(sympy.diff(wi, x, kx, y, ky, z, kz) for wi in symbolic_pyramid(n))
+
+
+@functools.cache
+def _symbolic_pyramid_lattice_values(n, kx, ky, kz):
+    """Derivatives evaluated on the lattice, shared across nderiv values.
+
+    The lattice (from cached_create_lattice) is identical for every nderiv
+    at a given n, so the substitution -- the other expensive step besides
+    differentiation -- only needs to happen once per (n, kx, ky, kz) too.
+    """
+    x = sympy.Symbol("x")
+    y = sympy.Symbol("y")
+    z = sympy.Symbol("z")
+    pts0 = cached_create_lattice(basix.CellType.pyramid, 5, basix.LatticeType.equispaced, False)
+    wd_list = _symbolic_pyramid_derivs(n, kx, ky, kz)
+    wsym = np.zeros((len(wd_list), len(pts0)))
+    for i, wd in enumerate(wd_list):
+        for j, p in enumerate(pts0):
+            wsym[i, j] = wd.subs([(x, p[0]), (y, p[1]), (z, p[2])])
+    return wsym
+
+
+@functools.cache
+def _symbolic_pyramid_apex_values(n, kx, ky, kz):
+    """Derivatives evaluated at the pyramid apex, cached for the same reason."""
+    x = sympy.Symbol("x")
+    y = sympy.Symbol("y")
+    z = sympy.Symbol("z")
+    values = []
+    for wd in _symbolic_pyramid_derivs(n, kx, ky, kz):
+        value = wd.subs([(x, 0.0), (y, 0.0), (z, 1.0)])
+        values.append(np.nan if not value.is_finite else float(value))
+    return values
+
+
 @pytest.mark.parametrize("n", range(3))
 @pytest.mark.parametrize("nderiv", range(6))
 def test_symbolic_pyramid(n, nderiv):
     idx = basix.index
 
-    x = sympy.Symbol("x")
-    y = sympy.Symbol("y")
-    z = sympy.Symbol("z")
-
-    w = symbolic_pyramid(n)
-
     cell = basix.CellType.pyramid
-    pts0 = basix.create_lattice(cell, 5, basix.LatticeType.equispaced, False)
+    pts0 = cached_create_lattice(cell, 5, basix.LatticeType.equispaced, False)
     wtab = basix.polynomials.tabulate_polynomial_set(
         cell, basix.PolysetType.standard, n, nderiv, pts0
     )
@@ -191,11 +240,7 @@ def test_symbolic_pyramid(n, nderiv):
     for kx in range(nderiv + 1):
         for ky in range(0, nderiv + 1 - kx):
             for kz in range(0, nderiv + 1 - kx - ky):
-                wsym = np.zeros_like(wtab[0])
-                for i, wi in enumerate(w):
-                    wd = sympy.diff(wi, x, kx, y, ky, z, kz)
-                    for j, p in enumerate(pts0):
-                        wsym[i, j] = wd.subs([(x, p[0]), (y, p[1]), (z, p[2])])
+                wsym = _symbolic_pyramid_lattice_values(n, kx, ky, kz)
                 assert np.allclose(wtab[idx(kx, ky, kz)], wsym)
 
 
@@ -203,12 +248,6 @@ def test_symbolic_pyramid(n, nderiv):
 @pytest.mark.parametrize("nderiv", range(6))
 def test_symbolic_pyramid_nan(n, nderiv):
     idx = basix.index
-
-    x = sympy.Symbol("x")
-    y = sympy.Symbol("y")
-    z = sympy.Symbol("z")
-
-    w = symbolic_pyramid(n)
 
     cell = basix.CellType.pyramid
     pts0 = np.array([[0.0, 0.0, 1.0]])
@@ -219,15 +258,7 @@ def test_symbolic_pyramid_nan(n, nderiv):
     for kx in range(nderiv + 1):
         for ky in range(0, nderiv + 1 - kx):
             for kz in range(0, nderiv + 1 - kx - ky):
-                wsym = np.zeros_like(wtab[0])
-                for i, wi in enumerate(w):
-                    wd = sympy.diff(wi, x, kx, y, ky, z, kz)
-                    for j, p in enumerate(pts0):
-                        value = wd.subs([(x, p[0]), (y, p[1]), (z, p[2])])
-                        if value.is_finite:
-                            wsym[i, j] = value
-                        else:
-                            wsym[i, j] = np.nan
-                for a, b in zip(wtab[idx(kx, ky, kz)], wsym):
-                    assert len(a) == len(b) == 1
-                    assert np.isnan(b[0]) or np.isclose(a[0], b[0])
+                values = _symbolic_pyramid_apex_values(n, kx, ky, kz)
+                for a, val in zip(wtab[idx(kx, ky, kz)], values):
+                    assert len(a) == 1
+                    assert np.isnan(val) or np.isclose(a[0], val)

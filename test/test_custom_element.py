@@ -10,6 +10,8 @@ import pytest
 import basix
 from basix import CellType
 
+from .utils import cached_create_element, cached_create_lattice
+
 
 def test_lagrange_custom_triangle_degree1():
     """Test Lagrange custom element.
@@ -28,7 +30,7 @@ def test_lagrange_custom_triangle_degree1():
     z = np.zeros((0, 1, 0, 1))
     M = [[np.array([[[[1.0]]]]), np.array([[[[1.0]]]]), np.array([[[[1.0]]]])], [z, z, z], [z], []]
 
-    lagrange = basix.create_element(basix.ElementFamily.P, CellType.triangle, 1)
+    lagrange = cached_create_element(basix.ElementFamily.P, CellType.triangle, 1)
     element = basix.create_custom_element(
         CellType.triangle,
         (),
@@ -43,7 +45,7 @@ def test_lagrange_custom_triangle_degree1():
         1,
         basix.PolysetType.standard,
     )
-    points = basix.create_lattice(CellType.triangle, 5, basix.LatticeType.equispaced, True)
+    points = cached_create_lattice(CellType.triangle, 5, basix.LatticeType.equispaced, True)
     assert np.allclose(lagrange.tabulate(1, points), element.tabulate(1, points))
     assert np.allclose(lagrange.base_transformations(), element.base_transformations())
 
@@ -62,7 +64,7 @@ def test_lagrange_custom_triangle_degree1_l2piola():
     z = np.zeros((0, 1, 0, 1))
     M = [[np.array([[[[1.0]]]]), np.array([[[[1.0]]]]), np.array([[[[1.0]]]])], [z, z, z], [z], []]
 
-    lagrange = basix.create_element(basix.ElementFamily.P, CellType.triangle, 1)
+    lagrange = cached_create_element(basix.ElementFamily.P, CellType.triangle, 1)
     element = basix.create_custom_element(
         CellType.triangle,
         (),
@@ -77,7 +79,7 @@ def test_lagrange_custom_triangle_degree1_l2piola():
         1,
         basix.PolysetType.standard,
     )
-    points = basix.create_lattice(CellType.triangle, 5, basix.LatticeType.equispaced, True)
+    points = cached_create_lattice(CellType.triangle, 5, basix.LatticeType.equispaced, True)
     assert np.allclose(lagrange.tabulate(1, points), element.tabulate(1, points))
     assert np.allclose(lagrange.base_transformations(), element.base_transformations())
 
@@ -121,7 +123,7 @@ def test_lagrange_custom_triangle_degree4():
         basix.PolysetType.standard,
     )
 
-    points = basix.create_lattice(CellType.triangle, 5, basix.LatticeType.equispaced, True)
+    points = cached_create_lattice(CellType.triangle, 5, basix.LatticeType.equispaced, True)
     assert np.allclose(lagrange.tabulate(1, points), element.tabulate(1, points))
     assert np.allclose(lagrange.base_transformations(), element.base_transformations())
 
@@ -154,7 +156,7 @@ def test_lagrange_custom_quadrilateral_degree1():
         [],
     ]
 
-    lagrange = basix.create_element(basix.ElementFamily.P, CellType.quadrilateral, 1)
+    lagrange = cached_create_element(basix.ElementFamily.P, CellType.quadrilateral, 1)
     element = basix.create_custom_element(
         CellType.quadrilateral,
         (),
@@ -169,7 +171,7 @@ def test_lagrange_custom_quadrilateral_degree1():
         1,
         basix.PolysetType.standard,
     )
-    points = basix.create_lattice(CellType.quadrilateral, 5, basix.LatticeType.equispaced, True)
+    points = cached_create_lattice(CellType.quadrilateral, 5, basix.LatticeType.equispaced, True)
     assert np.allclose(lagrange.tabulate(1, points), element.tabulate(1, points))
     assert np.allclose(lagrange.base_transformations(), element.base_transformations())
 
@@ -225,7 +227,7 @@ def test_raviart_thomas_triangle_degree1():
         basix.PolysetType.standard,
     )
     rt = basix.create_element(basix.ElementFamily.RT, CellType.triangle, 1)
-    points = basix.create_lattice(CellType.triangle, 5, basix.LatticeType.equispaced, True)
+    points = cached_create_lattice(CellType.triangle, 5, basix.LatticeType.equispaced, True)
     assert np.allclose(rt.tabulate(1, points), element.tabulate(1, points))
     assert np.allclose(rt.base_transformations(), element.base_transformations())
 
@@ -549,8 +551,8 @@ def test_wrong_interpolation_nderivs():
 @pytest.mark.parametrize("component", range(3))
 def test_point_outside_cell_gives_warning(dim, component):
     """Test the defining an element with a point outside the cell gives a warning."""
-    lagrange = basix.create_element(
-        basix.ElementFamily.P, CellType.tetrahedron, 4, basix.LagrangeVariant.gll_warped
+    lagrange = cached_create_element(
+        basix.ElementFamily.P, CellType.tetrahedron, 4, (basix.LagrangeVariant.gll_warped,)
     )
     wcoeffs = lagrange.wcoeffs
 

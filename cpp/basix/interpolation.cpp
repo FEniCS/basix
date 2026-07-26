@@ -85,20 +85,31 @@ basix::compute_interpolation_operator(const FiniteElement<T>& element_from,
     std::vector<T> outb(shape[0] * shape[1], 0.0);
     mdspan_t<T, 2> out(outb.data(), shape);
 
-    // i_m has shape (dim_to, vs_from * npts), with columns already ordered
-    // as (k, l) -> k * npts + l. Build B with shape (vs_from * npts,
-    // dim_from) using the same (k, l) row ordering, so that out = i_m * B
-    // is a single dim_to x dim_from matrix-matrix product (computed with
-    // BLAS via math::dot) instead of an explicit quadruple loop.
-    std::vector<T> Bb(vs_from * npts * dim_from);
-    mdspan_t<T, 2> B(Bb.data(),
-                      std::array<std::size_t, 2>{vs_from * npts, dim_from});
+    // i_m's columns are ordered as (k, l) -> k * npts + l for the first
+    // vs_from * npts columns, matching tab's layout below. i_m can have
+    // *more* columns than vs_from * npts (e.g. elements with
+    // interpolation_nderivs > 0, such as Hermite, encode extra derivative
+    // moments there); only the first vs_from * npts are used here, exactly
+    // as the quadruple loop this replaces only ever indexed columns in
+    // that range. Since those columns are not necessarily i_m's full row
+    // length, they must be copied into a compact buffer rather than
+    // viewed in-place, so that the matrix-matrix product below (computed
+    // with BLAS via math::dot) reads/writes only within bounds.
+    const std::size_t ncols = vs_from * npts;
+    std::vector<T> Ab(dim_to * ncols);
+    mdspan_t<T, 2> A(Ab.data(), std::array<std::size_t, 2>{dim_to, ncols});
+    for (std::size_t i = 0; i < dim_to; ++i)
+      for (std::size_t c = 0; c < ncols; ++c)
+        A(i, c) = i_m(i, c);
+
+    std::vector<T> Bb(ncols * dim_from);
+    mdspan_t<T, 2> B(Bb.data(), std::array<std::size_t, 2>{ncols, dim_from});
     for (std::size_t k = 0; k < vs_from; ++k)
       for (std::size_t l = 0; l < npts; ++l)
         for (std::size_t j = 0; j < dim_from; ++j)
           B(k * npts + l, j) = tab(0, l, j, k);
 
-    math::dot(i_m, B, out);
+    math::dot(A, B, out);
 
     return {std::move(outb), shape};
   }

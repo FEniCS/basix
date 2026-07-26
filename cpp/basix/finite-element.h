@@ -765,7 +765,7 @@ public:
   /// @return The entity transformations for the sub-entities of this
   /// element. The shape for each cell is (ntransformations, ndofs,
   /// ndofs)
-  std::map<cell::type, std::pair<std::vector<F>, std::array<std::size_t, 3>>>
+  const std::map<cell::type, std::pair<std::vector<F>, std::array<std::size_t, 3>>>&
   entity_transformations() const
   {
     return _entity_transformations;

@@ -9,6 +9,8 @@ import pytest
 
 import basix
 
+from .utils import cached_create_element
+
 elements = [
     (basix.ElementFamily.P, [basix.LagrangeVariant.gll_warped]),  # identity
     (basix.ElementFamily.N1E, [basix.LagrangeVariant.legendre]),  # covariant Piola
@@ -55,7 +57,7 @@ def run_map_test(e, J, detJ, K, reference_value_size, physical_value_size):
 @pytest.mark.parametrize("element_type, element_args", elements)
 def test_mappings_2d_to_2d(element_type, element_args):
     random.seed(42)
-    e = basix.create_element(element_type, basix.CellType.triangle, 1, *element_args)
+    e = cached_create_element(element_type, basix.CellType.triangle, 1, tuple(element_args))
     J = np.array([[random.random() + 1, random.random()], [random.random(), random.random()]])
     detJ = np.linalg.det(J)
     K = np.linalg.inv(J)
@@ -64,7 +66,7 @@ def test_mappings_2d_to_2d(element_type, element_args):
 
 @pytest.mark.parametrize("element_type, element_args", elements)
 def test_mappings_2d_to_3d(element_type, element_args):
-    e = basix.create_element(element_type, basix.CellType.triangle, 1, *element_args)
+    e = cached_create_element(element_type, basix.CellType.triangle, 1, tuple(element_args))
 
     # Map from (0,0)--(1,0)--(0,1) to (1,0,1)--(2,1,0)--(0,1,1)
     J = np.array([[1.0, -1.0], [1.0, 1.0], [-1.0, 0.0]])

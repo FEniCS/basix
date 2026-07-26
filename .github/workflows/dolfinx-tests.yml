@@ -15,7 +15,7 @@ on:
 jobs:
   build:
     name: Run DOLFINx tests
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     container: ghcr.io/fenics/test-env:current-openmpi
 
     env:

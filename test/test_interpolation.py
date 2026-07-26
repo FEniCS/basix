@@ -7,7 +7,7 @@ import pytest
 
 import basix
 
-from .utils import parametrize_over_elements
+from .utils import cached_create_element, parametrize_over_elements
 
 
 @pytest.mark.parametrize("n", range(1, 6))
@@ -16,7 +16,7 @@ from .utils import parametrize_over_elements
 )
 @pytest.mark.parametrize("element_type", [basix.ElementFamily.P])
 def test_interpolation(cell_type, n, element_type):
-    element = basix.create_element(element_type, cell_type, n, basix.LagrangeVariant.gll_warped)
+    element = cached_create_element(element_type, cell_type, n, (basix.LagrangeVariant.gll_warped,))
     assert element.interpolation_matrix.shape[0] == element.dim
     assert element.interpolation_matrix.shape[1] == element.points.shape[0]
     assert element.points.shape[1] == len(basix.topology(element.cell_type)) - 1
@@ -39,7 +39,7 @@ def test_interpolation_matrix(cell_type, degree, element_type, element_args):
                 "Lagrange spaces with equally spaced points are unstable."
             )
 
-    element = basix.create_element(element_type, cell_type, degree, *element_args)
+    element = cached_create_element(element_type, cell_type, degree, tuple(element_args))
 
     if element.interpolation_nderivs != 0:
         pytest.xfail("Interpolation into spaces with derivate DOFs not yet supported.")
@@ -57,7 +57,7 @@ def test_interpolation_matrix(cell_type, degree, element_type, element_args):
 
 @parametrize_over_elements(4)
 def test_interpolation_is_identity(cell_type, degree, element_type, element_args):
-    element = basix.create_element(element_type, cell_type, degree, *element_args)
+    element = cached_create_element(element_type, cell_type, degree, tuple(element_args))
     i_m = element.interpolation_matrix
     if i_m.shape[0] == i_m.shape[1]:
         assert element.interpolation_is_identity == np.allclose(i_m, np.eye(i_m.shape[0]))

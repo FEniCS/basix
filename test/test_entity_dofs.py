@@ -4,12 +4,12 @@
 
 import basix
 
-from .utils import parametrize_over_elements
+from .utils import cached_create_element, parametrize_over_elements
 
 
 @parametrize_over_elements(4)
 def test_number_of_dofs(cell_type, degree, element_type, element_args):
-    element = basix.create_element(element_type, cell_type, degree, *element_args)
+    element = cached_create_element(element_type, cell_type, degree, tuple(element_args))
     entity_dofs = element.entity_dofs
     num_entity_dofs = element.num_entity_dofs
     for entity_dofs, num_entity_dofs in zip(element.entity_dofs, element.num_entity_dofs):
@@ -24,7 +24,7 @@ def test_ordering_of_dofs(cell_type, degree, element_type, element_args):
 
     This assumption is required for DOF transformations to work correctly.
     """
-    element = basix.create_element(element_type, cell_type, degree, *element_args)
+    element = cached_create_element(element_type, cell_type, degree, tuple(element_args))
     entity_dofs = element.entity_dofs
     dof = 0
     for entity_dofs in element.entity_dofs:
@@ -36,7 +36,7 @@ def test_ordering_of_dofs(cell_type, degree, element_type, element_args):
 
 @parametrize_over_elements(4)
 def test_closure_dofs(cell_type, degree, element_type, element_args):
-    element = basix.create_element(element_type, cell_type, degree, *element_args)
+    element = cached_create_element(element_type, cell_type, degree, tuple(element_args))
     entity_dofs = element.entity_dofs
     entity_closure_dofs = element.entity_closure_dofs
     topology = basix.topology(cell_type)

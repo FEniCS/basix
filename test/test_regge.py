@@ -7,6 +7,8 @@ import pytest
 
 import basix
 
+from .utils import cached_create_lattice
+
 
 @pytest.mark.parametrize("degree", range(1, 4))
 @pytest.mark.parametrize("cell", [basix.CellType.triangle, basix.CellType.tetrahedron])
@@ -14,7 +16,7 @@ def test_discontinuous_regge(degree, cell):
     e = basix.create_element(basix.ElementFamily.Regge, cell, degree)
     d_e = basix.create_element(basix.ElementFamily.Regge, cell, degree, discontinuous=True)
 
-    pts = basix.create_lattice(cell, 5, basix.LatticeType.equispaced, True)
+    pts = cached_create_lattice(cell, 5, basix.LatticeType.equispaced, True)
 
     assert np.allclose(e.tabulate(1, pts), d_e.tabulate(1, pts))
 

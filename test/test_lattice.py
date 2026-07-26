@@ -7,6 +7,8 @@ import pytest
 
 import basix
 
+from .utils import cached_create_lattice
+
 
 @pytest.mark.parametrize(
     "lattice_type, simplex_method",
@@ -19,11 +21,11 @@ import basix
 def test_pyramid(n, lattice_type, simplex_method):
     # Check that all the surface points of the pyramid match up with the
     # same points on quad and triangle
-    tri_pts = basix.create_lattice(basix.CellType.triangle, n, lattice_type, True, simplex_method)
-    quad_pts = basix.create_lattice(
+    tri_pts = cached_create_lattice(basix.CellType.triangle, n, lattice_type, True, simplex_method)
+    quad_pts = cached_create_lattice(
         basix.CellType.quadrilateral, n, lattice_type, True, simplex_method
     )
-    pyr_pts = basix.create_lattice(basix.CellType.pyramid, n, lattice_type, True, simplex_method)
+    pyr_pts = cached_create_lattice(basix.CellType.pyramid, n, lattice_type, True, simplex_method)
 
     # Remove any near-zero values to make sorting robust
     pyr_pts[np.where(abs(pyr_pts) < 1e-12)] = 0.0
@@ -63,8 +65,8 @@ def test_pyramid(n, lattice_type, simplex_method):
 def test_tetrahedron(n, lattice_type, simplex_method):
     # Check that all the surface points of the tet match up with the same points on
     # triangle
-    tri_pts = basix.create_lattice(basix.CellType.triangle, n, lattice_type, True, simplex_method)
-    tet_pts = basix.create_lattice(
+    tri_pts = cached_create_lattice(basix.CellType.triangle, n, lattice_type, True, simplex_method)
+    tet_pts = cached_create_lattice(
         basix.CellType.tetrahedron, n, lattice_type, True, simplex_method
     )
 
@@ -101,8 +103,8 @@ def test_tetrahedron(n, lattice_type, simplex_method):
 def test_triangle(n, lattice_type, simplex_method):
     # Check that all the surface points of the triangle match up with the same points on
     # an interval
-    tri_pts = basix.create_lattice(basix.CellType.triangle, n, lattice_type, True, simplex_method)
-    interval_pts = basix.create_lattice(
+    tri_pts = cached_create_lattice(basix.CellType.triangle, n, lattice_type, True, simplex_method)
+    interval_pts = cached_create_lattice(
         basix.CellType.interval, n, lattice_type, True, simplex_method
     )
 

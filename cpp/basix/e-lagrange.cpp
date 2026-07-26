@@ -371,11 +371,18 @@ FiniteElement<T> create_bernstein(cell::type celltype, int degree,
       assert(phi.extent(0) == nb[d]);
       const std::size_t npts = pts.extent(0);
 
+      // mat(i,j) = sum_k bern(j,k) * wts[k] * phi(i,k) is a single
+      // matrix-matrix product, computed here via BLAS (math::dot)
+      // instead of an explicit triple loop.
       impl::mdarray_t<T, 2> mat(nb[d], nb[d]);
-      for (std::size_t i = 0; i < nb[d]; ++i)
-        for (std::size_t j = 0; j < nb[d]; ++j)
-          for (std::size_t k = 0; k < wts.size(); ++k)
-            mat(i, j) += wts[k] * bern(j, k) * phi(i, k);
+      {
+        std::vector<T> Bb(wts.size() * nb[d]);
+        impl::mdspan_t<T, 2> B(Bb.data(), wts.size(), nb[d]);
+        for (std::size_t k = 0; k < wts.size(); ++k)
+          for (std::size_t j = 0; j < nb[d]; ++j)
+            B(k, j) = wts[k] * bern(j, k);
+        math::dot(phi, B, impl::mdspan_t<T, 2>(mat.data(), mat.extents()));
+      }
 
       impl::mdarray_t<T, 2> minv(mat.extents());
       {
@@ -384,6 +391,28 @@ FiniteElement<T> create_bernstein(cell::type celltype, int degree,
         impl::mdspan_t<T, 2> _mat(mat.data(), mat.extents());
         std::vector<T> minv_data = math::solve<T>(_mat, _id);
         std::ranges::copy(minv_data, minv.data());
+      }
+
+      // The interpolation matrix for the interior "bubble" dofs of
+      // dimension d is identical for every entity of that dimension
+      // (only the physical point mapping x[d][e] differs per entity), so
+      // compute it once here rather than once per entity, and as a
+      // single matrix product via math::dot rather than a per-point,
+      // per-bubble loop.
+      const std::size_t nbub = bernstein_bubbles[d].size();
+      impl::mdarray_t<T, 2> moment(nbub, npts);
+      {
+        impl::mdarray_t<T, 2> minv_bubbles(nbub, nb[d]);
+        for (std::size_t i = 0; i < nbub; ++i)
+          for (std::size_t k = 0; k < nb[d]; ++k)
+            minv_bubbles(i, k) = minv(bernstein_bubbles[d][i], k);
+
+        math::dot(impl::mdspan_t<const T, 2>(minv_bubbles.data(),
+                                             minv_bubbles.extents()),
+                  phi, impl::mdspan_t<T, 2>(moment.data(), moment.extents()));
+        for (std::size_t i = 0; i < nbub; ++i)
+          for (std::size_t p = 0; p < npts; ++p)
+            moment(i, p) *= wts[p];
       }
 
       M[d] = std::vector<impl::mdarray_t<T, 4>>(
@@ -405,16 +434,10 @@ FiniteElement<T> create_bernstein(cell::type celltype, int degree,
           for (std::size_t k0 = 0; k0 < pts.extent(1); ++k0)
             for (std::size_t k1 = 0; k1 < shape[1]; ++k1)
               x[d][e](j, k1) += (entity_x(k0 + 1, k1) - x0[k1]) * pts(j, k0);
-        for (std::size_t i = 0; i < bernstein_bubbles[d].size(); ++i)
-        {
+
+        for (std::size_t i = 0; i < nbub; ++i)
           for (std::size_t p = 0; p < npts; ++p)
-          {
-            T tmp = 0.0;
-            for (std::size_t k = 0; k < phi.extent(0); ++k)
-              tmp += phi(k, p) * minv(bernstein_bubbles[d][i], k);
-            M[d][e](i, 0, p, 0) = wts[p] * tmp;
-          }
-        }
+            M[d][e](i, 0, p, 0) = moment(i, p);
       }
     }
   }
@@ -524,17 +547,19 @@ basix::element::create_lagrange(cell::type celltype, int degree,
         polynomials::type::lagrange, cell::type::pyramid, degree, pts);
     impl::mdspan_t<const T, 2> poly_table(_poly_table.data(), shape2);
 
-    for (std::size_t i = 0; i < ndofs; ++i)
-    {
+    // wcoeffs(i, j) = sum_k poly_table(i, k) * wts[k] * pset_table(0, j, k)
+    // is a single (ndofs x npts) times (npts x psize) matrix-matrix
+    // product, computed here with BLAS via math::dot instead of an
+    // explicit triple loop. Build the (npts x psize) operand, scaled by
+    // the quadrature weights, since pset_table's natural layout has the
+    // point index last rather than first.
+    std::vector<T> Bb(wts.size() * psize);
+    impl::mdspan_t<T, 2> B(Bb.data(), wts.size(), psize);
+    for (std::size_t k = 0; k < wts.size(); ++k)
       for (std::size_t j = 0; j < psize; ++j)
-      {
-        wcoeffs(i, j) = 0.0;
-        for (std::size_t k = 0; k < wts.size(); ++k)
-        {
-          wcoeffs(i, j) += wts[k] * poly_table(i, k) * pset_table(0, j, k);
-        }
-      }
-    }
+        B(k, j) = wts[k] * pset_table(0, j, k);
+
+    math::dot(poly_table, B, wcoeffs);
   }
 
   std::array<std::vector<impl::mdarray_t<T, 2>>, 4> x;

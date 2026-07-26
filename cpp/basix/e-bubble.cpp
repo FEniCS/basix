@@ -177,11 +177,19 @@ FiniteElement<T> basix::element::create_bubble(cell::type celltype, int degree,
     throw std::runtime_error("Unknown cell type.");
   }
 
+  // wcoeffs(i, j) = sum_k phi1(i, k) * (wts[k] * bubble[k] * phi(0, j, k))
+  // is a matrix-matrix product of phi1 (ndofs x npts) with a scaled,
+  // transposed view of phi (npts x psize), computed here via BLAS
+  // (math::dot) instead of the naive triple loop this used to be.
   impl::mdarray_t<T, 2> wcoeffs(ndofs, psize);
-  for (std::size_t i = 0; i < phi1.extent(0); ++i)
+  std::vector<T> Bb(wts.size() * psize);
+  impl::mdspan_t<T, 2> B(Bb.data(), wts.size(), psize);
+  for (std::size_t k = 0; k < wts.size(); ++k)
     for (std::size_t j = 0; j < psize; ++j)
-      for (std::size_t k = 0; k < wts.size(); ++k)
-        wcoeffs(i, j) += wts[k] * phi1(i, k) * bubble[k] * phi(0, j, k);
+      B(k, j) = wts[k] * bubble[k] * phi(0, j, k);
+  math::dot(phi1, B,
+           impl::mdspan_t<T, 2>(wcoeffs.data(), wcoeffs.extent(0),
+                                wcoeffs.extent(1)));
 
   math::orthogonalise<T>(wcoeffs);
 

@@ -129,6 +129,20 @@ impl::mdarray_t<T, 2> make_serendipity_div_space_2d(int degree)
       nonzero.push_back(i * (degree + 2) + j);
 
   std::vector<T> integrand(wts.size());
+
+  // Precompute pts(:,a)^degree for a = 0, 1 once. This factor does not
+  // depend on k or d, but the original code recomputed it via a
+  // length-`degree` multiplication loop for every (k, d) pair, making it
+  // by far the most expensive part of this loop at high degree.
+  std::array<std::vector<T>, 2> pow_a;
+  for (std::size_t a = 0; a < 2; ++a)
+  {
+    pow_a[a].assign(wts.size(), 1.0);
+    for (int i = 0; i < degree; ++i)
+      for (std::size_t j = 0; j < wts.size(); ++j)
+        pow_a[a][j] *= pts(j, a);
+  }
+
   for (std::size_t k = 0; k < nonzero.size(); ++k)
   {
     for (std::size_t d = 0; d < 2; ++d)
@@ -159,9 +173,8 @@ impl::mdarray_t<T, 2> make_serendipity_div_space_2d(int degree)
             integrand[i] *= pts(i, 1);
         }
 
-        for (int i = 0; i < degree; ++i)
-          for (std::size_t j = 0; j < integrand.size(); ++j)
-            integrand[j] *= pts(j, a);
+        for (std::size_t j = 0; j < integrand.size(); ++j)
+          integrand[j] *= pow_a[a][j];
 
         wcoeffs(2 * nv + a, psize * d + nonzero[k])
             = std::reduce(integrand.begin(), integrand.end(), 0.0);
@@ -230,6 +243,32 @@ impl::mdarray_t<T, 2> make_serendipity_div_space_3d(int degree)
   }
 
   std::vector<T> integrand(wts.size());
+
+  // Precompute pts(:,dim1(a))^index * pts(:,dim2(a))^(degree-index) for
+  // a = 0..2, index = 0..degree once. This factor does not depend on k
+  // or d, but the original code recomputed it via two length-O(degree)
+  // multiplication loops for every (k, d) pair, making it by far the
+  // most expensive part of this loop at high degree.
+  constexpr std::array<std::array<int, 2>, 3> pow_dims{{{1, 2}, {0, 2}, {0, 1}}};
+  std::array<std::vector<std::vector<T>>, 3> pow_factor;
+  for (std::size_t a = 0; a < 3; ++a)
+  {
+    const int dim1 = pow_dims[a][0];
+    const int dim2 = pow_dims[a][1];
+    pow_factor[a].resize(degree + 1);
+    for (int index = 0; index <= degree; ++index)
+    {
+      std::vector<T>& p = pow_factor[a][index];
+      p.assign(wts.size(), 1.0);
+      for (int i = 0; i < index; ++i)
+        for (std::size_t j = 0; j < wts.size(); ++j)
+          p[j] *= pts(j, dim1);
+      for (int i = 0; i < degree - index; ++i)
+        for (std::size_t j = 0; j < wts.size(); ++j)
+          p[j] *= pts(j, dim2);
+    }
+  }
+
   for (std::size_t k = 0; k < nonzero.size(); ++k)
   {
     for (std::size_t d = 0; d < 3; ++d)
@@ -258,17 +297,6 @@ impl::mdarray_t<T, 2> make_serendipity_div_space_3d(int degree)
               for (std::size_t i = 0; i < integrand.size(); ++i)
                 integrand[i] *= pts(i, 2);
             }
-
-            for (int i = 0; i < index; ++i)
-            {
-              for (std::size_t i = 0; i < integrand.size(); ++i)
-                integrand[i] *= pts(i, 1);
-            }
-            for (int i = 0; i < degree - index; ++i)
-            {
-              for (std::size_t i = 0; i < integrand.size(); ++i)
-                integrand[i] *= pts(i, 2);
-            }
           }
           else if (a == 1)
           {
@@ -286,17 +314,6 @@ impl::mdarray_t<T, 2> make_serendipity_div_space_3d(int degree)
             {
               for (std::size_t i = 0; i < integrand.size(); ++i)
                 integrand[i] *= -pts(i, 2);
-            }
-
-            for (int i = 0; i < index; ++i)
-            {
-              for (std::size_t i = 0; i < integrand.size(); ++i)
-                integrand[i] *= pts(i, 0);
-            }
-            for (int i = 0; i < degree - index; ++i)
-            {
-              for (std::size_t i = 0; i < integrand.size(); ++i)
-                integrand[i] *= pts(i, 2);
             }
           }
           else if (a == 2)
@@ -316,18 +333,11 @@ impl::mdarray_t<T, 2> make_serendipity_div_space_3d(int degree)
               for (std::size_t i = 0; i < integrand.size(); ++i)
                 integrand[i] *= -(degree + 2) * pts(i, 2);
             }
-
-            for (int i = 0; i < index; ++i)
-            {
-              for (std::size_t i = 0; i < integrand.size(); ++i)
-                integrand[i] *= pts(i, 0);
-            }
-            for (int i = 0; i < degree - index; ++i)
-            {
-              for (std::size_t i = 0; i < integrand.size(); ++i)
-                integrand[i] *= pts(i, 1);
-            }
           }
+
+          const std::vector<T>& p = pow_factor[a][index];
+          for (std::size_t i = 0; i < integrand.size(); ++i)
+            integrand[i] *= p[i];
 
           wcoeffs(3 * nv + 3 * index + a, psize * d + nonzero[k])
               = std::reduce(integrand.begin(), integrand.end(), 0.0);
@@ -376,6 +386,18 @@ impl::mdarray_t<T, 2> make_serendipity_curl_space_2d(int degree)
       nonzero.push_back(i * (degree + 2) + j);
 
   std::vector<T> integrand(wts.size());
+
+  // Precompute pts(:,a)^degree for a = 0, 1 once, see the identical
+  // hoist in make_serendipity_div_space_2d above for the rationale.
+  std::array<std::vector<T>, 2> pow_a;
+  for (std::size_t a = 0; a < 2; ++a)
+  {
+    pow_a[a].assign(wts.size(), 1.0);
+    for (int i = 0; i < degree; ++i)
+      for (std::size_t j = 0; j < wts.size(); ++j)
+        pow_a[a][j] *= pts(j, a);
+  }
+
   for (std::size_t k = 0; k < nonzero.size(); ++k)
   {
     for (std::size_t d = 0; d < 2; ++d)
@@ -406,11 +428,8 @@ impl::mdarray_t<T, 2> make_serendipity_curl_space_2d(int degree)
             integrand[i] *= -(degree + 1) * pts(i, 0);
         }
 
-        for (int i = 0; i < degree; ++i)
-        {
-          for (std::size_t i = 0; i < integrand.size(); ++i)
-            integrand[i] *= pts(i, a);
-        }
+        for (std::size_t i = 0; i < integrand.size(); ++i)
+          integrand[i] *= pow_a[a][i];
 
         wcoeffs(2 * nv + a, psize * d + nonzero[k])
             = std::reduce(integrand.begin(), integrand.end(), 0.0);
@@ -481,6 +500,33 @@ impl::mdarray_t<T, 2> make_serendipity_curl_space_3d(int degree)
   }
 
   std::vector<T> integrand(wts.size());
+
+  // Precompute pts(:,dim1(a))^index * pts(:,dim2(a))^(degree-1-index) for
+  // a = 0..2, index = 0..degree once, see the identical hoist in
+  // make_serendipity_div_space_3d above for the rationale. (Here the
+  // second exponent is `degree - 1 - index`, matching the loop bound
+  // used below; a negative bound yields zero extra multiplications,
+  // same as in the original code.)
+  constexpr std::array<std::array<int, 2>, 3> pow_dims{{{0, 2}, {1, 2}, {0, 1}}};
+  std::array<std::vector<std::vector<T>>, 3> pow_factor;
+  for (std::size_t a = 0; a < 3; ++a)
+  {
+    const int dim1 = pow_dims[a][0];
+    const int dim2 = pow_dims[a][1];
+    pow_factor[a].resize(degree + 1);
+    for (int index = 0; index <= degree; ++index)
+    {
+      std::vector<T>& p = pow_factor[a][index];
+      p.assign(wts.size(), 1.0);
+      for (int i = 0; i < index; ++i)
+        for (std::size_t j = 0; j < wts.size(); ++j)
+          p[j] *= pts(j, dim1);
+      for (int i = 0; i < degree - 1 - index; ++i)
+        for (std::size_t j = 0; j < wts.size(); ++j)
+          p[j] *= pts(j, dim2);
+    }
+  }
+
   for (std::size_t k = 0; k < nonzero.size(); ++k)
   {
     for (std::size_t d = 0; d < 3; ++d)
@@ -509,16 +555,6 @@ impl::mdarray_t<T, 2> make_serendipity_curl_space_3d(int degree)
               for (std::size_t i = 0; i < integrand.size(); ++i)
                 integrand[i] *= -pts(i, 0) * pts(i, 1);
             }
-            for (int i = 0; i < index; ++i)
-            {
-              for (std::size_t i = 0; i < integrand.size(); ++i)
-                integrand[i] *= pts(i, 0);
-            }
-            for (int i = 0; i < degree - 1 - index; ++i)
-            {
-              for (std::size_t i = 0; i < integrand.size(); ++i)
-                integrand[i] *= pts(i, 2);
-            }
           }
           else if (a == 1)
           {
@@ -536,17 +572,6 @@ impl::mdarray_t<T, 2> make_serendipity_curl_space_3d(int degree)
             {
               for (std::size_t i = 0; i < integrand.size(); ++i)
                 integrand[i] *= -pts(i, 0) * pts(i, 1);
-            }
-
-            for (int i = 0; i < index; ++i)
-            {
-              for (std::size_t i = 0; i < integrand.size(); ++i)
-                integrand[i] *= pts(i, 1);
-            }
-            for (int i = 0; i < degree - 1 - index; ++i)
-            {
-              for (std::size_t i = 0; i < integrand.size(); ++i)
-                integrand[i] *= pts(i, 2);
             }
           }
           else if (a == 2)
@@ -566,17 +591,11 @@ impl::mdarray_t<T, 2> make_serendipity_curl_space_3d(int degree)
               for (std::size_t i = 0; i < integrand.size(); ++i)
                 integrand[i] *= 0;
             }
-            for (int i = 0; i < index; ++i)
-            {
-              for (std::size_t i = 0; i < integrand.size(); ++i)
-                integrand[i] *= pts(i, 0);
-            }
-            for (int i = 0; i < degree - 1 - index; ++i)
-            {
-              for (std::size_t i = 0; i < integrand.size(); ++i)
-                integrand[i] *= pts(i, 1);
-            }
           }
+
+          const std::vector<T>& p = pow_factor[a][index];
+          for (std::size_t i = 0; i < integrand.size(); ++i)
+            integrand[i] *= p[i];
 
           wcoeffs(3 * nv + 3 * index + a, psize * d + nonzero[k])
               = std::reduce(integrand.begin(), integrand.end(), 0.0);
@@ -586,7 +605,37 @@ impl::mdarray_t<T, 2> make_serendipity_curl_space_3d(int degree)
   }
 
   int c = 3 * nv + (degree > 1 ? 3 : 2) * degree;
-  std::vector<std::array<int, 3>> indices;
+
+  // Precompute, for each (d, i) pair that will occur below, the factor
+  // built by the d2 loop (a product of pts(:,d2)^i[d2], with one
+  // dimension's power reduced by one and scaled by i[d2]). This factor
+  // does not depend on k, but the original code recomputed it via three
+  // length-O(degree) multiplication loops for every k, making it by far
+  // the most expensive part of this loop at high degree.
+  auto compute_d_factor
+      = [&](int d, const std::array<int, 3>& i) -> std::vector<T>
+  {
+    std::vector<T> p(wts.size(), 1.0);
+    for (int d2 = 0; d2 < 3; ++d2)
+    {
+      if (d == d2)
+      {
+        for (std::size_t j = 0; j < wts.size(); ++j)
+          p[j] *= i[d2];
+        for (int j = 0; j < i[d2] - 1; ++j)
+          for (std::size_t j2 = 0; j2 < wts.size(); ++j2)
+            p[j2] *= pts(j2, d2);
+      }
+      else
+      {
+        for (int j = 0; j < i[d2]; ++j)
+          for (std::size_t j2 = 0; j2 < wts.size(); ++j2)
+            p[j2] *= pts(j2, d2);
+      }
+    }
+    return p;
+  };
+
   for (int s = 1; s <= 3; ++s)
   {
     for (int i0 = 0; i0 <= s + degree + 1; ++i0)
@@ -599,33 +648,17 @@ impl::mdarray_t<T, 2> make_serendipity_curl_space_3d(int degree)
         {
           std::array<int, 3> i = {i0, i1, s + degree + 1 - i0 - i1};
 
+          std::array<std::vector<T>, 3> d_factor
+              = {compute_d_factor(0, i), compute_d_factor(1, i),
+                 compute_d_factor(2, i)};
+
           for (std::size_t k = 0; k < nonzero.size(); ++k)
           {
             for (int d = 0; d < 3; ++d)
             {
+              const std::vector<T>& p = d_factor[d];
               for (std::size_t j = 0; j < integrand.size(); ++j)
-                integrand[j] = wts[j] * Pq(0, nonzero[k], j);
-              for (int d2 = 0; d2 < 3; ++d2)
-              {
-                if (d == d2)
-                {
-                  for (std::size_t j = 0; j < integrand.size(); ++j)
-                    integrand[j] *= i[d2];
-                  for (int j = 0; j < i[d2] - 1; ++j)
-                  {
-                    for (std::size_t j = 0; j < integrand.size(); ++j)
-                      integrand[j] *= pts(j, d2);
-                  }
-                }
-                else
-                {
-                  for (int j = 0; j < i[d2]; ++j)
-                  {
-                    for (std::size_t j = 0; j < integrand.size(); ++j)
-                      integrand[j] *= pts(j, d2);
-                  }
-                }
-              }
+                integrand[j] = wts[j] * Pq(0, nonzero[k], j) * p[j];
 
               wcoeffs(c, psize * d + nonzero[k])
                   = std::reduce(integrand.begin(), integrand.end(), 0.0);

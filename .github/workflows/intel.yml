@@ -17,7 +17,7 @@ on:
 jobs:
   build:
     name: Build and test (oneAPI)
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     container: ubuntu:24.04  # Run in container to test with minimal pre-installed packages
     env:
       CC: icx

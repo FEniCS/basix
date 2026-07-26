@@ -64,21 +64,40 @@ FiniteElement<T> basix::element::create_rt(cell::type celltype, int degree,
       B(nv * i + j, psize * i + j) = 1.0;
 
   // Create coefficients for additional polynomials in Raviart-Thomas
-  // polynomial basis
-  for (std::size_t i = 0; i < ns; ++i)
+  // polynomial basis.
+  //
+  // For each (i, k, j) this originally computed a sum over quadrature
+  // points k1 of wts[k1]*phi(0,ns0+i,k1)*pts(k1,j)*phi(0,k,k1) via an
+  // explicit quadruple loop. Since phi(0,k,k1) (for k in [nv,psize)) does
+  // not depend on i or j, and wts[k1]*pts(k1,j)*phi(0,ns0+i,k1) does not
+  // depend on k, this is tdim matrix-matrix products, computed here via
+  // BLAS (math::dot) instead.
+  const std::size_t npts = wts.size();
+  const std::size_t ncols = psize - nv;
+
+  // Phi_cols(k1, kc) = phi(0, nv + kc, k1)
+  std::vector<T> Phi_cols_b(npts * ncols);
+  impl::mdspan_t<T, 2> Phi_cols(Phi_cols_b.data(), npts, ncols);
+  for (std::size_t k1 = 0; k1 < npts; ++k1)
+    for (std::size_t kc = 0; kc < ncols; ++kc)
+      Phi_cols(k1, kc) = phi(0, nv + kc, k1);
+
+  for (std::size_t j = 0; j < tdim; ++j)
   {
-    for (std::size_t k = nv; k < psize; ++k)
-    {
-      for (std::size_t j = 0; j < tdim; ++j)
-      {
-        B(nv * tdim + i, k + psize * j) = 0.0;
-        for (std::size_t k1 = 0; k1 < wts.size(); ++k1)
-        {
-          B(nv * tdim + i, k + psize * j)
-              += wts[k1] * phi(0, ns0 + i, k1) * pts(k1, j) * phi(0, k, k1);
-        }
-      }
-    }
+    // A(i, k1) = wts[k1] * pts(k1, j) * phi(0, ns0 + i, k1)
+    std::vector<T> Ab(ns * npts);
+    impl::mdspan_t<T, 2> A(Ab.data(), ns, npts);
+    for (std::size_t i = 0; i < ns; ++i)
+      for (std::size_t k1 = 0; k1 < npts; ++k1)
+        A(i, k1) = wts[k1] * pts(k1, j) * phi(0, ns0 + i, k1);
+
+    std::vector<T> Wb(ns * ncols);
+    impl::mdspan_t<T, 2> W(Wb.data(), ns, ncols);
+    math::dot(A, Phi_cols, W);
+
+    for (std::size_t i = 0; i < ns; ++i)
+      for (std::size_t kc = 0; kc < ncols; ++kc)
+        B(nv * tdim + i, nv + kc + psize * j) = W(i, kc);
   }
 
   math::orthogonalise<T>(B, nv * tdim);

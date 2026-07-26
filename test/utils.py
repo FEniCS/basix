@@ -5,7 +5,9 @@
 
 from functools import cache
 
+import numpy as np
 import pytest
+import sympy
 
 import basix
 from basix import CellType, DPCVariant, ElementFamily, LagrangeVariant
@@ -31,6 +33,19 @@ def cached_create_lattice(
 ):
     """Cached basix.create_lattice, for the same reason as cached_create_element."""
     return basix.create_lattice(cell_type, n, lattice_type, exterior, method)
+
+
+def evaluate_at_points(expr, symbols, pts):
+    """Evaluate a sympy expression at an array of points, vectorized via lambdify.
+
+    Looping `expr.subs(...)` once per point is very slow for polynomial-sized
+    point sets; lambdify compiles `expr` to a plain numpy expression once and
+    evaluates all points in a single call. Only safe for expressions without
+    per-point singularities that need symbolic (is_finite-style) handling.
+    """
+    f = sympy.lambdify(symbols, expr, "numpy")
+    values = np.asarray(f(*(pts[:, i] for i in range(len(symbols)))), dtype=float)
+    return np.broadcast_to(values, (len(pts),))
 
 
 def parametrize_over_elements(degree, reference=None, discontinuous=False):

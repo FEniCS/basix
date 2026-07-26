@@ -8,7 +8,7 @@ import sympy
 
 import basix
 
-from .utils import cached_create_lattice
+from .utils import cached_create_lattice, evaluate_at_points
 
 
 def sympy_lagrange(celltype, n):
@@ -779,8 +779,7 @@ def test_line(n):
         wsym = np.zeros_like(wtab[k])
         for i in range(n + 1):
             wd = sympy.diff(g[i], x, k)
-            for j, p in enumerate(pts):
-                wsym[j, i] = wd.subs(x, p[0])
+            wsym[:, i, 0] = evaluate_at_points(wd, (x,), pts)
         assert np.allclose(wtab[k], wsym)
 
 
@@ -797,8 +796,7 @@ def test_line_without_variant(n):
         wsym = np.zeros_like(wtab[k])
         for i in range(n + 1):
             wd = sympy.diff(g[i], x, k)
-            for j, p in enumerate(pts):
-                wsym[j, i] = wd.subs(x, p[0])
+            wsym[:, i, 0] = evaluate_at_points(wd, (x,), pts)
         assert np.allclose(wtab[k], wsym)
 
 
@@ -819,8 +817,7 @@ def test_tri(degree):
             wsym = np.zeros_like(wtab[0])
             for i in range(len(g)):
                 wd = sympy.diff(g[i], x, kx, y, ky)
-                for j, p in enumerate(pts):
-                    wsym[j, i] = wd.subs([(x, p[0]), (y, p[1])])
+                wsym[:, i, 0] = evaluate_at_points(wd, (x, y), pts)
             assert np.allclose(wtab[basix.index(kx, ky)], wsym)
 
 
@@ -845,8 +842,7 @@ def test_tet(degree):
                 wsym = np.zeros_like(wtab[0])
                 for i in range(len(g)):
                     wd = sympy.diff(g[i], x, kx, y, ky, z, kz)
-                    for j, p in enumerate(pts):
-                        wsym[j, i] = wd.subs([(x, p[0]), (y, p[1]), (z, p[2])])
+                    wsym[:, i, 0] = evaluate_at_points(wd, (x, y, z), pts)
                 assert np.allclose(wtab[basix.index(kx, ky, kz)], wsym)
 
 

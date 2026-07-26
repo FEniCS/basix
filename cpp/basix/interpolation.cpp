@@ -4,6 +4,7 @@
 
 #include "interpolation.h"
 #include "finite-element.h"
+#include "math.h"
 #include <concepts>
 #include <exception>
 
@@ -83,11 +84,21 @@ basix::compute_interpolation_operator(const FiniteElement<T>& element_from,
     std::array<std::size_t, 2> shape = {dim_to, dim_from};
     std::vector<T> outb(shape[0] * shape[1], 0.0);
     mdspan_t<T, 2> out(outb.data(), shape);
-    for (std::size_t i = 0; i < dim_to; ++i)
-      for (std::size_t j = 0; j < dim_from; ++j)
-        for (std::size_t k = 0; k < vs_from; ++k)
-          for (std::size_t l = 0; l < npts; ++l)
-            out(i, j) += i_m(i, k * npts + l) * tab(0, l, j, k);
+
+    // i_m has shape (dim_to, vs_from * npts), with columns already ordered
+    // as (k, l) -> k * npts + l. Build B with shape (vs_from * npts,
+    // dim_from) using the same (k, l) row ordering, so that out = i_m * B
+    // is a single dim_to x dim_from matrix-matrix product (computed with
+    // BLAS via math::dot) instead of an explicit quadruple loop.
+    std::vector<T> Bb(vs_from * npts * dim_from);
+    mdspan_t<T, 2> B(Bb.data(),
+                      std::array<std::size_t, 2>{vs_from * npts, dim_from});
+    for (std::size_t k = 0; k < vs_from; ++k)
+      for (std::size_t l = 0; l < npts; ++l)
+        for (std::size_t j = 0; j < dim_from; ++j)
+          B(k * npts + l, j) = tab(0, l, j, k);
+
+    math::dot(i_m, B, out);
 
     return {std::move(outb), shape};
   }

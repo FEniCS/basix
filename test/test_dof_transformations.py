@@ -42,8 +42,7 @@ def test_if_identity(cell_type, element_type, degree, element_args):
 def test_non_zero(cell_type, element_type, degree, element_args):
     e = cached_create_element(element_type, cell_type, degree, tuple(element_args))
     for t in e.base_transformations():
-        for row in t:
-            assert max(abs(i) for i in row) > 1e-6
+        assert np.all(np.max(np.abs(t), axis=1) > 1e-6)
 
 
 @parametrize_over_elements(5)
@@ -51,15 +50,17 @@ def test_apply_right(cell_type, element_type, degree, element_args):
     random.seed(42)
     e = cached_create_element(element_type, cell_type, degree, tuple(element_args))
     size = e.dim
+    base1 = np.arange(size * size, dtype=np.float32)
+    # This is the transpose of base1
+    base2 = base1.reshape(size, size).T.reshape(-1).copy()
     for i in range(10):
         cell_info = random.randrange(2**30)
 
-        data1 = np.array(list(range(size**2)), dtype=np.float32)
+        data1 = base1.copy()
         e.T_apply(data1, size, cell_info)
         data1 = data1.reshape((size, size))
 
-        # This is the transpose of the data used above
-        data2 = np.array([size * j + i for i in range(size) for j in range(size)], dtype=np.float32)
+        data2 = base2.copy()
         e.Tt_apply_right(data2, size, cell_info)
         data2 = data2.reshape((size, size))
 

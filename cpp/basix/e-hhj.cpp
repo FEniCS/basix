@@ -70,20 +70,25 @@ FiniteElement<T> basix::element::create_hhj(cell::type celltype, int degree,
   auto [_data, _shape] = cell::scaled_facet_normals<T>(celltype);
   impl::mdspan_t<const T, 2> normals(_data.data(), _shape);
 
+  // ct, ndofs, the quadrature points/weights, and the moment space (and
+  // its tabulation) depend only on the facet type, which is the same for
+  // every facet of a simplex -- compute them once rather than once per
+  // facet.
+  cell::type ct = cell::sub_entity_type(celltype, facet_dim, 0);
+
+  const std::size_t ndofs = polyset::dim(ct, polyset::type::standard, degree);
+  const auto [ptsbuffer, wts] = quadrature::make_quadrature<T>(
+      quadrature::type::Default, ct, polyset::type::standard, 2 * degree);
+  impl::mdspan_t<const T, 2> pts(ptsbuffer.data(), wts.size(), facet_dim);
+
+  FiniteElement<T> moment_space
+      = create_lagrange<T>(ct, degree, element::lagrange_variant::legendre,
+                           true);
+  const auto [phib, phishape] = moment_space.tabulate(0, pts);
+  impl::mdspan_t<const T, 4> moment_values(phib.data(), phishape);
+
   for (std::size_t e = 0; e < topology[facet_dim].size(); ++e)
   {
-    cell::type ct = cell::sub_entity_type(celltype, facet_dim, e);
-
-    const std::size_t ndofs = polyset::dim(ct, polyset::type::standard, degree);
-    const auto [ptsbuffer, wts] = quadrature::make_quadrature<T>(
-        quadrature::type::Default, ct, polyset::type::standard, 2 * degree);
-    impl::mdspan_t<const T, 2> pts(ptsbuffer.data(), wts.size(), facet_dim);
-
-    FiniteElement<T> moment_space = create_lagrange<T>(
-        ct, degree, element::lagrange_variant::legendre, true);
-    const auto [phib, phishape] = moment_space.tabulate(0, pts);
-    impl::mdspan_t<const T, 4> moment_values(phib.data(), phishape);
-
     // Entity coordinates
     const auto [entity_x_buffer, eshape]
         = cell::sub_entity_geometry<T>(celltype, facet_dim, e);

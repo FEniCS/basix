@@ -362,7 +362,8 @@ create_tri_warped(std::size_t n, lattice::type lattice_type, bool exterior)
 //-----------------------------------------------------------------------------
 template <std::floating_point T>
 std::vector<T> isaac_point(lattice::type lattice_type,
-                           std::span<const std::size_t> a)
+                           std::span<const std::size_t> a,
+                           const std::vector<std::vector<T>>& interval_pts)
 {
   if (a.size() == 1)
     return {1};
@@ -372,13 +373,22 @@ std::vector<T> isaac_point(lattice::type lattice_type,
     T denominator = 0;
     std::vector<std::size_t> sub_a(std::next(a.begin()), a.end());
     const std::size_t size = std::reduce(a.begin(), a.end());
-    std::vector<T> x = create_interval<T>(size, lattice_type, true);
+    // interval_pts[size] is create_interval<T>(size, lattice_type, true).
+    // Every recursive call at a given depth uses the same `size` (it only
+    // depends on the multiset of values in `a`, not their order), and
+    // callers of the top-level isaac_point for a fixed lattice degree n
+    // only ever need create_interval at the (at most n+1) sizes 0..n, so
+    // this is precomputed once by the caller rather than recomputed here
+    // on every call -- this recursion is invoked once per lattice point,
+    // i.e. O(n^2)/O(n^3) times for a triangle/tetrahedron lattice.
+    const std::vector<T>& x = interval_pts[size];
     for (std::size_t i = 0; i < a.size(); ++i)
     {
       if (i > 0)
         sub_a[i - 1] = a[i - 1];
       const std::size_t sub_size = size - a[i];
-      const std::vector sub_res = isaac_point<T>(lattice_type, sub_a);
+      const std::vector sub_res
+          = isaac_point<T>(lattice_type, sub_a, interval_pts);
       for (std::size_t j = 0; j < sub_res.size(); ++j)
         res[j < i ? j : j + 1] += x[sub_size] * sub_res[j];
       denominator += x[sub_size];
@@ -404,13 +414,21 @@ create_tri_isaac(std::size_t n, lattice::type lattice_type, bool exterior)
   md::mdspan<T, md::extents<std::size_t, md::dynamic_extent, 2>> p(_p.data(),
                                                                    shape);
 
+  // create_interval<T>(s, lattice_type, true) only depends on s, and every
+  // isaac_point call below (and its internal recursion) only ever needs it
+  // for s in [0, n], so build the table once instead of recomputing it
+  // from scratch for every one of the O(n^2) lattice points.
+  std::vector<std::vector<T>> interval_pts(n + 1);
+  for (std::size_t s = 0; s <= n; ++s)
+    interval_pts[s] = create_interval<T>(s, lattice_type, true);
+
   int c = 0;
   for (std::size_t j = b; j < (n - b + 1); ++j)
   {
     for (std::size_t i = b; i < (n - b + 1 - j); ++i)
     {
-      const std::vector isaac_p
-          = isaac_point<T>(lattice_type, std::array{i, j, n - i - j});
+      const std::vector isaac_p = isaac_point<T>(
+          lattice_type, std::array{i, j, n - i - j}, interval_pts);
       for (std::size_t k = 0; k < 2; ++k)
         p(c, k) = isaac_p[k];
       ++c;
@@ -538,6 +556,13 @@ create_tet_isaac(std::size_t n, lattice::type lattice_type, bool exterior)
   md::mdspan<T, md::extents<std::size_t, md::dynamic_extent, 3>> x(xb.data(),
                                                                    shape);
 
+  // See the comment in create_tri_isaac -- create_interval<T>(s, ...) only
+  // depends on s, so build the table of sizes 0..n once rather than
+  // recomputing it for every one of the O(n^3) lattice points.
+  std::vector<std::vector<T>> interval_pts(n + 1);
+  for (std::size_t s = 0; s <= n; ++s)
+    interval_pts[s] = create_interval<T>(s, lattice_type, true);
+
   int c = 0;
   for (std::size_t k = b; k < (n - b + 1); ++k)
   {
@@ -545,8 +570,8 @@ create_tet_isaac(std::size_t n, lattice::type lattice_type, bool exterior)
     {
       for (std::size_t i = b; i < (n - b + 1 - j - k); ++i)
       {
-        const std::vector ip
-            = isaac_point<T>(lattice_type, std::array{i, j, k, n - i - j - k});
+        const std::vector ip = isaac_point<T>(
+            lattice_type, std::array{i, j, k, n - i - j - k}, interval_pts);
         for (std::size_t l = 0; l < 3; ++l)
           x(c, l) = ip[l];
         ++c;

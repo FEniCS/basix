@@ -1001,15 +1001,9 @@ FiniteElement<T> basix::create_custom_element(
     }
   }
 
-  auto [dualmatrix, dualshape]
-      = compute_dual_matrix(cell_type, poly_type, wcoeffs_ortho, x, M,
-                            embedded_superdegree, interpolation_nderivs);
-  if (math::is_singular(mdspan_t<const T, 2>(dualmatrix.data(), dualshape)))
-  {
-    throw std::runtime_error(
-        "Dual matrix is singular, there is an error in your inputs");
-  }
-
+  // Note: the dual matrix is computed (once) inside the FiniteElement
+  // constructor below, which also checks for singularity and throws with
+  // the same message as here if it is singular.
   return basix::FiniteElement<T>(
       element::family::custom, cell_type, poly_type, embedded_superdegree,
       value_shape, wcoeffs_ortho, x, M, interpolation_nderivs, map_type,
@@ -1083,6 +1077,12 @@ FiniteElement<F>::FiniteElement(
   _dual_matrix
       = compute_dual_matrix<F>(cell_type, poly_type, wcoeffs, x, M,
                                embedded_superdegree, interpolation_nderivs);
+  if (math::is_singular(mdspan_t<const F, 2>(_dual_matrix.first.data(),
+                                              _dual_matrix.second)))
+  {
+    throw std::runtime_error(
+        "Dual matrix is singular, there is an error in your inputs");
+  }
 
   // Copy x
   for (std::size_t i = 0; i < x.size(); ++i)

@@ -434,23 +434,25 @@ std::pair<std::vector<T>, std::array<std::size_t, 2>> compute_transformation(
         tabulated_data(k0, k1, j) = result(k1, k0);
   }
 
-  // push forward
+  // Push forward.
+  //
+  // J, K and detJ are the same for every point here (this maps the
+  // reference cell to itself, e.g. a reflection/rotation, not physical
+  // cell geometry that could vary per point), so instead of calling
+  // push_forward once per point, every point's (total_ndofs, vs) block
+  // is pushed forward in a single call by viewing the whole
+  // (npts, total_ndofs, vs) buffer as one flat (npts * total_ndofs, vs)
+  // matrix -- valid since each row of that matrix is transformed
+  // independently of the others.
   mdarray_t<T, 3> pushed_data(tabulated_data.extents());
   {
-    mdarray_t<T, 2> temp_data(pushed_data.extent(1), pushed_data.extent(2));
-    for (std::size_t i = 0; i < npts; ++i)
-    {
-      mdspan_t<const T, 2> tab(
-          tabulated_data_b.data()
-              + i * tabulated_data.extent(1) * tabulated_data.extent(2),
-          tabulated_data.extent(1), tabulated_data.extent(2));
-      push_forward(map_type,
-                   mdspan_t<T, 2>(temp_data.data(), temp_data.extents()), tab,
-                   J, detJ, K);
-      for (std::size_t k0 = 0; k0 < temp_data.extent(0); ++k0)
-        for (std::size_t k1 = 0; k1 < temp_data.extent(1); ++k1)
-          pushed_data(i, k0, k1) = temp_data(k0, k1);
-    }
+    mdspan_t<const T, 2> tab_all(tabulated_data_b.data(),
+                                 npts * tabulated_data.extent(1),
+                                 tabulated_data.extent(2));
+    mdspan_t<T, 2> pushed_all(pushed_data.data(),
+                              npts * pushed_data.extent(1),
+                              pushed_data.extent(2));
+    push_forward(map_type, pushed_all, tab_all, J, detJ, K);
   }
 
   // Interpolate to calculate coefficients

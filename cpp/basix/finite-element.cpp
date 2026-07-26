@@ -1077,12 +1077,6 @@ FiniteElement<F>::FiniteElement(
   _dual_matrix
       = compute_dual_matrix<F>(cell_type, poly_type, wcoeffs, x, M,
                                embedded_superdegree, interpolation_nderivs);
-  if (math::is_singular(mdspan_t<const F, 2>(_dual_matrix.first.data(),
-                                              _dual_matrix.second)))
-  {
-    throw std::runtime_error(
-        "Dual matrix is singular, there is an error in your inputs");
-  }
 
   // Copy x
   for (std::size_t i = 0; i < x.size(); ++i)
@@ -1107,9 +1101,24 @@ FiniteElement<F>::FiniteElement(
   }
 
   // Compute C = (BD^T)^{-1} B
-  _coeffs.first = math::solve<F>(
-      mdspan_t<const F, 2>(_dual_matrix.first.data(), _dual_matrix.second),
-      wcoeffs);
+  //
+  // math::solve's LU factorisation of the dual matrix already detects
+  // singularity (via the LAPACK info code), so a separate
+  // math::is_singular pre-check -- which would repeat the same O(n^3)
+  // factorisation of the same matrix just to test it -- is unnecessary;
+  // any failure here is converted to the same message that check used to
+  // give.
+  try
+  {
+    _coeffs.first = math::solve<F>(
+        mdspan_t<const F, 2>(_dual_matrix.first.data(), _dual_matrix.second),
+        wcoeffs);
+  }
+  catch (const std::runtime_error&)
+  {
+    throw std::runtime_error(
+        "Dual matrix is singular, there is an error in your inputs");
+  }
   _coeffs.second = {_dual_matrix.second[1], wcoeffs.extent(1)};
 
   std::size_t num_points = 0;

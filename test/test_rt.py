@@ -8,6 +8,8 @@ import sympy
 
 import basix
 
+from .utils import cached_create_element, cached_create_lattice
+
 
 def sympy_rt(celltype, n):
     # These basis functions were computed using symfem. They can be recomputed
@@ -980,10 +982,13 @@ def test_tri(degree):
     g = sympy_rt(celltype, degree)
     x = sympy.Symbol("x")
     y = sympy.Symbol("y")
-    rt = basix.create_element(
-        basix.ElementFamily.RT, basix.CellType.triangle, degree, basix.LagrangeVariant.equispaced
+    rt = cached_create_element(
+        basix.ElementFamily.RT,
+        basix.CellType.triangle,
+        degree,
+        (basix.LagrangeVariant.equispaced,),
     )
-    pts = basix.create_lattice(celltype, 1, basix.LatticeType.equispaced, True)
+    pts = cached_create_lattice(celltype, 1, basix.LatticeType.equispaced, True)
     nderiv = 3
     wtab = rt.tabulate(nderiv, pts)
 
@@ -1006,11 +1011,14 @@ def test_tet(degree):
     x = sympy.Symbol("x")
     y = sympy.Symbol("y")
     z = sympy.Symbol("z")
-    rt = basix.create_element(
-        basix.ElementFamily.RT, basix.CellType.tetrahedron, degree, basix.LagrangeVariant.equispaced
+    rt = cached_create_element(
+        basix.ElementFamily.RT,
+        basix.CellType.tetrahedron,
+        degree,
+        (basix.LagrangeVariant.equispaced,),
     )
 
-    pts = basix.create_lattice(celltype, 5, basix.LatticeType.equispaced, True)
+    pts = cached_create_lattice(celltype, 5, basix.LatticeType.equispaced, True)
     nderiv = 1
     wtab = rt.tabulate(nderiv, pts)
 

@@ -3,9 +3,34 @@
 # SPDX-License-Identifier: MIT
 """Test utilities."""
 
+from functools import cache
+
 import pytest
 
+import basix
 from basix import CellType, DPCVariant, ElementFamily, LagrangeVariant
+
+
+@cache
+def cached_create_element(family, cell_type, degree, element_args=(), discontinuous=False):
+    """Cached basix.create_element.
+
+    Many tests parametrize over combinations that recreate the same
+    (expensive) element repeatedly, either across parametrizations within
+    one test or across sibling test functions. Caching avoids rebuilding
+    identical elements.
+    """
+    return basix.create_element(
+        family, cell_type, degree, *element_args, discontinuous=discontinuous
+    )
+
+
+@cache
+def cached_create_lattice(
+    cell_type, n, lattice_type, exterior, method=basix.LatticeSimplexMethod.none
+):
+    """Cached basix.create_lattice, for the same reason as cached_create_element."""
+    return basix.create_lattice(cell_type, n, lattice_type, exterior, method)
 
 
 def parametrize_over_elements(degree, reference=None, discontinuous=False):

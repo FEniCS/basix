@@ -2,6 +2,8 @@
 # FEniCS Project
 # SPDX-License-Identifier: MIT
 
+import functools
+
 import numpy as np
 import pytest
 import sympy
@@ -26,17 +28,32 @@ def test_cell_quadrature(celltype, order):
     assert np.isclose(sum(Qwts), celltype[1])
 
 
+@functools.cache
+def _qorder_line_exact(m):
+    x = sympy.Symbol("x")
+    f = x**m
+    return sympy.integrate(f, (x, 0, 1))
+
+
 @pytest.mark.parametrize("m", range(7))
 @pytest.mark.parametrize("scheme", [basix.QuadratureType.default, basix.QuadratureType.gll])
 def test_qorder_line(m, scheme):
     Qpts, Qwts = basix.make_quadrature(basix.CellType.interval, m, rule=scheme)
     x = sympy.Symbol("x")
     f = x**m
-    q = sympy.integrate(f, (x, 0, 1))
+    q = _qorder_line_exact(m)
     s = 0.0
     for pt, wt in zip(Qpts, Qwts):
         s += wt * f.subs([(x, pt[0])])
     assert np.isclose(float(q), float(s))
+
+
+@functools.cache
+def _qorder_tri_exact(m):
+    x = sympy.Symbol("x")
+    y = sympy.Symbol("y")
+    f = x**m + y**m
+    return sympy.integrate(f, (x, 0, 1 - y), (y, 0, 1))
 
 
 @pytest.mark.parametrize("m", range(6))
@@ -48,7 +65,7 @@ def test_qorder_tri(m, scheme):
     x = sympy.Symbol("x")
     y = sympy.Symbol("y")
     f = x**m + y**m
-    q = sympy.integrate(f, (x, 0, 1 - y), (y, 0, 1))
+    q = _qorder_tri_exact(m)
     s = 0.0
     for pt, wt in zip(Qpts, Qwts):
         s += wt * f.subs([(x, pt[0]), (y, pt[1])])
@@ -84,6 +101,15 @@ def test_xiao_gimbutas_tet(m, scheme):
     assert np.isclose(float(q), float(s))
 
 
+@functools.cache
+def _qorder_tet_exact(m):
+    x = sympy.Symbol("x")
+    y = sympy.Symbol("y")
+    z = sympy.Symbol("z")
+    f = x**m + y**m + z**m
+    return sympy.integrate(f, (x, 0, 1 - y - z), (y, 0, 1 - z), (z, 0, 1))
+
+
 @pytest.mark.parametrize("m", range(9))
 @pytest.mark.parametrize(
     "scheme", [basix.QuadratureType.default, basix.QuadratureType.gauss_jacobi]
@@ -94,11 +120,20 @@ def test_qorder_tet(m, scheme):
     y = sympy.Symbol("y")
     z = sympy.Symbol("z")
     f = x**m + y**m + z**m
-    q = sympy.integrate(f, (x, 0, 1 - y - z), (y, 0, 1 - z), (z, 0, 1))
+    q = _qorder_tet_exact(m)
     s = 0.0
     for pt, wt in zip(Qpts, Qwts):
         s += wt * f.subs([(x, pt[0]), (y, pt[1]), (z, pt[2])])
     assert np.isclose(float(q), float(s))
+
+
+@functools.cache
+def _qorder_prism_exact(m):
+    x = sympy.Symbol("x")
+    y = sympy.Symbol("y")
+    z = sympy.Symbol("z")
+    f = x**m + y**m + z**m
+    return sympy.integrate(f, (x, 0, 1 - y), (y, 0, 1), (z, 0, 1))
 
 
 @pytest.mark.parametrize("m", range(9))
@@ -111,19 +146,15 @@ def test_qorder_prism(m, scheme):
     y = sympy.Symbol("y")
     z = sympy.Symbol("z")
     f = x**m + y**m + z**m
-    q = sympy.integrate(f, (x, 0, 1 - y), (y, 0, 1), (z, 0, 1))
+    q = _qorder_prism_exact(m)
     s = 0.0
     for pt, wt in zip(Qpts, Qwts):
         s += wt * f.subs([(x, pt[0]), (y, pt[1]), (z, pt[2])])
     assert np.isclose(float(q), float(s))
 
 
-@pytest.mark.parametrize("m", range(6))
-@pytest.mark.parametrize(
-    "scheme", [basix.QuadratureType.default, basix.QuadratureType.gauss_jacobi]
-)
-def test_qorder_pyramid(m, scheme):
-    Qpts, Qwts = basix.make_quadrature(basix.CellType.pyramid, m, rule=scheme)
+@functools.cache
+def _qorder_pyramid_exact(m):
     x = sympy.Symbol("x")
     y = sympy.Symbol("y")
     z = sympy.Symbol("z")
@@ -135,8 +166,19 @@ def test_qorder_pyramid(m, scheme):
     ]
     polyset += [x * y**m / (1 - z) ** m, x**m * y / (1 - z) ** m]
     polyset += [x**a * y**b / (1 - z) ** min(a, b) for a in range(m) for b in range(m + 1 - a, m)]
-    for f in polyset:
-        q = sympy.integrate(f, (x, 0, 1 - z), (y, 0, 1 - z), (z, 0, 1))
+    return [(f, sympy.integrate(f, (x, 0, 1 - z), (y, 0, 1 - z), (z, 0, 1))) for f in polyset]
+
+
+@pytest.mark.parametrize("m", range(6))
+@pytest.mark.parametrize(
+    "scheme", [basix.QuadratureType.default, basix.QuadratureType.gauss_jacobi]
+)
+def test_qorder_pyramid(m, scheme):
+    Qpts, Qwts = basix.make_quadrature(basix.CellType.pyramid, m, rule=scheme)
+    x = sympy.Symbol("x")
+    y = sympy.Symbol("y")
+    z = sympy.Symbol("z")
+    for f, q in _qorder_pyramid_exact(m):
         s = 0.0
         for pt, wt in zip(Qpts, Qwts):
             s += wt * f.subs([(x, pt[0]), (y, pt[1]), (z, pt[2])])

@@ -8,6 +8,8 @@ import sympy
 
 import basix
 
+from .utils import cached_create_lattice
+
 
 def sympy_nedelec(celltype, n):
     # These basis functions were computed using symfem. They can be recomputed
@@ -412,7 +414,7 @@ def test_tri(degree):
     nedelec = basix.create_element(
         basix.ElementFamily.N2E, basix.CellType.triangle, degree, basix.LagrangeVariant.equispaced
     )
-    pts = basix.create_lattice(celltype, 6, basix.LatticeType.equispaced, True)
+    pts = cached_create_lattice(celltype, 6, basix.LatticeType.equispaced, True)
     nderiv = 3
     wtab = nedelec.tabulate(nderiv, pts)
     for kx in range(nderiv + 1):
@@ -439,7 +441,7 @@ def test_tet(degree):
         degree,
         basix.LagrangeVariant.equispaced,
     )
-    pts = basix.create_lattice(celltype, 6, basix.LatticeType.equispaced, True)
+    pts = cached_create_lattice(celltype, 6, basix.LatticeType.equispaced, True)
     nderiv = 1
     wtab = nedelec.tabulate(nderiv, pts)
     for kx in range(nderiv + 1):

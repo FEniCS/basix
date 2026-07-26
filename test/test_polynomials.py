@@ -8,6 +8,8 @@ import sympy
 
 import basix
 
+from .utils import cached_create_lattice
+
 one = sympy.Integer(1)
 x = sympy.Symbol("x")
 y = sympy.Symbol("y")
@@ -159,7 +161,7 @@ def test_order(cell_type, ptype, functions, degree):
 
     assert len(functions) == polys.shape[0]
 
-    eval_points = basix.create_lattice(cell_type, 10, basix.LatticeType.equispaced, False)
+    eval_points = cached_create_lattice(cell_type, 10, basix.LatticeType.equispaced, False)
     eval_polys = basix.tabulate_polynomials(ptype, cell_type, degree, eval_points)
 
     for n, function in enumerate(functions):

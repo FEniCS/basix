@@ -2,13 +2,18 @@
 # FEniCS Project
 # SPDX-License-Identifier: MIT
 
+import functools
+
 import numpy as np
 import pytest
 import sympy
 
 import basix
 
+from .utils import cached_create_lattice
 
+
+@functools.cache
 def P_interval(n, x):
     r = []
     for i in range(n + 1):
@@ -24,10 +29,11 @@ def P_interval(n, x):
 @pytest.mark.parametrize("nderiv", range(8))
 def test_symbolic_interval(n, nderiv):
     x = sympy.Symbol("x")
-    wd = P_interval(n, x)
+    # Copy the cached list since the loop below mutates entries in place.
+    wd = list(P_interval(n, x))
 
     cell = basix.CellType.interval
-    pts0 = basix.create_lattice(cell, 10, basix.LatticeType.equispaced, True)
+    pts0 = cached_create_lattice(cell, 10, basix.LatticeType.equispaced, True)
     wtab = basix.polynomials.tabulate_polynomial_set(
         cell, basix.PolysetType.standard, n, nderiv, pts0
     )
@@ -48,11 +54,12 @@ def test_symbolic_quad(n, nderiv):
 
     x = sympy.Symbol("x")
     y = sympy.Symbol("y")
-    w = [wx * wy for wx in P_interval(n, x) for wy in P_interval(n, y)]
+    wy_list = P_interval(n, y)
+    w = [wx * wy for wx in P_interval(n, x) for wy in wy_list]
 
     m = (n + 1) ** 2
     cell = basix.CellType.quadrilateral
-    pts0 = basix.create_lattice(cell, 2, basix.LatticeType.equispaced, True)
+    pts0 = cached_create_lattice(cell, 2, basix.LatticeType.equispaced, True)
     wtab = basix.polynomials.tabulate_polynomial_set(
         cell, basix.PolysetType.standard, n, nderiv, pts0
     )
@@ -183,7 +190,7 @@ def test_symbolic_pyramid(n, nderiv):
     w = symbolic_pyramid(n)
 
     cell = basix.CellType.pyramid
-    pts0 = basix.create_lattice(cell, 5, basix.LatticeType.equispaced, False)
+    pts0 = cached_create_lattice(cell, 5, basix.LatticeType.equispaced, False)
     wtab = basix.polynomials.tabulate_polynomial_set(
         cell, basix.PolysetType.standard, n, nderiv, pts0
     )

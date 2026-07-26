@@ -8,6 +8,8 @@ import sympy
 
 import basix
 
+from .utils import cached_create_lattice
+
 
 def sympy_lagrange(celltype, n):
     # These basis functions were computed using symfem. They can be recomputed
@@ -770,7 +772,7 @@ def test_line(n):
     lagrange = basix.create_element(
         basix.ElementFamily.P, celltype, n, basix.LagrangeVariant.equispaced
     )
-    pts = basix.create_lattice(celltype, 6, basix.LatticeType.equispaced, True)
+    pts = cached_create_lattice(celltype, 6, basix.LatticeType.equispaced, True)
     nderiv = n
     wtab = lagrange.tabulate(nderiv, pts)
     for k in range(nderiv + 1):
@@ -788,7 +790,7 @@ def test_line_without_variant(n):
     g = sympy_lagrange(celltype, n)
     x = sympy.Symbol("x")
     lagrange = basix.create_element(basix.ElementFamily.P, basix.CellType.interval, n)
-    pts = basix.create_lattice(celltype, 6, basix.LatticeType.equispaced, True)
+    pts = cached_create_lattice(celltype, 6, basix.LatticeType.equispaced, True)
     nderiv = n
     wtab = lagrange.tabulate(nderiv, pts)
     for k in range(nderiv + 1):
@@ -809,7 +811,7 @@ def test_tri(degree):
     lagrange = basix.create_element(
         basix.ElementFamily.P, basix.CellType.triangle, degree, basix.LagrangeVariant.equispaced
     )
-    pts = basix.create_lattice(celltype, 6, basix.LatticeType.equispaced, True)
+    pts = cached_create_lattice(celltype, 6, basix.LatticeType.equispaced, True)
     nderiv = 3
     wtab = lagrange.tabulate(nderiv, pts)
     for kx in range(nderiv):
@@ -832,7 +834,7 @@ def test_tet(degree):
     lagrange = basix.create_element(
         basix.ElementFamily.P, basix.CellType.tetrahedron, degree, basix.LagrangeVariant.equispaced
     )
-    pts = basix.create_lattice(celltype, 6, basix.LatticeType.equispaced, True)
+    pts = cached_create_lattice(celltype, 6, basix.LatticeType.equispaced, True)
     nderiv = 1
     wtab = lagrange.tabulate(nderiv, pts)
     for k in range(nderiv + 1):
@@ -861,7 +863,7 @@ def test_lagrange(celltype, degree):
     lagrange = basix.create_element(
         basix.ElementFamily.P, celltype[1], degree, basix.LagrangeVariant.equispaced
     )
-    pts = basix.create_lattice(celltype[0], 6, basix.LatticeType.equispaced, True)
+    pts = cached_create_lattice(celltype[0], 6, basix.LatticeType.equispaced, True)
     w = lagrange.tabulate(0, pts)[0]
     assert np.isclose(np.sum(w, axis=1), 1.0).all()
 
@@ -988,7 +990,7 @@ def test_celltypes(degree, celltype):
     tp = basix.create_element(
         basix.ElementFamily.P, celltype, degree, basix.LagrangeVariant.equispaced
     )
-    pts = basix.create_lattice(celltype, 5, basix.LatticeType.equispaced, True)
+    pts = cached_create_lattice(celltype, 5, basix.LatticeType.equispaced, True)
     w = tp.tabulate(0, pts)[0]
     assert np.allclose(np.sum(w, axis=1), 1.0)
 

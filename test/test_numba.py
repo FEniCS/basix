@@ -17,6 +17,8 @@ from numba.typed import Dict
 
 from basix import numba_helpers
 
+from .utils import cached_create_element
+
 
 @pytest.mark.parametrize(
     "cell",
@@ -49,7 +51,7 @@ def test_dof_transformations(cell, element, degree, element_args, block_size):
 
     random.seed(1337)
 
-    e = basix.create_element(element, cell, degree, *element_args)
+    e = cached_create_element(element, cell, degree, tuple(element_args))
     data = np.array(list(range(e.dim * block_size)), dtype=np.double)
 
     for i in range(10):
@@ -105,7 +107,7 @@ def test_dof_transformations_to_transpose(cell, element, degree, block_size, ele
 
     random.seed(1337)
 
-    e = basix.create_element(element, cell, degree, *element_args)
+    e = cached_create_element(element, cell, degree, tuple(element_args))
     data = np.array(list(range(e.dim * block_size)), dtype=np.double)
 
     for i in range(10):

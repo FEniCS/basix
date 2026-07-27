@@ -74,16 +74,19 @@ impl::mdarray_t<T, 2> create_nedelec_2d_space(int degree)
 
   // A1(i, k) = wts[k] * pts(k, 1) * phi(0, ns0 + i, k)
   // A2(i, k) = wts[k] * pts(k, 0) * phi(0, ns0 + i, k)
-  std::vector<T> A1b(ns * npts), A2b(ns * npts);
+  std::vector<T> A1b(ns * npts);
+  std::vector<T> A2b(ns * npts);
   impl::mdspan_t<T, 2> A1(A1b.data(), ns, npts);
   impl::mdspan_t<T, 2> A2(A2b.data(), ns, npts);
   for (std::size_t i = 0; i < ns; ++i)
+  {
     for (std::size_t k = 0; k < npts; ++k)
     {
       const T p = wts[k] * phi(0, ns0 + i, k);
       A1(i, k) = p * pts(k, 1);
       A2(i, k) = p * pts(k, 0);
     }
+  }
 
   std::vector<T> R1b(ns * ncols), R2b(ns * ncols);
   impl::mdspan_t<T, 2> R1(R1b.data(), ns, ncols);

@@ -70,53 +70,60 @@ FiniteElement<T> basix::element::create_hhj(cell::type celltype, int degree,
   auto [_data, _shape] = cell::scaled_facet_normals<T>(celltype);
   impl::mdspan_t<const T, 2> normals(_data.data(), _shape);
 
-  // ct, ndofs, the quadrature points/weights, and the moment space (and
-  // its tabulation) depend only on the facet type, which is the same for
-  // every facet of a simplex -- compute them once rather than once per
-  // facet.
-  cell::type ct = cell::sub_entity_type(celltype, facet_dim, 0);
-
-  const std::size_t ndofs = polyset::dim(ct, polyset::type::standard, degree);
-  const auto [ptsbuffer, wts] = quadrature::make_quadrature<T>(
-      quadrature::type::Default, ct, polyset::type::standard, 2 * degree);
-  impl::mdspan_t<const T, 2> pts(ptsbuffer.data(), wts.size(), facet_dim);
-
-  FiniteElement<T> moment_space
-      = create_lagrange<T>(ct, degree, element::lagrange_variant::legendre,
-                           true);
-  const auto [phib, phishape] = moment_space.tabulate(0, pts);
-  impl::mdspan_t<const T, 4> moment_values(phib.data(), phishape);
-
-  for (std::size_t e = 0; e < topology[facet_dim].size(); ++e)
   {
-    // Entity coordinates
-    const auto [entity_x_buffer, eshape]
-        = cell::sub_entity_geometry<T>(celltype, facet_dim, e);
-    std::span<const T> x0(entity_x_buffer.data(), eshape[1]);
-    impl::mdspan_t<const T, 2> entity_x(entity_x_buffer.data(), eshape);
+    // ct, ndofs, the quadrature points/weights, and the moment space (and
+    // its tabulation) depend only on the facet type, which is the same for
+    // every facet of a simplex -- compute them once rather than once per
+    // facet. Scoped to this block so these names don't shadow the
+    // unrelated ct/ndofs/pts/wts/moment_space locals used below for the
+    // interior dofs.
+    cell::type ct = cell::sub_entity_type(celltype, facet_dim, 0);
 
-    // Copy points
-    auto& _x = x[facet_dim].emplace_back(pts.extent(0), tdim);
-    for (std::size_t p = 0; p < pts.extent(0); ++p)
-    {
-      for (std::size_t k = 0; k < _x.extent(1); ++k)
-        _x(p, k) = x0[k];
-      for (std::size_t k0 = 0; k0 + 1 < entity_x.extent(0); ++k0)
-        for (std::size_t k1 = 0; k1 < _x.extent(1); ++k1)
-          _x(p, k1) += (entity_x(k0 + 1, k1) - x0[k1]) * pts(p, k0);
-    }
+    const std::size_t ndofs
+        = polyset::dim(ct, polyset::type::standard, degree);
+    const auto [ptsbuffer, wts] = quadrature::make_quadrature<T>(
+        quadrature::type::Default, ct, polyset::type::standard, 2 * degree);
+    impl::mdspan_t<const T, 2> pts(ptsbuffer.data(), wts.size(), facet_dim);
 
-    auto& _M = M[facet_dim].emplace_back(ndofs, tdim * tdim, pts.extent(0), 1);
-    for (int n = 0; n < moment_space.dim(); ++n)
+    FiniteElement<T> moment_space
+        = create_lagrange<T>(ct, degree, element::lagrange_variant::legendre,
+                             true);
+    const auto [phib, phishape] = moment_space.tabulate(0, pts);
+    impl::mdspan_t<const T, 4> moment_values(phib.data(), phishape);
+
+    for (std::size_t e = 0; e < topology[facet_dim].size(); ++e)
     {
-      for (std::size_t q = 0; q < pts.extent(0); ++q)
+      // Entity coordinates
+      const auto [entity_x_buffer, eshape]
+          = cell::sub_entity_geometry<T>(celltype, facet_dim, e);
+      std::span<const T> x0(entity_x_buffer.data(), eshape[1]);
+      impl::mdspan_t<const T, 2> entity_x(entity_x_buffer.data(), eshape);
+
+      // Copy points
+      auto& _x = x[facet_dim].emplace_back(pts.extent(0), tdim);
+      for (std::size_t p = 0; p < pts.extent(0); ++p)
       {
-        for (std::size_t k0 = 0; k0 < tdim; ++k0)
+        for (std::size_t k = 0; k < _x.extent(1); ++k)
+          _x(p, k) = x0[k];
+        for (std::size_t k0 = 0; k0 + 1 < entity_x.extent(0); ++k0)
+          for (std::size_t k1 = 0; k1 < _x.extent(1); ++k1)
+            _x(p, k1) += (entity_x(k0 + 1, k1) - x0[k1]) * pts(p, k0);
+      }
+
+      auto& _M
+          = M[facet_dim].emplace_back(ndofs, tdim * tdim, pts.extent(0), 1);
+      for (int n = 0; n < moment_space.dim(); ++n)
+      {
+        for (std::size_t q = 0; q < pts.extent(0); ++q)
         {
-          for (std::size_t k1 = 0; k1 < tdim; ++k1)
+          for (std::size_t k0 = 0; k0 < tdim; ++k0)
           {
-            _M(n, tdim * k0 + k1, q, 0) = normals(e, k0) * normals(e, k1)
-                                          * wts[q] * moment_values(0, q, n, 0);
+            for (std::size_t k1 = 0; k1 < tdim; ++k1)
+            {
+              _M(n, tdim * k0 + k1, q, 0) = normals(e, k0) * normals(e, k1)
+                                            * wts[q]
+                                            * moment_values(0, q, n, 0);
+            }
           }
         }
       }

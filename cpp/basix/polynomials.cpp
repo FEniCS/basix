@@ -220,23 +220,23 @@ void tabulate_lagrange_pyramid(
 
       if (q > 1)
       {
-        auto _p = md::submdspan(P, pyr_idx(p, q - 2, 0), md::full_extent);
+        auto _p2 = md::submdspan(P, pyr_idx(p, q - 2, 0), md::full_extent);
         if (q <= p)
         {
           for (std::size_t i = 0; i < r_pq.size(); ++i)
-            r_pq[i] -= a * _p[i];
+            r_pq[i] -= a * _p2[i];
         }
         else if (q == p + 1)
         {
           for (std::size_t i = 0; i < r_pq.size(); ++i)
-            r_pq[i] -= a * (1.0 - x2[i]) * _p[i];
+            r_pq[i] -= a * (1.0 - x2[i]) * _p2[i];
         }
         else
         {
           for (std::size_t i = 0; i < r_pq.size(); ++i)
           {
             const T f2 = 1.0 - x2[i];
-            r_pq[i] -= a * f2 * f2 * _p[i];
+            r_pq[i] -= a * f2 * f2 * _p2[i];
           }
         }
       }

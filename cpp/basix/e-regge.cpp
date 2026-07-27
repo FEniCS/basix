@@ -74,13 +74,13 @@ FiniteElement<T> element::create_regge(cell::type celltype, int degree,
     }
     else
     {
-      // ct, ndofs, the quadrature points/weights, and the moment space
-      // (and its tabulation) depend only on the sub-entity type, which is
-      // the same for every entity of dimension d on a simplex -- compute
-      // them once per d rather than once per entity.
+      // ct, entity_ndofs, the quadrature points/weights, and the moment
+      // space (and its tabulation) depend only on the sub-entity type,
+      // which is the same for every entity of dimension d on a simplex --
+      // compute them once per d rather than once per entity.
       cell::type ct = cell::sub_entity_type(celltype, d, 0);
 
-      const std::size_t ndofs
+      const std::size_t entity_ndofs
           = polyset::dim(ct, polyset::type::standard, degree + 1 - d);
       const auto [_pts, wts] = quadrature::make_quadrature<T>(
           quadrature::type::Default, ct, polyset::type::standard,
@@ -140,7 +140,7 @@ FiniteElement<T> element::create_regge(cell::type celltype, int degree,
           }
         }
 
-        auto& _M = M[d].emplace_back(ndofs * ntangents, tdim * tdim,
+        auto& _M = M[d].emplace_back(entity_ndofs * ntangents, tdim * tdim,
                                      pts.extent(0), 1);
         for (int n = 0; n < moment_space.dim(); ++n)
         {

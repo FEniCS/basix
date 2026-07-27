@@ -2159,10 +2159,11 @@ void tabulate_polyset_pyramid_derivs(
 
             if (q > 1)
             {
-              auto _p = md::submdspan(P, idx(kx, ky, kz), pyr_idx(p, q - 2, 0),
-                                      md::full_extent);
+              auto _p2
+                  = md::submdspan(P, idx(kx, ky, kz), pyr_idx(p, q - 2, 0),
+                                  md::full_extent);
               for (std::size_t i = 0; i < pq0.size(); ++i)
-                pq0[i] -= a * _p[i];
+                pq0[i] -= a * _p2[i];
               if (kz > 0)
               {
                 auto p2z = md::submdspan(P, idx(kx, ky, kz - 1),

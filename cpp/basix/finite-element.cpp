@@ -1336,8 +1336,8 @@ FiniteElement<F>::FiniteElement(
               = {std::vector<F>(perm.size() * perm.size()),
                  {perm.size(), perm.size()}};
           std::ranges::fill(identity.first, 0.);
-          for (std::size_t i = 0; i < perm.size(); ++i)
-            identity.first[i * perm.size() + i] = 1;
+          for (std::size_t k = 0; k < perm.size(); ++k)
+            identity.first[k * perm.size() + k] = 1;
 
           auto& etrans = _etrans.try_emplace(ctype).first->second;
           auto& etransT = _etransT.try_emplace(ctype).first->second;
@@ -1398,10 +1398,10 @@ FiniteElement<F>::FiniteElement(
             }
 
             M_b.resize(dim * dim);
-            mdspan_t<F, 2> M(M_b.data(), dim, dim);
+            mdspan_t<F, 2> Mmat(M_b.data(), dim, dim);
             for (std::size_t k0 = 0; k0 < dim; ++k0)
               for (std::size_t k1 = 0; k1 < dim; ++k1)
-                M(k0, k1) = trans(i, k0, k1);
+                Mmat(k0, k1) = trans(i, k0, k1);
 
             // Rotation of a face: this is in the only base transformation
             // such that M^{-1} != M.
@@ -1413,11 +1413,11 @@ FiniteElement<F>::FiniteElement(
             {
               matint.resize(dim * dim);
               mdspan_t<F, 2> mat_int(matint.data(), dim, dim);
-              math::dot(M, M, mat_int);
-              math::dot(mat_int, M, Minv);
+              math::dot(Mmat, Mmat, mat_int);
+              math::dot(mat_int, Mmat, Minv);
             }
             else if (ctype == cell::type::triangle and i == 0)
-              math::dot(M, M, Minv);
+              math::dot(Mmat, Mmat, Minv);
             else
               Minv_b.assign(M_b.begin(), M_b.end());
 
@@ -1933,13 +1933,13 @@ FiniteElement<F>::base_transformations() const
       mdspan_t<const F, 3> tmp(tmp_data.first.data(), tmp_data.second);
       for (auto& e : _edofs[1])
       {
-        std::size_t ndofs = e.size();
-        for (std::size_t i = 0; i < ndofs; ++i)
-          for (std::size_t j = 0; j < ndofs; ++j)
+        std::size_t entity_ndofs = e.size();
+        for (std::size_t i = 0; i < entity_ndofs; ++i)
+          for (std::size_t j = 0; j < entity_ndofs; ++j)
             bt(transform_n, i + dofstart, j + dofstart) = tmp(0, i, j);
 
         ++transform_n;
-        dofstart += ndofs;
+        dofstart += entity_ndofs;
       }
     }
 
@@ -1947,23 +1947,23 @@ FiniteElement<F>::base_transformations() const
     {
       for (std::size_t f = 0; f < _edofs[2].size(); ++f)
       {
-        if (std::size_t ndofs = _edofs[2][f].size(); ndofs > 0)
+        if (std::size_t entity_ndofs = _edofs[2][f].size(); entity_ndofs > 0)
         {
           auto& tmp_data
               = _entity_transformations.at(_cell_subentity_types[2][f]);
           mdspan_t<const F, 3> tmp(tmp_data.first.data(), tmp_data.second);
 
-          for (std::size_t i = 0; i < ndofs; ++i)
-            for (std::size_t j = 0; j < ndofs; ++j)
+          for (std::size_t i = 0; i < entity_ndofs; ++i)
+            for (std::size_t j = 0; j < entity_ndofs; ++j)
               bt(transform_n, i + dofstart, j + dofstart) = tmp(0, i, j);
           ++transform_n;
 
-          for (std::size_t i = 0; i < ndofs; ++i)
-            for (std::size_t j = 0; j < ndofs; ++j)
+          for (std::size_t i = 0; i < entity_ndofs; ++i)
+            for (std::size_t j = 0; j < entity_ndofs; ++j)
               bt(transform_n, i + dofstart, j + dofstart) = tmp(1, i, j);
           ++transform_n;
 
-          dofstart += ndofs;
+          dofstart += entity_ndofs;
         }
       }
     }

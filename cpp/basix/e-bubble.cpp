@@ -70,9 +70,9 @@ FiniteElement<T> basix::element::create_bubble(cell::type celltype, int degree,
       quadrature::type::Default, celltype, polyset::type::standard, 2 * degree);
   impl::mdspan_t<const T, 2> pts(_pts.data(), wts.size(),
                                  _pts.size() / wts.size());
-  const auto [_phi, shape]
+  const auto [_phi, phi_shape]
       = polyset::tabulate(celltype, polyset::type::standard, degree, 0, pts);
-  impl::mdspan_t<const T, 3> phi(_phi.data(), shape);
+  impl::mdspan_t<const T, 3> phi(_phi.data(), phi_shape);
 
   // The number of order (degree) polynomials
   const std::size_t psize = phi.extent(1);

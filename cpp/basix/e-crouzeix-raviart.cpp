@@ -43,8 +43,8 @@ FiniteElement<T> basix::element::create_cr(cell::type celltype, int degree,
   const std::vector<std::vector<int>>& facet_topology = topology[tdim - 1];
   const std::size_t ndofs = facet_topology.size();
 
-  const auto [gdata, shape] = cell::geometry<T>(celltype);
-  impl::mdspan_t<const T, 2> geometry(gdata.data(), shape);
+  const auto [gdata, gshape] = cell::geometry<T>(celltype);
+  impl::mdspan_t<const T, 2> geometry(gdata.data(), gshape);
 
   std::array<std::vector<impl::mdarray_t<T, 2>>, 4> x;
   std::array<std::vector<impl::mdarray_t<T, 4>>, 4> M;

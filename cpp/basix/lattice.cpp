@@ -406,6 +406,16 @@ create_tri_isaac(std::size_t n, lattice::type lattice_type, bool exterior)
   md::mdspan<T, md::extents<std::size_t, md::dynamic_extent, 2>> p(_p.data(),
                                                                    shape);
 
+  // If there are no points to generate (e.g. an interior/face lattice
+  // requested for too low a degree), return before paying for the
+  // interval_pts table below -- each entry involves a GLL/Gauss point
+  // computation (an eigenvalue solve), so building the full table
+  // unconditionally is wasted work whenever this is a common,
+  // legitimately-empty case (as it is for low-degree Lagrange elements,
+  // where every entity down to some dimension has zero interior dofs).
+  if (shape[0] == 0)
+    return {std::move(_p), shape};
+
   // create_interval<T>(s, lattice_type, true) only depends on s, and every
   // isaac_point call below (and its internal recursion) only ever needs it
   // for s in [0, n], so build the table once instead of recomputing it
@@ -547,6 +557,13 @@ create_tet_isaac(std::size_t n, lattice::type lattice_type, bool exterior)
   std::vector<T> xb(shape[0] * shape[1]);
   md::mdspan<T, md::extents<std::size_t, md::dynamic_extent, 3>> x(xb.data(),
                                                                    shape);
+
+  // See the comment in create_tri_isaac -- return before paying for the
+  // interval_pts table below (a GLL/Gauss eigenvalue solve per entry)
+  // when there are no points to generate, e.g. for a low-degree Lagrange
+  // element's interior lattice.
+  if (shape[0] == 0)
+    return {std::move(xb), shape};
 
   // See the comment in create_tri_isaac -- create_interval<T>(s, ...) only
   // depends on s, so build the table of sizes 0..n once rather than

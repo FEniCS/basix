@@ -283,6 +283,23 @@ if(_cxx_standard)
   string(APPEND PKG_CXXFLAGS " -std=c++${_cxx_standard}")
 endif()
 
+# BLAS/LAPACK are linked PRIVATE, so only a *static* Basix::basix needs
+# consumers to also link them (a shared library resolves its own private
+# dependencies). List them in Libs.private, which `pkg-config --libs`
+# ignores but `pkg-config --static --libs` includes. macOS frameworks
+# (e.g. Accelerate) are not valid bare linker arguments, so translate
+# those to `-framework <name>`.
+set(_pkg_libs_private)
+foreach(_lib ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
+  if(_lib MATCHES "\\.framework$")
+    get_filename_component(_fw_name "${_lib}" NAME_WE)
+    list(APPEND _pkg_libs_private "-framework" "${_fw_name}")
+  else()
+    list(APPEND _pkg_libs_private "${_lib}")
+  endif()
+endforeach()
+string(REPLACE ";" " " PKG_LIBS_PRIVATE "${_pkg_libs_private}")
+
 configure_file(
   ${CMAKE_CURRENT_SOURCE_DIR}/basix.pc.in
   ${CMAKE_CURRENT_BINARY_DIR}/basix.pc

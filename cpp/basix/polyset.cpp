@@ -165,7 +165,7 @@ void tabulate_polyset_line_macroedge_derivs(
         {
           T x_term = pow(1.0 - x0[p], n - k - d);
           for (std::size_t i = n - k; i > n - k - d; --i)
-            x_term *= -i;
+            x_term *= -static_cast<T>(i);
           value += factorials[k] * x_term;
         }
       }
@@ -198,7 +198,7 @@ void tabulate_polyset_line_macroedge_derivs(
           }
           value *= pow(0.5 - x0[p], n - j - d);
           for (std::size_t i = n - j; i > n - j - d; --i)
-            value *= -i;
+            value *= -static_cast<T>(i);
           P(d, j + 1, p) = value;
         }
         else
@@ -208,7 +208,7 @@ void tabulate_polyset_line_macroedge_derivs(
           {
             T x_term = pow(1.0 - x0[p], j - k - d);
             for (std::size_t i = j - k; i > j - k - d; --i)
-              x_term *= -i;
+              x_term *= -static_cast<T>(i);
             value += factorials[k] * x_term;
           }
           value *= pow(x0[p] - 0.5, n - j - d);
@@ -273,7 +273,7 @@ void tabulate_polyset_quadrilateral_macroedge_derivs(
         {
           T x_term = pow(1.0 - x0[p], n - k - dx);
           for (std::size_t i = n - k; i > n - k - dx; --i)
-            x_term *= -i;
+            x_term *= -static_cast<T>(i);
           value += factorials[k] * x_term;
         }
       }
@@ -308,7 +308,7 @@ void tabulate_polyset_quadrilateral_macroedge_derivs(
           }
           value *= pow(0.5 - x0[p], n - j - dx);
           for (std::size_t i = n - j; i > n - j - dx; --i)
-            value *= -i;
+            value *= -static_cast<T>(i);
           for (std::size_t dy = 0; dy <= nderiv - dx; ++dy)
             for (std::size_t jy = 0; jy < 2 * n + 1; ++jy)
               P(idx(dx, dy), quad_idx(j + 1, jy), p) = value;
@@ -320,7 +320,7 @@ void tabulate_polyset_quadrilateral_macroedge_derivs(
           {
             T x_term = pow(1.0 - x0[p], j - k - dx);
             for (std::size_t i = j - k; i > j - k - dx; --i)
-              x_term *= -i;
+              x_term *= -static_cast<T>(i);
             value += factorials[k] * x_term;
           }
           value *= pow(x0[p] - 0.5, n - j - dx);
@@ -361,7 +361,7 @@ void tabulate_polyset_quadrilateral_macroedge_derivs(
         {
           T y_term = pow(1.0 - x1[p], n - k - dy);
           for (std::size_t i = n - k; i > n - k - dy; --i)
-            y_term *= -i;
+            y_term *= -static_cast<T>(i);
           value += factorials[k] * y_term;
         }
       }
@@ -396,7 +396,7 @@ void tabulate_polyset_quadrilateral_macroedge_derivs(
           }
           value *= pow(0.5 - x1[p], n - j - dy);
           for (std::size_t i = n - j; i > n - j - dy; --i)
-            value *= -i;
+            value *= -static_cast<T>(i);
           for (std::size_t dx = 0; dx <= nderiv - dy; ++dx)
           {
             for (std::size_t jx = 0; jx < 2 * n + 1; ++jx)
@@ -413,7 +413,7 @@ void tabulate_polyset_quadrilateral_macroedge_derivs(
           {
             T y_term = pow(1.0 - x1[p], j - k - dy);
             for (std::size_t i = j - k; i > j - k - dy; --i)
-              y_term *= -i;
+              y_term *= -static_cast<T>(i);
             value += factorials[k] * y_term;
           }
           value *= pow(x1[p] - 0.5, n - j - dy);
@@ -1310,7 +1310,7 @@ void tabulate_polyset_hexahedron_macroedge_derivs(
         {
           T x_term = pow(1.0 - x0[p], n - k - dx);
           for (std::size_t i = n - k; i > n - k - dx; --i)
-            x_term *= -i;
+            x_term *= -static_cast<T>(i);
           value += factorials[k] * x_term;
         }
       }
@@ -1347,7 +1347,7 @@ void tabulate_polyset_hexahedron_macroedge_derivs(
           }
           value *= pow(0.5 - x0[p], n - j - dx);
           for (std::size_t i = n - j; i > n - j - dx; --i)
-            value *= -i;
+            value *= -static_cast<T>(i);
           for (std::size_t dy = 0; dy <= nderiv - dx; ++dy)
             for (std::size_t dz = 0; dz <= nderiv - dy - dx; ++dz)
               for (std::size_t jy = 0; jy < 2 * n + 1; ++jy)
@@ -1361,7 +1361,7 @@ void tabulate_polyset_hexahedron_macroedge_derivs(
           {
             T x_term = pow(1.0 - x0[p], j - k - dx);
             for (std::size_t i = j - k; i > j - k - dx; --i)
-              x_term *= -i;
+              x_term *= -static_cast<T>(i);
             value += factorials[k] * x_term;
           }
           value *= pow(x0[p] - 0.5, n - j - dx);
@@ -1404,7 +1404,7 @@ void tabulate_polyset_hexahedron_macroedge_derivs(
         {
           T y_term = pow(1.0 - x1[p], n - k - dy);
           for (std::size_t i = n - k; i > n - k - dy; --i)
-            y_term *= -i;
+            y_term *= -static_cast<T>(i);
           value += factorials[k] * y_term;
         }
       }
@@ -1441,7 +1441,7 @@ void tabulate_polyset_hexahedron_macroedge_derivs(
           }
           value *= pow(0.5 - x1[p], n - j - dy);
           for (std::size_t i = n - j; i > n - j - dy; --i)
-            value *= -i;
+            value *= -static_cast<T>(i);
           for (std::size_t dx = 0; dx <= nderiv - dy; ++dx)
             for (std::size_t dz = 0; dz <= nderiv - dx - dy; ++dz)
               for (std::size_t jx = 0; jx < 2 * n + 1; ++jx)
@@ -1458,7 +1458,7 @@ void tabulate_polyset_hexahedron_macroedge_derivs(
           {
             T y_term = pow(1.0 - x1[p], j - k - dy);
             for (std::size_t i = j - k; i > j - k - dy; --i)
-              y_term *= -i;
+              y_term *= -static_cast<T>(i);
             value += factorials[k] * y_term;
           }
           value *= pow(x1[p] - 0.5, n - j - dy);
@@ -1510,7 +1510,7 @@ void tabulate_polyset_hexahedron_macroedge_derivs(
         {
           T z_term = pow(1.0 - x2[p], n - k - dz);
           for (std::size_t i = n - k; i > n - k - dz; --i)
-            z_term *= -i;
+            z_term *= -static_cast<T>(i);
           value += factorials[k] * z_term;
         }
       }
@@ -1547,7 +1547,7 @@ void tabulate_polyset_hexahedron_macroedge_derivs(
           }
           value *= pow(0.5 - x2[p], n - j - dz);
           for (std::size_t i = n - j; i > n - j - dz; --i)
-            value *= -i;
+            value *= -static_cast<T>(i);
           for (std::size_t dx = 0; dx <= nderiv - dz; ++dx)
             for (std::size_t dy = 0; dy <= nderiv - dx - dz; ++dy)
               for (std::size_t jx = 0; jx < 2 * n + 1; ++jx)
@@ -1564,7 +1564,7 @@ void tabulate_polyset_hexahedron_macroedge_derivs(
           {
             T z_term = pow(1.0 - x2[p], j - k - dz);
             for (std::size_t i = j - k; i > j - k - dz; --i)
-              z_term *= -i;
+              z_term *= -static_cast<T>(i);
             value += factorials[k] * z_term;
           }
           value *= pow(x2[p] - 0.5, n - j - dz);

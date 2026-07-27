@@ -450,6 +450,8 @@ std::pair<std::vector<T>, std::array<std::size_t, 2>>
 cell::facet_normals(cell::type cell_type)
 {
   const std::size_t tdim = cell::topological_dimension(cell_type);
+  if (tdim == 0)
+    throw std::runtime_error("Wrong topological dimension");
   std::vector<std::vector<int>> facets = cell::topology(cell_type)[tdim - 1];
   auto [xdata, xshape] = cell::geometry<T>(cell_type);
 
@@ -507,6 +509,8 @@ std::pair<std::vector<T>, std::array<std::size_t, 2>>
 cell::scaled_facet_normals(cell::type cell_type)
 {
   const std::size_t tdim = cell::topological_dimension(cell_type);
+  if (tdim == 0)
+    throw std::runtime_error("Wrong topological dimension");
   std::vector<std::vector<int>> facets = cell::topology(cell_type)[tdim - 1];
   auto [xdata, xshape] = cell::geometry<T>(cell_type);
 
@@ -556,6 +560,8 @@ cell::scaled_facet_normals(cell::type cell_type)
 std::vector<bool> cell::facet_orientations(cell::type cell_type)
 {
   const std::size_t tdim = cell::topological_dimension(cell_type);
+  if (tdim == 0)
+    throw std::runtime_error("Wrong topological dimension");
   const auto [_x, xshape] = cell::geometry<double>(cell_type);
   mdspan_t<const double, 2> x(_x.data(), xshape);
   std::vector<std::vector<int>> facets = topology(cell_type)[tdim - 1];
@@ -587,6 +593,8 @@ template <std::floating_point T>
 std::vector<T> cell::facet_reference_volumes(cell::type cell_type)
 {
   int tdim = topological_dimension(cell_type);
+  if (tdim == 0)
+    throw std::runtime_error("Wrong topological dimension");
   std::vector<cell::type> facet_types = subentity_types(cell_type)[tdim - 1];
   std::vector<T> out;
   out.reserve(facet_types.size());

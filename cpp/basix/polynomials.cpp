@@ -66,8 +66,6 @@ tabulate_bernstein(cell::type celltype, int d, mdspan_t<const T, 2> x)
     throw std::runtime_error("not implemented yet");
   }
 
-  // TODO: implement a better Bernstein evaluation algorithm here
-
   const std::size_t pdim = dim(polynomials::type::bernstein, celltype, d);
 
   std::array<std::size_t, 2> shape = {pdim, x.extent(0)};
@@ -86,6 +84,21 @@ tabulate_bernstein(cell::type celltype, int d, mdspan_t<const T, 2> x)
     }
   }
 
+  // Precompute lambdas(l, :)^k for l = 0..tdim, k = 0..d once, so each
+  // basis function needs only lambdas.extent(0) (<= 4) multiplications
+  // per point below instead of up to d.
+  std::vector<mdarray_t<T, 2>> pow_lambda;
+  pow_lambda.reserve(lambdas.extent(0));
+  for (std::size_t l = 0; l < lambdas.extent(0); ++l)
+  {
+    mdarray_t<T, 2>& pl = pow_lambda.emplace_back(d + 1, lambdas.extent(1));
+    for (std::size_t j = 0; j < pl.extent(1); ++j)
+      pl(0, j) = 1.0;
+    for (int k = 1; k <= d; ++k)
+      for (std::size_t j = 0; j < pl.extent(1); ++j)
+        pl(k, j) = pl(k - 1, j) * lambdas(l, j);
+  }
+
   std::vector<int> powers(lambdas.extent(0), 0);
   powers[0] = d;
 
@@ -99,9 +112,12 @@ tabulate_bernstein(cell::type celltype, int d, mdspan_t<const T, 2> x)
     }
 
     for (std::size_t l = 0; l < lambdas.extent(0); ++l)
-      for (int a = 0; a < powers[l]; ++a)
-        for (std::size_t j = 0; j < values.extent(1); ++j)
-          values(n, j) *= lambdas(l, j);
+    {
+      auto pl = mdspan_t<const T, 1>(&pow_lambda[l](powers[l], 0),
+                                     lambdas.extent(1));
+      for (std::size_t j = 0; j < values.extent(1); ++j)
+        values(n, j) *= pl(j);
+    }
 
     powers[0] -= 1;
     powers[1] += 1;
@@ -200,23 +216,23 @@ void tabulate_lagrange_pyramid(
 
       if (q > 1)
       {
-        auto _p = md::submdspan(P, pyr_idx(p, q - 2, 0), md::full_extent);
+        auto _p2 = md::submdspan(P, pyr_idx(p, q - 2, 0), md::full_extent);
         if (q <= p)
         {
           for (std::size_t i = 0; i < r_pq.size(); ++i)
-            r_pq[i] -= a * _p[i];
+            r_pq[i] -= a * _p2[i];
         }
         else if (q == p + 1)
         {
           for (std::size_t i = 0; i < r_pq.size(); ++i)
-            r_pq[i] -= a * (1.0 - x2[i]) * _p[i];
+            r_pq[i] -= a * (1.0 - x2[i]) * _p2[i];
         }
         else
         {
           for (std::size_t i = 0; i < r_pq.size(); ++i)
           {
             const T f2 = 1.0 - x2[i];
-            r_pq[i] -= a * f2 * f2 * _p[i];
+            r_pq[i] -= a * f2 * f2 * _p2[i];
           }
         }
       }

@@ -1001,15 +1001,8 @@ FiniteElement<T> basix::create_custom_element(
     }
   }
 
-  auto [dualmatrix, dualshape]
-      = compute_dual_matrix(cell_type, poly_type, wcoeffs_ortho, x, M,
-                            embedded_superdegree, interpolation_nderivs);
-  if (math::is_singular(mdspan_t<const T, 2>(dualmatrix.data(), dualshape)))
-  {
-    throw std::runtime_error(
-        "Dual matrix is singular, there is an error in your inputs");
-  }
-
+  // The dual matrix is computed (once) inside the FiniteElement
+  // constructor below, which also checks for singularity.
   return basix::FiniteElement<T>(
       element::family::custom, cell_type, poly_type, embedded_superdegree,
       value_shape, wcoeffs_ortho, x, M, interpolation_nderivs, map_type,
@@ -1107,9 +1100,21 @@ FiniteElement<F>::FiniteElement(
   }
 
   // Compute C = (BD^T)^{-1} B
-  _coeffs.first = math::solve<F>(
-      mdspan_t<const F, 2>(_dual_matrix.first.data(), _dual_matrix.second),
-      wcoeffs);
+  //
+  // math::solve's LU factorisation already detects singularity, so a
+  // separate math::is_singular pre-check (an extra O(n^3) factorisation)
+  // is unnecessary.
+  try
+  {
+    _coeffs.first = math::solve<F>(
+        mdspan_t<const F, 2>(_dual_matrix.first.data(), _dual_matrix.second),
+        wcoeffs);
+  }
+  catch (const std::runtime_error&)
+  {
+    throw std::runtime_error(
+        "Dual matrix is singular, there is an error in your inputs");
+  }
   _coeffs.second = {_dual_matrix.second[1], wcoeffs.extent(1)};
 
   std::size_t num_points = 0;
@@ -1327,8 +1332,8 @@ FiniteElement<F>::FiniteElement(
               = {std::vector<F>(perm.size() * perm.size()),
                  {perm.size(), perm.size()}};
           std::ranges::fill(identity.first, 0.);
-          for (std::size_t i = 0; i < perm.size(); ++i)
-            identity.first[i * perm.size() + i] = 1;
+          for (std::size_t k = 0; k < perm.size(); ++k)
+            identity.first[k * perm.size() + k] = 1;
 
           auto& etrans = _etrans.try_emplace(ctype).first->second;
           auto& etransT = _etransT.try_emplace(ctype).first->second;
@@ -1389,10 +1394,10 @@ FiniteElement<F>::FiniteElement(
             }
 
             M_b.resize(dim * dim);
-            mdspan_t<F, 2> M(M_b.data(), dim, dim);
+            mdspan_t<F, 2> Mmat(M_b.data(), dim, dim);
             for (std::size_t k0 = 0; k0 < dim; ++k0)
               for (std::size_t k1 = 0; k1 < dim; ++k1)
-                M(k0, k1) = trans(i, k0, k1);
+                Mmat(k0, k1) = trans(i, k0, k1);
 
             // Rotation of a face: this is in the only base transformation
             // such that M^{-1} != M.
@@ -1404,11 +1409,11 @@ FiniteElement<F>::FiniteElement(
             {
               matint.resize(dim * dim);
               mdspan_t<F, 2> mat_int(matint.data(), dim, dim);
-              math::dot(M, M, mat_int);
-              math::dot(mat_int, M, Minv);
+              math::dot(Mmat, Mmat, mat_int);
+              math::dot(mat_int, Mmat, Minv);
             }
             else if (ctype == cell::type::triangle and i == 0)
-              math::dot(M, M, Minv);
+              math::dot(Mmat, Mmat, Minv);
             else
               Minv_b.assign(M_b.begin(), M_b.end());
 
@@ -1843,41 +1848,38 @@ void FiniteElement<F>::tabulate(int nd, impl::mdspan_t<const F, 2> x,
   mdspan_t<F, 3> basis(basis_b.data(), bsize);
   polyset::tabulate(basis, _cell_type, _poly_type, _embedded_superdegree, nd,
                     x);
-  const int vs = std::accumulate(_value_shape.begin(), _value_shape.end(), 1,
-                                 std::multiplies{});
+  const std::size_t vs = std::accumulate(
+      _value_shape.begin(), _value_shape.end(), 1, std::multiplies{});
+  const std::size_t ndofs = _coeffs.second[0];
 
-  std::vector<F> C_b(_coeffs.second[0] * psize);
-  mdspan_t<F, 2> C(C_b.data(), _coeffs.second[0], psize);
+  // _coeffs's (ndofs, vs * psize) row-major buffer is exactly (ndofs * vs,
+  // psize) with no data movement, letting every value component be
+  // computed by a single math::dot call below instead of vs separate
+  // calls each preceded by a copy to extract that component's columns.
+  assert(_coeffs.second[1] == vs * psize);
+  mdspan_t<const F, 2> coeffs_flat(_coeffs.first.data(), ndofs * vs, psize);
 
-  mdspan_t<const F, 2> coeffs_view(_coeffs.first.data(), _coeffs.second);
-  std::vector<F> result_b(C.extent(0) * bsize[2]);
-  mdspan_t<F, 2> result(result_b.data(), C.extent(0), bsize[2]);
+  std::vector<F> result_b(ndofs * vs * bsize[2]);
+  mdspan_t<F, 2> result(result_b.data(), ndofs * vs, bsize[2]);
   for (std::size_t p = 0; p < basis.extent(0); ++p)
   {
     mdspan_t<const F, 2> B(basis_b.data() + p * bsize[1] * bsize[2], bsize[1],
                            bsize[2]);
-    for (int j = 0; j < vs; ++j)
+    math::dot(coeffs_flat, B, result);
+
+    if (_dof_ordering.empty())
     {
-      for (std::size_t k0 = 0; k0 < coeffs_view.extent(0); ++k0)
-        for (std::size_t k1 = 0; k1 < psize; ++k1)
-          C(k0, k1) = coeffs_view(k0, k1 + psize * j);
-
-      math::dot(C,
-                mdspan_t<const F, 2>(B.data_handle(), B.extent(0), B.extent(1)),
-                result);
-
-      if (_dof_ordering.empty())
-      {
-        for (std::size_t k0 = 0; k0 < basis_data.extent(1); ++k0)
-          for (std::size_t k1 = 0; k1 < basis_data.extent(2); ++k1)
-            basis_data(p, k0, k1, j) = result(k1, k0);
-      }
-      else
-      {
-        for (std::size_t k0 = 0; k0 < basis_data.extent(1); ++k0)
-          for (std::size_t k1 = 0; k1 < basis_data.extent(2); ++k1)
-            basis_data(p, k0, _dof_ordering[k1], j) = result(k1, k0);
-      }
+      for (std::size_t k0 = 0; k0 < basis_data.extent(1); ++k0)
+        for (std::size_t k1 = 0; k1 < basis_data.extent(2); ++k1)
+          for (std::size_t j = 0; j < vs; ++j)
+            basis_data(p, k0, k1, j) = result(k1 * vs + j, k0);
+    }
+    else
+    {
+      for (std::size_t k0 = 0; k0 < basis_data.extent(1); ++k0)
+        for (std::size_t k1 = 0; k1 < basis_data.extent(2); ++k1)
+          for (std::size_t j = 0; j < vs; ++j)
+            basis_data(p, k0, _dof_ordering[k1], j) = result(k1 * vs + j, k0);
     }
   }
 }
@@ -1924,13 +1926,13 @@ FiniteElement<F>::base_transformations() const
       mdspan_t<const F, 3> tmp(tmp_data.first.data(), tmp_data.second);
       for (auto& e : _edofs[1])
       {
-        std::size_t ndofs = e.size();
-        for (std::size_t i = 0; i < ndofs; ++i)
-          for (std::size_t j = 0; j < ndofs; ++j)
+        std::size_t entity_ndofs = e.size();
+        for (std::size_t i = 0; i < entity_ndofs; ++i)
+          for (std::size_t j = 0; j < entity_ndofs; ++j)
             bt(transform_n, i + dofstart, j + dofstart) = tmp(0, i, j);
 
         ++transform_n;
-        dofstart += ndofs;
+        dofstart += entity_ndofs;
       }
     }
 
@@ -1938,23 +1940,23 @@ FiniteElement<F>::base_transformations() const
     {
       for (std::size_t f = 0; f < _edofs[2].size(); ++f)
       {
-        if (std::size_t ndofs = _edofs[2][f].size(); ndofs > 0)
+        if (std::size_t entity_ndofs = _edofs[2][f].size(); entity_ndofs > 0)
         {
           auto& tmp_data
               = _entity_transformations.at(_cell_subentity_types[2][f]);
           mdspan_t<const F, 3> tmp(tmp_data.first.data(), tmp_data.second);
 
-          for (std::size_t i = 0; i < ndofs; ++i)
-            for (std::size_t j = 0; j < ndofs; ++j)
+          for (std::size_t i = 0; i < entity_ndofs; ++i)
+            for (std::size_t j = 0; j < entity_ndofs; ++j)
               bt(transform_n, i + dofstart, j + dofstart) = tmp(0, i, j);
           ++transform_n;
 
-          for (std::size_t i = 0; i < ndofs; ++i)
-            for (std::size_t j = 0; j < ndofs; ++j)
+          for (std::size_t i = 0; i < entity_ndofs; ++i)
+            for (std::size_t j = 0; j < entity_ndofs; ++j)
               bt(transform_n, i + dofstart, j + dofstart) = tmp(1, i, j);
           ++transform_n;
 
-          dofstart += ndofs;
+          dofstart += entity_ndofs;
         }
       }
     }

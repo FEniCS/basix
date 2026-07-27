@@ -35,17 +35,12 @@ FiniteElement<T> basix::element::create_rtc(cell::type celltype, int degree,
   const cell::type facettype
       = (tdim == 2) ? cell::type::interval : cell::type::quadrilateral;
 
-  // Evaluate the expansion polynomials at the quadrature points
-  const auto [_pts, qwts] = quadrature::make_quadrature<T>(
-      quadrature::type::Default, celltype, polyset::type::standard, 2 * degree);
-  impl::mdspan_t<const T, 2> pts(_pts.data(), qwts.size(),
-                                 _pts.size() / qwts.size());
-  const auto [_phi, shape]
-      = polyset::tabulate(celltype, polyset::type::standard, degree, 0, pts);
-  impl::mdspan_t<const T, 3> phi(_phi.data(), shape);
-
-  // The number of order (degree) polynomials
-  const std::size_t psize = phi.extent(1);
+  // The number of order (degree) polynomials.
+  //
+  // Only a size is needed, so use polyset::dim directly rather than
+  // tabulating the whole polynomial set just to read off its extent.
+  const std::size_t psize
+      = polyset::dim(celltype, polyset::type::standard, degree);
 
   const int facet_count = tdim == 2 ? 4 : 6;
   const int facet_dofs
@@ -174,17 +169,11 @@ FiniteElement<T> basix::element::create_nce(cell::type celltype, int degree,
 
   const std::size_t tdim = cell::topological_dimension(celltype);
 
-  // Evaluate the expansion polynomials at the quadrature points
-  const auto [_pts, wts] = quadrature::make_quadrature<T>(
-      quadrature::type::Default, celltype, polyset::type::standard, 2 * degree);
-  impl::mdspan_t<const T, 2> pts(_pts.data(), wts.size(),
-                                 _pts.size() / wts.size());
-  const auto [_phi, shape]
-      = polyset::tabulate(celltype, polyset::type::standard, degree, 0, pts);
-  impl::mdspan_t<const T, 3> phi(_phi.data(), shape);
-
-  // The number of order (degree) polynomials
-  const int psize = phi.extent(1);
+  // The number of order (degree) polynomials.
+  //
+  // Only a size is needed, so use polyset::dim directly rather than
+  // tabulating the whole polynomial set just to read off its extent.
+  const int psize = polyset::dim(celltype, polyset::type::standard, degree);
 
   const int edge_count = tdim == 2 ? 4 : 12;
   const int edge_dofs

@@ -215,8 +215,8 @@ void declare_float(nb::module_& m, const std::string& type)
                      for (auto& edofs_d : edofs)
                      {
                        auto& ndofs = num_edofs.emplace_back();
-                       for (auto& edofs : edofs_d)
-                         ndofs.push_back(edofs.size());
+                       for (auto& dofs : edofs_d)
+                         ndofs.push_back(dofs.size());
                      }
                      return num_edofs;
                    })
@@ -231,8 +231,8 @@ void declare_float(nb::module_& m, const std::string& type)
                      for (auto& edofs_d : edofs)
                      {
                        auto& ndofs = num_edofs.emplace_back();
-                       for (auto& edofs : edofs_d)
-                         ndofs.push_back(edofs.size());
+                       for (auto& dofs : edofs_d)
+                         ndofs.push_back(dofs.size());
                      }
                      return num_edofs;
                    })

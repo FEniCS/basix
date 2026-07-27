@@ -66,8 +66,6 @@ tabulate_bernstein(cell::type celltype, int d, mdspan_t<const T, 2> x)
     throw std::runtime_error("not implemented yet");
   }
 
-  // TODO: implement a better Bernstein evaluation algorithm here
-
   const std::size_t pdim = dim(polynomials::type::bernstein, celltype, d);
 
   std::array<std::size_t, 2> shape = {pdim, x.extent(0)};
@@ -86,6 +84,25 @@ tabulate_bernstein(cell::type celltype, int d, mdspan_t<const T, 2> x)
     }
   }
 
+  // Precompute lambdas(l, :)^k for l = 0..tdim, k = 0..d once. Each basis
+  // function's value is a product of powers of the barycentric
+  // coordinates whose exponents sum to d, so the original code applied
+  // up to d separate multiplications per basis function per point. With
+  // this table, each basis function needs only lambdas.extent(0) (<= 4)
+  // multiplications per point instead of up to d, which matters because
+  // pdim itself grows with d.
+  std::vector<mdarray_t<T, 2>> pow_lambda;
+  pow_lambda.reserve(lambdas.extent(0));
+  for (std::size_t l = 0; l < lambdas.extent(0); ++l)
+  {
+    mdarray_t<T, 2>& pl = pow_lambda.emplace_back(d + 1, lambdas.extent(1));
+    for (std::size_t j = 0; j < pl.extent(1); ++j)
+      pl(0, j) = 1.0;
+    for (int k = 1; k <= d; ++k)
+      for (std::size_t j = 0; j < pl.extent(1); ++j)
+        pl(k, j) = pl(k - 1, j) * lambdas(l, j);
+  }
+
   std::vector<int> powers(lambdas.extent(0), 0);
   powers[0] = d;
 
@@ -99,9 +116,12 @@ tabulate_bernstein(cell::type celltype, int d, mdspan_t<const T, 2> x)
     }
 
     for (std::size_t l = 0; l < lambdas.extent(0); ++l)
-      for (int a = 0; a < powers[l]; ++a)
-        for (std::size_t j = 0; j < values.extent(1); ++j)
-          values(n, j) *= lambdas(l, j);
+    {
+      auto pl = mdspan_t<const T, 1>(&pow_lambda[l](powers[l], 0),
+                                     lambdas.extent(1));
+      for (std::size_t j = 0; j < values.extent(1); ++j)
+        values(n, j) *= pl(j);
+    }
 
     powers[0] -= 1;
     powers[1] += 1;

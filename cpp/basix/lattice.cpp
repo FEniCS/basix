@@ -8,6 +8,7 @@
 #include "polyset.h"
 #include "quadrature.h"
 #include <algorithm>
+#include <cassert>
 #include <cmath>
 #include <concepts>
 #include <math.h>
@@ -174,35 +175,26 @@ tabulate_dlagrange(std::size_t n, std::span<const T> x)
   md::mdspan<const T, md::dextents<std::size_t, 2>> equi_pts_v(equi_pts.data(),
                                                                n + 1, 1);
 
+  // polyset::tabulate with nderivs = 0 always returns a leading extent
+  // of 1 (values only, no derivatives), so with the row-major (layout_right)
+  // storage used throughout, the returned buffer is already exactly the
+  // (ndofs, npts) matrix -- no need to copy it element-by-element into a
+  // separate 2D buffer first, as this used to, just to drop that leading
+  // extent of 1.
   const auto [dual_values_b, dshape] = polyset::tabulate<T>(
       cell::type::interval, polyset::type::standard, n, 0, equi_pts_v);
-  md::mdspan<const T, md::dextents<std::size_t, 3>> dual_values(
-      dual_values_b.data(), dshape);
-
-  std::vector<T> dualmat_b(dual_values.extent(1) * dual_values.extent(2));
-  md::mdspan<T, md::dextents<std::size_t, 2>> dualmat(
-      dualmat_b.data(), dual_values.extent(1), dual_values.extent(2));
-  for (std::size_t i = 0; i < dualmat.extent(0); ++i)
-    for (std::size_t j = 0; j < dualmat.extent(1); ++j)
-      dualmat(i, j) = dual_values(0, i, j);
+  assert(dshape[0] == 1);
+  md::mdspan<const T, md::dextents<std::size_t, 2>> dualmat(
+      dual_values_b.data(), dshape[1], dshape[2]);
 
   using cmdspan2_t
       = md::mdspan<const T, md::extents<std::size_t, md::dynamic_extent, 1>>;
   const auto [tabulated_values_b, tshape]
       = polyset::tabulate<T>(cell::type::interval, polyset::type::standard, n,
                              0, cmdspan2_t(x.data(), x.size(), 1));
-  md::mdspan<const T, md::dextents<std::size_t, 3>> tabulated_values(
-      tabulated_values_b.data(), tshape);
-
-  std::vector<T> tabulated_b(tabulated_values.extent(1)
-                             * tabulated_values.extent(2));
-  md::mdspan<T, md::dextents<std::size_t, 2>> tabulated(
-      tabulated_b.data(), tabulated_values.extent(1),
-      tabulated_values.extent(2));
-
-  for (std::size_t i = 0; i < tabulated.extent(0); ++i)
-    for (std::size_t j = 0; j < tabulated.extent(1); ++j)
-      tabulated(i, j) = tabulated_values(0, i, j);
+  assert(tshape[0] == 1);
+  md::mdspan<const T, md::dextents<std::size_t, 2>> tabulated(
+      tabulated_values_b.data(), tshape[1], tshape[2]);
 
   std::vector<T> c = math::solve<T>(dualmat, tabulated);
   return mdex::mdarray<T, md::dextents<std::size_t, 2>>(tabulated.extents(),

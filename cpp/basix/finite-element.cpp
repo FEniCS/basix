@@ -1852,41 +1852,41 @@ void FiniteElement<F>::tabulate(int nd, impl::mdspan_t<const F, 2> x,
   mdspan_t<F, 3> basis(basis_b.data(), bsize);
   polyset::tabulate(basis, _cell_type, _poly_type, _embedded_superdegree, nd,
                     x);
-  const int vs = std::accumulate(_value_shape.begin(), _value_shape.end(), 1,
-                                 std::multiplies{});
+  const std::size_t vs = std::accumulate(
+      _value_shape.begin(), _value_shape.end(), 1, std::multiplies{});
+  const std::size_t ndofs = _coeffs.second[0];
 
-  std::vector<F> C_b(_coeffs.second[0] * psize);
-  mdspan_t<F, 2> C(C_b.data(), _coeffs.second[0], psize);
+  // _coeffs has shape (ndofs, vs * psize) in row-major storage, i.e. each
+  // dof's row is vs contiguous blocks of psize values, one per value
+  // component. So viewing its buffer directly with shape (ndofs * vs,
+  // psize) is exact (no data movement) and lets every value component be
+  // computed by a single math::dot call below, instead of vs separate
+  // calls each preceded by an O(ndofs * psize) copy to extract that
+  // component's columns out of _coeffs.
+  assert(_coeffs.second[1] == vs * psize);
+  mdspan_t<const F, 2> coeffs_flat(_coeffs.first.data(), ndofs * vs, psize);
 
-  mdspan_t<const F, 2> coeffs_view(_coeffs.first.data(), _coeffs.second);
-  std::vector<F> result_b(C.extent(0) * bsize[2]);
-  mdspan_t<F, 2> result(result_b.data(), C.extent(0), bsize[2]);
+  std::vector<F> result_b(ndofs * vs * bsize[2]);
+  mdspan_t<F, 2> result(result_b.data(), ndofs * vs, bsize[2]);
   for (std::size_t p = 0; p < basis.extent(0); ++p)
   {
     mdspan_t<const F, 2> B(basis_b.data() + p * bsize[1] * bsize[2], bsize[1],
                            bsize[2]);
-    for (int j = 0; j < vs; ++j)
+    math::dot(coeffs_flat, B, result);
+
+    if (_dof_ordering.empty())
     {
-      for (std::size_t k0 = 0; k0 < coeffs_view.extent(0); ++k0)
-        for (std::size_t k1 = 0; k1 < psize; ++k1)
-          C(k0, k1) = coeffs_view(k0, k1 + psize * j);
-
-      math::dot(C,
-                mdspan_t<const F, 2>(B.data_handle(), B.extent(0), B.extent(1)),
-                result);
-
-      if (_dof_ordering.empty())
-      {
-        for (std::size_t k0 = 0; k0 < basis_data.extent(1); ++k0)
-          for (std::size_t k1 = 0; k1 < basis_data.extent(2); ++k1)
-            basis_data(p, k0, k1, j) = result(k1, k0);
-      }
-      else
-      {
-        for (std::size_t k0 = 0; k0 < basis_data.extent(1); ++k0)
-          for (std::size_t k1 = 0; k1 < basis_data.extent(2); ++k1)
-            basis_data(p, k0, _dof_ordering[k1], j) = result(k1, k0);
-      }
+      for (std::size_t k0 = 0; k0 < basis_data.extent(1); ++k0)
+        for (std::size_t k1 = 0; k1 < basis_data.extent(2); ++k1)
+          for (std::size_t j = 0; j < vs; ++j)
+            basis_data(p, k0, k1, j) = result(k1 * vs + j, k0);
+    }
+    else
+    {
+      for (std::size_t k0 = 0; k0 < basis_data.extent(1); ++k0)
+        for (std::size_t k1 = 0; k1 < basis_data.extent(2); ++k1)
+          for (std::size_t j = 0; j < vs; ++j)
+            basis_data(p, k0, _dof_ordering[k1], j) = result(k1 * vs + j, k0);
     }
   }
 }

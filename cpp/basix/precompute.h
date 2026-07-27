@@ -241,24 +241,38 @@ void apply_matrix(std::span<const std::size_t> v_size_t,
 
   const std::size_t dim = v_size_t.size();
   apply_permutation(v_size_t, data, offset, n);
-  for (std::size_t b = 0; b < n; ++b)
+
+  // data is laid out as n contiguous values per dof (index b is the fast,
+  // unit-stride index -- see the data[n * (offset + i) + b] addressing
+  // below), so b is kept as the innermost loop here: for fixed (i, j) the
+  // inner loop over b is then a simple contiguous AXPY-like update, which
+  // vectorises and is cache-friendly, unlike looping over the (strided)
+  // dof index in the inner loop.
+  for (std::size_t i = 0; i < dim; ++i)
   {
-    for (std::size_t i = 0; i < dim; ++i)
+    for (std::size_t j = i + 1; j < dim; ++j)
     {
-      for (std::size_t j = i + 1; j < dim; ++j)
+      const U Mij = static_cast<U>(M(i, j));
+      for (std::size_t b = 0; b < n; ++b)
       {
-        data[n * (offset + i) + b]
-            += static_cast<U>(M(i, j)) * data[n * (offset + j) + b];
+        data[n * (offset + i) + b] += Mij * data[n * (offset + j) + b];
       }
     }
+  }
 
-    for (std::size_t i = 1; i <= dim; ++i)
+  for (std::size_t i = 1; i <= dim; ++i)
+  {
+    const U Mdiag = static_cast<U>(M(dim - i, dim - i));
+    for (std::size_t b = 0; b < n; ++b)
+      data[n * (offset + dim - i) + b] *= Mdiag;
+
+    for (std::size_t j = 0; j < dim - i; ++j)
     {
-      data[n * (offset + dim - i) + b] *= static_cast<U>(M(dim - i, dim - i));
-      for (std::size_t j = 0; j < dim - i; ++j)
+      const U Mij = static_cast<U>(M(dim - i, j));
+      for (std::size_t b = 0; b < n; ++b)
       {
         data[n * (offset + dim - i) + b]
-            += static_cast<U>(M(dim - i, j)) * data[n * (offset + j) + b];
+            += Mij * data[n * (offset + j) + b];
       }
     }
   }

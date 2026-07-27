@@ -8,6 +8,7 @@
 #include "polyset.h"
 #include "quadrature.h"
 #include <algorithm>
+#include <cassert>
 #include <cmath>
 #include <concepts>
 #include <math.h>
@@ -174,35 +175,23 @@ tabulate_dlagrange(std::size_t n, std::span<const T> x)
   md::mdspan<const T, md::dextents<std::size_t, 2>> equi_pts_v(equi_pts.data(),
                                                                n + 1, 1);
 
+  // polyset::tabulate with nderivs = 0 always returns a leading extent of
+  // 1, so the buffer is already exactly the (ndofs, npts) matrix -- no
+  // need to copy it into a separate buffer just to drop that extent.
   const auto [dual_values_b, dshape] = polyset::tabulate<T>(
       cell::type::interval, polyset::type::standard, n, 0, equi_pts_v);
-  md::mdspan<const T, md::dextents<std::size_t, 3>> dual_values(
-      dual_values_b.data(), dshape);
-
-  std::vector<T> dualmat_b(dual_values.extent(1) * dual_values.extent(2));
-  md::mdspan<T, md::dextents<std::size_t, 2>> dualmat(
-      dualmat_b.data(), dual_values.extent(1), dual_values.extent(2));
-  for (std::size_t i = 0; i < dualmat.extent(0); ++i)
-    for (std::size_t j = 0; j < dualmat.extent(1); ++j)
-      dualmat(i, j) = dual_values(0, i, j);
+  assert(dshape[0] == 1);
+  md::mdspan<const T, md::dextents<std::size_t, 2>> dualmat(
+      dual_values_b.data(), dshape[1], dshape[2]);
 
   using cmdspan2_t
       = md::mdspan<const T, md::extents<std::size_t, md::dynamic_extent, 1>>;
   const auto [tabulated_values_b, tshape]
       = polyset::tabulate<T>(cell::type::interval, polyset::type::standard, n,
                              0, cmdspan2_t(x.data(), x.size(), 1));
-  md::mdspan<const T, md::dextents<std::size_t, 3>> tabulated_values(
-      tabulated_values_b.data(), tshape);
-
-  std::vector<T> tabulated_b(tabulated_values.extent(1)
-                             * tabulated_values.extent(2));
-  md::mdspan<T, md::dextents<std::size_t, 2>> tabulated(
-      tabulated_b.data(), tabulated_values.extent(1),
-      tabulated_values.extent(2));
-
-  for (std::size_t i = 0; i < tabulated.extent(0); ++i)
-    for (std::size_t j = 0; j < tabulated.extent(1); ++j)
-      tabulated(i, j) = tabulated_values(0, i, j);
+  assert(tshape[0] == 1);
+  md::mdspan<const T, md::dextents<std::size_t, 2>> tabulated(
+      tabulated_values_b.data(), tshape[1], tshape[2]);
 
   std::vector<T> c = math::solve<T>(dualmat, tabulated);
   return mdex::mdarray<T, md::dextents<std::size_t, 2>>(tabulated.extents(),
@@ -362,7 +351,8 @@ create_tri_warped(std::size_t n, lattice::type lattice_type, bool exterior)
 //-----------------------------------------------------------------------------
 template <std::floating_point T>
 std::vector<T> isaac_point(lattice::type lattice_type,
-                           std::span<const std::size_t> a)
+                           std::span<const std::size_t> a,
+                           const std::vector<std::vector<T>>& interval_pts)
 {
   if (a.size() == 1)
     return {1};
@@ -372,13 +362,18 @@ std::vector<T> isaac_point(lattice::type lattice_type,
     T denominator = 0;
     std::vector<std::size_t> sub_a(std::next(a.begin()), a.end());
     const std::size_t size = std::reduce(a.begin(), a.end());
-    std::vector<T> x = create_interval<T>(size, lattice_type, true);
+    // interval_pts[size] is create_interval<T>(size, lattice_type, true),
+    // precomputed once by the caller (for sizes 0..n) rather than
+    // recomputed on every call to this recursion, which runs once per
+    // lattice point.
+    const std::vector<T>& x = interval_pts[size];
     for (std::size_t i = 0; i < a.size(); ++i)
     {
       if (i > 0)
         sub_a[i - 1] = a[i - 1];
       const std::size_t sub_size = size - a[i];
-      const std::vector sub_res = isaac_point<T>(lattice_type, sub_a);
+      const std::vector sub_res
+          = isaac_point<T>(lattice_type, sub_a, interval_pts);
       for (std::size_t j = 0; j < sub_res.size(); ++j)
         res[j < i ? j : j + 1] += x[sub_size] * sub_res[j];
       denominator += x[sub_size];
@@ -404,13 +399,26 @@ create_tri_isaac(std::size_t n, lattice::type lattice_type, bool exterior)
   md::mdspan<T, md::extents<std::size_t, md::dynamic_extent, 2>> p(_p.data(),
                                                                    shape);
 
+  // Return before paying for the interval_pts table below (each entry is
+  // a GLL/Gauss eigenvalue solve) when there are no points to generate,
+  // e.g. a low-degree Lagrange element's interior lattice.
+  if (shape[0] == 0)
+    return {std::move(_p), shape};
+
+  // create_interval<T>(s, lattice_type, true) only depends on s, so build
+  // the table once for s in [0, n] instead of recomputing it for every
+  // one of the O(n^2) lattice points below.
+  std::vector<std::vector<T>> interval_pts(n + 1);
+  for (std::size_t s = 0; s <= n; ++s)
+    interval_pts[s] = create_interval<T>(s, lattice_type, true);
+
   int c = 0;
   for (std::size_t j = b; j < (n - b + 1); ++j)
   {
     for (std::size_t i = b; i < (n - b + 1 - j); ++i)
     {
-      const std::vector isaac_p
-          = isaac_point<T>(lattice_type, std::array{i, j, n - i - j});
+      const std::vector isaac_p = isaac_point<T>(
+          lattice_type, std::array{i, j, n - i - j}, interval_pts);
       for (std::size_t k = 0; k < 2; ++k)
         p(c, k) = isaac_p[k];
       ++c;
@@ -538,6 +546,15 @@ create_tet_isaac(std::size_t n, lattice::type lattice_type, bool exterior)
   md::mdspan<T, md::extents<std::size_t, md::dynamic_extent, 3>> x(xb.data(),
                                                                    shape);
 
+  // See the comment in create_tri_isaac.
+  if (shape[0] == 0)
+    return {std::move(xb), shape};
+
+  // See the comment in create_tri_isaac.
+  std::vector<std::vector<T>> interval_pts(n + 1);
+  for (std::size_t s = 0; s <= n; ++s)
+    interval_pts[s] = create_interval<T>(s, lattice_type, true);
+
   int c = 0;
   for (std::size_t k = b; k < (n - b + 1); ++k)
   {
@@ -545,8 +562,8 @@ create_tet_isaac(std::size_t n, lattice::type lattice_type, bool exterior)
     {
       for (std::size_t i = b; i < (n - b + 1 - j - k); ++i)
       {
-        const std::vector ip
-            = isaac_point<T>(lattice_type, std::array{i, j, k, n - i - j - k});
+        const std::vector ip = isaac_point<T>(
+            lattice_type, std::array{i, j, k, n - i - j - k}, interval_pts);
         for (std::size_t l = 0; l < 3; ++l)
           x(c, l) = ip[l];
         ++c;

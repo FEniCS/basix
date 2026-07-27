@@ -413,44 +413,38 @@ std::pair<std::vector<T>, std::array<std::size_t, 2>> compute_transformation(
 
   std::vector<T> tabulated_data_b(npts * total_ndofs * vs);
   mdspan_t<T, 3> tabulated_data(tabulated_data_b.data(), npts, total_ndofs, vs);
-  std::vector<T> result_b(polyset_vals.extent(1) * coeffs.extent(0));
-  mdspan_t<T, 2> result(result_b.data(), coeffs.extent(0),
+
+  // coeffs's (total_ndofs, vs * psize) row-major buffer is exactly
+  // (total_ndofs * vs, psize) with no data movement, letting every value
+  // component be computed by a single math::dot call rather than vs
+  // separate calls each preceded by a column-extraction copy -- same
+  // pattern as FiniteElement::tabulate().
+  assert(coeffs.extent(1) == vs * static_cast<std::size_t>(psize));
+  mdspan_t<const T, 2> coeffs_flat(coeffs.data_handle(),
+                                   coeffs.extent(0) * vs, psize);
+  std::vector<T> result_b(polyset_vals.extent(1) * coeffs.extent(0) * vs);
+  mdspan_t<T, 2> result(result_b.data(), coeffs.extent(0) * vs,
                         polyset_vals.extent(1));
-  std::vector<T> coeffs_b(coeffs.extent(0) * polyset_vals.extent(0));
-  mdspan_t<T, 2> _coeffs(coeffs_b.data(), coeffs.extent(0),
-                         polyset_vals.extent(0));
-  for (std::size_t j = 0; j < vs; ++j)
-  {
-    for (std::size_t k0 = 0; k0 < coeffs.extent(0); ++k0)
-      for (std::size_t k2 = 0; k2 < polyset_vals.extent(0); ++k2)
-        _coeffs(k0, k2) = coeffs(k0, k2 + psize * j);
+  math::dot(coeffs_flat, polyset_vals, result);
+  for (std::size_t k0 = 0; k0 < result.extent(1); ++k0)
+    for (std::size_t k1 = 0; k1 < coeffs.extent(0); ++k1)
+      for (std::size_t j = 0; j < vs; ++j)
+        tabulated_data(k0, k1, j) = result(k1 * vs + j, k0);
 
-    // r^t: coeffs.extent(0) x polyset_vals.extent(1) [k0, k1]
-    // c: coeffs.extent(1) x polyset_vals.extent(0)   [k0, k2]
-    // p: polyset_vals.extent(0) x polyset_vals.extent(1)  [k2, k1]
-    math::dot(_coeffs, polyset_vals, result);
-    for (std::size_t k0 = 0; k0 < result.extent(1); ++k0)
-      for (std::size_t k1 = 0; k1 < result.extent(0); ++k1)
-        tabulated_data(k0, k1, j) = result(k1, k0);
-  }
-
-  // push forward
+  // J, K and detJ are the same for every point here (a reflection/
+  // rotation of the reference cell onto itself, not physical geometry
+  // varying per point), so push forward all points in a single call by
+  // viewing the (npts, total_ndofs, vs) buffer as one flat
+  // (npts * total_ndofs, vs) matrix, rather than once per point.
   mdarray_t<T, 3> pushed_data(tabulated_data.extents());
   {
-    mdarray_t<T, 2> temp_data(pushed_data.extent(1), pushed_data.extent(2));
-    for (std::size_t i = 0; i < npts; ++i)
-    {
-      mdspan_t<const T, 2> tab(
-          tabulated_data_b.data()
-              + i * tabulated_data.extent(1) * tabulated_data.extent(2),
-          tabulated_data.extent(1), tabulated_data.extent(2));
-      push_forward(map_type,
-                   mdspan_t<T, 2>(temp_data.data(), temp_data.extents()), tab,
-                   J, detJ, K);
-      for (std::size_t k0 = 0; k0 < temp_data.extent(0); ++k0)
-        for (std::size_t k1 = 0; k1 < temp_data.extent(1); ++k1)
-          pushed_data(i, k0, k1) = temp_data(k0, k1);
-    }
+    mdspan_t<const T, 2> tab_all(tabulated_data_b.data(),
+                                 npts * tabulated_data.extent(1),
+                                 tabulated_data.extent(2));
+    mdspan_t<T, 2> pushed_all(pushed_data.data(),
+                              npts * pushed_data.extent(1),
+                              pushed_data.extent(2));
+    push_forward(map_type, pushed_all, tab_all, J, detJ, K);
   }
 
   // Interpolate to calculate coefficients

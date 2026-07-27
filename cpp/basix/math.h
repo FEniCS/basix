@@ -365,10 +365,23 @@ template <std::floating_point T>
 void orthogonalise(md::mdspan<T, md::dextents<std::size_t, 2>> wcoeffs,
                    std::size_t start = 0)
 {
-  for (std::size_t i = start; i < wcoeffs.extent(0); ++i)
+  using mdspan2_t = md::mdspan<T, md::dextents<std::size_t, 2>>;
+  using cmdspan2_t = md::mdspan<const T, md::dextents<std::size_t, 2>>;
+
+  const std::size_t ndofs = wcoeffs.extent(0);
+  const std::size_t psize = wcoeffs.extent(1);
+
+  // Classical Gram-Schmidt: after normalising row i, its projection onto
+  // every later row is subtracted. Rather than looping over each row j,
+  // the projection coefficients for all remaining rows are computed as a
+  // single matrix-vector product, and the subtraction as a single rank-1
+  // update, both via BLAS (math::dot).
+  std::vector<T> a_vec;
+  std::vector<T> update;
+  for (std::size_t i = start; i < ndofs; ++i)
   {
     T norm = 0;
-    for (std::size_t k = 0; k < wcoeffs.extent(1); ++k)
+    for (std::size_t k = 0; k < psize; ++k)
       norm += wcoeffs(i, k) * wcoeffs(i, k);
 
     norm = std::sqrt(norm);
@@ -378,17 +391,34 @@ void orthogonalise(md::mdspan<T, md::dextents<std::size_t, 2>> wcoeffs,
                                "with incomplete row rank");
     }
 
-    for (std::size_t k = 0; k < wcoeffs.extent(1); ++k)
+    for (std::size_t k = 0; k < psize; ++k)
       wcoeffs(i, k) /= norm;
 
-    for (std::size_t j = i + 1; j < wcoeffs.extent(0); ++j)
-    {
-      T a = 0;
-      for (std::size_t k = 0; k < wcoeffs.extent(1); ++k)
-        a += wcoeffs(i, k) * wcoeffs(j, k);
-      for (std::size_t k = 0; k < wcoeffs.extent(1); ++k)
-        wcoeffs(j, k) -= a * wcoeffs(i, k);
-    }
+    const std::size_t nrem = ndofs - i - 1;
+    if (nrem == 0)
+      continue;
+
+    // Row i viewed as a (psize, 1) column and a (1, psize) row (both are
+    // just the same contiguous length-psize data), and the remaining
+    // rows viewed as an (nrem, psize) block.
+    cmdspan2_t row_col(&wcoeffs(i, 0), psize, 1);
+    cmdspan2_t row_row(&wcoeffs(i, 0), 1, psize);
+    cmdspan2_t tail(&wcoeffs(i + 1, 0), nrem, psize);
+
+    // a = tail * row_i
+    a_vec.resize(nrem);
+    mdspan2_t a_view(a_vec.data(), nrem, 1);
+    dot(tail, row_col, a_view);
+
+    // update = a * row_i^T
+    update.resize(nrem * psize);
+    mdspan2_t update_view(update.data(), nrem, psize);
+    dot(cmdspan2_t(a_vec.data(), nrem, 1), row_row, update_view);
+
+    mdspan2_t tail_mut(&wcoeffs(i + 1, 0), nrem, psize);
+    for (std::size_t j = 0; j < nrem; ++j)
+      for (std::size_t k = 0; k < psize; ++k)
+        tail_mut(j, k) -= update_view(j, k);
   }
 }
 } // namespace basix::math

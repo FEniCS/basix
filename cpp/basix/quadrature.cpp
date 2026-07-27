@@ -216,6 +216,40 @@ mdarray_t<T, 2> compute_jacobi_deriv(T a, std::size_t n, std::size_t nderiv,
 }
 //----------------------------------------------------------------------------
 
+/// Evaluate the mth Jacobi polynomial and its first derivative, with
+/// weight parameters (a, 0), at a single point x. Same recurrence as
+/// compute_jacobi_deriv (nderiv = 1), but tracks only the last two
+/// values of each sequence in scalars rather than allocating
+/// (2, m+1, x.size()) arrays per Newton iteration.
+template <std::floating_point T>
+std::array<T, 2> jacobi_value_deriv(T a, std::size_t m, T x)
+{
+  if (m == 0)
+    return {1.0, 0.0};
+
+  T p0 = 1.0, d0 = 0.0;
+  T p1 = (x * (a + 2.0) + a) * 0.5, d1 = a * 0.5 + 1;
+  if (m == 1)
+    return {p1, d1};
+
+  for (std::size_t j = 2; j < m + 1; ++j)
+  {
+    const T a1 = 2 * j * (j + a) * (2 * j + a - 2);
+    const T a2 = (2 * j + a - 1) * (a * a) / a1;
+    const T a3 = (2 * j + a - 1) * (2 * j + a) / (2 * j * (j + a));
+    const T a4 = 2 * (j + a - 1) * (j - 1) * (2 * j + a) / a1;
+    const T p2 = p1 * (x * a3 + a2) - p0 * a4;
+    const T d2 = d1 * (x * a3 + a2) - d0 * a4 + a3 * p1;
+    p0 = p1;
+    p1 = p2;
+    d0 = d1;
+    d1 = d2;
+  }
+
+  return {p1, d1};
+}
+//-----------------------------------------------------------------------------
+
 /// Computes the m roots of \f$P_{m}^{a,0}\f$ on [-1,1] by Newton's
 /// method. The initial guesses are the Chebyshev points.  Algorithm
 /// implemented from the pseudocode given by Karniadakis and Sherwin.
@@ -238,9 +272,8 @@ std::vector<T> compute_gauss_jacobi_points(T a, int m)
       T s = 0;
       for (int i = 0; i < k; ++i)
         s += 1.0 / (x[k] - x[i]);
-      std::span<const T> _x(&x[k], 1);
-      mdarray_t<T, 2> f = compute_jacobi_deriv<T>(a, m, 1, _x);
-      T delta = f(0, 0) / (f(1, 0) - f(0, 0) * s);
+      auto [f0, f1] = jacobi_value_deriv<T>(a, m, x[k]);
+      T delta = f0 / (f1 - f0 * s);
       x[k] -= delta;
       if (std::abs(delta) < eps)
         break;

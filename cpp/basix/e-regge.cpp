@@ -74,6 +74,23 @@ FiniteElement<T> element::create_regge(cell::type celltype, int degree,
     }
     else
     {
+      // ct, entity_ndofs, etc. depend only on the sub-entity type (same
+      // for every entity of dimension d on a simplex), so compute once
+      // per d rather than once per entity.
+      cell::type ct = cell::sub_entity_type(celltype, d, 0);
+
+      const std::size_t entity_ndofs
+          = polyset::dim(ct, polyset::type::standard, degree + 1 - d);
+      const auto [_pts, wts] = quadrature::make_quadrature<T>(
+          quadrature::type::Default, ct, polyset::type::standard,
+          degree + (degree + 1 - d));
+      impl::mdspan_t<const T, 2> pts(_pts.data(), wts.size(),
+                                     _pts.size() / wts.size());
+
+      FiniteElement moment_space = create_lagrange<T>(
+          ct, degree + 1 - d, element::lagrange_variant::legendre, true);
+      const auto [phib, phishape] = moment_space.tabulate(0, pts);
+      impl::mdspan_t<const T, 4> moment_values(phib.data(), phishape);
 
       // Loop over entities of dimension dim
       for (std::size_t e = 0; e < topology[d].size(); ++e)
@@ -82,22 +99,6 @@ FiniteElement<T> element::create_regge(cell::type celltype, int degree,
         const auto [ebuffer, eshape]
             = cell::sub_entity_geometry<T>(celltype, d, e);
         impl::mdspan_t<const T, 2> entity_x(ebuffer.data(), eshape);
-
-        // Tabulate points in lattice
-        cell::type ct = cell::sub_entity_type(celltype, d, e);
-
-        const std::size_t ndofs
-            = polyset::dim(ct, polyset::type::standard, degree + 1 - d);
-        const auto [_pts, wts] = quadrature::make_quadrature<T>(
-            quadrature::type::Default, ct, polyset::type::standard,
-            degree + (degree + 1 - d));
-        impl::mdspan_t<const T, 2> pts(_pts.data(), wts.size(),
-                                       _pts.size() / wts.size());
-
-        FiniteElement moment_space = create_lagrange<T>(
-            ct, degree + 1 - d, element::lagrange_variant::legendre, true);
-        const auto [phib, phishape] = moment_space.tabulate(0, pts);
-        impl::mdspan_t<const T, 4> moment_values(phib.data(), phishape);
 
         auto& _x = x[d].emplace_back(pts.extent(0), tdim);
 
@@ -138,7 +139,7 @@ FiniteElement<T> element::create_regge(cell::type celltype, int degree,
           }
         }
 
-        auto& _M = M[d].emplace_back(ndofs * ntangents, tdim * tdim,
+        auto& _M = M[d].emplace_back(entity_ndofs * ntangents, tdim * tdim,
                                      pts.extent(0), 1);
         for (int n = 0; n < moment_space.dim(); ++n)
         {

@@ -70,9 +70,9 @@ FiniteElement<T> basix::element::create_bubble(cell::type celltype, int degree,
       quadrature::type::Default, celltype, polyset::type::standard, 2 * degree);
   impl::mdspan_t<const T, 2> pts(_pts.data(), wts.size(),
                                  _pts.size() / wts.size());
-  const auto [_phi, shape]
+  const auto [_phi, phi_shape]
       = polyset::tabulate(celltype, polyset::type::standard, degree, 0, pts);
-  impl::mdspan_t<const T, 3> phi(_phi.data(), shape);
+  impl::mdspan_t<const T, 3> phi(_phi.data(), phi_shape);
 
   // The number of order (degree) polynomials
   const std::size_t psize = phi.extent(1);
@@ -177,11 +177,17 @@ FiniteElement<T> basix::element::create_bubble(cell::type celltype, int degree,
     throw std::runtime_error("Unknown cell type.");
   }
 
+  // wcoeffs = phi1 * (wts * bubble * phi)^T, computed via BLAS (math::dot)
+  // rather than a triple loop.
   impl::mdarray_t<T, 2> wcoeffs(ndofs, psize);
-  for (std::size_t i = 0; i < phi1.extent(0); ++i)
+  std::vector<T> Bb(wts.size() * psize);
+  impl::mdspan_t<T, 2> B(Bb.data(), wts.size(), psize);
+  for (std::size_t k = 0; k < wts.size(); ++k)
     for (std::size_t j = 0; j < psize; ++j)
-      for (std::size_t k = 0; k < wts.size(); ++k)
-        wcoeffs(i, j) += wts[k] * phi1(i, k) * bubble[k] * phi(0, j, k);
+      B(k, j) = wts[k] * bubble[k] * phi(0, j, k);
+  math::dot(phi1, B,
+           impl::mdspan_t<T, 2>(wcoeffs.data(), wcoeffs.extent(0),
+                                wcoeffs.extent(1)));
 
   math::orthogonalise<T>(wcoeffs);
 

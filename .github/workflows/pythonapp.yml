@@ -23,7 +23,7 @@ on:
 jobs:
   lint:
     name: Lint code
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - name: Set up Python
         uses: actions/setup-python@v6
@@ -42,6 +42,7 @@ jobs:
           pip install mypy numpy
           pip install git+https://github.com/${{ env.ufl_repository }}.git@${{ env.ufl_ref }}
           mypy python/basix
+          mypy demo/python
       - name: Gersemi check
         run: |
           pip install gersemi
@@ -53,7 +54,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-22.04]
+        os: [ubuntu-24.04]
         python-version: ["3.11", "3.12", "3.13", "3.14"]
     steps:
       - uses: actions/checkout@v7
@@ -141,7 +142,7 @@ jobs:
 
   no-isolation-python-build:
     name: Build Python using '--no-build-isolation'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v7
       - name: Set up Python
@@ -163,12 +164,12 @@ jobs:
         run: mypy -p basix
       - name: Run mypy (test)
         run: mypy test
-      # - name: Run mypy (demo)
-      #   run: mypy demo/python
+      - name: Run mypy (demo)
+        run: mypy demo/python
 
   build-separately:
     name: Build C++ and Python parts separately and run tests
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v7
       - name: Set up Python
@@ -198,7 +199,7 @@ jobs:
 
   build-cpp-only:
     name: Build C++ part only and run demos
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v7
       - name: Install dependencies
@@ -208,6 +209,10 @@ jobs:
           cmake -G Ninja -DCMAKE_BUILD_TYPE=Developer -B build-dir -S cpp
           cmake --build build-dir
           sudo cmake --install build-dir
+      - name: Run pkg-config integration test
+        run: |
+          cd test/test_pkgconfig
+          make run
       - name: Set up Python
         uses: actions/setup-python@v6
         with:

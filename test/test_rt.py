@@ -8,6 +8,8 @@ import sympy
 
 import basix
 
+from .utils import cached_create_element, cached_create_lattice, evaluate_at_points
+
 
 def sympy_rt(celltype, n):
     # These basis functions were computed using symfem. They can be recomputed
@@ -980,10 +982,13 @@ def test_tri(degree):
     g = sympy_rt(celltype, degree)
     x = sympy.Symbol("x")
     y = sympy.Symbol("y")
-    rt = basix.create_element(
-        basix.ElementFamily.RT, basix.CellType.triangle, degree, basix.LagrangeVariant.equispaced
+    rt = cached_create_element(
+        basix.ElementFamily.RT,
+        basix.CellType.triangle,
+        degree,
+        (basix.LagrangeVariant.equispaced,),
     )
-    pts = basix.create_lattice(celltype, 1, basix.LatticeType.equispaced, True)
+    pts = cached_create_lattice(celltype, 1, basix.LatticeType.equispaced, True)
     nderiv = 3
     wtab = rt.tabulate(nderiv, pts)
 
@@ -993,8 +998,7 @@ def test_tri(degree):
             for i, gi in enumerate(g):
                 for j, gij in enumerate(gi):
                     wd = sympy.diff(gij, x, kx, y, ky)
-                    for k, p in enumerate(pts):
-                        wsym[k, i, j] = wd.subs([(x, p[0]), (y, p[1])])
+                    wsym[:, i, j] = evaluate_at_points(wd, (x, y), pts)
 
             assert np.isclose(wtab[basix.index(kx, ky)], wsym).all()
 
@@ -1006,11 +1010,14 @@ def test_tet(degree):
     x = sympy.Symbol("x")
     y = sympy.Symbol("y")
     z = sympy.Symbol("z")
-    rt = basix.create_element(
-        basix.ElementFamily.RT, basix.CellType.tetrahedron, degree, basix.LagrangeVariant.equispaced
+    rt = cached_create_element(
+        basix.ElementFamily.RT,
+        basix.CellType.tetrahedron,
+        degree,
+        (basix.LagrangeVariant.equispaced,),
     )
 
-    pts = basix.create_lattice(celltype, 5, basix.LatticeType.equispaced, True)
+    pts = cached_create_lattice(celltype, 5, basix.LatticeType.equispaced, True)
     nderiv = 1
     wtab = rt.tabulate(nderiv, pts)
 
@@ -1021,7 +1028,6 @@ def test_tet(degree):
                 for i, gi in enumerate(g):
                     for j, gij in enumerate(gi):
                         wd = sympy.diff(gij, x, kx, y, ky, z, kz)
-                        for k, p in enumerate(pts):
-                            wsym[k, i, j] = wd.subs([(x, p[0]), (y, p[1]), (z, p[2])])
+                        wsym[:, i, j] = evaluate_at_points(wd, (x, y, z), pts)
 
                 assert np.isclose(wtab[basix.index(kx, ky, kz)], wsym).all()

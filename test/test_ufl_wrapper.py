@@ -2,6 +2,8 @@
 # FEniCS Project
 # SPDX-License-Identifier: MIT
 
+import functools
+
 import numpy as np
 import pytest
 
@@ -130,6 +132,11 @@ def test_sobolev_space(e, space0, space1):
     assert e.basix_sobolev_space == space1
 
 
+@functools.cache
+def _cached_scalar_quadrature_element(cell, degree):
+    return basix.ufl.quadrature_element(cell, (), degree=degree)
+
+
 @pytest.mark.parametrize(
     "cell",
     [
@@ -142,7 +149,7 @@ def test_sobolev_space(e, space0, space1):
 @pytest.mark.parametrize("degree", [1, 3, 6])
 @pytest.mark.parametrize("shape", [(), (1,), (2,), (3,), (5,), (2, 2), (3, 3), (4, 1), (5, 1, 7)])
 def test_quadrature_element(cell, degree, shape):
-    scalar_e = basix.ufl.quadrature_element(cell, (), degree=degree)
+    scalar_e = _cached_scalar_quadrature_element(cell, degree)
     e = basix.ufl.quadrature_element(cell, shape, degree=degree)
 
     size = 1
@@ -151,6 +158,11 @@ def test_quadrature_element(cell, degree, shape):
 
     assert e.reference_value_size == scalar_e.reference_value_size * size
     assert e.dim == scalar_e.dim * size
+
+
+@functools.cache
+def _cached_scalar_real_element(cell):
+    return basix.ufl.real_element(cell)
 
 
 @pytest.mark.parametrize(
@@ -164,7 +176,7 @@ def test_quadrature_element(cell, degree, shape):
 )
 @pytest.mark.parametrize("shape", [(), (1,), (2,), (3,), (5,), (2, 2), (3, 3), (4, 1), (5, 1, 7)])
 def test_real_element(cell, shape):
-    scalar_e = basix.ufl.real_element(cell)
+    scalar_e = _cached_scalar_real_element(cell)
     e = basix.ufl.real_element(cell, shape)
 
     size = 1

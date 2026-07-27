@@ -2,12 +2,38 @@
 # FEniCS Project
 # SPDX-License-Identifier: MIT
 
+from functools import cache
+
 import numpy as np
 import pytest
 
 import basix
 
 from .utils import parametrize_over_elements
+
+
+@cache
+def _lattice(cell_type):
+    return basix.create_lattice(cell_type, 10, basix.LatticeType.equispaced, True)
+
+
+@cache
+def _discontinuous_lagrange(p_family, cell_type, degree):
+    """Cached comparison Lagrange element.
+
+    The same (p_family, cell_type, degree) combination is requested by many
+    different tested elements in test_degree_bounds, and each creation and
+    tabulation is expensive, so this is cached across the whole test run.
+    """
+    return basix.create_element(
+        p_family, cell_type, degree, basix.LagrangeVariant.equispaced, discontinuous=True
+    )
+
+
+@cache
+def _discontinuous_lagrange_tab(p_family, cell_type, degree):
+    lagrange = _discontinuous_lagrange(p_family, cell_type, degree)
+    return lagrange.tabulate(0, _lattice(cell_type))[0]
 
 
 def run_test(lower_element, higher_element, power, value_size):
@@ -208,7 +234,7 @@ def test_degree_bounds(cell_type, degree, element_type, element_args):
 
     element = basix.create_element(element_type, cell_type, degree, *element_args)
 
-    points = basix.create_lattice(cell_type, 10, basix.LatticeType.equispaced, True)
+    points = _lattice(cell_type)
     tab = element.tabulate(0, points)[0]
 
     # Test that this element's basis functions are contained in Lagrange
@@ -223,15 +249,11 @@ def test_degree_bounds(cell_type, degree, element_type, element_args):
 
     if element.embedded_superdegree >= 0:
         # The element being tested should be a subset of this Lagrange space
-        lagrange = basix.create_element(
-            p_family,
-            cell_type,
-            element.embedded_superdegree,
-            basix.LagrangeVariant.equispaced,
-            discontinuous=True,
-        )
+        lagrange = _discontinuous_lagrange(p_family, cell_type, element.embedded_superdegree)
         lagrange_coeffs = basix.compute_interpolation_operator(element, lagrange) @ coeffs
-        lagrange_tab = lagrange.tabulate(0, points)[0]
+        lagrange_tab = _discontinuous_lagrange_tab(
+            p_family, cell_type, element.embedded_superdegree
+        )
         lagrange_values = np.array(
             [
                 lagrange_tab[:, :, 0] @ lagrange_coeffs[i :: element.value_size]
@@ -244,15 +266,11 @@ def test_degree_bounds(cell_type, degree, element_type, element_args):
     if element.embedded_superdegree >= 1:
         # The element being tested should be NOT a subset of this
         # Lagrange space
-        lagrange = basix.create_element(
-            p_family,
-            cell_type,
-            element.embedded_superdegree - 1,
-            basix.LagrangeVariant.equispaced,
-            discontinuous=True,
-        )
+        lagrange = _discontinuous_lagrange(p_family, cell_type, element.embedded_superdegree - 1)
         lagrange_coeffs = basix.compute_interpolation_operator(element, lagrange) @ coeffs
-        lagrange_tab = lagrange.tabulate(0, points)[0]
+        lagrange_tab = _discontinuous_lagrange_tab(
+            p_family, cell_type, element.embedded_superdegree - 1
+        )
         lagrange_values = np.array(
             [
                 lagrange_tab[:, :, 0] @ lagrange_coeffs[i :: element.value_size]
@@ -268,15 +286,9 @@ def test_degree_bounds(cell_type, degree, element_type, element_args):
     if element.embedded_subdegree >= 0:
         # This Lagrange space should be a subset to the element being
         # tested
-        lagrange = basix.create_element(
-            p_family,
-            cell_type,
-            element.embedded_subdegree,
-            basix.LagrangeVariant.equispaced,
-            discontinuous=True,
-        )
+        lagrange = _discontinuous_lagrange(p_family, cell_type, element.embedded_subdegree)
         lagrange_coeffs = generator.random(lagrange.dim * element.value_size)
-        lagrange_tab = lagrange.tabulate(0, points)[0]
+        lagrange_tab = _discontinuous_lagrange_tab(p_family, cell_type, element.embedded_subdegree)
         lagrange_values = np.array(
             [
                 lagrange_tab[:, :, 0] @ lagrange_coeffs[i :: element.value_size]
@@ -296,15 +308,11 @@ def test_degree_bounds(cell_type, degree, element_type, element_args):
     if element.embedded_subdegree >= -1:
         # This Lagrange space should NOT be a subset to the element
         # being tested
-        lagrange = basix.create_element(
-            p_family,
-            cell_type,
-            element.embedded_subdegree + 1,
-            basix.LagrangeVariant.equispaced,
-            discontinuous=True,
-        )
+        lagrange = _discontinuous_lagrange(p_family, cell_type, element.embedded_subdegree + 1)
         lagrange_coeffs = generator.random(lagrange.dim * element.value_size)
-        lagrange_tab = lagrange.tabulate(0, points)[0]
+        lagrange_tab = _discontinuous_lagrange_tab(
+            p_family, cell_type, element.embedded_subdegree + 1
+        )
         lagrange_values = np.array(
             [
                 lagrange_tab[:, :, 0] @ lagrange_coeffs[i :: element.value_size]

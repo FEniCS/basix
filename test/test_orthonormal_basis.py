@@ -23,10 +23,7 @@ def test_quad(order):
     )[0]
     ndofs = basis.shape[0]
 
-    mat = np.zeros((ndofs, ndofs))
-    for i in range(ndofs):
-        for j in range(ndofs):
-            mat[i, j] = sum(basis[i, :] * basis[j, :] * Qwts)
+    mat = (basis * Qwts) @ basis.T
 
     assert np.allclose(mat, np.eye(ndofs))
 
@@ -48,10 +45,7 @@ def test_pyramid(order):
     )[0]
     ndofs = basis.shape[0]
 
-    mat = np.zeros((ndofs, ndofs))
-    for i in range(ndofs):
-        for j in range(ndofs):
-            mat[i, j] = sum(basis[i, :] * basis[j, :] * Qwts)
+    mat = (basis * Qwts) @ basis.T
 
     assert np.allclose(mat, np.eye(ndofs))
 
@@ -72,10 +66,7 @@ def test_hex(order):
     )[0]
     ndofs = basis.shape[0]
 
-    mat = np.zeros((ndofs, ndofs))
-    for i in range(ndofs):
-        for j in range(ndofs):
-            mat[i, j] = sum(basis[i, :] * basis[j, :] * Qwts)
+    mat = (basis * Qwts) @ basis.T
 
     assert np.allclose(mat, np.eye(ndofs))
 
@@ -96,10 +87,7 @@ def test_prism(order):
     )[0]
     ndofs = basis.shape[0]
 
-    mat = np.zeros((ndofs, ndofs))
-    for i in range(ndofs):
-        for j in range(ndofs):
-            mat[i, j] = sum(basis[i, :] * basis[j, :] * Qwts)
+    mat = (basis * Qwts) @ basis.T
 
     assert np.allclose(mat, np.eye(ndofs))
 
@@ -124,10 +112,7 @@ def test_standard(cell_type, order):
     )[0]
 
     ndofs = basis.shape[0]
-    mat = np.zeros((ndofs, ndofs))
-    for i in range(ndofs):
-        for j in range(ndofs):
-            mat[i, j] = sum(basis[i, :] * basis[j, :] * Qwts)
+    mat = (basis * Qwts) @ basis.T
 
     assert np.allclose(mat, np.eye(ndofs))
 
@@ -157,8 +142,5 @@ def test_macroedge(cell_type, order):
     )[0]
 
     ndofs = basis.shape[0]
-    mat = np.zeros((ndofs, ndofs))
-    for i in range(ndofs):
-        for j in range(ndofs):
-            mat[i, j] = sum(basis[i, :] * basis[j, :] * Qwts)
+    mat = (basis * Qwts) @ basis.T
     assert np.allclose(mat, np.eye(ndofs))

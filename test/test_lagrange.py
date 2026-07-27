@@ -8,6 +8,8 @@ import sympy
 
 import basix
 
+from .utils import cached_create_lattice, evaluate_at_points
+
 
 def sympy_lagrange(celltype, n):
     # These basis functions were computed using symfem. They can be recomputed
@@ -770,15 +772,14 @@ def test_line(n):
     lagrange = basix.create_element(
         basix.ElementFamily.P, celltype, n, basix.LagrangeVariant.equispaced
     )
-    pts = basix.create_lattice(celltype, 6, basix.LatticeType.equispaced, True)
+    pts = cached_create_lattice(celltype, 6, basix.LatticeType.equispaced, True)
     nderiv = n
     wtab = lagrange.tabulate(nderiv, pts)
     for k in range(nderiv + 1):
         wsym = np.zeros_like(wtab[k])
         for i in range(n + 1):
             wd = sympy.diff(g[i], x, k)
-            for j, p in enumerate(pts):
-                wsym[j, i] = wd.subs(x, p[0])
+            wsym[:, i, 0] = evaluate_at_points(wd, (x,), pts)
         assert np.allclose(wtab[k], wsym)
 
 
@@ -788,15 +789,14 @@ def test_line_without_variant(n):
     g = sympy_lagrange(celltype, n)
     x = sympy.Symbol("x")
     lagrange = basix.create_element(basix.ElementFamily.P, basix.CellType.interval, n)
-    pts = basix.create_lattice(celltype, 6, basix.LatticeType.equispaced, True)
+    pts = cached_create_lattice(celltype, 6, basix.LatticeType.equispaced, True)
     nderiv = n
     wtab = lagrange.tabulate(nderiv, pts)
     for k in range(nderiv + 1):
         wsym = np.zeros_like(wtab[k])
         for i in range(n + 1):
             wd = sympy.diff(g[i], x, k)
-            for j, p in enumerate(pts):
-                wsym[j, i] = wd.subs(x, p[0])
+            wsym[:, i, 0] = evaluate_at_points(wd, (x,), pts)
         assert np.allclose(wtab[k], wsym)
 
 
@@ -809,7 +809,7 @@ def test_tri(degree):
     lagrange = basix.create_element(
         basix.ElementFamily.P, basix.CellType.triangle, degree, basix.LagrangeVariant.equispaced
     )
-    pts = basix.create_lattice(celltype, 6, basix.LatticeType.equispaced, True)
+    pts = cached_create_lattice(celltype, 6, basix.LatticeType.equispaced, True)
     nderiv = 3
     wtab = lagrange.tabulate(nderiv, pts)
     for kx in range(nderiv):
@@ -817,8 +817,7 @@ def test_tri(degree):
             wsym = np.zeros_like(wtab[0])
             for i in range(len(g)):
                 wd = sympy.diff(g[i], x, kx, y, ky)
-                for j, p in enumerate(pts):
-                    wsym[j, i] = wd.subs([(x, p[0]), (y, p[1])])
+                wsym[:, i, 0] = evaluate_at_points(wd, (x, y), pts)
             assert np.allclose(wtab[basix.index(kx, ky)], wsym)
 
 
@@ -832,7 +831,7 @@ def test_tet(degree):
     lagrange = basix.create_element(
         basix.ElementFamily.P, basix.CellType.tetrahedron, degree, basix.LagrangeVariant.equispaced
     )
-    pts = basix.create_lattice(celltype, 6, basix.LatticeType.equispaced, True)
+    pts = cached_create_lattice(celltype, 6, basix.LatticeType.equispaced, True)
     nderiv = 1
     wtab = lagrange.tabulate(nderiv, pts)
     for k in range(nderiv + 1):
@@ -843,8 +842,7 @@ def test_tet(degree):
                 wsym = np.zeros_like(wtab[0])
                 for i in range(len(g)):
                     wd = sympy.diff(g[i], x, kx, y, ky, z, kz)
-                    for j, p in enumerate(pts):
-                        wsym[j, i] = wd.subs([(x, p[0]), (y, p[1]), (z, p[2])])
+                    wsym[:, i, 0] = evaluate_at_points(wd, (x, y, z), pts)
                 assert np.allclose(wtab[basix.index(kx, ky, kz)], wsym)
 
 
@@ -861,7 +859,7 @@ def test_lagrange(celltype, degree):
     lagrange = basix.create_element(
         basix.ElementFamily.P, celltype[1], degree, basix.LagrangeVariant.equispaced
     )
-    pts = basix.create_lattice(celltype[0], 6, basix.LatticeType.equispaced, True)
+    pts = cached_create_lattice(celltype[0], 6, basix.LatticeType.equispaced, True)
     w = lagrange.tabulate(0, pts)[0]
     assert np.isclose(np.sum(w, axis=1), 1.0).all()
 
@@ -988,7 +986,7 @@ def test_celltypes(degree, celltype):
     tp = basix.create_element(
         basix.ElementFamily.P, celltype, degree, basix.LagrangeVariant.equispaced
     )
-    pts = basix.create_lattice(celltype, 5, basix.LatticeType.equispaced, True)
+    pts = cached_create_lattice(celltype, 5, basix.LatticeType.equispaced, True)
     w = tp.tabulate(0, pts)[0]
     assert np.allclose(np.sum(w, axis=1), 1.0)
 

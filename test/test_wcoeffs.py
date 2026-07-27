@@ -7,7 +7,7 @@ import pytest
 
 import basix
 
-from .utils import parametrize_over_elements
+from .utils import cached_create_element, parametrize_over_elements
 
 
 def tensor_product(*data):
@@ -29,9 +29,7 @@ def test_orthonormal(cell_type, degree, element_type, element_args):
     ):
         pytest.skip()  # Skip slow test
 
-    element = basix.create_element(element_type, cell_type, degree, *element_args)
+    element = cached_create_element(element_type, cell_type, degree, tuple(element_args))
 
     wcoeffs = element.wcoeffs
-    for i, rowi in enumerate(wcoeffs):
-        for j, rowj in enumerate(wcoeffs):
-            assert np.isclose(np.dot(rowi, rowj), int(i == j))
+    assert np.allclose(wcoeffs @ wcoeffs.T, np.eye(wcoeffs.shape[0]))

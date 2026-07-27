@@ -20,7 +20,7 @@ on:
 jobs:
   build:
     name: Build and test (Red Hat)
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     container: rockylinux/rockylinux:10
     env:
       CC: gcc

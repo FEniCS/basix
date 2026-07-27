@@ -3,7 +3,7 @@
 # This file is part of Basix (https://www.fenicsproject.org)
 #
 # SPDX-License-Identifier:    MIT
-"""Utility funcitons."""
+"""Utility functions."""
 
 from basix._basixcpp import index as _index
 

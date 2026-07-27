@@ -34,8 +34,8 @@ FiniteElement<T> create_serendipity(cell::type celltype, int degree,
 /// @param[in] celltype The cell type
 /// @param[in] degree The degree of the element
 /// @param[in] variant The variant of the element to be created
-/// @param[in] discontinuous Controls whether the element is continuous or
-/// discontinuous
+/// @param[in] discontinuous Must be `true`; DPC elements are
+/// discontinuous only, and `false` causes a runtime error.
 /// @return A finite element
 template <std::floating_point T>
 FiniteElement<T> create_dpc(cell::type celltype, int degree,

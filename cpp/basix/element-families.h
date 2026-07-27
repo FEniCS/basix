@@ -43,19 +43,20 @@ enum class dpc_variant
 /// Available element families
 enum class family
 {
-  custom = 0,
-  P = 1,
-  RT = 2,
-  N1E = 3,
-  BDM = 4,
-  N2E = 5,
-  CR = 6,
-  Regge = 7,
-  DPC = 8,
-  bubble = 9,
-  serendipity = 10,
-  HHJ = 11,
-  Hermite = 12,
-  iso = 13,
+  custom = 0,       /*!< Custom element, defined directly by its
+                       coefficients, interpolation points/matrices, etc. */
+  P = 1,            /*!< Lagrange */
+  RT = 2,           /*!< Raviart-Thomas */
+  N1E = 3,          /*!< Nedelec first kind */
+  BDM = 4,          /*!< Brezzi-Douglas-Marini */
+  N2E = 5,          /*!< Nedelec second kind */
+  CR = 6,           /*!< Crouzeix-Raviart */
+  Regge = 7,        /*!< Regge */
+  DPC = 8,          /*!< Discontinuous polynomial cubical */
+  bubble = 9,       /*!< Bubble */
+  serendipity = 10, /*!< Serendipity */
+  HHJ = 11,         /*!< Hellan-Herrmann-Johnson */
+  Hermite = 12,     /*!< Hermite */
+  iso = 13,         /*!< Iso (macro) element */
 };
 } // namespace basix::element

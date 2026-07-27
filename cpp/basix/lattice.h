@@ -15,8 +15,8 @@ namespace basix::lattice
 {
 /// @brief The type of point spacing to be used in a lattice.
 ///
-/// @note type::chebyshev_plus_endpoints() and type::gl_plus_endpoints() are
-/// only intended for internal use only.
+/// @note type::chebyshev_plus_endpoints and type::gl_plus_endpoints are
+/// intended for internal use only.
 enum class type
 {
   equispaced = 0, /*!< Equally spaced points */

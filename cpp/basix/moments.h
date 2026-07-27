@@ -38,10 +38,11 @@ namespace moments
 /// define
 /// @param value_size The value size of the space being defined
 /// @param q_deg The quadrature degree used for the integrals
-/// @return (interpolation points, interpolation matrix). The indices of
-/// the interpolation points are (number of entities, npoints, gdim).
-/// The indices on the interpolation matrix are (number of entities,
-/// ndofs, value_size, npoints, derivative)
+/// @return (interpolation points, interpolation shape, interpolation
+/// matrix, interpolation shape). The indices of the interpolation
+/// points are (number of entities, npoints, gdim). The indices on the
+/// interpolation matrix are (number of entities, ndofs, value_size,
+/// npoints, derivative)
 template <std::floating_point T>
 std::tuple<std::vector<std::vector<T>>, std::array<std::size_t, 2>,
            std::vector<std::vector<T>>, std::array<std::size_t, 4>>
@@ -57,8 +58,8 @@ make_integral_moments(const FiniteElement<T>& moment_space, cell::type celltype,
 /// triangle and the moment space is a P1 space on an edge, this will
 /// perform two integrals for each of the 3 edges of the triangle.
 ///
-/// @todo Clarify what happens value size of the moment space is less
-/// than `value_size`.
+/// @todo Clarify what happens when the value size of the moment space
+/// is less than `value_size`.
 ///
 /// @param V The space to compute the integral moments against
 /// @param celltype The cell type of the cell on which the space is
@@ -67,7 +68,7 @@ make_integral_moments(const FiniteElement<T>& moment_space, cell::type celltype,
 /// define
 /// @param value_size The value size of the space being defined
 /// @param q_deg The quadrature degree used for the integrals
-/// @return (interpolation points, interpolation shape,  interpolation
+/// @return (interpolation points, interpolation shape, interpolation
 /// matrix, interpolation shape). The indices of the interpolation
 /// points are (number of entities, npoints, gdim). The indices on the
 /// interpolation matrix are (number of entities, ndofs, value_size,
@@ -90,10 +91,9 @@ make_dot_integral_moments(const FiniteElement<T>& V, cell::type celltype,
 /// being defined
 /// @param ptype The polyset type of the element this moment is being used to
 /// define
-/// @param value_size The value size of the space being defined the
-/// space
+/// @param value_size The value size of the space being defined
 /// @param q_deg The quadrature degree used for the integrals
-/// @return (interpolation points, interpolation shape,  interpolation
+/// @return (interpolation points, interpolation shape, interpolation
 /// matrix, interpolation shape). The indices of the interpolation
 /// points are (number of entities, npoints, gdim). The indices on the
 /// interpolation matrix are (number of entities, ndofs, value_size,
@@ -118,7 +118,7 @@ make_tangent_integral_moments(const FiniteElement<T>& V, cell::type celltype,
 /// define
 /// @param[in] value_size The value size of the space being defined
 /// @param[in] q_deg The quadrature degree used for the integrals
-/// @return (interpolation points, interpolation shape,  interpolation
+/// @return (interpolation points, interpolation shape, interpolation
 /// matrix, interpolation shape). The indices of the interpolation
 /// points are (number of entities, npoints, gdim). The indices on the
 /// interpolation matrix are (number of entities, ndofs, value_size,

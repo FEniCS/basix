@@ -130,10 +130,8 @@ impl::mdarray_t<T, 2> make_serendipity_div_space_2d(int degree)
 
   std::vector<T> integrand(wts.size());
 
-  // Precompute pts(:,a)^degree for a = 0, 1 once. This factor does not
-  // depend on k or d, but the original code recomputed it via a
-  // length-`degree` multiplication loop for every (k, d) pair, making it
-  // by far the most expensive part of this loop at high degree.
+  // Precompute pts(:,a)^degree once per a instead of recomputing it
+  // inside the (k, d) loop below.
   std::array<std::vector<T>, 2> pow_a;
   for (std::size_t a = 0; a < 2; ++a)
   {
@@ -244,11 +242,9 @@ impl::mdarray_t<T, 2> make_serendipity_div_space_3d(int degree)
 
   std::vector<T> integrand(wts.size());
 
-  // Precompute pts(:,dim1(a))^index * pts(:,dim2(a))^(degree-index) for
-  // a = 0..2, index = 0..degree once. This factor does not depend on k
-  // or d, but the original code recomputed it via two length-O(degree)
-  // multiplication loops for every (k, d) pair, making it by far the
-  // most expensive part of this loop at high degree.
+  // Precompute pts(:,dim1(a))^index * pts(:,dim2(a))^(degree-index) once
+  // per (a, index) instead of recomputing it inside the (k, d) loop
+  // below.
   constexpr std::array<std::array<int, 2>, 3> pow_dims{{{1, 2}, {0, 2}, {0, 1}}};
   std::array<std::vector<std::vector<T>>, 3> pow_factor;
   for (std::size_t a = 0; a < 3; ++a)
@@ -501,12 +497,9 @@ impl::mdarray_t<T, 2> make_serendipity_curl_space_3d(int degree)
 
   std::vector<T> integrand(wts.size());
 
-  // Precompute pts(:,dim1(a))^index * pts(:,dim2(a))^(degree-1-index) for
-  // a = 0..2, index = 0..degree once, see the identical hoist in
-  // make_serendipity_div_space_3d above for the rationale. (Here the
-  // second exponent is `degree - 1 - index`, matching the loop bound
-  // used below; a negative bound yields zero extra multiplications,
-  // same as in the original code.)
+  // Precompute pts(:,dim1(a))^index * pts(:,dim2(a))^(degree-1-index), see
+  // make_serendipity_div_space_3d above; a negative loop bound below
+  // yields zero extra multiplications, as before.
   constexpr std::array<std::array<int, 2>, 3> pow_dims{{{0, 2}, {1, 2}, {0, 1}}};
   std::array<std::vector<std::vector<T>>, 3> pow_factor;
   for (std::size_t a = 0; a < 3; ++a)
@@ -606,12 +599,9 @@ impl::mdarray_t<T, 2> make_serendipity_curl_space_3d(int degree)
 
   int c = 3 * nv + (degree > 1 ? 3 : 2) * degree;
 
-  // Precompute, for each (d, i) pair that will occur below, the factor
-  // built by the d2 loop (a product of pts(:,d2)^i[d2], with one
-  // dimension's power reduced by one and scaled by i[d2]). This factor
-  // does not depend on k, but the original code recomputed it via three
-  // length-O(degree) multiplication loops for every k, making it by far
-  // the most expensive part of this loop at high degree.
+  // Precompute, for each (d, i) pair below, the d2-loop factor (a product
+  // of pts(:,d2)^i[d2], one power reduced and scaled by i[d2]) instead of
+  // recomputing it inside the k loop.
   auto compute_d_factor
       = [&](int d, const std::array<int, 3>& i) -> std::vector<T>
   {

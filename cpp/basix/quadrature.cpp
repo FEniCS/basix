@@ -217,14 +217,10 @@ mdarray_t<T, 2> compute_jacobi_deriv(T a, std::size_t n, std::size_t nderiv,
 //----------------------------------------------------------------------------
 
 /// Evaluate the mth Jacobi polynomial and its first derivative, with
-/// weight parameters (a, 0), at a single point x. This follows the
-/// exact same recurrence as compute_jacobi_deriv (nderiv = 1) but
-/// tracks only the last two values of each of the two coupled
-/// sequences in scalars, rather than allocating (2, m+1, x.size())
-/// arrays -- worthwhile because this is evaluated at one point per
-/// Newton iteration in compute_gauss_jacobi_points below, so the
-/// array-based version would allocate twice per iteration for no
-/// benefit (nothing beyond the last two values is ever read back).
+/// weight parameters (a, 0), at a single point x. Same recurrence as
+/// compute_jacobi_deriv (nderiv = 1), but tracks only the last two
+/// values of each sequence in scalars rather than allocating
+/// (2, m+1, x.size()) arrays per Newton iteration.
 template <std::floating_point T>
 std::array<T, 2> jacobi_value_deriv(T a, std::size_t m, T x)
 {

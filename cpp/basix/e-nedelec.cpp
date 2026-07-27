@@ -54,14 +54,9 @@ impl::mdarray_t<T, 2> create_nedelec_2d_space(int degree)
     wcoeffs(nv + i, psize + i) = 1.0;
   }
 
-  // Create coefficients for the additional Nedelec polynomials.
-  //
-  // For each (i, j) this originally computed a sum over quadrature points
-  // k of wts[k]*phi(0,ns0+i,k)*pts(k,dim)*phi(0,j,k) (dim = 1 and 0) via
-  // an explicit triple loop. Since phi(0,j,k) (for j in [nv,psize)) does
-  // not depend on i, and wts[k]*pts(k,dim)*phi(0,ns0+i,k) does not depend
-  // on j, this is a pair of matrix-matrix products, computed here via
-  // BLAS (math::dot) instead.
+  // Create coefficients for the additional Nedelec polynomials, as a pair
+  // of matrix-matrix products (via math::dot) rather than an explicit
+  // triple loop.
   const std::size_t npts = wts.size();
   const std::size_t ncols = psize - nv;
 
@@ -148,17 +143,9 @@ impl::mdarray_t<T, 2> create_nedelec_3d_space(int degree)
     for (std::size_t j = 0; j < nv; ++j)
       wcoeffs(i * nv + j, i * psize + j) = 1.0;
 
-  // Create coefficients for additional Nedelec polynomials.
-  //
-  // Each of the three loops below originally computed, for every (i, j),
-  // a sum over quadrature points k of
-  //   wts[k] * phi(0,ns0+i,k) * pts(k,dim) * phi(0,j,k)
-  // via an explicit triple loop, for dim = 2, 1, 0 respectively. Since
-  // phi(0,j,k) (for j in [nv,psize)) does not depend on i or dim, and the
-  // wts[k]*pts(k,dim)*phi(0,ns0+i,k) factor does not depend on j, these
-  // are three matrix-matrix products, computed here via BLAS (math::dot)
-  // instead; the row/column targets and signs below are unchanged from
-  // the three original loops.
+  // Create coefficients for additional Nedelec polynomials, as three
+  // matrix-matrix products (via math::dot) rather than an explicit
+  // quadruple loop; row/column targets and signs are unchanged.
   const std::size_t npts = wts.size();
   const std::size_t ncols = psize - nv;
 

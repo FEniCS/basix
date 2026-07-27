@@ -84,13 +84,9 @@ tabulate_bernstein(cell::type celltype, int d, mdspan_t<const T, 2> x)
     }
   }
 
-  // Precompute lambdas(l, :)^k for l = 0..tdim, k = 0..d once. Each basis
-  // function's value is a product of powers of the barycentric
-  // coordinates whose exponents sum to d, so the original code applied
-  // up to d separate multiplications per basis function per point. With
-  // this table, each basis function needs only lambdas.extent(0) (<= 4)
-  // multiplications per point instead of up to d, which matters because
-  // pdim itself grows with d.
+  // Precompute lambdas(l, :)^k for l = 0..tdim, k = 0..d once, so each
+  // basis function needs only lambdas.extent(0) (<= 4) multiplications
+  // per point below instead of up to d.
   std::vector<mdarray_t<T, 2>> pow_lambda;
   pow_lambda.reserve(lambdas.extent(0));
   for (std::size_t l = 0; l < lambdas.extent(0); ++l)

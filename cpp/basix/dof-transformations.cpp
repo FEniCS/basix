@@ -414,14 +414,11 @@ std::pair<std::vector<T>, std::array<std::size_t, 2>> compute_transformation(
   std::vector<T> tabulated_data_b(npts * total_ndofs * vs);
   mdspan_t<T, 3> tabulated_data(tabulated_data_b.data(), npts, total_ndofs, vs);
 
-  // coeffs has shape (total_ndofs, vs * psize) in row-major storage, i.e.
-  // each dof's row is vs contiguous blocks of psize values, one per
-  // value component. So viewing its buffer directly with shape
-  // (total_ndofs * vs, psize) is exact (no data movement) and lets every
-  // value component be computed by a single math::dot call, instead of
-  // vs separate calls each preceded by an O(total_ndofs * psize) copy to
-  // extract that component's columns out of coeffs -- the same pattern
-  // fixed in FiniteElement::tabulate().
+  // coeffs's (total_ndofs, vs * psize) row-major buffer is exactly
+  // (total_ndofs * vs, psize) with no data movement, letting every value
+  // component be computed by a single math::dot call rather than vs
+  // separate calls each preceded by a column-extraction copy -- same
+  // pattern as FiniteElement::tabulate().
   assert(coeffs.extent(1) == vs * static_cast<std::size_t>(psize));
   mdspan_t<const T, 2> coeffs_flat(coeffs.data_handle(),
                                    coeffs.extent(0) * vs, psize);
@@ -434,16 +431,11 @@ std::pair<std::vector<T>, std::array<std::size_t, 2>> compute_transformation(
       for (std::size_t j = 0; j < vs; ++j)
         tabulated_data(k0, k1, j) = result(k1 * vs + j, k0);
 
-  // Push forward.
-  //
-  // J, K and detJ are the same for every point here (this maps the
-  // reference cell to itself, e.g. a reflection/rotation, not physical
-  // cell geometry that could vary per point), so instead of calling
-  // push_forward once per point, every point's (total_ndofs, vs) block
-  // is pushed forward in a single call by viewing the whole
-  // (npts, total_ndofs, vs) buffer as one flat (npts * total_ndofs, vs)
-  // matrix -- valid since each row of that matrix is transformed
-  // independently of the others.
+  // J, K and detJ are the same for every point here (a reflection/
+  // rotation of the reference cell onto itself, not physical geometry
+  // varying per point), so push forward all points in a single call by
+  // viewing the (npts, total_ndofs, vs) buffer as one flat
+  // (npts * total_ndofs, vs) matrix, rather than once per point.
   mdarray_t<T, 3> pushed_data(tabulated_data.extents());
   {
     mdspan_t<const T, 2> tab_all(tabulated_data_b.data(),

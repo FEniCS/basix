@@ -371,13 +371,11 @@ void orthogonalise(md::mdspan<T, md::dextents<std::size_t, 2>> wcoeffs,
   const std::size_t ndofs = wcoeffs.extent(0);
   const std::size_t psize = wcoeffs.extent(1);
 
-  // For each row i, after normalising it, every later row j > i has its
-  // projection onto row i subtracted (classical Gram-Schmidt). Rather
-  // than looping over each j individually (a separate length-psize dot
-  // product and axpy per row), the projection coefficients for all
-  // remaining rows are computed as a single matrix-vector product, and
-  // the subtraction as a single rank-1 update, both via BLAS (math::dot)
-  // through the same code path used for genuine matrix-matrix products.
+  // Classical Gram-Schmidt: after normalising row i, its projection onto
+  // every later row is subtracted. Rather than looping over each row j,
+  // the projection coefficients for all remaining rows are computed as a
+  // single matrix-vector product, and the subtraction as a single rank-1
+  // update, both via BLAS (math::dot).
   std::vector<T> a_vec;
   std::vector<T> update;
   for (std::size_t i = start; i < ndofs; ++i)

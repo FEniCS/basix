@@ -37,11 +37,8 @@ FiniteElement<T> basix::element::create_rtc(cell::type celltype, int degree,
 
   // The number of order (degree) polynomials.
   //
-  // This is only a size, so it's computed directly via polyset::dim
-  // rather than by generating a quadrature rule and tabulating the whole
-  // polynomial set at those points (as this used to do) only to read off
-  // the size of the result -- the tabulated values themselves were never
-  // otherwise used here.
+  // Only a size is needed, so use polyset::dim directly rather than
+  // tabulating the whole polynomial set just to read off its extent.
   const std::size_t psize
       = polyset::dim(celltype, polyset::type::standard, degree);
 
@@ -174,11 +171,8 @@ FiniteElement<T> basix::element::create_nce(cell::type celltype, int degree,
 
   // The number of order (degree) polynomials.
   //
-  // This is only a size, so it's computed directly via polyset::dim
-  // rather than by generating a quadrature rule and tabulating the whole
-  // polynomial set at those points (as this used to do) only to read off
-  // the size of the result -- the tabulated values themselves were never
-  // otherwise used here.
+  // Only a size is needed, so use polyset::dim directly rather than
+  // tabulating the whole polynomial set just to read off its extent.
   const int psize = polyset::dim(celltype, polyset::type::standard, degree);
 
   const int edge_count = tdim == 2 ? 4 : 12;

@@ -71,12 +71,9 @@ FiniteElement<T> basix::element::create_hhj(cell::type celltype, int degree,
   impl::mdspan_t<const T, 2> normals(_data.data(), _shape);
 
   {
-    // ct, ndofs, the quadrature points/weights, and the moment space (and
-    // its tabulation) depend only on the facet type, which is the same for
-    // every facet of a simplex -- compute them once rather than once per
-    // facet. Scoped to this block so these names don't shadow the
-    // unrelated ct/ndofs/pts/wts/moment_space locals used below for the
-    // interior dofs.
+    // ct, ndofs, etc. depend only on the facet type (same for every facet
+    // of a simplex), so compute once here; scoped to avoid shadowing the
+    // unrelated locals of the same name used below for interior dofs.
     cell::type ct = cell::sub_entity_type(celltype, facet_dim, 0);
 
     const std::size_t ndofs

@@ -175,12 +175,9 @@ tabulate_dlagrange(std::size_t n, std::span<const T> x)
   md::mdspan<const T, md::dextents<std::size_t, 2>> equi_pts_v(equi_pts.data(),
                                                                n + 1, 1);
 
-  // polyset::tabulate with nderivs = 0 always returns a leading extent
-  // of 1 (values only, no derivatives), so with the row-major (layout_right)
-  // storage used throughout, the returned buffer is already exactly the
-  // (ndofs, npts) matrix -- no need to copy it element-by-element into a
-  // separate 2D buffer first, as this used to, just to drop that leading
-  // extent of 1.
+  // polyset::tabulate with nderivs = 0 always returns a leading extent of
+  // 1, so the buffer is already exactly the (ndofs, npts) matrix -- no
+  // need to copy it into a separate buffer just to drop that extent.
   const auto [dual_values_b, dshape] = polyset::tabulate<T>(
       cell::type::interval, polyset::type::standard, n, 0, equi_pts_v);
   assert(dshape[0] == 1);
@@ -365,14 +362,10 @@ std::vector<T> isaac_point(lattice::type lattice_type,
     T denominator = 0;
     std::vector<std::size_t> sub_a(std::next(a.begin()), a.end());
     const std::size_t size = std::reduce(a.begin(), a.end());
-    // interval_pts[size] is create_interval<T>(size, lattice_type, true).
-    // Every recursive call at a given depth uses the same `size` (it only
-    // depends on the multiset of values in `a`, not their order), and
-    // callers of the top-level isaac_point for a fixed lattice degree n
-    // only ever need create_interval at the (at most n+1) sizes 0..n, so
-    // this is precomputed once by the caller rather than recomputed here
-    // on every call -- this recursion is invoked once per lattice point,
-    // i.e. O(n^2)/O(n^3) times for a triangle/tetrahedron lattice.
+    // interval_pts[size] is create_interval<T>(size, lattice_type, true),
+    // precomputed once by the caller (for sizes 0..n) rather than
+    // recomputed on every call to this recursion, which runs once per
+    // lattice point.
     const std::vector<T>& x = interval_pts[size];
     for (std::size_t i = 0; i < a.size(); ++i)
     {
@@ -406,20 +399,15 @@ create_tri_isaac(std::size_t n, lattice::type lattice_type, bool exterior)
   md::mdspan<T, md::extents<std::size_t, md::dynamic_extent, 2>> p(_p.data(),
                                                                    shape);
 
-  // If there are no points to generate (e.g. an interior/face lattice
-  // requested for too low a degree), return before paying for the
-  // interval_pts table below -- each entry involves a GLL/Gauss point
-  // computation (an eigenvalue solve), so building the full table
-  // unconditionally is wasted work whenever this is a common,
-  // legitimately-empty case (as it is for low-degree Lagrange elements,
-  // where every entity down to some dimension has zero interior dofs).
+  // Return before paying for the interval_pts table below (each entry is
+  // a GLL/Gauss eigenvalue solve) when there are no points to generate,
+  // e.g. a low-degree Lagrange element's interior lattice.
   if (shape[0] == 0)
     return {std::move(_p), shape};
 
-  // create_interval<T>(s, lattice_type, true) only depends on s, and every
-  // isaac_point call below (and its internal recursion) only ever needs it
-  // for s in [0, n], so build the table once instead of recomputing it
-  // from scratch for every one of the O(n^2) lattice points.
+  // create_interval<T>(s, lattice_type, true) only depends on s, so build
+  // the table once for s in [0, n] instead of recomputing it for every
+  // one of the O(n^2) lattice points below.
   std::vector<std::vector<T>> interval_pts(n + 1);
   for (std::size_t s = 0; s <= n; ++s)
     interval_pts[s] = create_interval<T>(s, lattice_type, true);
@@ -558,16 +546,11 @@ create_tet_isaac(std::size_t n, lattice::type lattice_type, bool exterior)
   md::mdspan<T, md::extents<std::size_t, md::dynamic_extent, 3>> x(xb.data(),
                                                                    shape);
 
-  // See the comment in create_tri_isaac -- return before paying for the
-  // interval_pts table below (a GLL/Gauss eigenvalue solve per entry)
-  // when there are no points to generate, e.g. for a low-degree Lagrange
-  // element's interior lattice.
+  // See the comment in create_tri_isaac.
   if (shape[0] == 0)
     return {std::move(xb), shape};
 
-  // See the comment in create_tri_isaac -- create_interval<T>(s, ...) only
-  // depends on s, so build the table of sizes 0..n once rather than
-  // recomputing it for every one of the O(n^3) lattice points.
+  // See the comment in create_tri_isaac.
   std::vector<std::vector<T>> interval_pts(n + 1);
   for (std::size_t s = 0; s <= n; ++s)
     interval_pts[s] = create_interval<T>(s, lattice_type, true);

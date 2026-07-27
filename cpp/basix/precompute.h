@@ -242,18 +242,11 @@ void apply_matrix(std::span<const std::size_t> v_size_t,
   const std::size_t dim = v_size_t.size();
   apply_permutation(v_size_t, data, offset, n);
 
-  // data is laid out as n contiguous values per dof (index b is the fast,
-  // unit-stride index -- see the data[n * (offset + i) + b] addressing
-  // below). For large n, looping over b innermost turns each elimination
-  // step into a simple contiguous AXPY that the compiler can vectorise.
-  // But n is often small in practice (e.g. 1-3, for a scalar or
-  // low-dimensional vector field), and there the fixed cost of
-  // re-entering that tiny b-loop for every one of the O(dim^2) (i, j)
-  // pairs outweighs the vectorisation benefit -- there, the original
-  // ordering (b outermost, paying the loop-entry cost once, amortised
-  // over the whole O(dim^2) elimination) is faster. The threshold below
-  // was chosen from measurements showing the crossover is between n=12
-  // and n=16.
+  // data has n contiguous (unit-stride) values per dof. Looping over b
+  // innermost vectorises each elimination step, but for small n (common
+  // in practice, e.g. 1-3) the loop-entry cost per (i, j) pair outweighs
+  // that benefit, so fall back to the original b-outermost ordering.
+  // Threshold chosen from measurements showing the crossover is n=12-16.
   if (n <= 12)
   {
     for (std::size_t b = 0; b < n; ++b)

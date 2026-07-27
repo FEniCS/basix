@@ -74,10 +74,9 @@ FiniteElement<T> element::create_regge(cell::type celltype, int degree,
     }
     else
     {
-      // ct, entity_ndofs, the quadrature points/weights, and the moment
-      // space (and its tabulation) depend only on the sub-entity type,
-      // which is the same for every entity of dimension d on a simplex --
-      // compute them once per d rather than once per entity.
+      // ct, entity_ndofs, etc. depend only on the sub-entity type (same
+      // for every entity of dimension d on a simplex), so compute once
+      // per d rather than once per entity.
       cell::type ct = cell::sub_entity_type(celltype, d, 0);
 
       const std::size_t entity_ndofs

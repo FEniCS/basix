@@ -371,9 +371,8 @@ FiniteElement<T> create_bernstein(cell::type celltype, int degree,
       assert(phi.extent(0) == nb[d]);
       const std::size_t npts = pts.extent(0);
 
-      // mat(i,j) = sum_k bern(j,k) * wts[k] * phi(i,k) is a single
-      // matrix-matrix product, computed here via BLAS (math::dot)
-      // instead of an explicit triple loop.
+      // mat = phi * (wts * bern)^T, computed via BLAS (math::dot) rather
+      // than a triple loop.
       impl::mdarray_t<T, 2> mat(nb[d], nb[d]);
       {
         std::vector<T> Bb(wts.size() * nb[d]);
@@ -393,12 +392,10 @@ FiniteElement<T> create_bernstein(cell::type celltype, int degree,
         std::ranges::copy(minv_data, minv.data());
       }
 
-      // The interpolation matrix for the interior "bubble" dofs of
-      // dimension d is identical for every entity of that dimension
-      // (only the physical point mapping x[d][e] differs per entity), so
-      // compute it once here rather than once per entity, and as a
-      // single matrix product via math::dot rather than a per-point,
-      // per-bubble loop.
+      // The interior "bubble" dof interpolation matrix for dimension d is
+      // the same for every entity of that dimension (only the physical
+      // point mapping x[d][e] differs), so compute it once here via
+      // math::dot rather than once per entity with a per-point loop.
       const std::size_t nbub = bernstein_bubbles[d].size();
       impl::mdarray_t<T, 2> moment(nbub, npts);
       {
@@ -547,12 +544,9 @@ basix::element::create_lagrange(cell::type celltype, int degree,
         polynomials::type::lagrange, cell::type::pyramid, degree, pts);
     impl::mdspan_t<const T, 2> poly_table(_poly_table.data(), shape2);
 
-    // wcoeffs(i, j) = sum_k poly_table(i, k) * wts[k] * pset_table(0, j, k)
-    // is a single (ndofs x npts) times (npts x psize) matrix-matrix
-    // product, computed here with BLAS via math::dot instead of an
-    // explicit triple loop. Build the (npts x psize) operand, scaled by
-    // the quadrature weights, since pset_table's natural layout has the
-    // point index last rather than first.
+    // wcoeffs = poly_table * (wts * pset_table)^T, computed via BLAS
+    // (math::dot) rather than a triple loop; pset_table is transposed
+    // into B since its natural layout has the point index last.
     std::vector<T> Bb(wts.size() * psize);
     impl::mdspan_t<T, 2> B(Bb.data(), wts.size(), psize);
     for (std::size_t k = 0; k < wts.size(); ++k)

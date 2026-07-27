@@ -1001,9 +1001,8 @@ FiniteElement<T> basix::create_custom_element(
     }
   }
 
-  // Note: the dual matrix is computed (once) inside the FiniteElement
-  // constructor below, which also checks for singularity and throws with
-  // the same message as here if it is singular.
+  // The dual matrix is computed (once) inside the FiniteElement
+  // constructor below, which also checks for singularity.
   return basix::FiniteElement<T>(
       element::family::custom, cell_type, poly_type, embedded_superdegree,
       value_shape, wcoeffs_ortho, x, M, interpolation_nderivs, map_type,
@@ -1102,12 +1101,9 @@ FiniteElement<F>::FiniteElement(
 
   // Compute C = (BD^T)^{-1} B
   //
-  // math::solve's LU factorisation of the dual matrix already detects
-  // singularity (via the LAPACK info code), so a separate
-  // math::is_singular pre-check -- which would repeat the same O(n^3)
-  // factorisation of the same matrix just to test it -- is unnecessary;
-  // any failure here is converted to the same message that check used to
-  // give.
+  // math::solve's LU factorisation already detects singularity, so a
+  // separate math::is_singular pre-check (an extra O(n^3) factorisation)
+  // is unnecessary.
   try
   {
     _coeffs.first = math::solve<F>(
@@ -1856,13 +1852,10 @@ void FiniteElement<F>::tabulate(int nd, impl::mdspan_t<const F, 2> x,
       _value_shape.begin(), _value_shape.end(), 1, std::multiplies{});
   const std::size_t ndofs = _coeffs.second[0];
 
-  // _coeffs has shape (ndofs, vs * psize) in row-major storage, i.e. each
-  // dof's row is vs contiguous blocks of psize values, one per value
-  // component. So viewing its buffer directly with shape (ndofs * vs,
-  // psize) is exact (no data movement) and lets every value component be
-  // computed by a single math::dot call below, instead of vs separate
-  // calls each preceded by an O(ndofs * psize) copy to extract that
-  // component's columns out of _coeffs.
+  // _coeffs's (ndofs, vs * psize) row-major buffer is exactly (ndofs * vs,
+  // psize) with no data movement, letting every value component be
+  // computed by a single math::dot call below instead of vs separate
+  // calls each preceded by a copy to extract that component's columns.
   assert(_coeffs.second[1] == vs * psize);
   mdspan_t<const F, 2> coeffs_flat(_coeffs.first.data(), ndofs * vs, psize);
 

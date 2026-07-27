@@ -64,14 +64,8 @@ FiniteElement<T> basix::element::create_rt(cell::type celltype, int degree,
       B(nv * i + j, psize * i + j) = 1.0;
 
   // Create coefficients for additional polynomials in Raviart-Thomas
-  // polynomial basis.
-  //
-  // For each (i, k, j) this originally computed a sum over quadrature
-  // points k1 of wts[k1]*phi(0,ns0+i,k1)*pts(k1,j)*phi(0,k,k1) via an
-  // explicit quadruple loop. Since phi(0,k,k1) (for k in [nv,psize)) does
-  // not depend on i or j, and wts[k1]*pts(k1,j)*phi(0,ns0+i,k1) does not
-  // depend on k, this is tdim matrix-matrix products, computed here via
-  // BLAS (math::dot) instead.
+  // polynomial basis, as tdim matrix-matrix products (via math::dot)
+  // rather than an explicit quadruple loop.
   const std::size_t npts = wts.size();
   const std::size_t ncols = psize - nv;
 

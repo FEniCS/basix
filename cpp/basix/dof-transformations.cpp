@@ -413,26 +413,26 @@ std::pair<std::vector<T>, std::array<std::size_t, 2>> compute_transformation(
 
   std::vector<T> tabulated_data_b(npts * total_ndofs * vs);
   mdspan_t<T, 3> tabulated_data(tabulated_data_b.data(), npts, total_ndofs, vs);
-  std::vector<T> result_b(polyset_vals.extent(1) * coeffs.extent(0));
-  mdspan_t<T, 2> result(result_b.data(), coeffs.extent(0),
-                        polyset_vals.extent(1));
-  std::vector<T> coeffs_b(coeffs.extent(0) * polyset_vals.extent(0));
-  mdspan_t<T, 2> _coeffs(coeffs_b.data(), coeffs.extent(0),
-                         polyset_vals.extent(0));
-  for (std::size_t j = 0; j < vs; ++j)
-  {
-    for (std::size_t k0 = 0; k0 < coeffs.extent(0); ++k0)
-      for (std::size_t k2 = 0; k2 < polyset_vals.extent(0); ++k2)
-        _coeffs(k0, k2) = coeffs(k0, k2 + psize * j);
 
-    // r^t: coeffs.extent(0) x polyset_vals.extent(1) [k0, k1]
-    // c: coeffs.extent(1) x polyset_vals.extent(0)   [k0, k2]
-    // p: polyset_vals.extent(0) x polyset_vals.extent(1)  [k2, k1]
-    math::dot(_coeffs, polyset_vals, result);
-    for (std::size_t k0 = 0; k0 < result.extent(1); ++k0)
-      for (std::size_t k1 = 0; k1 < result.extent(0); ++k1)
-        tabulated_data(k0, k1, j) = result(k1, k0);
-  }
+  // coeffs has shape (total_ndofs, vs * psize) in row-major storage, i.e.
+  // each dof's row is vs contiguous blocks of psize values, one per
+  // value component. So viewing its buffer directly with shape
+  // (total_ndofs * vs, psize) is exact (no data movement) and lets every
+  // value component be computed by a single math::dot call, instead of
+  // vs separate calls each preceded by an O(total_ndofs * psize) copy to
+  // extract that component's columns out of coeffs -- the same pattern
+  // fixed in FiniteElement::tabulate().
+  assert(coeffs.extent(1) == vs * static_cast<std::size_t>(psize));
+  mdspan_t<const T, 2> coeffs_flat(coeffs.data_handle(),
+                                   coeffs.extent(0) * vs, psize);
+  std::vector<T> result_b(polyset_vals.extent(1) * coeffs.extent(0) * vs);
+  mdspan_t<T, 2> result(result_b.data(), coeffs.extent(0) * vs,
+                        polyset_vals.extent(1));
+  math::dot(coeffs_flat, polyset_vals, result);
+  for (std::size_t k0 = 0; k0 < result.extent(1); ++k0)
+    for (std::size_t k1 = 0; k1 < coeffs.extent(0); ++k1)
+      for (std::size_t j = 0; j < vs; ++j)
+        tabulated_data(k0, k1, j) = result(k1 * vs + j, k0);
 
   // Push forward.
   //

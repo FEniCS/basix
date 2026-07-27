@@ -11,4 +11,5 @@ Description: Finite element tabulation library
 Version: @PROJECT_VERSION@
 Conflicts:
 Libs: -L${libdir} -lbasix
+Libs.private: @PKG_LIBS_PRIVATE@
 Cflags: @PKG_CXXFLAGS@ ${definitions} -I${includedir}

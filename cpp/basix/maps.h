@@ -47,11 +47,12 @@ enum class type
 };
 
 /// @brief L2 Piola map.
+///
+/// This map does not use the Jacobian or its inverse.
+///
 /// @param[out] r The mapped (physical-cell) values.
 /// @param[in] U The reference-cell values to map.
-/// @param[in] J Unused by this map.
 /// @param[in] detJ Determinant of the Jacobian of the map.
-/// @param[in] K Unused by this map.
 template <typename O, typename P, typename Q, typename R>
 void l2_piola(O&& r, const P& U, const Q& /*J*/, double detJ, const R& /*K*/)
 {
@@ -63,10 +64,11 @@ void l2_piola(O&& r, const P& U, const Q& /*J*/, double detJ, const R& /*K*/)
 }
 
 /// @brief Covariant Piola map.
+///
+/// This map does not use the Jacobian or its determinant.
+///
 /// @param[out] r The mapped (physical-cell) values.
 /// @param[in] U The reference-cell values to map.
-/// @param[in] J Unused by this map.
-/// @param[in] detJ Unused by this map.
 /// @param[in] K Inverse of the Jacobian of the map.
 template <typename O, typename P, typename Q, typename R>
 void covariant_piola(O&& r, const P& U, const Q& /*J*/, double /*detJ*/,
@@ -88,11 +90,13 @@ void covariant_piola(O&& r, const P& U, const Q& /*J*/, double /*detJ*/,
 }
 
 /// @brief Contravariant Piola map.
+///
+/// This map does not use the inverse of the Jacobian.
+///
 /// @param[out] r The mapped (physical-cell) values.
 /// @param[in] U The reference-cell values to map.
 /// @param[in] J Jacobian of the map.
 /// @param[in] detJ Determinant of the Jacobian of the map.
-/// @param[in] K Unused by this map.
 template <typename O, typename P, typename Q, typename R>
 void contravariant_piola(O&& r, const P& U, const Q& J, double detJ,
                          const R& /*K*/)
@@ -115,10 +119,11 @@ void contravariant_piola(O&& r, const P& U, const Q& J, double detJ,
 }
 
 /// @brief Double covariant Piola map.
+///
+/// This map does not use the Jacobian or its determinant.
+///
 /// @param[out] r The mapped (physical-cell) values.
 /// @param[in] U The reference-cell values to map.
-/// @param[in] J Unused by this map.
-/// @param[in] detJ Unused by this map.
 /// @param[in] K Inverse of the Jacobian of the map.
 template <typename O, typename P, typename Q, typename R>
 void double_covariant_piola(O&& r, const P& U, const Q& /*J*/, double /*detJ*/,
@@ -148,11 +153,13 @@ void double_covariant_piola(O&& r, const P& U, const Q& /*J*/, double /*detJ*/,
 }
 
 /// @brief Double contravariant Piola map.
+///
+/// This map does not use the inverse of the Jacobian.
+///
 /// @param[out] r The mapped (physical-cell) values.
 /// @param[in] U The reference-cell values to map.
 /// @param[in] J Jacobian of the map.
 /// @param[in] detJ Determinant of the Jacobian of the map.
-/// @param[in] K Unused by this map.
 template <typename O, typename P, typename Q, typename R>
 void double_contravariant_piola(O&& r, const P& U, const Q& J, double detJ,
                                 const R& /*K*/)

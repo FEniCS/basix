@@ -234,6 +234,10 @@ install(
   ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Development
 )
 if(INSTALL_RUNTIME_DEPENDENCIES AND WIN32)
+  # Regexes below accept either separator, so CMP0207 normalisation is a no-op.
+  if(POLICY CMP0207)
+    cmake_policy(SET CMP0207 NEW)
+  endif()
   # https://discourse.cmake.org/t/migration-experiences-comparison-runtime-dependency-set-vs-fixup-bundle-bundleutilities
   install(
     RUNTIME_DEPENDENCY_SET dependencies DESTINATION ${CMAKE_INSTALL_BINDIR}

@@ -242,8 +242,8 @@ void declare_float(nb::module_& m, const std::string& type)
                    [](const FiniteElement<T>& self)
                    {
                      return std::accumulate(self.value_shape().begin(),
-                                            self.value_shape().end(), 1,
-                                            std::multiplies{});
+                                            self.value_shape().end(),
+                                            std::size_t{1}, std::multiplies{});
                    })
       .def_prop_ro("value_shape", &FiniteElement<T>::value_shape)
       .def_prop_ro("discontinuous", &FiniteElement<T>::discontinuous)

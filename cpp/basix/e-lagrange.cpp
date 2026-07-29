@@ -577,7 +577,7 @@ basix::element::create_lagrange(cell::type celltype, int degree,
         = lattice::create<T>(celltype, 0, lattice_type, true, simplex_method);
     x[tdim].emplace_back(md::dextents<std::size_t, 2>{shape[0], shape[1]}, pt);
     auto& _M = M[tdim].emplace_back(shape[0], 1, shape[0], 1);
-    std::fill(_M.data(), _M.data() + _M.size(), 0);
+    std::fill(_M.data(), _M.data() + _M.size(), T(0));
     for (std::size_t i = 0; i < shape[0]; ++i)
       _M(i, 0, i, 0) = 1;
   }
@@ -598,7 +598,7 @@ basix::element::create_lagrange(cell::type celltype, int degree,
                               entity_x);
           auto& _M
               = M[dim].emplace_back(entity_x_shape[0], 1, entity_x_shape[0], 1);
-          std::fill(_M.data(), _M.data() + _M.size(), 0);
+          std::fill(_M.data(), _M.data() + _M.size(), T(0));
           for (std::size_t i = 0; i < entity_x_shape[0]; ++i)
             _M(i, 0, i, 0) = 1;
         }
@@ -609,7 +609,7 @@ basix::element::create_lagrange(cell::type celltype, int degree,
           x[dim].emplace_back(md::dextents<std::size_t, 2>{shape[0], shape[1]},
                               pt);
           auto& _M = M[dim].emplace_back(shape[0], 1, shape[0], 1);
-          std::fill(_M.data(), _M.data() + _M.size(), 0);
+          std::fill(_M.data(), _M.data() + _M.size(), T(0));
           for (std::size_t i = 0; i < shape[0]; ++i)
             _M(i, 0, i, 0) = 1;
         }
@@ -634,7 +634,7 @@ basix::element::create_lagrange(cell::type celltype, int degree,
                 _x(j, q) += (entity_x_view(k + 1, q) - x0[q]) * lattice(j, k);
 
           auto& _M = M[dim].emplace_back(shape[0], 1, shape[0], 1);
-          std::fill(_M.data(), _M.data() + _M.size(), 0);
+          std::fill(_M.data(), _M.data() + _M.size(), T(0));
           for (std::size_t i = 0; i < shape[0]; ++i)
             _M(i, 0, i, 0) = 1;
         }
@@ -788,7 +788,7 @@ FiniteElement<T> basix::element::create_iso(cell::type celltype, int degree,
                 _x(j, q) += (entity_x_view(k + 1, q) - x0[q]) * lattice(j, k);
 
           auto& _M = M[dim].emplace_back(shape[0], 1, shape[0], 1);
-          std::fill(_M.data(), _M.data() + _M.size(), 0);
+          std::fill(_M.data(), _M.data() + _M.size(), T(0));
           for (std::size_t i = 0; i < shape[0]; ++i)
             _M(i, 0, i, 0) = 1;
         }

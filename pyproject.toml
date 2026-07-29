@@ -61,14 +61,11 @@ test-requires = ["pytest-xdist"]
 test-extras = ["test"]
 
 [tool.cibuildwheel.windows]
-# Pin VCPKG_INSTALLED_DIR so the DLLs are at a fixed path.
 build-frontend = { name = "build", args = [
     "-Cwheel.py-api=cp312",
-    "-Ccmake.args=-DVCPKG_INSTALLED_DIR=C:/vcpkg_installed",
+    "-Ccmake.args=-DINSTALL_RUNTIME_DEPENDENCIES=ON",
     "-Ccmake.args=-DCMAKE_TOOLCHAIN_FILE=C:/vcpkg/scripts/buildsystems/vcpkg.cmake",
 ] }
-# Tell delvewheel where vcpkg puts the DLLs. Only one triplet exists per runner.
-repair-wheel-command = 'delvewheel repair --add-path "C:/vcpkg_installed/x64-windows/bin;C:/vcpkg_installed/arm64-windows/bin" -w {dest_dir} -v {wheel}'
 test-command = ["python -m pytest -n auto --durations 20 {project}/test/"]
 
 [tool.cibuildwheel.linux]

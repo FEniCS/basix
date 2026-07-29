@@ -4,11 +4,6 @@ cmake_minimum_required(VERSION 3.16)
 
 project(basix_test)
 
-# Set the C++ standard
-set(CMAKE_CXX_STANDARD 23)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_CXX_EXTENSIONS OFF)
-
 # Use Python for detecting Basix
 include(${CMAKE_CURRENT_SOURCE_DIR}/../../cmake/BasixPythonHints.cmake)
 find_package(Basix REQUIRED CONFIG HINTS ${BASIX_PY_DIR})
@@ -25,8 +20,8 @@ if(BASIX_PY_DIR AND IS_DIRECTORY ${BASIX_PY_DIR}/../fenics_basix.libs)
   )
 endif()
 if(WIN32 AND BASIX_PY_DIR)
-  # Windows has no rpath: copy basix.dll and the delvewheel-vendored
-  # dependencies next to the executable instead.
+  # Windows has no rpath: copy basix.dll and any vendored dlls next to
+  # the executable instead.
   file(
     GLOB _basix_dlls
     ${BASIX_PY_DIR}/*.dll

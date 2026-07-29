@@ -105,7 +105,7 @@ std::pair<std::vector<T>, std::array<std::size_t, 2>> compute_dual_matrix(
 
   std::size_t pdim = polyset::dim(cell_type, poly_type, degree);
   mdarray_t<T, 3> D(vs, pdim, num_dofs);
-  std::fill(D.data(), D.data() + D.size(), 0);
+  std::fill(D.data(), D.data() + D.size(), T(0));
   std::vector<T> Pb;
 
   // Loop over different dimensions
@@ -910,8 +910,9 @@ FiniteElement<T> basix::create_custom_element(
   // Check that inputs are valid
   const std::size_t psize
       = polyset::dim(cell_type, poly_type, embedded_superdegree);
-  const std::size_t value_size = std::reduce(
-      value_shape.begin(), value_shape.end(), 1, std::multiplies{});
+  const std::size_t value_size
+      = std::reduce(value_shape.begin(), value_shape.end(), std::size_t{1},
+                    std::multiplies{});
   const std::size_t deriv_count
       = polyset::nderivs(cell_type, interpolation_nderivs);
   const std::size_t tdim = cell::topological_dimension(cell_type);
@@ -1132,8 +1133,9 @@ FiniteElement<F>::FiniteElement(
           _points.first.push_back(x_e(p, k));
 
   // Copy into _matM
-  const std::size_t value_size = std::accumulate(
-      value_shape.begin(), value_shape.end(), 1, std::multiplies{});
+  const std::size_t value_size
+      = std::accumulate(value_shape.begin(), value_shape.end(), std::size_t{1},
+                        std::multiplies{});
 
   // Count number of dofs and point
   std::size_t num_dofs(0), num_points1(0);
@@ -1331,7 +1333,7 @@ FiniteElement<F>::FiniteElement(
           std::pair<std::vector<F>, std::array<std::size_t, 2>> identity
               = {std::vector<F>(perm.size() * perm.size()),
                  {perm.size(), perm.size()}};
-          std::ranges::fill(identity.first, 0.);
+          std::ranges::fill(identity.first, F(0));
           for (std::size_t k = 0; k < perm.size(); ++k)
             identity.first[k * perm.size() + k] = 1;
 
@@ -1848,8 +1850,9 @@ void FiniteElement<F>::tabulate(int nd, impl::mdspan_t<const F, 2> x,
   mdspan_t<F, 3> basis(basis_b.data(), bsize);
   polyset::tabulate(basis, _cell_type, _poly_type, _embedded_superdegree, nd,
                     x);
-  const std::size_t vs = std::accumulate(
-      _value_shape.begin(), _value_shape.end(), 1, std::multiplies{});
+  const std::size_t vs
+      = std::accumulate(_value_shape.begin(), _value_shape.end(),
+                        std::size_t{1}, std::multiplies{});
   const std::size_t ndofs = _coeffs.second[0];
 
   // _coeffs's (ndofs, vs * psize) row-major buffer is exactly (ndofs * vs,
@@ -2008,8 +2011,9 @@ FiniteElement<F>::pull_back(impl::mdspan_t<const F, 3> u,
                             std::span<const F> detJ,
                             impl::mdspan_t<const F, 3> K) const
 {
-  const std::size_t reference_value_size = std::accumulate(
-      _value_shape.begin(), _value_shape.end(), 1, std::multiplies{});
+  const std::size_t reference_value_size
+      = std::accumulate(_value_shape.begin(), _value_shape.end(),
+                        std::size_t{1}, std::multiplies{});
 
   std::array<std::size_t, 3> shape
       = {u.extent(0), u.extent(1), reference_value_size};

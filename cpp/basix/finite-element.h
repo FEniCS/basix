@@ -370,7 +370,7 @@ public:
     for (std::size_t i = 1; i <= nd; ++i)
       ndsize /= i;
     std::size_t vs = std::accumulate(_value_shape.begin(), _value_shape.end(),
-                                     1, std::multiplies{});
+                                     std::size_t{1}, std::multiplies{});
     std::size_t ndofs = _coeffs.second[0];
     return {ndsize, num_points, ndofs, vs};
   }

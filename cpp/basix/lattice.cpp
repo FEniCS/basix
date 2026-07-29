@@ -584,7 +584,8 @@ create_tet_warped(std::size_t n, lattice::type lattice_type, bool exterior)
 
   std::transform(std::next(r.begin()), std::prev(r.end()),
                  std::next(wbar.begin()), std::next(wbar.begin()),
-                 [](auto r, auto w) { return w / (r * (1.0 - r)); });
+                 [](auto r, auto w)
+                 { return static_cast<T>(w / (r * (1.0 - r))); });
 
   std::array<std::size_t, 2> shape
       = {(n - 4 * b + 1) * (n - 4 * b + 2) * (n - 4 * b + 3) / 6, 3};

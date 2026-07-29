@@ -4,12 +4,10 @@ cmake_minimum_required(VERSION 3.21)
 project(Basix VERSION 0.12.0.0 LANGUAGES CXX)
 include(GNUInstallDirs)
 
-if(SKBUILD AND UNIX)
-  # Avoid lib64/ which can lead to linking issues.
-  set(CMAKE_INSTALL_LIBDIR basix/lib)
-endif()
-
 if(SKBUILD)
+  # Make sure libraries, the CMake package and basix.pc end up inside basix/
+  # subdirectory in wheel. Also avoids lib64/, which can lead to linking issues.
+  set(CMAKE_INSTALL_LIBDIR basix/lib)
   # Make sure includes end up inside basix/ subdirectory in wheel.
   set(CMAKE_INSTALL_INCLUDEDIR basix/include)
   # Make sure all binaries end up inside basix/ subdirectory in wheel.

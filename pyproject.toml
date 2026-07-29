@@ -71,8 +71,10 @@ build-frontend = { name = "build", args = [
 # C++ consumers link against it. --with-mangle still mangles its dependencies,
 # which delvewheel vendors from vcpkg. Only one triplet exists per runner.
 repair-wheel-command = 'delvewheel repair --ignore-existing --with-mangle --add-path "C:/vcpkg_installed/x64-windows/bin;C:/vcpkg_installed/arm64-windows/bin" -w {dest_dir} -v {wheel}'
+# cibuildwheel sets VIRTUAL_ENV for the test environment; the Unix
+# $(which python) trick does not work in cmd.
 test-command = [
-    "cmake -B build-dir -S {project}/test/test_cmake",
+    "cmake -B build-dir -S {project}/test/test_cmake -DPython3_EXECUTABLE=%VIRTUAL_ENV%\\Scripts\\python.exe",
     "cmake --build build-dir --config Release",
     "build-dir\\Release\\a.out.exe",
     "python -m pytest -n auto --durations 20 {project}/test/",

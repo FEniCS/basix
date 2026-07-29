@@ -35,8 +35,9 @@ if(WIN32 AND BASIX_PY_DIR)
   add_custom_command(
     TARGET a.out
     POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different ${_basix_dlls}
-            $<TARGET_FILE_DIR:a.out>
+    COMMAND
+      ${CMAKE_COMMAND} -E copy_if_different ${_basix_dlls}
+      $<TARGET_FILE_DIR:a.out>
   )
 endif()
 

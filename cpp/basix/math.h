@@ -53,9 +53,13 @@ namespace impl
 {
 /// @brief Compute C = alpha A * B  + beta C using BLAS (GEMM).
 /// @param[in] A Input matrix.
+/// @param[in] Ashape Shape of `A`.
 /// @param[in] B Input matrix.
-/// @param[in] alpha
-/// @param[in] beta
+/// @param[in] Bshape Shape of `B`.
+/// @param[in,out] C Output matrix, size `Ashape[0] * Bshape[1]`. Read
+/// when `beta != 0`.
+/// @param[in] alpha Scalar multiplying `A * B`.
+/// @param[in] beta Scalar multiplying the existing contents of `C`.
 template <std::floating_point T>
 void dot_blas(std::span<const T> A, std::array<std::size_t, 2> Ashape,
               std::span<const T> B, std::array<std::size_t, 2> Bshape,
@@ -88,7 +92,7 @@ void dot_blas(std::span<const T> A, std::array<std::size_t, 2> Ashape,
 
 } // namespace impl
 
-/// @brief Compute the outer product of vectors u and v.
+/// @brief Compute the outer product of vectors `u` and `v`.
 /// @param u The first vector.
 /// @param v The second vector.
 /// @return The outer product. The type will be the same as `u`.
@@ -104,8 +108,8 @@ outer(const U& u, const V& v)
 }
 
 /// @brief Compute the cross product u x v.
-/// @param u The first vector. It must has size 3.
-/// @param v The second vector. It must has size 3.
+/// @param u The first vector. It must have size 3.
+/// @param v The second vector. It must have size 3.
 /// @return The cross product `u x v`. The type will be the same as `u`.
 template <typename U, typename V>
 std::array<typename U::value_type, 3> cross(const U& u, const V& v)
@@ -117,11 +121,11 @@ std::array<typename U::value_type, 3> cross(const U& u, const V& v)
 }
 
 /// @brief Compute the eigenvalues and eigenvectors of a square
-/// Hermitian matrix A.
+/// symmetric matrix A.
 /// @param[in] A Input matrix, row-major storage.
 /// @param[in] n Number of rows.
 /// @return Eigenvalues (0) and eigenvectors (1). The eigenvector array
-/// uses column-major storage, which each column being an eigenvector.
+/// uses column-major storage, with each column being an eigenvector.
 /// @pre The matrix `A` must be symmetric.
 template <std::floating_point T>
 std::pair<std::vector<T>, std::vector<T>> eigh(std::span<const T> A,
@@ -298,10 +302,10 @@ transpose_lu(std::pair<std::vector<T>, std::array<std::size_t, 2>>& A)
 /// @brief Compute C = alpha A * B + beta C
 /// @param[in] A Input matrix
 /// @param[in] B Input matrix
-/// @param[out] C Output matrix. Must be sized correctly before calling
-/// this function.
-/// @param[in] alpha
-/// @param[in] beta
+/// @param[in,out] C Matrix to accumulate into (read when `beta != 0`).
+/// Must be sized correctly before calling this function.
+/// @param[in] alpha Scalar multiplying `A * B`.
+/// @param[in] beta Scalar multiplying the existing contents of `C`.
 template <typename U, typename V, typename W>
 void dot(const U& A, const V& B, W&& C,
          typename std::decay_t<U>::value_type alpha = 1,
@@ -357,10 +361,10 @@ std::vector<T> eye(std::size_t n)
   return I;
 }
 
-/// @brief Orthogonalise the rows of a matrix (in place).
-/// @param[in] wcoeffs The matrix.
+/// @brief Orthonormalise the rows of a matrix (in place).
+/// @param[in,out] wcoeffs The matrix, orthonormalised on exit.
 /// @param[in] start The row to start from. The rows before this should
-/// already be orthogonal.
+/// already be orthonormal.
 template <std::floating_point T>
 void orthogonalise(md::mdspan<T, md::dextents<std::size_t, 2>> wcoeffs,
                    std::size_t start = 0)

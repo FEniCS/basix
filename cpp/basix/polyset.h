@@ -132,7 +132,7 @@
 namespace basix::polyset
 {
 
-/// @brief Cell type
+/// @brief Polyset (polynomial set) type.
 enum class type
 {
   standard = 0,
@@ -240,8 +240,8 @@ int dim(cell::type cell, polyset::type ptype, int d);
 /// @return Number of derivatives
 int nderivs(cell::type cell, int d);
 
-/// @brief Get the polyset types that is a superset of two types on the
-/// given cell.
+/// @brief Get the polyset type that is a superset of two given types
+/// on the given cell.
 /// @param[in] cell Cell type
 /// @param[in] type1 First polyset type
 /// @param[in] type2 Second polyset type

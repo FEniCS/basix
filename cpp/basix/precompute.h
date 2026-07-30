@@ -143,6 +143,12 @@ void apply_permutation(std::span<const std::size_t> perm, std::span<E> data,
 }
 
 /// @brief Permutation of mapped data.
+/// @param[in] perm A permutation in precomputed form (as returned by
+/// prepare_permutation()).
+/// @param[in,out] data The data to apply the permutation to.
+/// @param[in] emap Map from the permutation's local entity numbering to
+/// the position of that entity's block in `data`.
+/// @param[in] n The block size of the data.
 template <typename E>
 void apply_permutation_mapped(std::span<const std::size_t> perm,
                               std::span<E> data, std::span<const int> emap,
@@ -157,10 +163,21 @@ void apply_permutation_mapped(std::span<const std::size_t> perm,
 ///
 /// Applies \f$v = u P^{T}\f$.
 ///
+/// Unlike apply_permutation(), where the `n` values of a block are
+/// interleaved (block `b` occupies `data[n*(offset+i)+b]` for `i` in
+/// the permutation), here each of the `n` blocks is contiguous: block
+/// `b` occupies `data[data_size*b+offset+i]` for `i` in the
+/// permutation.
+///
 /// @note This function is designed to be called at runtime, so its
 /// performance is critical.
 ///
-/// See apply_permutation().
+/// @param[in] perm A permutation in precomputed form (as returned by
+/// prepare_permutation()).
+/// @param[in,out] data The data to apply the permutation to.
+/// @param[in] offset The position in each block to start applying the
+/// permutation.
+/// @param[in] n The number of blocks in the data.
 template <typename E>
 void apply_inv_permutation_right(std::span<const std::size_t> perm,
                                  std::span<E> data, std::size_t offset = 0,
@@ -189,11 +206,10 @@ void apply_inv_permutation_right(std::span<const std::size_t> perm,
 /// For an example of how the permutation in this form is applied, see
 /// apply_matrix().
 ///
-/// @param[in,out] A The matrix data.
-/// @return The three parts of a precomputed representation of the
-/// matrix. These are (as described above):
-/// - A permutation (precomputed as in prepare_permutation());
-/// - the vector @f$D@f$;
+/// @param[in,out] A The matrix data. On exit, holds the LU factors of
+/// @f$A^t@f$ in place.
+/// @return The permutation @f$P@f$ (in prepared form, as produced by
+/// prepare_permutation()) satisfying @f$PA^t=LU@f$.
 template <std::floating_point T>
 std::vector<std::size_t>
 prepare_matrix(std::pair<std::vector<T>, std::array<std::size_t, 2>>& A)
@@ -219,15 +235,15 @@ prepare_matrix(std::pair<std::vector<T>, std::array<std::size_t, 2>>& A)
 ///         data[i] += mat[i, j] * data[j]
 /// \endcode
 ///
-/// If `n` is set, this will apply the permutation to every block. The
-/// `offset` is set, this will start applying the permutation at the
-/// `offset`th block.
+/// If `n` is set, the permutation is applied to every block. If
+/// `offset` is set, application starts at the `offset`-th block.
 ///
 /// @note This function is designed to be called at runtime, so its
 /// performance is critical.
 ///
 /// @param[in] v_size_t A permutation, as computed by prepare_matrix().
-/// @param[in] M The vector created by prepare_matrix().
+/// @param[in] M The matrix data left in `A` after the call to
+/// prepare_matrix().
 /// @param[in,out] data The data to apply the permutation to
 /// @param[in] offset The position in the data to start applying the
 /// permutation
@@ -308,10 +324,21 @@ void apply_matrix(std::span<const std::size_t> v_size_t,
 ///
 /// Computes \f$v^{T} = M u^{T}\f$ (or equivalently \f$v = u M^{T}\f$).
 ///
+/// Uses the same block-contiguous data layout as
+/// apply_inv_permutation_right() (rather than the interleaved layout
+/// used by apply_matrix()): block `b` occupies
+/// `data[data_size*b+offset+i]`.
+///
 /// @note This function is designed to be called at runtime, so its
 /// performance is critical.
 ///
-/// See apply_matrix().
+/// @param[in] v_size_t A permutation, as computed by prepare_matrix().
+/// @param[in] M The matrix data left in `A` after the call to
+/// prepare_matrix().
+/// @param[in,out] data The data to apply the permutation to.
+/// @param[in] offset The position in each block to start applying the
+/// permutation.
+/// @param[in] n The number of blocks in the data.
 template <typename T, typename E>
 void apply_tranpose_matrix_right(
     std::span<const std::size_t> v_size_t,

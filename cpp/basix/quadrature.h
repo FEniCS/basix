@@ -28,7 +28,7 @@ enum class type
 
 /// @brief Get the Gauss-Jacobi rule for the interval for integrating
 /// f(x) * (1-x)^a on the interval [0, 1].
-/// @tparam The floating point type.
+/// @tparam T The floating point type.
 /// @param[in] a The exponent a.
 /// @param[in] m The number of points.
 /// @return Points and weights of a Gauss-Jacobi rule.
@@ -42,8 +42,9 @@ std::array<std::vector<T>, 2> gauss_jacobi_rule(T a, int m);
 /// @param[in] polytype Polyset type.
 /// @param[in] m Maximum degree of polynomial that this quadrature rule
 /// will integrate exactly.
-/// @return List of points and list of weights. The number of points
-/// arrays has shape `(num points, gdim)`.
+/// @return Points and weights. The points are flattened row-major with
+/// shape `(num_points, gdim)`; the weights array has length
+/// `num_points`.
 template <std::floating_point T>
 std::array<std::vector<T>, 2> make_quadrature(const quadrature::type rule,
                                               cell::type celltype,

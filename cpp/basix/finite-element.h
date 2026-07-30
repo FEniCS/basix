@@ -288,8 +288,6 @@ public:
   /// @param[in] cell_type The cell type
   /// @param[in] poly_type The polyset type
   /// @param[in] degree The degree of the element
-  /// @param[in] interpolation_nderivs The number of derivatives that
-  /// need to be used during interpolation
   /// @param[in] value_shape The value shape of the element
   /// @param[in] wcoeffs Matrices for the kth value index containing the
   /// expansion coefficients defining a polynomial basis spanning the
@@ -299,6 +297,8 @@ public:
   /// index, point index, dim)
   /// @param[in] M The interpolation matrices. Indices are (tdim, entity
   /// index, dof, vs, point_index, derivative)
+  /// @param[in] interpolation_nderivs The number of derivatives that
+  /// need to be used during interpolation
   /// @param[in] map_type The type of map to be used to map values from
   /// the reference to a cell
   /// @param[in] sobolev_space The underlying Sobolev space for the
@@ -308,9 +308,9 @@ public:
   /// @param[in] embedded_subdegree The highest degree n such that
   /// a Lagrange (or vector Lagrange) element of degree n is a subspace
   /// of this element
-  /// @param[in] embedded_superdegree The highest degree n such that at least
-  /// one polynomial of degree n is included in this element's
-  /// polymonial set
+  /// @param[in] embedded_superdegree The lowest degree n such that
+  /// this element's polynomial set is a subspace of a Lagrange (or
+  /// vector Lagrange) element of degree n
   /// @param[in] lvariant The Lagrange variant of the element
   /// @param[in] dvariant The DPC variant of the element
   /// @param[in] dof_ordering DOF reordering: a mapping from the
@@ -378,7 +378,7 @@ public:
   /// @brief Compute basis values and derivatives at set of points.
   ///
   /// @note The version of tabulate() with the basis data as an out
-  /// argument should be preferred for repeated call where performance
+  /// argument should be preferred for repeated calls where performance
   /// is critical.
   ///
   /// @param[in] nd The order of derivatives, up to and including, to
@@ -394,7 +394,7 @@ public:
   /// appropriate derivative.
   /// - The second index is the point index
   /// - The third index is the basis function index
-  /// - The fourth index is the basis function component. Its has size
+  /// - The fourth index is the basis function component. It has size
   /// one for scalar basis functions.
   std::pair<std::vector<F>, std::array<std::size_t, 4>>
   tabulate(int nd, impl::mdspan_t<const F, 2> x) const;
@@ -402,7 +402,7 @@ public:
   /// @brief Compute basis values and derivatives at set of points.
   ///
   /// @note The version of tabulate() with the basis data as an out
-  /// argument should be preferred for repeated call where performance
+  /// argument should be preferred for repeated calls where performance
   /// is critical
   ///
   /// @param[in] nd The order of derivatives, up to and including, to
@@ -420,7 +420,7 @@ public:
   /// appropriate derivative.
   /// - The second index is the point index
   /// - The third index is the basis function index
-  /// - The fourth index is the basis function component. Its has size
+  /// - The fourth index is the basis function component. It has size
   /// one for scalar basis functions.
   std::pair<std::vector<F>, std::array<std::size_t, 4>>
   tabulate(int nd, std::span<const F> x,
@@ -446,7 +446,7 @@ public:
   /// find the appropriate derivative.
   /// - The second index is the point index
   /// - The third index is the basis function index
-  /// - The fourth index is the basis function component. Its has size
+  /// - The fourth index is the basis function component. It has size
   /// one for scalar basis functions.
   ///
   /// @todo Remove all internal dynamic memory allocation, pass scratch
@@ -477,7 +477,7 @@ public:
   /// appropriate derivative.
   /// - The second index is the point index
   /// - The third index is the basis function index
-  /// - The fourth index is the basis function component. Its has size
+  /// - The fourth index is the basis function component. It has size
   /// one for scalar basis functions.
   void tabulate(int nd, std::span<const F> x, std::array<std::size_t, 2> xshape,
                 std::span<F> basis) const;
@@ -494,9 +494,9 @@ public:
   /// @return Polynomial degree
   int degree() const { return _degree; }
 
-  /// @brief Lowest degree `n` such that the highest degree polynomial in this
-  /// element is contained in a Lagrange (or vector Lagrange) element of
-  /// degree `n`.
+  /// @brief Lowest degree `n` such that this element's polynomial set
+  /// is a subspace of a Lagrange (or vector Lagrange) element of degree
+  /// `n`.
   /// @return Polynomial degree
   int embedded_superdegree() const { return _embedded_superdegree; }
 
@@ -579,10 +579,14 @@ public:
                std::span<const F> detJ, impl::mdspan_t<const F, 3> K) const;
 
   /// @brief Map function values from a physical cell to the reference.
-  /// @param[in] u The function values on the cell
-  /// @param[in] J The Jacobian of the mapping
-  /// @param[in] detJ The determinant of the Jacobian of the mapping
-  /// @param[in] K The inverse of the Jacobian of the mapping
+  /// @param[in] u The function values on the cell. The indices are
+  /// `[Jacobian index, point index, components]`.
+  /// @param[in] J The Jacobian of the mapping. The indices are
+  /// `[Jacobian index, J_i, J_j]`.
+  /// @param[in] detJ The determinant of the Jacobian of the mapping. It
+  /// has length `J.shape(0)`.
+  /// @param[in] K The inverse of the Jacobian of the mapping. The
+  /// indices are `[Jacobian index, K_i, K_j]`.
   /// @return The function values on the reference. The indices are
   /// [Jacobian index, point index, components].
   std::pair<std::vector<F>, std::array<std::size_t, 3>>
@@ -757,7 +761,7 @@ public:
   ///                [1, 0]]
   /// ~~~~~~~~~~~~~~~~
   /// @return The base transformations for this element. The shape is
-  /// (ntranformations, ndofs, ndofs)
+  /// (ntransformations, ndofs, ndofs)
   std::pair<std::vector<F>, std::array<std::size_t, 3>>
   base_transformations() const;
 
@@ -1056,7 +1060,7 @@ public:
   /// elements, but not all.
   ///
   /// @param[in,out] u Data to transform. The shape is `(m, n)`, where
-  /// `m` is the number of dgerees-of-freedom and the storage is
+  /// `m` is the number of degrees-of-freedom and the storage is
   /// row-major.
   /// @param[in] n Number of columns in `data`.
   /// @param cell_info Permutation info for the cell
@@ -1069,7 +1073,7 @@ public:
   /// in-place.
   ///
   /// @param[in,out] u Data to transform. The shape is `(m, n)`, where
-  /// `m` is the number of dgerees-of-freedom an d the storage is
+  /// `m` is the number of degrees-of-freedom and the storage is
   /// row-major.
   /// @param[in] n Number of columns in `data`.
   /// @param[in] cell_info Permutation info for the cell,
@@ -1083,7 +1087,7 @@ public:
   /// in-place.
   ///
   /// @param[in,out] u Data to transform. The shape is `(m, n)`, where
-  /// `m` is the number of dgerees-of-freedom and the storage is
+  /// `m` is the number of degrees-of-freedom and the storage is
   /// row-major.
   /// @param[in] n Number of columns in `data`.
   /// @param[in] cell_info Permutation info for the cell.
@@ -1096,7 +1100,7 @@ public:
   /// in-place.
   ///
   /// @param[in,out] u Data to transform. The shape is `(m, n)`, where
-  /// `m` is the number of dgerees-of-freedom and the storage is
+  /// `m` is the number of degrees-of-freedom and the storage is
   /// row-major.
   /// @param[in] n Number of columns in `data`.
   /// @param[in] cell_info Permutation info for the cell.
@@ -1109,7 +1113,7 @@ public:
   /// Computes \f[ u^{T} \leftarrow u^{T} T^{T} \f] in-place.
   ///
   /// @param[in,out] u Data to transform. The shape is `(m, n)`, where
-  /// `m` is the number of dgerees-of-freedom and the storage is
+  /// `m` is the number of degrees-of-freedom and the storage is
   /// row-major.
   /// @param[in] n Number of columns in `data`.
   /// @param[in] cell_info Permutation info for the cell.
@@ -1121,7 +1125,7 @@ public:
   /// Computes \f[ u^{T} \leftarrow u^{T} T \f] in-place.
   ///
   /// @param[in,out] u Data to transform. The shape is `(m, n)`, where
-  /// `m` is the number of dgerees-of-freedom and the storage is
+  /// `m` is the number of degrees-of-freedom and the storage is
   /// row-major.
   /// @param[in] n Number of columns in `data`.
   /// @param[in] cell_info Permutation info for the cell.
@@ -1134,7 +1138,7 @@ public:
   /// Computes \f[ u^{T} \leftarrow u^{T} T^{-1} \f] in-place.
   ///
   /// @param[in,out] u Data to transform. The shape is `(m, n)`, where
-  /// `m` is the number of dgerees-of-freedom and the storage is
+  /// `m` is the number of degrees-of-freedom and the storage is
   /// row-major.
   /// @param[in] n Number of columns in `data`.
   /// @param cell_info Permutation info for the cell.
@@ -1147,7 +1151,7 @@ public:
   /// Computes \f[ u^{T} \leftarrow u^{T} T^{-T} \f] in-place.
   ///
   /// @param[in,out] u Data to transform. The shape is `(m, n)`, where
-  /// `m` is the number of dgerees-of-freedom and the storage is
+  /// `m` is the number of degrees-of-freedom and the storage is
   /// row-major.
   /// @param[in] n Number of columns in `data`.
   /// @param cell_info Permutation info for the cell.
@@ -1268,7 +1272,7 @@ public:
   /// element.
   ///
   /// @return Coefficient matrix. Shape is `(dim(finite element polyset),
-  /// dim(Lagrange polynomials))`.
+  /// dim(Legendre polynomials))`.
   const std::pair<std::vector<F>, std::array<std::size_t, 2>>& wcoeffs() const
   {
     return _wcoeffs;
@@ -1298,7 +1302,7 @@ public:
   /// \code{.pseudo}
   /// matrix = element.M()[d][e]
   /// pts = element.x()[d][e]
-  /// nderivs = element
+  /// nderivs = element.interpolation_nderivs()
   /// values = f.eval_derivs(nderivs, pts)
   /// result = ZEROS(matrix.shape(0))
   /// FOR i IN RANGE(matrix.shape(0)):
@@ -1330,7 +1334,11 @@ public:
 
   /// @brief Get the matrix of coefficients.
   ///
-  /// @return The coefficient matrix. Shape is `(ndofs, ndofs)`.
+  /// @return The coefficient matrix. Shape is `(ndofs, dim(Legendre
+  /// polynomials))`; it is only square (`ndofs == dim(Legendre
+  /// polynomials)`) for elements, such as Lagrange, whose polynomial
+  /// set spans the full space of Legendre polynomials up to the
+  /// element's degree.
   const std::pair<std::vector<F>, std::array<std::size_t, 2>>&
   coefficient_matrix() const
   {
@@ -1381,7 +1389,11 @@ public:
   /// @brief The number of derivatives needed when interpolating
   int interpolation_nderivs() const { return _interpolation_nderivs; }
 
-  /// @brief Get dof layout
+  /// @brief Get the mapping from the reference-element DOF ordering to
+  /// the custom DOF ordering supplied at construction (empty if none
+  /// was supplied).
+  /// @return Vector `v` such that reference DOF `i` is placed at
+  /// position `v[i]` in the custom ordering.
   const std::vector<int>& dof_ordering() const { return _dof_ordering; }
 
 private:
@@ -1582,8 +1594,9 @@ private:
 /// @param[in] embedded_subdegree The highest degree n such that a
 /// Lagrange (or vector Lagrange) element of degree n is a subspace of this
 /// element
-/// @param[in] embedded_superdegree The degree of a polynomial in this element's
-/// polyset
+/// @param[in] embedded_superdegree The lowest degree n such that this
+/// element's polynomial set is a subspace of a Lagrange (or vector
+/// Lagrange) element of degree n
 /// @param[in] poly_type The type of polyset to use for this element
 /// @return A custom finite element
 template <std::floating_point T>

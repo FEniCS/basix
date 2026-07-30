@@ -34,8 +34,8 @@ enum class type
 /// @param[in] d Polynomial degree
 /// @param[in] x Points at which to evaluate the basis. The shape is
 /// (number of points, geometric dimension).
-/// @return Polynomial sets, for each derivative, tabulated at points.
-/// The shape is `(basis index, number of points)`.
+/// @return Polynomial values tabulated at points. The shape is
+/// `(basis index, number of points)`.
 template <std::floating_point T>
 std::pair<std::vector<T>, std::array<std::size_t, 2>>
 tabulate(polynomials::type polytype, cell::type celltype, int d,
@@ -45,7 +45,7 @@ tabulate(polynomials::type polytype, cell::type celltype, int d,
 /// @param[in] polytype Polynomial type
 /// @param[in] cell Cell type
 /// @param[in] d Polynomial degree
-/// @return The number terms in the basis spanning a space of
+/// @return The number of terms in the basis spanning a space of
 /// polynomial degree `d`.
 int dim(polynomials::type polytype, cell::type cell, int d);
 

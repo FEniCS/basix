@@ -15,9 +15,9 @@
 #include <vector>
 
 ///
-/// @brief Functions to transform DOFs in high degree Lagrange spaces.
-/// The functions in this namespace calculate the permutations that can
-/// be used to rotate and reflect DOF points in Lagrange spaces.
+/// @brief Functions to compute the DOF transformations (rotations and
+/// reflections of entity DOFs) needed by a finite element under a
+/// change of entity orientation.
 namespace basix::doftransforms
 {
 /// @brief Compute the entity DOF transformations for an element.
@@ -29,8 +29,11 @@ namespace basix::doftransforms
 /// (tdim, entity index, dof, vs, point_index, derivative)
 /// @param[in] coeffs The coefficients that define the basis functions
 /// of the element in terms of the orthonormal basis. Shape is
-/// (dim(Legendre polynomials), dim(finite element polyset))
-/// @param[in] degree The degree of the element
+/// (number of basis functions of the element, dim(Legendre
+/// polynomials))
+/// @param[in] degree The embedded superdegree of the element (the
+/// lowest degree `n` such that the element's polynomial set is a
+/// subspace of a Lagrange element of degree `n`)
 /// @param[in] vs The value size of the element
 /// @param[in] map_type The map type used by the element
 /// @param[in] ptype The polyset type used by the element

@@ -15,8 +15,10 @@ namespace basix::element
 /// @param[in] celltype The element cell type
 /// @param[in] degree The degree of the element
 /// @param[in] variant The variant of the element to be created
-/// @param[in] discontinuous True if the is discontinuous
-/// @param[in] dof_ordering DOF reordering
+/// @param[in] discontinuous Controls whether the element is continuous or
+/// discontinuous
+/// @param[in] dof_ordering A mapping from the reference DOF order to a
+/// new permuted order (empty for the default ordering)
 /// @return A finite element
 template <std::floating_point T>
 FiniteElement<T> create_lagrange(cell::type celltype, int degree,
@@ -27,7 +29,8 @@ FiniteElement<T> create_lagrange(cell::type celltype, int degree,
 /// @param[in] celltype The element cell type
 /// @param[in] degree The degree of the element
 /// @param[in] variant The variant of the element to be created
-/// @param[in] discontinuous True if the is discontinuous
+/// @param[in] discontinuous Controls whether the element is continuous or
+/// discontinuous
 /// @return A finite element
 template <std::floating_point T>
 FiniteElement<T> create_iso(cell::type celltype, int degree,

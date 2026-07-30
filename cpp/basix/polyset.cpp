@@ -52,7 +52,7 @@ void tabulate_polyset_point_derivs(
   assert(P.extent(1) == 1);
   assert(P.extent(2) == x.extent(0));
 
-  std::fill(P.data_handle(), P.data_handle() + P.size(), 0.0);
+  std::fill(P.data_handle(), P.data_handle() + P.size(), T(0));
   for (std::size_t i = 0; i < P.extent(2); ++i)
     P(0, 0, i) = 1.0;
 }
@@ -73,7 +73,7 @@ void tabulate_polyset_line_derivs(
   assert(P.extent(1) == n + 1);
   assert(P.extent(2) == x.extent(0));
 
-  std::fill(P.data_handle(), P.data_handle() + P.size(), 0.0);
+  std::fill(P.data_handle(), P.data_handle() + P.size(), T(0));
   for (std::size_t j = 0; j < P.extent(2); ++j)
     P(0, 0, j) = 1.0;
 
@@ -135,7 +135,7 @@ void tabulate_polyset_line_macroedge_derivs(
 
   auto x0 = md::submdspan(x, md::full_extent, 0);
 
-  std::fill(P.data_handle(), P.data_handle() + P.size(), 0.0);
+  std::fill(P.data_handle(), P.data_handle() + P.size(), T(0));
 
   std::vector<T> factorials(n + 1, 0.0);
 
@@ -242,7 +242,7 @@ void tabulate_polyset_quadrilateral_macroedge_derivs(
   auto x0 = md::submdspan(x, md::full_extent, 0);
   auto x1 = md::submdspan(x, md::full_extent, 1);
 
-  std::fill(P.data_handle(), P.data_handle() + P.size(), 0.0);
+  std::fill(P.data_handle(), P.data_handle() + P.size(), T(0));
 
   std::vector<T> factorials(n + 1, 0.0);
 
@@ -450,7 +450,7 @@ void tabulate_polyset_triangle_macroedge_derivs(
   auto x0 = md::submdspan(x, md::full_extent, 0);
   auto x1 = md::submdspan(x, md::full_extent, 1);
 
-  std::fill(P.data_handle(), P.data_handle() + P.size(), 0.0);
+  std::fill(P.data_handle(), P.data_handle() + P.size(), T(0));
 
   if (n == 0)
   {
@@ -941,7 +941,7 @@ void tabulate_polyset_tetrahedron_macroedge_derivs(
   auto x1 = md::submdspan(x, md::full_extent, 1);
   auto x2 = md::submdspan(x, md::full_extent, 2);
 
-  std::fill(P.data_handle(), P.data_handle() + P.size(), 0.0);
+  std::fill(P.data_handle(), P.data_handle() + P.size(), T(0));
 
   if (n == 0)
   {
@@ -1279,7 +1279,7 @@ void tabulate_polyset_hexahedron_macroedge_derivs(
   auto x1 = md::submdspan(x, md::full_extent, 1);
   auto x2 = md::submdspan(x, md::full_extent, 2);
 
-  std::fill(P.data_handle(), P.data_handle() + P.size(), 0.0);
+  std::fill(P.data_handle(), P.data_handle() + P.size(), T(0));
 
   std::vector<T> factorials(n + 1, 0.0);
 
@@ -1612,7 +1612,7 @@ void tabulate_polyset_triangle_derivs(
   assert(P.extent(1) == (n + 1) * (n + 2) / 2);
   assert(P.extent(2) == x.extent(0));
 
-  std::fill(P.data_handle(), P.data_handle() + P.size(), 0.0);
+  std::fill(P.data_handle(), P.data_handle() + P.size(), T(0));
   if (n == 0)
   {
     for (std::size_t j = 0; j < P.extent(2); ++j)
@@ -1757,7 +1757,7 @@ void tabulate_polyset_tetrahedron_derivs(
   auto x2 = md::submdspan(x, md::full_extent, 2);
 
   // Traverse derivatives in increasing order
-  std::fill(P.data_handle(), P.data_handle() + P.size(), 0.0);
+  std::fill(P.data_handle(), P.data_handle() + P.size(), T(0));
   for (std::size_t i = 0; i < P.extent(2); ++i)
     P(idx(0, 0, 0), 0, i) = 1.0;
 
@@ -2042,7 +2042,7 @@ void tabulate_polyset_pyramid_derivs(
   const auto x2 = md::submdspan(x, md::full_extent, 2);
 
   // Traverse derivatives in increasing order
-  std::fill(P.data_handle(), P.data_handle() + P.size(), 0.0);
+  std::fill(P.data_handle(), P.data_handle() + P.size(), T(0));
 
   if (n == 0)
   {
@@ -2260,7 +2260,7 @@ void tabulate_polyset_quad_derivs(
   assert(x1.extent(0) > 0);
 
   // Compute tabulation of interval for px = 0
-  std::fill(P.data_handle(), P.data_handle() + P.size(), 0.0);
+  std::fill(P.data_handle(), P.data_handle() + P.size(), T(0));
   for (std::size_t j = 0; j < P.extent(2); ++j)
     P(idx(0, 0), quad_idx(0, 0), j) = 1.0;
 
@@ -2429,7 +2429,7 @@ void tabulate_polyset_hex_derivs(
   assert(x1.extent(0) > 0);
   assert(x2.extent(0) > 0);
 
-  std::fill(P.data_handle(), P.data_handle() + P.size(), 0.0);
+  std::fill(P.data_handle(), P.data_handle() + P.size(), T(0));
   for (std::size_t i = 0; i < P.extent(2); ++i)
     P(idx(0, 0, 0), hex_idx(0, 0, 0), i) = 1.0;
 
@@ -2725,7 +2725,7 @@ void tabulate_polyset_prism_derivs(
   { return (n + 1) * idx(py, px) + pz; };
 
   // Tabulate triangle for px=0
-  std::fill(P.data_handle(), P.data_handle() + P.size(), 0.0);
+  std::fill(P.data_handle(), P.data_handle() + P.size(), T(0));
   if (n == 0)
   {
     for (std::size_t i = 0; i < P.extent(2); ++i)

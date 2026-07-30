@@ -61,12 +61,22 @@ test-requires = ["pytest-xdist"]
 test-extras = ["test"]
 
 [tool.cibuildwheel.windows]
+# Pin VCPKG_INSTALLED_DIR so the DLLs are at a fixed path.
 build-frontend = { name = "build", args = [
     "-Cwheel.py-api=cp312",
-    "-Ccmake.args=-DINSTALL_RUNTIME_DEPENDENCIES=ON",
+    "-Ccmake.args=-DVCPKG_INSTALLED_DIR=C:/vcpkg_installed",
     "-Ccmake.args=-DCMAKE_TOOLCHAIN_FILE=C:/vcpkg/scripts/buildsystems/vcpkg.cmake",
 ] }
-test-command = ["python -m pytest -n auto --durations 20 {project}/test/"]
+# --ignore-existing keeps basix.dll under its usual name, as downstream C++
+# consumers may link against it. --with-mangle still mangles its dependencies,
+# which delvewheel copies in from from vcpkg.
+repair-wheel-command = 'delvewheel repair --ignore-existing --with-mangle --add-path "C:/vcpkg_installed/x64-windows/bin;C:/vcpkg_installed/arm64-windows/bin" -w {dest_dir} -v {wheel}'
+test-command = [
+    "cmake -B build-dir -S {project}/test/test_cmake -DPython3_EXECUTABLE=%VIRTUAL_ENV%\\Scripts\\python.exe",
+    "cmake --build build-dir --config Release",
+    "build-dir\\Release\\a.out.exe",
+    "python -m pytest -n auto --durations 20 {project}/test/",
+]
 
 [tool.cibuildwheel.linux]
 archs = [

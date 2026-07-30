@@ -4,12 +4,10 @@ cmake_minimum_required(VERSION 3.21)
 project(Basix VERSION 0.12.0.0 LANGUAGES CXX)
 include(GNUInstallDirs)
 
-if(SKBUILD AND UNIX)
-  # Avoid lib64/ which can lead to linking issues.
-  set(CMAKE_INSTALL_LIBDIR basix/lib)
-endif()
-
 if(SKBUILD)
+  # Make sure libraries, the CMake package and basix.pc end up inside basix/
+  # subdirectory in wheel. Also avoids lib64/, which can lead to linking issues.
+  set(CMAKE_INSTALL_LIBDIR basix/lib)
   # Make sure includes end up inside basix/ subdirectory in wheel.
   set(CMAKE_INSTALL_INCLUDEDIR basix/include)
   # Make sure all binaries end up inside basix/ subdirectory in wheel.
@@ -234,6 +232,10 @@ install(
   ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Development
 )
 if(INSTALL_RUNTIME_DEPENDENCIES AND WIN32)
+  # Regexes below accept either separator, so CMP0207 normalisation is a no-op.
+  if(POLICY CMP0207)
+    cmake_policy(SET CMP0207 NEW)
+  endif()
   # https://discourse.cmake.org/t/migration-experiences-comparison-runtime-dependency-set-vs-fixup-bundle-bundleutilities
   install(
     RUNTIME_DEPENDENCY_SET dependencies DESTINATION ${CMAKE_INSTALL_BINDIR}

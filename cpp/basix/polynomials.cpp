@@ -160,7 +160,7 @@ void tabulate_lagrange_pyramid(
   const auto x2 = md::submdspan(x, md::full_extent, 2);
 
   // Traverse derivatives in increasing order
-  std::fill(P.data_handle(), P.data_handle() + P.size(), 0.0);
+  std::fill(P.data_handle(), P.data_handle() + P.size(), T(0));
 
   if (n == 0)
   {

@@ -118,8 +118,8 @@ moments::make_integral_moments(const FiniteElement<T>& V, cell::type celltype,
   mdspan_t<const T, 2> pts(_pts.data(), wts.size(), _pts.size() / wts.size());
 
   // Evaluate moment space at quadrature points
-  assert(std::accumulate(V.value_shape().begin(), V.value_shape().end(), 1,
-                         std::multiplies{})
+  assert(std::accumulate(V.value_shape().begin(), V.value_shape().end(),
+                         std::size_t{1}, std::multiplies{})
          == 1);
   const auto [phib, phishape] = V.tabulate(0, pts);
   mdspan_t<const T, 4> phi(phib.data(), phishape);
@@ -132,8 +132,8 @@ moments::make_integral_moments(const FiniteElement<T>& V, cell::type celltype,
   const std::array<std::size_t, 4> Dshape
       = {num_dofs, value_size, pts.extent(0), 1};
 
-  const std::size_t size
-      = std::reduce(Dshape.begin(), Dshape.end(), 1, std::multiplies{});
+  const std::size_t size = std::reduce(Dshape.begin(), Dshape.end(),
+                                       std::size_t{1}, std::multiplies{});
   std::vector<std::vector<T>> Db(num_entities, std::vector<T>(size));
   std::vector<mdspan_t<T, 4>> D;
 
@@ -225,8 +225,8 @@ moments::make_dot_integral_moments(const FiniteElement<T>& V,
   // Shape (num dofs, value size, num points)
   const std::array<std::size_t, 4> Dshape
       = {phi.extent(2), value_size, pts.extent(0), 1};
-  const std::size_t size
-      = std::reduce(Dshape.begin(), Dshape.end(), 1, std::multiplies{});
+  const std::size_t size = std::reduce(Dshape.begin(), Dshape.end(),
+                                       std::size_t{1}, std::multiplies{});
   std::vector<std::vector<T>> Db(num_entities, std::vector<T>(size));
   std::vector<mdspan_t<T, 4>> D;
 
@@ -291,8 +291,8 @@ moments::make_tangent_integral_moments(const FiniteElement<T>& V,
   mdspan_t<const T, 2> pts(_pts.data(), wts.size(), _pts.size() / wts.size());
 
   // Evaluate moment space at quadrature points
-  assert(std::accumulate(V.value_shape().begin(), V.value_shape().end(), 1,
-                         std::multiplies{})
+  assert(std::accumulate(V.value_shape().begin(), V.value_shape().end(),
+                         std::size_t{1}, std::multiplies{})
          == 1);
   const auto [phib, phishape] = V.tabulate(0, pts);
   mdspan_t<const T, 4> phi(phib.data(), phishape);
@@ -302,8 +302,8 @@ moments::make_tangent_integral_moments(const FiniteElement<T>& V,
 
   const std::array<std::size_t, 4> Dshape
       = {phi.extent(2), value_size, phi.extent(1), 1};
-  const std::size_t size
-      = std::reduce(Dshape.begin(), Dshape.end(), 1, std::multiplies{});
+  const std::size_t size = std::reduce(Dshape.begin(), Dshape.end(),
+                                       std::size_t{1}, std::multiplies{});
   std::vector<std::vector<T>> Db(num_entities, std::vector<T>(size));
   std::vector<mdspan_t<T, 4>> D;
 
@@ -365,8 +365,8 @@ moments::make_normal_integral_moments(const FiniteElement<T>& V,
   mdspan_t<const T, 2> pts(_pts.data(), wts.size(), _pts.size() / wts.size());
 
   // Evaluate moment space at quadrature points
-  assert(std::accumulate(V.value_shape().begin(), V.value_shape().end(), 1,
-                         std::multiplies{})
+  assert(std::accumulate(V.value_shape().begin(), V.value_shape().end(),
+                         std::size_t{1}, std::multiplies{})
          == 1);
   const auto [phib, phishape] = V.tabulate(0, pts);
   mdspan_t<const T, 4> phi(phib.data(), phishape);
@@ -378,8 +378,8 @@ moments::make_normal_integral_moments(const FiniteElement<T>& V,
   // Storage for interpolation matrix
   const std::array<std::size_t, 4> Dshape
       = {phi.extent(2), value_size, phi.extent(1), 1};
-  const std::size_t size
-      = std::reduce(Dshape.begin(), Dshape.end(), 1, std::multiplies{});
+  const std::size_t size = std::reduce(Dshape.begin(), Dshape.end(),
+                                       std::size_t{1}, std::multiplies{});
   std::vector<std::vector<T>> Db(num_entities, std::vector<T>(size));
   std::vector<mdspan_t<T, 4>> D;
 

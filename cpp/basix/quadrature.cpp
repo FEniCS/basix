@@ -46,23 +46,25 @@ std::array<std::vector<T>, 2> rec_jacobi(int N, T a, T b)
                * std::tgamma(b + 1.0) / std::tgamma(a + b + 2.0);
 
   std::vector<T> n(N - 1);
-  std::iota(n.begin(), n.end(), 1.0);
+  std::iota(n.begin(), n.end(), T(1));
   std::vector<T> nab(n.size());
-  std::ranges::transform(n, nab.begin(),
-                         [a, b](auto x) { return 2.0 * x + a + b; });
+  std::ranges::transform(n, nab.begin(), [a, b](auto x)
+                         { return static_cast<T>(2.0 * x + a + b); });
 
   std::vector<T> alpha(N);
   alpha.front() = nu;
-  std::ranges::transform(nab, std::next(alpha.begin()), [a, b](auto nab)
-                         { return (b * b - a * a) / (nab * (nab + 2.0)); });
+  std::ranges::transform(
+      nab, std::next(alpha.begin()), [a, b](auto nab)
+      { return static_cast<T>((b * b - a * a) / (nab * (nab + 2.0))); });
 
   std::vector<T> beta(N);
   beta.front() = mu;
   std::ranges::transform(n, nab, std::next(beta.begin()),
                          [a, b](auto n, auto nab)
                          {
-                           return 4 * (n + a) * (n + b) * n * (n + a + b)
-                                  / (nab * nab * (nab + 1.0) * (nab - 1.0));
+                           return static_cast<T>(
+                               4 * (n + a) * (n + b) * n * (n + a + b)
+                               / (nab * nab * (nab + 1.0) * (nab - 1.0)));
                          });
 
   return {std::move(alpha), std::move(beta)};
@@ -307,9 +309,10 @@ template <std::floating_point T>
 std::array<std::vector<T>, 2> make_quadrature_line(int m)
 {
   auto [ptx, wx] = compute_gauss_jacobi_rule<T>(0.0, m);
-  std::ranges::transform(wx, wx.begin(), [](auto w) { return 0.5 * w; });
-  std::ranges::transform(ptx, ptx.begin(),
-                         [](auto x) { return 0.5 * (x + 1.0); });
+  std::ranges::transform(wx, wx.begin(),
+                         [](auto w) { return static_cast<T>(0.5 * w); });
+  std::ranges::transform(ptx, ptx.begin(), [](auto x)
+                         { return static_cast<T>(0.5 * (x + 1.0)); });
   return {std::move(ptx), std::move(wx)};
 }
 //-----------------------------------------------------------------------------
@@ -497,9 +500,10 @@ template <std::floating_point T>
 std::array<std::vector<T>, 2> make_gll_line(int m)
 {
   auto [ptx, wx] = compute_gll_rule<T>(m);
-  std::ranges::transform(wx, wx.begin(), [](auto w) { return 0.5 * w; });
-  std::ranges::transform(ptx, ptx.begin(),
-                         [](auto x) { return 0.5 * (x + 1.0); });
+  std::ranges::transform(wx, wx.begin(),
+                         [](auto w) { return static_cast<T>(0.5 * w); });
+  std::ranges::transform(ptx, ptx.begin(), [](auto x)
+                         { return static_cast<T>(0.5 * (x + 1.0)); });
   return {ptx, wx};
 }
 //-----------------------------------------------------------------------------
@@ -5002,7 +5006,7 @@ std::vector<T> quadrature::get_gl_points(int m)
 {
   std::vector<T> pts = compute_gauss_jacobi_points<T>(0, m);
   std::ranges::transform(pts, pts.begin(),
-                         [](auto x) { return 0.5 + 0.5 * x; });
+                         [](auto x) { return static_cast<T>(0.5 + 0.5 * x); });
   return pts;
 }
 //-----------------------------------------------------------------------------

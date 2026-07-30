@@ -36,12 +36,12 @@ basix::compute_interpolation_operator(const FiniteElement<T>& element_from,
   const std::size_t dim_from = element_from.dim();
   const std::size_t npts = tab.extent(1);
 
-  const std::size_t vs_from
-      = std::accumulate(element_from.value_shape().begin(),
-                        element_from.value_shape().end(), 1, std::multiplies{});
-  const std::size_t vs_to
-      = std::reduce(element_to.value_shape().begin(),
-                    element_to.value_shape().end(), 1, std::multiplies{});
+  const std::size_t vs_from = std::accumulate(
+      element_from.value_shape().begin(), element_from.value_shape().end(),
+      std::size_t{1}, std::multiplies{});
+  const std::size_t vs_to = std::reduce(element_to.value_shape().begin(),
+                                        element_to.value_shape().end(),
+                                        std::size_t{1}, std::multiplies{});
 
   if (vs_from != vs_to)
   {

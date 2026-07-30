@@ -355,7 +355,7 @@ class _ElementBase(_AbstractFiniteElement):
         return ()
 
     @property
-    def _wcoeffs(self) -> _npt.ArrayLike:
+    def _wcoeffs(self) -> _npt.NDArray[np.floating]:
         """The coefficients used to define the polynomial set."""
         raise NotImplementedError()
 
@@ -460,7 +460,7 @@ class _BasixElement(_ElementBase):
     ) -> _npt.NDArray[np.floating]:
         tab = self._element.tabulate(nderivs, points)
         # TODO: update FFCx to remove the need for transposing here
-        return tab.transpose((0, 1, 3, 2)).reshape((tab.shape[0], tab.shape[1], -1))  # type: ignore
+        return tab.transpose((0, 1, 3, 2)).reshape((tab.shape[0], tab.shape[1], -1))
 
     def get_component_element(self, flat_component: int) -> tuple[_ElementBase, int, int]:
         assert flat_component < self.reference_value_size
@@ -556,7 +556,7 @@ class _BasixElement(_ElementBase):
         return self._element.polyset_type
 
     @property
-    def _wcoeffs(self) -> _npt.ArrayLike:
+    def _wcoeffs(self) -> _npt.NDArray[np.floating]:
         return self._element.wcoeffs
 
     @property
@@ -608,9 +608,9 @@ class _ComponentElement(_ElementBase):
     def tabulate(self, nderivs: int, points: _npt.NDArray[np.floating]) -> _npt.NDArray[np.float64]:
         tables = self._element.tabulate(nderivs, points)
         output = []
-        for tbl in tables:  # type: ignore
+        for tbl in tables:
             shape = (points.shape[0], *self._element._reference_value_shape, -1)
-            tbl = tbl.reshape(shape)  # type: ignore
+            tbl = tbl.reshape(shape)
             if len(self._element._reference_value_shape) == 0:
                 output.append(tbl)
             elif len(self._element._reference_value_shape) == 1:
@@ -1048,11 +1048,11 @@ class _BlockedElement(_ElementBase):
         assert len(self._block_shape) == 1  # TODO: block shape
         assert self.reference_value_size == self._block_size  # TODO: remove this assumption
         output = []
-        for table in self._sub_element.tabulate(nderivs, points):  # type: ignore
+        for table in self._sub_element.tabulate(nderivs, points):
             # Repeat sub element horizontally
-            assert len(table.shape) == 2  # type: ignore
+            assert len(table.shape) == 2
             new_table = np.zeros(
-                (table.shape[0], *self._block_shape, self._block_size * table.shape[1])  # type: ignore
+                (table.shape[0], *self._block_shape, self._block_size * table.shape[1])
             )
             for i, j in enumerate(_itertools.product(*[range(s) for s in self._block_shape])):
                 if len(j) == 1:
@@ -1177,13 +1177,13 @@ class _BlockedElement(_ElementBase):
         return self._sub_element.polyset_type
 
     @property
-    def _wcoeffs(self) -> _npt.ArrayLike:
+    def _wcoeffs(self) -> _npt.NDArray[np.floating]:
         sub_wc = self._sub_element._wcoeffs
-        wcoeffs = np.zeros((sub_wc.shape[0] * self._block_size, sub_wc.shape[1] * self._block_size))  # type: ignore
+        wcoeffs = np.zeros((sub_wc.shape[0] * self._block_size, sub_wc.shape[1] * self._block_size))
         for i in range(self._block_size):
             wcoeffs[
-                sub_wc.shape[0] * i : sub_wc.shape[0] * (i + 1),  # type: ignore
-                sub_wc.shape[1] * i : sub_wc.shape[1] * (i + 1),  # type: ignore
+                sub_wc.shape[0] * i : sub_wc.shape[0] * (i + 1),
+                sub_wc.shape[1] * i : sub_wc.shape[1] * (i + 1),
             ] = sub_wc
         return wcoeffs
 
@@ -1199,22 +1199,22 @@ class _BlockedElement(_ElementBase):
             for mat in M_list:
                 new_mat = np.zeros(
                     (
-                        mat.shape[0] * self._block_size,  # type: ignore
-                        mat.shape[1] * self._block_size,  # type: ignore
-                        mat.shape[2],  # type: ignore
-                        mat.shape[3],  # type: ignore
+                        mat.shape[0] * self._block_size,
+                        mat.shape[1] * self._block_size,
+                        mat.shape[2],
+                        mat.shape[3],
                     )
                 )
                 for i in range(self._block_size):
                     new_mat[
-                        i * mat.shape[0] : (i + 1) * mat.shape[0],  # type: ignore
-                        i * mat.shape[1] : (i + 1) * mat.shape[1],  # type: ignore
+                        i * mat.shape[0] : (i + 1) * mat.shape[0],
+                        i * mat.shape[1] : (i + 1) * mat.shape[1],
                         :,
                         :,
                     ] = mat
                 M_row.append(new_mat)
             M.append(M_row)
-        return M  # type: ignore
+        return M
 
     @property
     def has_tensor_product_factorisation(self) -> bool:
@@ -1549,17 +1549,17 @@ def _compute_signature(element: _basix.finite_element.FiniteElement) -> str:
         f"{element.discontinuous}, {element.embedded_subdegree}, {element.embedded_superdegree}, "
         f"{element.dtype}, {element.dof_ordering}"
     )
-    data = ",".join([f"{i}" for row in element.wcoeffs for i in row])  # type: ignore
+    data = ",".join([f"{i}" for row in element.wcoeffs for i in row])
     data += "__"
     for entity in element.x:
         for points in entity:
-            data += ",".join([f"{i}" for p in points for i in p])  # type: ignore
+            data += ",".join([f"{i}" for p in points for i in p])
             data += "_"
     data += "__"
 
     for entity in element.M:
         for matrices in entity:
-            data += ",".join([f"{i}" for mat in matrices for row in mat for i in row])  # type: ignore
+            data += ",".join([f"{i}" for mat in matrices for row in mat for i in row])
             data += "_"
     data += "__"
 
@@ -1651,7 +1651,7 @@ def element(
         dpc_variant,
         discontinuous,
         dof_ordering=dof_ordering,
-        dtype=dtype,  # type: ignore
+        dtype=dtype,
     )
     ufl_e = _BasixElement(e)
 
@@ -1734,7 +1734,7 @@ def enriched_element(
         wcoeffs[row : row + e.dim, :] = _basix.polynomials.reshape_coefficients(
             _basix.PolynomialType.legendre,
             ct,
-            e._wcoeffs,  # type: ignore
+            e._wcoeffs,
             vsize,
             e.embedded_superdegree,
             hd,
@@ -1817,7 +1817,7 @@ def custom_element(
         embedded_subdegree,
         embedded_superdegree,
         polyset_type,
-        dtype=dtype,  # type: ignore
+        dtype=dtype,
     )
     return _BasixElement(e)
 
@@ -1872,9 +1872,9 @@ def quadrature_element(
         assert weights is None
         assert degree is not None
         if scheme is None:
-            points, weights = _basix.make_quadrature(cell, degree)  # type: ignore
+            points, weights = _basix.make_quadrature(cell, degree)
         else:
-            points, weights = _basix.make_quadrature(  # type: ignore
+            points, weights = _basix.make_quadrature(
                 cell, degree, rule=_basix.quadrature.string_to_type(scheme)
             )
 

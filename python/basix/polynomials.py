@@ -5,7 +5,7 @@
 # SPDX-License-Identifier:    MIT
 """Functions for working with polynomials."""
 
-from typing import TypeVar
+from typing import TypeVar, cast
 
 import numpy as np
 import numpy.typing as npt
@@ -32,7 +32,7 @@ T = TypeVar("T", np.float32, np.float64)
 def reshape_coefficients(
     poly_type: PolynomialType,
     cell_type: CellType,
-    coefficients: npt.NDArray[np.float64],
+    coefficients: npt.NDArray[np.floating],
     value_size: int,
     input_degree: int,
     output_degree: int,
@@ -61,7 +61,7 @@ def reshape_coefficients(
         raise ValueError("Output degree must be greater than or equal to input degree")
 
     if output_degree == input_degree:
-        return coefficients
+        return coefficients.astype(np.float64, copy=False)
 
     pdim = dim(poly_type, cell_type, output_degree)
     out = np.zeros((coefficients.shape[0], pdim * value_size))
@@ -220,8 +220,12 @@ def tabulate_polynomial_set(
         Tabulated polynomial set
     """
     if pts.dtype == np.float32:
-        return tabulate_polynomial_set_float32(celltype, ptype, degree, nderiv, pts)  # type: ignore
+        pts32 = cast(npt.NDArray[np.float32], pts)
+        tab32 = tabulate_polynomial_set_float32(celltype, ptype, degree, nderiv, pts32)
+        return cast(npt.NDArray[T], tab32)
     elif pts.dtype == np.float64:
-        return tabulate_polynomial_set_float64(celltype, ptype, degree, nderiv, pts)  # type: ignore
+        pts64 = cast(npt.NDArray[np.float64], pts)
+        tab64 = tabulate_polynomial_set_float64(celltype, ptype, degree, nderiv, pts64)
+        return cast(npt.NDArray[T], tab64)
     else:
         raise RuntimeError(f"Unsupported data dtype: {pts.dtype}")

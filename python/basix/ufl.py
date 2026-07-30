@@ -214,7 +214,7 @@ class _ElementBase(_AbstractFiniteElement):
         """
 
     @_abstractmethod
-    def get_component_element(self, flat_component: int) -> tuple[_typing.Any, int, int]:
+    def get_component_element(self, flat_component: int) -> tuple["_ElementBase", int, int]:
         """Get element that represents a component, and the offset and stride of the component.
 
         For example, for a mixed element, this will return the

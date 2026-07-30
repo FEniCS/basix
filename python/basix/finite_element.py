@@ -109,7 +109,9 @@ class FiniteElement(Generic[T]):
         """Hash."""
         return self.hash()
 
-    def push_forward(self, U, J, detJ, K) -> npt.NDArray[T]:
+    def push_forward(
+        self, U: npt.NDArray, J: npt.NDArray, detJ: npt.NDArray, K: npt.NDArray
+    ) -> npt.NDArray[T]:
         """Map function values from the reference to a physical cell.
 
         This function can perform the mapping for multiple points,
@@ -148,7 +150,7 @@ class FiniteElement(Generic[T]):
         """
         return cast(npt.NDArray[T], self._e.pull_back(u, J, detJ, K))
 
-    def T_apply(self, data, block_size, cell_info) -> None:
+    def T_apply(self, data: npt.NDArray[T], block_size: int, cell_info: int) -> None:
         """Apply DOF transformations to some data in-place.
 
         Note:
@@ -161,9 +163,9 @@ class FiniteElement(Generic[T]):
             cell_info: The permutation info for the cell
 
         """
-        self._e.T_apply(data, block_size, cell_info)
+        self._e.T_apply(cast(Any, data), block_size, cell_info)
 
-    def Tt_apply_right(self, data, block_size, cell_info) -> None:
+    def Tt_apply_right(self, data: npt.NDArray[T], block_size: int, cell_info: int) -> None:
         """Post-apply DOF transformations to some transposed data in-place.
 
         Note:
@@ -175,9 +177,9 @@ class FiniteElement(Generic[T]):
             block_size: The number of data points per DOF.
             cell_info: The permutation info for the cell.
         """
-        self._e.Tt_apply_right(data, block_size, cell_info)
+        self._e.Tt_apply_right(cast(Any, data), block_size, cell_info)
 
-    def Tt_inv_apply(self, data, block_size, cell_info) -> None:
+    def Tt_inv_apply(self, data: npt.NDArray[T], block_size: int, cell_info: int) -> None:
         """Pre-apply inverse transpose DOF transformations to some data.
 
         Note:
@@ -189,7 +191,7 @@ class FiniteElement(Generic[T]):
             block_size: The number of data points per DOF.
             cell_info: The permutation info for the cell.
         """
-        self._e.Tt_inv_apply(data, block_size, cell_info)
+        self._e.Tt_inv_apply(cast(Any, data), block_size, cell_info)
 
     def base_transformations(self) -> npt.NDArray[T]:
         r"""Get the base transformations.

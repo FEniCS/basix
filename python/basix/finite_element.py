@@ -291,7 +291,7 @@ class FiniteElement(Generic[T]):
         """
         return cast(npt.NDArray[T], self._e.base_transformations())
 
-    def entity_transformations(self) -> dict:
+    def entity_transformations(self) -> dict[str, npt.NDArray[T]]:
         """Entity dof transformation matrices.
 
         Returns:

@@ -166,6 +166,14 @@ if(WIN32)
 
   # This *must* be called prior to nanobind_add_stub
   install(TARGETS _basixcpp LIBRARY DESTINATION basix)
+
+  # nanobind_add_stub's INSTALL_TIME marker-file generation below requires
+  # importing basix._basixcpp, which (per the note above) can fail on
+  # Windows, silently skipping marker-file creation. Install the static
+  # marker directly so the package is always recognised as typed (PEP
+  # 561), matching the non-Windows branch below.
+  install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/basix/py.typed DESTINATION basix)
+
   # nanobind automatically installs into ${CMAKE_INSTALL_PREFIX} in
   # INSTALL_TIME mode.
   # DEPENDS is redundant in INSTALL_TIME mode - _basixcpp must be installed.

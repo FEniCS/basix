@@ -50,7 +50,7 @@ def test_apply_right(cell_type, element_type, degree, element_args):
     random.seed(42)
     e = cached_create_element(element_type, cell_type, degree, tuple(element_args))
     size = e.dim
-    base1 = np.arange(size * size, dtype=np.float32)
+    base1 = np.arange(size * size, dtype=np.float64)
     # This is the transpose of base1
     base2 = base1.reshape(size, size).T.reshape(-1).copy()
     for i in range(10):

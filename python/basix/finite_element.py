@@ -5,8 +5,8 @@
 # SPDX-License-Identifier:    MIT
 """Functions for creating finite elements."""
 
-from collections.abc import Sequence
-from typing import TYPE_CHECKING, Generic, Self, TypeVar
+from collections.abc import Callable, Sequence
+from typing import TYPE_CHECKING, Any, Generic, Self, TypeVar, cast
 from warnings import warn
 
 import numpy as np
@@ -92,7 +92,7 @@ class FiniteElement(Generic[T]):
             * The third index is the basis function index one for scalar
                 basis functions.
         """
-        return self._e.tabulate(n, x)  # type: ignore
+        return cast(npt.NDArray[T], self._e.tabulate(n, cast(Any, x)))
 
     def __eq__(self, other) -> bool:
         """Test element for equality."""
@@ -109,7 +109,9 @@ class FiniteElement(Generic[T]):
         """Hash."""
         return self.hash()
 
-    def push_forward(self, U, J, detJ, K) -> npt.NDArray[T]:
+    def push_forward(
+        self, U: npt.NDArray, J: npt.NDArray, detJ: npt.NDArray, K: npt.NDArray
+    ) -> npt.NDArray[T]:
         """Map function values from the reference to a physical cell.
 
         This function can perform the mapping for multiple points,
@@ -129,7 +131,7 @@ class FiniteElement(Generic[T]):
             The function values on the cell. The indices are ``(Jacobian
             index, point index, components)``.
         """
-        return self._e.push_forward(U, J, detJ, K)  # type: ignore
+        return cast(npt.NDArray[T], self._e.push_forward(U, J, detJ, K))
 
     def pull_back(
         self, u: npt.NDArray, J: npt.NDArray, detJ: npt.NDArray, K: npt.NDArray
@@ -146,9 +148,9 @@ class FiniteElement(Generic[T]):
             The function values on the reference. The indices are
             ``(Jacobian index, point index, components``).
         """
-        return self._e.pull_back(u, J, detJ, K)  # type: ignore
+        return cast(npt.NDArray[T], self._e.pull_back(u, J, detJ, K))
 
-    def T_apply(self, data, block_size, cell_info) -> None:
+    def T_apply(self, data: npt.NDArray[T], block_size: int, cell_info: int) -> None:
         """Apply DOF transformations to some data in-place.
 
         Note:
@@ -161,9 +163,9 @@ class FiniteElement(Generic[T]):
             cell_info: The permutation info for the cell
 
         """
-        self._e.T_apply(data, block_size, cell_info)
+        self._e.T_apply(cast(Any, data), block_size, cell_info)
 
-    def Tt_apply_right(self, data, block_size, cell_info) -> None:
+    def Tt_apply_right(self, data: npt.NDArray[T], block_size: int, cell_info: int) -> None:
         """Post-apply DOF transformations to some transposed data in-place.
 
         Note:
@@ -175,9 +177,9 @@ class FiniteElement(Generic[T]):
             block_size: The number of data points per DOF.
             cell_info: The permutation info for the cell.
         """
-        self._e.Tt_apply_right(data, block_size, cell_info)
+        self._e.Tt_apply_right(cast(Any, data), block_size, cell_info)
 
-    def Tt_inv_apply(self, data, block_size, cell_info) -> None:
+    def Tt_inv_apply(self, data: npt.NDArray[T], block_size: int, cell_info: int) -> None:
         """Pre-apply inverse transpose DOF transformations to some data.
 
         Note:
@@ -189,7 +191,7 @@ class FiniteElement(Generic[T]):
             block_size: The number of data points per DOF.
             cell_info: The permutation info for the cell.
         """
-        self._e.Tt_inv_apply(data, block_size, cell_info)
+        self._e.Tt_inv_apply(cast(Any, data), block_size, cell_info)
 
     def base_transformations(self) -> npt.NDArray[T]:
         r"""Get the base transformations.
@@ -287,9 +289,9 @@ class FiniteElement(Generic[T]):
             The base transformations for this element. The shape is
             ``(ntranformations, ndofs, ndofs)``.
         """
-        return self._e.base_transformations()  # type: ignore
+        return cast(npt.NDArray[T], self._e.base_transformations())
 
-    def entity_transformations(self) -> dict:
+    def entity_transformations(self) -> dict[str, npt.NDArray[T]]:
         """Entity dof transformation matrices.
 
         Returns:
@@ -519,7 +521,7 @@ class FiniteElement(Generic[T]):
         evaluated in order to interpolate it in the finite element
         space. Shape is ``(num_points, tdim)``.
         """
-        return self._e.points  # type: ignore
+        return cast(npt.NDArray[T], self._e.points)
 
     @property
     def interpolation_matrix(self) -> npt.NDArray[T]:
@@ -529,7 +531,7 @@ class FiniteElement(Generic[T]):
         evaluated in order to interpolate it in the finite element
         space.
         """
-        return self._e.interpolation_matrix  # type: ignore
+        return cast(npt.NDArray[T], self._e.interpolation_matrix)
 
     @property
     def dual_matrix(self) -> npt.NDArray[T]:
@@ -537,12 +539,12 @@ class FiniteElement(Generic[T]):
 
         See C++ documentation.
         """
-        return self._e.dual_matrix  # type: ignore
+        return cast(npt.NDArray[T], self._e.dual_matrix)
 
     @property
     def coefficient_matrix(self) -> npt.NDArray[T]:
         """Matrix of coefficients."""
-        return self._e.coefficient_matrix  # type: ignore
+        return cast(npt.NDArray[T], self._e.coefficient_matrix)
 
     @property
     def wcoeffs(self) -> npt.NDArray[T]:
@@ -550,7 +552,7 @@ class FiniteElement(Generic[T]):
 
         See C++ documentation for details.
         """
-        return self._e.wcoeffs  # type: ignore
+        return cast(npt.NDArray[T], self._e.wcoeffs)
 
     @property
     def M(self) -> list[list[npt.NDArray[T]]]:
@@ -558,7 +560,7 @@ class FiniteElement(Generic[T]):
 
         See C++ documentation for details.
         """
-        return self._e.M  # type: ignore
+        return cast(list[list[npt.NDArray[T]]], self._e.M)
 
     @property
     def x(self) -> list[list[npt.NDArray[T]]]:
@@ -567,7 +569,7 @@ class FiniteElement(Generic[T]):
         The indices of this data are ``(tdim, entity index, point index,
         dim)``.
         """
-        return self._e.x  # type: ignore
+        return cast(list[list[npt.NDArray[T]]], self._e.x)
 
     @property
     def has_tensor_product_factorisation(self) -> bool:
@@ -687,9 +689,9 @@ def create_custom_element(
         M.append([])
 
     if wcoeffs.dtype != dtype:
-        wcoeffs = np.dtype(dtype).type(wcoeffs)  # type: ignore
-        x = [[np.dtype(dtype).type(j) for j in i] for i in x]  # type: ignore
-        M = [[np.dtype(dtype).type(j) for j in i] for i in M]  # type: ignore
+        wcoeffs = wcoeffs.astype(dtype)
+        x = [[j.astype(dtype) for j in i] for i in x]
+        M = [[j.astype(dtype) for j in i] for i in M]
 
     # Check shape of x
     tdim = len(topology(cell_type)) - 1
@@ -710,20 +712,22 @@ def create_custom_element(
                     if np.dot(p - geo[facet[0]], facet_normal) > 0.001:
                         warn(f"Point {p} is not in cell", UserWarning)
 
+    _CreateCustomElement = Callable[..., _FiniteElement_float32 | _FiniteElement_float64]
+    _create_custom_element: _CreateCustomElement
     if np.issubdtype(dtype, np.float32):
-        _create_custom_element = _create_custom_element_float32  # type: ignore
+        _create_custom_element = _create_custom_element_float32
     elif np.issubdtype(dtype, np.float64):
-        _create_custom_element = _create_custom_element_float64  # type: ignore
+        _create_custom_element = _create_custom_element_float64
     else:
         raise NotImplementedError(f"Type {dtype} not supported.")
 
     return FiniteElement(
-        _create_custom_element(
+        cast(_CreateCustomElement, _create_custom_element)(
             cell_type,
             tuple(value_shape),
-            wcoeffs,  # type: ignore
-            x,  # type: ignore
-            M,  # type: ignore
+            wcoeffs,
+            x,
+            M,
             interpolation_nderivs,
             map_type,
             sobolev_space,

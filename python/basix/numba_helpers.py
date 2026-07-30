@@ -102,7 +102,7 @@ def T_apply(
 @_numba.jit(nopython=True)
 def T_apply_interval(
     entity_transformations: dict[str, npt.NDArray[np.float64]],
-    entity_dofs: dict[str, npt.NDArray[np.int32]],
+    entity_dofs: list[list[int]],
     data: npt.NDArray,
     cell_info: int,
 ):
@@ -122,7 +122,7 @@ def T_apply_interval(
 @_numba.jit(nopython=True)
 def T_apply_triangle(
     entity_transformations: dict[str, npt.NDArray[np.float64]],
-    entity_dofs: dict[str, npt.NDArray[np.int32]],
+    entity_dofs: list[list[int]],
     data: npt.NDArray,
     cell_info: int,
 ):
@@ -151,7 +151,7 @@ def T_apply_triangle(
 @_numba.jit(nopython=True)
 def T_apply_quadrilateral(
     entity_transformations: dict[str, npt.NDArray[np.float64]],
-    entity_dofs: dict[str, npt.NDArray[np.int32]],
+    entity_dofs: list[list[int]],
     data: npt.NDArray,
     cell_info: int,
 ):
@@ -180,7 +180,7 @@ def T_apply_quadrilateral(
 @_numba.jit(nopython=True)
 def T_apply_tetrahedron(
     entity_transformations: dict[str, npt.NDArray[np.float64]],
-    entity_dofs: dict[str, npt.NDArray[np.int32]],
+    entity_dofs: list[list[int]],
     data: npt.NDArray,
     cell_info: int,
 ):
@@ -209,7 +209,7 @@ def T_apply_tetrahedron(
 @_numba.jit(nopython=True)
 def T_apply_hexahedron(
     entity_transformations: dict[str, npt.NDArray[np.float64]],
-    entity_dofs: dict[str, npt.NDArray[np.int32]],
+    entity_dofs: list[list[int]],
     data: npt.NDArray,
     cell_info: int,
 ):
@@ -238,7 +238,7 @@ def T_apply_hexahedron(
 @_numba.jit(nopython=True)
 def T_apply_prism(
     entity_transformations: dict[str, npt.NDArray[np.float64]],
-    entity_dofs: dict[str, npt.NDArray[np.int32]],
+    entity_dofs: list[list[int]],
     data: npt.NDArray,
     cell_info: int,
 ):
@@ -267,7 +267,7 @@ def T_apply_prism(
 @_numba.jit(nopython=True)
 def T_apply_pyramid(
     entity_transformations: dict[str, npt.NDArray[np.float64]],
-    entity_dofs: dict[str, npt.NDArray[np.int32]],
+    entity_dofs: list[list[int]],
     data: npt.NDArray,
     cell_info: int,
 ):
@@ -298,8 +298,8 @@ def Tt_apply_right(
     tdim: int,
     edge_count: int,
     face_count: int,
-    entity_transformations: list[int],
-    entity_dofs: list[int],
+    entity_transformations: dict[str, npt.NDArray],
+    entity_dofs: list[list[int]],
     data: npt.NDArray,
     cell_info: int,
     face_types: list[str],
@@ -336,7 +336,7 @@ def Tt_apply_right(
 @_numba.jit(nopython=True)
 def Tt_apply_right_interval(
     entity_transformations: dict[str, npt.NDArray[np.float64]],
-    entity_dofs: dict[str, npt.NDArray[np.int32]],
+    entity_dofs: list[list[int]],
     data: npt.NDArray,
     cell_info: int,
 ):
@@ -356,7 +356,7 @@ def Tt_apply_right_interval(
 @_numba.jit(nopython=True)
 def Tt_apply_right_triangle(
     entity_transformations: dict[str, npt.NDArray[np.float64]],
-    entity_dofs: dict[str, npt.NDArray[np.int32]],
+    entity_dofs: list[list[int]],
     data: npt.NDArray,
     cell_info: int,
 ):
@@ -385,7 +385,7 @@ def Tt_apply_right_triangle(
 @_numba.jit(nopython=True)
 def Tt_apply_right_quadrilateral(
     entity_transformations: dict[str, npt.NDArray[np.float64]],
-    entity_dofs: dict[str, npt.NDArray[np.int32]],
+    entity_dofs: list[list[int]],
     data: npt.NDArray,
     cell_info: int,
 ):
@@ -414,7 +414,7 @@ def Tt_apply_right_quadrilateral(
 @_numba.jit(nopython=True)
 def Tt_apply_right_tetrahedron(
     entity_transformations: dict[str, npt.NDArray[np.float64]],
-    entity_dofs: dict[str, npt.NDArray[np.int32]],
+    entity_dofs: list[list[int]],
     data: npt.NDArray,
     cell_info: int,
 ):
@@ -443,7 +443,7 @@ def Tt_apply_right_tetrahedron(
 @_numba.jit(nopython=True)
 def Tt_apply_right_hexahedron(
     entity_transformations: dict[str, npt.NDArray[np.float64]],
-    entity_dofs: dict[str, npt.NDArray[np.int32]],
+    entity_dofs: list[list[int]],
     data: npt.NDArray,
     cell_info: int,
 ):
@@ -472,7 +472,7 @@ def Tt_apply_right_hexahedron(
 @_numba.jit(nopython=True)
 def Tt_apply_right_prism(
     entity_transformations: dict[str, npt.NDArray[np.float64]],
-    entity_dofs: dict[str, npt.NDArray[np.int32]],
+    entity_dofs: list[list[int]],
     data: npt.NDArray,
     cell_info: int,
 ):
@@ -501,7 +501,7 @@ def Tt_apply_right_prism(
 @_numba.jit(nopython=True)
 def Tt_apply_right_pyramid(
     entity_transformations: dict[str, npt.NDArray[np.float64]],
-    entity_dofs: dict[str, npt.NDArray[np.int32]],
+    entity_dofs: list[list[int]],
     data: npt.NDArray,
     cell_info: int,
 ):

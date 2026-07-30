@@ -5,6 +5,8 @@
 # SPDX-License-Identifier:    MIT
 """Interpolation."""
 
+from typing import Any, cast
+
 import numpy.typing as npt
 
 from basix._basixcpp import (
@@ -51,4 +53,4 @@ def compute_interpolation_operator(
         the 'to' degrees-of-freedom. Shape is (ndofs(element_to),
         ndofs(element_from))
     """
-    return _compute_interpolation_operator(e0._e, e1._e)  # type: ignore
+    return _compute_interpolation_operator(cast(Any, e0._e), cast(Any, e1._e))

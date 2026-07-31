@@ -169,10 +169,11 @@ if(WIN32)
 
   # nanobind_add_stub's INSTALL_TIME marker-file generation below requires
   # importing basix._basixcpp, which (per the note above) can fail on
-  # Windows, silently skipping marker-file creation. Install the static
-  # marker directly so the package is always recognised as typed (PEP
-  # 561), matching the non-Windows branch below.
-  install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/basix/py.typed DESTINATION basix)
+  # Windows, silently skipping marker-file creation. py.typed is not a
+  # tracked source file (it is generated, hence gitignored), so write
+  # the (empty) PEP 561 marker directly at install time instead of
+  # copying it from a source path that may not exist.
+  install(CODE "file(WRITE \"\${CMAKE_INSTALL_PREFIX}/basix/py.typed\" \"\")")
 
   # nanobind automatically installs into ${CMAKE_INSTALL_PREFIX} in
   # INSTALL_TIME mode.

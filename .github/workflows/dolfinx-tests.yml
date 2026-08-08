@@ -4,7 +4,6 @@ name: DOLFINx integration
 # unit tests.
 
 on:
-  push:
   pull_request:
     branches:
       - main

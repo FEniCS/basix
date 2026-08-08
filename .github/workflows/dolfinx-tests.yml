@@ -63,8 +63,8 @@ jobs:
           python3 -m pip -v install --break-system-packages --check-build-dependencies --no-build-isolation 'dolfinx/python/[mypy,test]'
       - name: Run mypy checks
         run: |
-          mypy --config-file python/pyproject.toml -p dolfinx --exclude superlu_dist.py
-          cd python/
+          mypy --config-file dolfinx/python/pyproject.toml -p dolfinx --exclude superlu_dist.py
+          cd dolfinx/python/
           mypy test
         # mypy demo
       - name: Install Python demo/test dependencies

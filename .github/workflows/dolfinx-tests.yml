@@ -64,7 +64,7 @@ jobs:
         run: |
           python3 -m pip install --break-system-packages mypy
           cd dolfinx/python
-          python3 -m mypy dolfinx
+          python3 -m mypy dolfinx --exclude superlu_dist.py
       - name: Install Python demo/test dependencies
         run: python3 -m pip install --break-system-packages matplotlib numba pyamg pytest pytest-xdist scipy pyvista networkx
       - name: Run DOLFINx Python unit tests

@@ -103,7 +103,7 @@ jobs:
         shell: spack-bash {0}
         run: |
           spack env activate ci
-          spack load cmake ninja py-fenics-basix
+          spack load gcc cmake ninja py-fenics-basix
           cmake -G Ninja -DCMAKE_BUILD_TYPE=Debug -B build/demo -S basix-src/demo/cpp/demo_create_and_tabulate
           cmake --build build/demo
           build/demo/demo_create_and_tabulate
@@ -112,7 +112,7 @@ jobs:
         shell: spack-bash {0}
         run: |
           spack env activate ci
-          spack load cmake ninja py-fenics-basix
+          spack load gcc cmake ninja py-fenics-basix
           cmake -G Ninja -DCMAKE_BUILD_TYPE=Debug -B build/test-cmake -S basix-src/test/test_cmake
           cmake --build build/test-cmake
           build/test-cmake/a.out
@@ -121,7 +121,7 @@ jobs:
         shell: spack-bash {0}
         run: |
           spack env activate ci
-          spack load fenics-basix
+          spack load gcc fenics-basix
           cd basix-src/test/test_pkgconfig
           make run
 

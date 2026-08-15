@@ -16,15 +16,30 @@ on:
   merge_group:
     branches:
       - main
-  schedule:
-    # '*' is a special character in YAML, so string must be quoted
-    - cron: "0 2 * * TUE"
   workflow_dispatch:
 
 jobs:
+  # oneAPI and Red Hat don't build on tag pushes (release tags only need
+  # the main CI + macOS); compute that once here rather than repeating
+  # the check in both jobs' `if:`.
+  gate:
+    name: Compute trigger gates
+    runs-on: ubuntu-24.04
+    outputs:
+      is_tag_push: ${{ steps.check.outputs.is_tag_push }}
+    steps:
+      - id: check
+        run: |
+          if [ "${{ github.event_name }}" = "push" ] && [[ "${{ github.ref }}" == refs/tags/* ]]; then
+            echo "is_tag_push=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "is_tag_push=false" >> "$GITHUB_OUTPUT"
+          fi
+
   oneapi:
     name: Build and test (oneAPI)
-    if: github.event_name != 'schedule' && !(github.event_name == 'push' && startsWith(github.ref, 'refs/tags/'))
+    needs: gate
+    if: needs.gate.outputs.is_tag_push != 'true'
     runs-on: ubuntu-24.04
     container: ubuntu:24.04  # Run in container to test with minimal pre-installed packages
     env:
@@ -44,7 +59,7 @@ jobs:
 
       - uses: actions/checkout@v7
 
-      - uses: conda-incubator/setup-miniconda@v4
+      - uses: conda-incubator/setup-miniconda@8ee1f361103df19b6f8c8655fd3967a8ecb162d5 # v4
         with:
           activate-environment: oneapi
           python-version: 3.13
@@ -73,7 +88,8 @@ jobs:
 
   redhat:
     name: Build and test (Red Hat)
-    if: ${{ !(github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')) }}
+    needs: gate
+    if: needs.gate.outputs.is_tag_push != 'true'
     runs-on: ubuntu-24.04
     container: rockylinux/rockylinux:10
     env:
@@ -100,7 +116,6 @@ jobs:
 
   macos:
     name: Build and test (MacOS)
-    if: github.event_name != 'schedule'
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v7
@@ -114,7 +129,7 @@ jobs:
         run: pip -v install -Ccmake.build-type="Developer" .[test]
       - name: Run units tests
         run: |
-          pip install pytest-xdist
+          pip install --only-binary :all: pytest-xdist
           pytest -n auto --durations 20 test/
       - name: Run python demos
         run: pytest demo/python/test.py

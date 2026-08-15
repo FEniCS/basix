@@ -3,15 +3,9 @@ name: Red Hat clone
 # This workflow will test Basix on Red Hat
 
 on:
-  schedule:
-    # '*' is a special character in YAML, so string must be quoted
-    - cron: "0 2 * * TUE"
   pull_request:
     branches:
       - main
-  push:
-    branches:
-      - "main"
   merge_group:
     branches:
       - main

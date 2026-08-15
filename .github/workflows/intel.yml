@@ -3,9 +3,6 @@ name: oneAPI
 # Test Basix using Intel oneAPI compilers and MKL
 
 on:
-  push:
-    branches:
-      - "main"
   pull_request:
     branches:
       - main

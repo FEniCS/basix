@@ -19,27 +19,8 @@ on:
   workflow_dispatch:
 
 jobs:
-  # oneAPI and Red Hat don't build on tag pushes (release tags only need
-  # the main CI + macOS); compute that once here rather than repeating
-  # the check in both jobs' `if:`.
-  gate:
-    name: Compute trigger gates
-    runs-on: ubuntu-24.04
-    outputs:
-      is_tag_push: ${{ steps.check.outputs.is_tag_push }}
-    steps:
-      - id: check
-        run: |
-          if [ "${{ github.event_name }}" = "push" ] && [[ "${{ github.ref }}" == refs/tags/* ]]; then
-            echo "is_tag_push=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "is_tag_push=false" >> "$GITHUB_OUTPUT"
-          fi
-
   oneapi:
     name: Build and test (oneAPI)
-    needs: gate
-    if: needs.gate.outputs.is_tag_push != 'true'
     runs-on: ubuntu-24.04
     container: ubuntu:24.04  # Run in container to test with minimal pre-installed packages
     env:
@@ -88,8 +69,6 @@ jobs:
 
   redhat:
     name: Build and test (Red Hat)
-    needs: gate
-    if: needs.gate.outputs.is_tag_push != 'true'
     runs-on: ubuntu-24.04
     container: rockylinux/rockylinux:10
     env:

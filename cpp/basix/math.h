@@ -131,6 +131,9 @@ template <std::floating_point T>
 std::pair<std::vector<T>, std::vector<T>> eigh(std::span<const T> A,
                                                std::size_t n)
 {
+  if (A.size() != n * n)
+    throw std::runtime_error("Matrix A must be n x n for eigh.");
+
   // Copy A
   std::vector<T> M(A.begin(), A.end());
 
@@ -191,6 +194,12 @@ template <std::floating_point T>
 std::vector<T> solve(md::mdspan<const T, md::dextents<std::size_t, 2>> A,
                      md::mdspan<const T, md::dextents<std::size_t, 2>> B)
 {
+  if (A.extent(0) != A.extent(1))
+    throw std::runtime_error("Matrix A must be square to solve A X = B.");
+  if (A.extent(0) != B.extent(0))
+    throw std::runtime_error("Matrix A and matrix B must have the same "
+                             "number of rows to solve A X = B.");
+
   // Copy A and B to column-major storage
   mdex::mdarray<T, md::dextents<std::size_t, 2>, md::layout_left> _A(
       A.extents()),
@@ -233,6 +242,10 @@ std::vector<T> solve(md::mdspan<const T, md::dextents<std::size_t, 2>> A,
 template <std::floating_point T>
 bool is_singular(md::mdspan<const T, md::dextents<std::size_t, 2>> A)
 {
+  if (A.extent(0) != A.extent(1))
+    throw std::runtime_error(
+        "Matrix A must be square to test for singularity.");
+
   // Copy to column major matrix
   mdex::mdarray<T, md::dextents<std::size_t, 2>, md::layout_left> _A(
       A.extents());
@@ -240,7 +253,7 @@ bool is_singular(md::mdspan<const T, md::dextents<std::size_t, 2>> A)
     for (std::size_t j = 0; j < A.extent(1); ++j)
       _A(i, j) = A(i, j);
 
-  std::vector<T> B(A.extent(1), 1);
+  std::vector<T> B(A.extent(0), 1);
   int N = _A.extent(0);
   int nrhs = 1;
   int lda = _A.extent(0);
@@ -275,7 +288,8 @@ std::vector<std::size_t>
 transpose_lu(std::pair<std::vector<T>, std::array<std::size_t, 2>>& A)
 {
   std::size_t dim = A.second[0];
-  assert(dim == A.second[1]);
+  if (dim != A.second[1])
+    throw std::runtime_error("Matrix A must be square for transpose_lu.");
   int N = dim;
   int info;
   std::vector<int> lu_perm(dim);
@@ -313,9 +327,12 @@ void dot(const U& A, const V& B, W&& C,
 {
   using T = typename std::decay_t<U>::value_type;
 
-  assert(A.extent(1) == B.extent(0));
-  assert(C.extent(0) == A.extent(0));
-  assert(C.extent(1) == B.extent(1));
+  if (A.extent(1) != B.extent(0))
+    throw std::runtime_error("Matrix dimension mismatch: A.extent(1) != "
+                             "B.extent(0) in dot(A, B, C).");
+  if (C.extent(0) != A.extent(0) or C.extent(1) != B.extent(1))
+    throw std::runtime_error("Output matrix C has the wrong shape in "
+                             "dot(A, B, C).");
   if (A.extent(0) * B.extent(1) * A.extent(1) < 256)
   {
     for (std::size_t i = 0; i < A.extent(0); ++i)

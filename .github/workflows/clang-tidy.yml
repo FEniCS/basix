@@ -2,8 +2,6 @@ name: clang-tidy
 
 on:
   push:
-    branches:
-      - "**"
     tags:
       - "v*"
   pull_request:
@@ -13,9 +11,10 @@ on:
     branches:
       - main
   workflow_dispatch:
-  # Weekly build on Mondays at 8 am
-  schedule:
-    - cron: "0 8 * * 1"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 
 jobs:
   clang-tidy:

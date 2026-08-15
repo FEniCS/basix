@@ -17,7 +17,7 @@ concurrency:
 
 jobs:
  valgrind:
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     env:
       VALGRIND_FLAGS: "--suppressions=cpython/Misc/valgrind-python.supp --leak-check=full --show-leak-kinds=all --errors-for-leak-kinds=definite,indirect --error-exitcode=1"
       # Slow, but useful for in-depth info: --track-origins=yes --read-var-info=yes

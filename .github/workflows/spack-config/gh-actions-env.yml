@@ -1,0 +1,24 @@
+spack:
+  concretizer:
+    unify: true
+    reuse: false
+
+  packages:
+    all:
+      # Pin to the generic microarchitecture the shared GitHub Actions
+      # build cache (added by spack/setup-spack) and our own
+      # local-buildcache are built for. Without this, concretization picks
+      # the runner's exact detected microarch, which does not match the
+      # cache's hashes, so every package (including LLVM, for numba)
+      # rebuilds from source instead of being pulled as a binary.
+      require:
+      - target=x86_64_v3
+
+  mirrors:
+    local-buildcache:
+      url: oci://ghcr.io/fenics/basix-spack-buildcache
+      binary: true
+      signed: false
+      access_pair:
+        id_variable: GITHUB_USER
+        secret_variable: GITHUB_TOKEN

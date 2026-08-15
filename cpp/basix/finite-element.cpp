@@ -192,7 +192,7 @@ FiniteElement<T>
 basix::create_element(element::family family, cell::type cell, int degree,
                       element::lagrange_variant lvariant,
                       element::dpc_variant dvariant, bool discontinuous,
-                      std::vector<int> dof_ordering)
+                      const std::vector<int>& dof_ordering)
 {
   if (family == element::family::custom)
   {
@@ -318,11 +318,11 @@ basix::create_element(element::family family, cell::type cell, int degree,
 template basix::FiniteElement<float>
 basix::create_element(element::family, cell::type, int,
                       element::lagrange_variant, element::dpc_variant, bool,
-                      std::vector<int>);
+                      const std::vector<int>&);
 template basix::FiniteElement<double>
 basix::create_element(element::family, cell::type, int,
                       element::lagrange_variant, element::dpc_variant, bool,
-                      std::vector<int>);
+                      const std::vector<int>&);
 //-----------------------------------------------------------------------------
 template <std::floating_point T>
 FiniteElement<T>

@@ -1,0 +1,118 @@
+name: Platform builds
+
+# This workflow builds and tests Basix on additional platforms/toolchains
+# not covered by the main CI: Intel oneAPI compilers/MKL, Red Hat, and
+# macOS.
+
+on:
+  push:
+    tags:
+      - "v*"
+  pull_request:
+    branches:
+      - main
+  merge_group:
+    branches:
+      - main
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  oneapi:
+    name: Build and test (oneAPI)
+    runs-on: ubuntu-26.04
+    container: ubuntu:26.04  # Run in container to test with minimal pre-installed packages
+    env:
+      CC: icx
+      CXX: icpx
+      DEBIAN_FRONTEND: noninteractive
+      CMAKE_GENERATOR: Ninja
+    defaults:
+      run:
+        shell: bash -el {0}
+
+    steps:
+      - name: Install compiler dependencies
+        run: |
+          apt-get -y update
+          apt-get -y install binutils libstdc++-14-dev
+
+      - uses: actions/checkout@v7
+
+      - uses: conda-incubator/setup-miniconda@8ee1f361103df19b6f8c8655fd3967a8ecb162d5 # v4
+        with:
+          activate-environment: oneapi
+          python-version: 3.13
+          channels: https://software.repos.intel.com/python/conda,conda-forge
+
+      - name: Install
+        run: >
+          conda config --set plugins.conda_pypi_pip_warning false &&
+          conda install python=3.13 dpcpp_linux-64 cmake git libblas=*=*mkl
+          matplotlib nanobind ninja numba numpy pip pytest pytest-xdist
+          scikit-build-core scipy sympy
+
+      - name: Install Basix
+        run: |
+          pip -v install --no-build-isolation -Ccmake.build-type="Developer" .
+      - name: Run units tests
+        run: |
+          pip -v install git+https://github.com/FEniCS/ufl.git
+          pytest -n auto --durations 20 test/
+      - name: Run Python demos
+        run: |
+          pytest demo/python/test.py
+      - name: Run C++ demos
+        run: |
+          pytest demo/cpp/test.py
+
+  redhat:
+    name: Build and test (Red Hat)
+    runs-on: ubuntu-26.04
+    container: rockylinux/rockylinux:10
+    env:
+      CC: gcc
+      CXX: g++
+    steps:
+      - name: Install dependencies
+        run: |
+          dnf -y update
+          dnf install -y dnf-plugins-core
+          dnf config-manager --set-enabled crb
+          dnf install -y openblas-devel cmake gcc gcc-c++ git lapack-devel python3 python3-devel python3-pip
+      - name: Upgrade pip
+        run: python3 -m pip install pip --upgrade
+      - uses: actions/checkout@v7
+      - name: Install Basix
+        run: python3 -m pip install -Ccmake.build-type="Developer" .[test]
+      - name: Run units tests
+        run: python3 -m pytest --durations 20 test/
+      - name: Run Python demos
+        run: python3 -m pytest demo/python/test.py
+      - name: Run C++ demos
+        run: python3 -m pytest demo/cpp/test.py
+
+  macos:
+    name: Build and test (MacOS)
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.13"
+      - name: Install dependencies (non-Python)
+        run: brew install ninja
+      - name: Install Basix
+        run: pip -v install -Ccmake.build-type="Developer" .[test]
+      - name: Run units tests
+        run: |
+          pip install --only-binary :all: pytest-xdist
+          pytest -n auto --durations 20 test/
+      - name: Run python demos
+        run: pytest demo/python/test.py
+      - name: Run C++ demos
+        run: pytest demo/cpp/test.py

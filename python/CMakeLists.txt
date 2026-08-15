@@ -158,54 +158,43 @@ elseif(BASIX_SET_INSTALL_RPATH)
   set_target_properties(_basixcpp PROPERTIES INSTALL_RPATH ${_basix_dir})
 endif()
 
-# and the nanobind typing stubs.
+# Generate nanobind type stubs (.pyi). On UNIX-like systems the freshly
+# built module can be imported directly from the build tree (rpath
+# resolves its dependencies), so stubs are generated at build time. On
+# Windows, _basixcpp cannot be imported until it is installed next to
+# its dependent DLLs, so stub generation is deferred to install time -
+# nanobind installs the .pyi automatically in that mode.
 if(WIN32)
-  # On Windows we cannot import basix._basixcpp without bundling in all
-  # external dlls and relying on Windows library search order - effectively a
-  # 'static binary build'.
-
   # This *must* be called prior to nanobind_add_stub
   install(TARGETS _basixcpp LIBRARY DESTINATION basix)
 
-  # nanobind_add_stub's INSTALL_TIME marker-file generation below requires
-  # importing basix._basixcpp, which (per the note above) can fail on
-  # Windows, silently skipping marker-file creation. py.typed is not a
-  # tracked source file (it is generated, hence gitignored), so write
-  # the (empty) PEP 561 marker directly at install time instead of
-  # copying it from a source path that may not exist.
-  install(CODE "file(WRITE \"\${CMAKE_INSTALL_PREFIX}/basix/py.typed\" \"\")")
-
-  # nanobind automatically installs into ${CMAKE_INSTALL_PREFIX} in
-  # INSTALL_TIME mode.
   # DEPENDS is redundant in INSTALL_TIME mode - _basixcpp must be installed.
   nanobind_add_stub(
       _basixcpp_stub
       MODULE basix._basixcpp
       INSTALL_TIME
-      MARKER_FILE basix/py.typed
       VERBOSE
       OUTPUT
         basix/_basixcpp.pyi
   )
 else()
-  # On UNIX-like systems we can import the cpp compiled module before
-  # installing and rely on dynamic linking at import time.
   nanobind_add_stub(
       _basixcpp_stub
       MODULE _basixcpp
       PYTHON_PATH $<TARGET_FILE_DIR:_basixcpp>
       DEPENDS _basixcpp
-      MARKER_FILE ${CMAKE_CURRENT_SOURCE_DIR}/basix/py.typed
       VERBOSE
       OUTPUT
         _basixcpp.pyi
   )
 
   install(TARGETS _basixcpp LIBRARY DESTINATION basix)
-  install(
-    FILES
-      ${CMAKE_CURRENT_SOURCE_DIR}/basix/py.typed
-      ${CMAKE_CURRENT_BINARY_DIR}/_basixcpp.pyi
-    DESTINATION basix
-  )
+  install(FILES ${CMAKE_CURRENT_BINARY_DIR}/_basixcpp.pyi DESTINATION basix)
 endif()
+
+# py.typed (PEP 561 marker) is not a tracked source file - write it
+# directly at install time on both platforms rather than relying on
+# nanobind's MARKER_FILE option, which requires importing the freshly
+# built module (unreliable on Windows, see above) and would otherwise
+# write a build artifact into the source tree on UNIX.
+install(CODE "file(WRITE \"\${CMAKE_INSTALL_PREFIX}/basix/py.typed\" \"\")")

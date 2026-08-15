@@ -152,7 +152,7 @@ FiniteElement<T> create_d_lagrange(cell::type celltype, int degree,
       impl::mdspan_t<const T, 2>(math::eye<T>(ndofs).data(), ndofs, ndofs),
       impl::to_mdspan(x), impl::to_mdspan(M), 0, maps::type::identity,
       sobolev::space::L2, true, degree, degree, variant,
-      element::dpc_variant::unset, dof_ordering);
+      element::dpc_variant::unset, std::move(dof_ordering));
 }
 //----------------------------------------------------------------------------
 template <std::floating_point T>
@@ -255,7 +255,7 @@ FiniteElement<T> create_legendre(cell::type celltype, int degree,
       impl::mdspan_t<T, 2>(math::eye<T>(ndofs).data(), ndofs, ndofs),
       impl::to_mdspan(x), impl::to_mdspan(M), 0, maps::type::identity, space,
       discontinuous, degree, degree, element::lagrange_variant::legendre,
-      element::dpc_variant::unset, dof_ordering);
+      element::dpc_variant::unset, std::move(dof_ordering));
 }
 //-----------------------------------------------------------------------------
 template <std::floating_point T>
@@ -448,7 +448,7 @@ FiniteElement<T> create_bernstein(cell::type celltype, int degree,
       impl::mdspan_t<T, 2>(math::eye<T>(ndofs).data(), ndofs, ndofs),
       impl::to_mdspan(x), impl::to_mdspan(M), 0, maps::type::identity, space,
       discontinuous, degree, degree, element::lagrange_variant::bernstein,
-      element::dpc_variant::unset, dof_ordering);
+      element::dpc_variant::unset, std::move(dof_ordering));
 }
 //-----------------------------------------------------------------------------
 } // namespace
@@ -458,7 +458,7 @@ template <std::floating_point T>
 FiniteElement<T>
 basix::element::create_lagrange(cell::type celltype, int degree,
                                 lagrange_variant variant, bool discontinuous,
-                                std::vector<int> dof_ordering)
+                                const std::vector<int>& dof_ordering)
 {
   if (celltype == cell::type::point)
   {
@@ -822,10 +822,10 @@ FiniteElement<T> basix::element::create_iso(cell::type celltype, int degree,
 /// @cond DOXYGEN_SHOULD_SKIP_THIS
 template FiniteElement<float> element::create_lagrange(cell::type, int,
                                                        lagrange_variant, bool,
-                                                       std::vector<int>);
+                                                       const std::vector<int>&);
 template FiniteElement<double> element::create_lagrange(cell::type, int,
                                                         lagrange_variant, bool,
-                                                        std::vector<int>);
+                                                        const std::vector<int>&);
 template FiniteElement<float> element::create_iso(cell::type, int,
                                                   lagrange_variant, bool);
 template FiniteElement<double> element::create_iso(cell::type, int,

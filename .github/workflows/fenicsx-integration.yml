@@ -11,6 +11,10 @@ on:
       - main
   workflow_dispatch:
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 jobs:
   ffcx:
     name: Run FFCx tests
@@ -97,6 +101,7 @@ jobs:
           mypy --config-file dolfinx/python/pyproject.toml -p dolfinx --exclude superlu_dist.py
           cd dolfinx/python/
           mypy test
+        # mypy demo
       - name: Install Python demo/test dependencies
         run: python3 -m pip install --break-system-packages matplotlib numba pyamg pytest pytest-xdist scipy pyvista networkx
       - name: Run DOLFINx Python unit tests

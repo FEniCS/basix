@@ -8,8 +8,6 @@ on:
   push:
     tags:
       - "v*"
-    branches:
-      - main
   pull_request:
     branches:
       - main
@@ -17,6 +15,10 @@ on:
     branches:
       - main
   workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 
 jobs:
   oneapi:

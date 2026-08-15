@@ -368,7 +368,8 @@ std::pair<std::vector<T>, std::array<std::size_t, 2>> compute_transformation(
     std::array<std::vector<mdspan_t<const T, 4>>, 4> M,
     mdspan_t<const T, 2> coeffs, const mdarray_t<T, 2>& J, T detJ,
     const mdarray_t<T, 2>& K,
-    std::function<std::array<T, 3>(std::span<const T>)> map_point, int degree,
+    const std::function<std::array<T, 3>(std::span<const T>)>& map_point,
+    int degree,
     int tdim, int entity, std::size_t vs, const maps::type map_type,
     const polyset::type ptype)
 {
@@ -494,9 +495,8 @@ template <std::floating_point T>
 std::map<cell::type, std::pair<std::vector<T>, std::array<std::size_t, 3>>>
 doftransforms::compute_entity_transformations(
     cell::type cell_type,
-    std::array<std::vector<md::mdspan<const T, md::dextents<std::size_t, 2>>>,
-               4>
-        x,
+    const std::array<
+        std::vector<md::mdspan<const T, md::dextents<std::size_t, 2>>>, 4>& x,
     std::array<std::vector<md::mdspan<const T, md::dextents<std::size_t, 4>>>,
                4>
         M,
@@ -534,8 +534,9 @@ template std::map<cell::type,
                   std::pair<std::vector<float>, std::array<std::size_t, 3>>>
 doftransforms::compute_entity_transformations(
     cell::type,
-    std::array<
-        std::vector<md::mdspan<const float, md::dextents<std::size_t, 2>>>, 4>,
+    const std::array<
+        std::vector<md::mdspan<const float, md::dextents<std::size_t, 2>>>,
+        4>&,
     std::array<
         std::vector<md::mdspan<const float, md::dextents<std::size_t, 4>>>, 4>,
     md::mdspan<const float, md::dextents<std::size_t, 2>>, int, std::size_t,
@@ -545,8 +546,9 @@ template std::map<cell::type,
                   std::pair<std::vector<double>, std::array<std::size_t, 3>>>
 doftransforms::compute_entity_transformations(
     cell::type,
-    std::array<
-        std::vector<md::mdspan<const double, md::dextents<std::size_t, 2>>>, 4>,
+    const std::array<
+        std::vector<md::mdspan<const double, md::dextents<std::size_t, 2>>>,
+        4>&,
     std::array<
         std::vector<md::mdspan<const double, md::dextents<std::size_t, 4>>>, 4>,
     md::mdspan<const double, md::dextents<std::size_t, 2>>, int, std::size_t,

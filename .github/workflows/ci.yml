@@ -20,8 +20,8 @@ env:
 jobs:
   ci-spack-build:
     name: ci-spack-build
-    runs-on: ubuntu-24.04
-    container: ubuntu:24.04
+    runs-on: ubuntu-26.04
+    container: ubuntu:26.04
     permissions:
       packages: write
 
@@ -95,7 +95,7 @@ jobs:
       # later step fails. The index is rebuilt by the final push.
       - name: Push packages to cache
         run: |
-          spack -e ci buildcache push --base-image ubuntu:24.04 --only dependencies \
+          spack -e ci buildcache push --base-image ubuntu:26.04 --only dependencies \
             --with-build-dependencies --allow-missing local-buildcache
         if: ${{ !cancelled() }}
 
@@ -144,6 +144,6 @@ jobs:
       # rebuilds the index, which is the expensive part.
       - name: Push test packages to cache and update index
         run: |
-          spack -e ci buildcache push --base-image ubuntu:24.04 --allow-missing --update-index local-buildcache \
+          spack -e ci buildcache push --base-image ubuntu:26.04 --allow-missing --update-index local-buildcache \
             py-matplotlib py-numba py-pytest py-pytest-xdist py-scipy py-sympy cmake ninja
         if: ${{ !cancelled() }}

@@ -47,7 +47,7 @@ jobs:
 
   dolfinx:
     name: Run DOLFINx tests
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     container: ghcr.io/fenics/test-env:current-openmpi
 
     env:

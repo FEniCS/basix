@@ -40,7 +40,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-24.04, ubuntu-24.04-arm, macos-26, macos-26-intel, windows-11-arm, windows-2022]
+        os: [ubuntu-26.04, ubuntu-26.04-arm, macos-26, macos-26-intel, windows-11-arm, windows-2022]
 
     steps:
       - uses: actions/checkout@v7
@@ -58,7 +58,7 @@ jobs:
 
   build_sdist:
     name: Build source distribution
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     steps:
       - uses: actions/checkout@v7
         with:
@@ -83,7 +83,7 @@ jobs:
     name: Upload to test PyPI (optional)
     if: ${{ github.event.inputs.test_pypi_publish == 'true' }}
     needs: [build_wheels, build_sdist]
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     environment:
       name: testpypi
       url: https://test.pypi.org/p/fenics-basix
@@ -106,7 +106,7 @@ jobs:
     name: Upload to PyPI (optional)
     if: ${{ github.event.inputs.pypi_publish == 'true' }}
     needs: [build_wheels, build_sdist]
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     environment:
       name: pypi
       url: https://pypi.org/p/fenics-basix

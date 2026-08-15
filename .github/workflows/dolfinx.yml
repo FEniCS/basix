@@ -36,7 +36,7 @@ jobs:
       PRTE_MCA_rmaps_default_mapping_policy: :oversubscribe
 
     steps:
-      - run: apt-get -y update && apt-get install -y bzip2 ca-certificates file g++ gcc gfortran git gzip lsb-release patch pkg-config python3 tar unzip xz-utils zstd
+      - run: apt-get -y update && apt-get install -y bzip2 ca-certificates file g++ gcc gfortran git gzip libgl-dev libosmesa6-dev lsb-release patch pkg-config python3 tar unzip xz-utils zstd
 
       - uses: spack/setup-spack@16b756799ede8b28951287f89bcd3fdb32ec1ca3 # v3.0.0
         with:

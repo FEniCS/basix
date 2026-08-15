@@ -137,9 +137,9 @@ jobs:
         run: |
           spack env activate ci
           spack load gcc py-fenics-dolfinx
-          pip install mypy
-          mypy --config-file dolfinx-src/python/pyproject.toml -p dolfinx --exclude superlu_dist.py
-          (cd dolfinx-src/python && mypy test)
+          python3 -m pip install mypy
+          python3 -m mypy --config-file dolfinx-src/python/pyproject.toml -p dolfinx --exclude superlu_dist.py
+          (cd dolfinx-src/python && python3 -m mypy test)
           python3 -m pytest -n auto dolfinx-src/python/test/unit
 
       - name: Push test cache and update index

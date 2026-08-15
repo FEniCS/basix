@@ -50,8 +50,8 @@ impl::mdarray_t<T, 2> create_nedelec_2d_space(int degree)
   impl::mdarray_t<T, 2> wcoeffs(nv * 2 + ns, psize * 2);
   for (std::size_t i = 0; i < nv; ++i)
   {
-    wcoeffs(i, i) = 1.0;
-    wcoeffs(nv + i, psize + i) = 1.0;
+    wcoeffs[i, i] = 1.0;
+    wcoeffs[nv + i, psize + i] = 1.0;
   }
 
   // Create coefficients for the additional Nedelec polynomials, as a pair
@@ -65,7 +65,7 @@ impl::mdarray_t<T, 2> create_nedelec_2d_space(int degree)
   impl::mdspan_t<T, 2> B(Bb.data(), npts, ncols);
   for (std::size_t k = 0; k < npts; ++k)
     for (std::size_t jc = 0; jc < ncols; ++jc)
-      B(k, jc) = phi(0, nv + jc, k);
+      B[k, jc] = phi[0, nv + jc, k];
 
   // A1(i, k) = wts[k] * pts(k, 1) * phi(0, ns0 + i, k)
   // A2(i, k) = wts[k] * pts(k, 0) * phi(0, ns0 + i, k)
@@ -77,9 +77,9 @@ impl::mdarray_t<T, 2> create_nedelec_2d_space(int degree)
   {
     for (std::size_t k = 0; k < npts; ++k)
     {
-      const T p = wts[k] * phi(0, ns0 + i, k);
-      A1(i, k) = p * pts(k, 1);
-      A2(i, k) = p * pts(k, 0);
+      const T p = wts[k] * phi[0, ns0 + i, k];
+      A1[i, k] = p * pts[k, 1];
+      A2[i, k] = p * pts[k, 0];
     }
   }
 
@@ -93,8 +93,8 @@ impl::mdarray_t<T, 2> create_nedelec_2d_space(int degree)
   {
     for (std::size_t jc = 0; jc < ncols; ++jc)
     {
-      wcoeffs(2 * nv + i, nv + jc) = R1(i, jc);
-      wcoeffs(2 * nv + i, nv + jc + psize) = -R2(i, jc);
+      wcoeffs[2 * nv + i, nv + jc] = R1[i, jc];
+      wcoeffs[2 * nv + i, nv + jc + psize] = -R2[i, jc];
     }
   }
 
@@ -141,7 +141,7 @@ impl::mdarray_t<T, 2> create_nedelec_3d_space(int degree)
   impl::mdarray_t<T, 2> wcoeffs(ndofs, psize * tdim);
   for (std::size_t i = 0; i < tdim; ++i)
     for (std::size_t j = 0; j < nv; ++j)
-      wcoeffs(i * nv + j, i * psize + j) = 1.0;
+      wcoeffs[i * nv + j, i * psize + j] = 1.0;
 
   // Create coefficients for additional Nedelec polynomials, as three
   // matrix-matrix products (via math::dot) rather than an explicit
@@ -154,7 +154,7 @@ impl::mdarray_t<T, 2> create_nedelec_3d_space(int degree)
   impl::mdspan_t<T, 2> B(Bb.data(), npts, ncols);
   for (std::size_t k = 0; k < npts; ++k)
     for (std::size_t jc = 0; jc < ncols; ++jc)
-      B(k, jc) = phi(0, nv + jc, k);
+      B[k, jc] = phi[0, nv + jc, k];
 
   // A[dim](i, k) = wts[k] * pts(k, dim) * phi(0, ns0 + i, k)
   std::array<std::vector<T>, 3> Ab{std::vector<T>(ns * npts),
@@ -167,10 +167,10 @@ impl::mdarray_t<T, 2> create_nedelec_3d_space(int degree)
   for (std::size_t i = 0; i < ns; ++i)
     for (std::size_t k = 0; k < npts; ++k)
     {
-      const T p = wts[k] * phi(0, ns0 + i, k);
-      A[0](i, k) = p * pts(k, 0);
-      A[1](i, k) = p * pts(k, 1);
-      A[2](i, k) = p * pts(k, 2);
+      const T p = wts[k] * phi[0, ns0 + i, k];
+      A[0][i, k] = p * pts[k, 0];
+      A[1][i, k] = p * pts[k, 1];
+      A[2][i, k] = p * pts[k, 2];
     }
 
   // W[dim] = A[dim] * B
@@ -189,23 +189,23 @@ impl::mdarray_t<T, 2> create_nedelec_3d_space(int degree)
     for (std::size_t jc = 0; jc < ncols; ++jc)
     {
       const std::size_t j = nv + jc;
-      const T w0 = W[0](i, jc);
-      const T w1 = W[1](i, jc);
-      const T w2 = W[2](i, jc);
+      const T w0 = W[0][i, jc];
+      const T w1 = W[1][i, jc];
+      const T w2 = W[2][i, jc];
 
       // dim = 2 (first original loop)
       if (i >= ns_remove)
-        wcoeffs(tdim * nv + i - ns_remove, psize + j) = -w2;
-      wcoeffs(tdim * nv + i + ns - ns_remove, j) = w2;
+        wcoeffs[tdim * nv + i - ns_remove, psize + j] = -w2;
+      wcoeffs[tdim * nv + i + ns - ns_remove, j] = w2;
 
       // dim = 1 (second original loop)
-      wcoeffs(tdim * nv + i + ns * 2 - ns_remove, j) = -w1;
+      wcoeffs[tdim * nv + i + ns * 2 - ns_remove, j] = -w1;
       if (i >= ns_remove)
-        wcoeffs(tdim * nv + i - ns_remove, psize * 2 + j) = w1;
+        wcoeffs[tdim * nv + i - ns_remove, psize * 2 + j] = w1;
 
       // dim = 0 (third original loop)
-      wcoeffs(tdim * nv + i + ns - ns_remove, psize * 2 + j) = -w0;
-      wcoeffs(tdim * nv + i + ns * 2 - ns_remove, psize + j) = w0;
+      wcoeffs[tdim * nv + i + ns - ns_remove, psize * 2 + j] = -w0;
+      wcoeffs[tdim * nv + i + ns * 2 - ns_remove, psize + j] = w0;
     }
   }
 

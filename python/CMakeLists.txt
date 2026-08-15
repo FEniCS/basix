@@ -53,7 +53,7 @@ if(NOT "${SKBUILD_SABI_VERSION}" STREQUAL "")
   set(NANOBIND_SABI "STABLE_ABI")
 endif()
 nanobind_add_module(_basixcpp NB_SUPPRESS_WARNINGS ${NANOBIND_SABI} wrapper.cpp)
-target_compile_features(_basixcpp PRIVATE cxx_std_20)
+target_compile_features(_basixcpp PRIVATE cxx_std_23)
 
 # Windows requires all symbols to be manually exported; this exports them
 # automatically as on Unix. No-op on other platforms.
@@ -132,12 +132,6 @@ target_compile_options(
 target_compile_definitions(
   _basixcpp
   PRIVATE $<$<CONFIG:Developer>:${BASIX_PY_CXX_DEVELOPER_DEFINITIONS}>
-)
-
-# TODO: remove after issue https://github.com/FEniCS/basix/issues/842 is resolved
-target_compile_definitions(
-  _basixcpp
-  PRIVATE MDSPAN_USE_PAREN_OPERATOR=1 MDSPAN_USE_BRACKET_OPERATOR=0
 )
 
 if(BASIX_FULL_SKBUILD AND BASIX_SET_INSTALL_RPATH)

@@ -62,8 +62,8 @@ FiniteElement<T> basix::element::create_rtc(cell::type celltype, int degree,
     {
       for (int j = 0; j < nv; ++j)
       {
-        wcoeffs(dof++, j * nv + i) = 1;
-        wcoeffs(dof++, psize + i * nv + j) = 1;
+        wcoeffs[dof++, j * nv + i] = 1;
+        wcoeffs[dof++, psize + i * nv + j] = 1;
       }
     }
   }
@@ -75,9 +75,9 @@ FiniteElement<T> basix::element::create_rtc(cell::type celltype, int degree,
       {
         for (int k = 0; k < nv; ++k)
         {
-          wcoeffs(dof++, k * nv * nv + j * nv + i) = 1;
-          wcoeffs(dof++, psize + i * nv * nv + k * nv + j) = 1;
-          wcoeffs(dof++, psize * 2 + j * nv * nv + i * nv + k) = 1;
+          wcoeffs[dof++, k * nv * nv + j * nv + i] = 1;
+          wcoeffs[dof++, psize + i * nv * nv + k * nv + j] = 1;
+          wcoeffs[dof++, psize * 2 + j * nv * nv + i * nv + k] = 1;
         }
       }
     }
@@ -200,8 +200,8 @@ FiniteElement<T> basix::element::create_nce(cell::type celltype, int degree,
     {
       for (int j = 0; j < nv; ++j)
       {
-        wcoeffs(dof++, i * nv + j) = 1;
-        wcoeffs(dof++, psize + j * nv + i) = 1;
+        wcoeffs[dof++, i * nv + j] = 1;
+        wcoeffs[dof++, psize + j * nv + i] = 1;
       }
     }
   }
@@ -213,9 +213,9 @@ FiniteElement<T> basix::element::create_nce(cell::type celltype, int degree,
       {
         for (int k = 0; k < nv; ++k)
         {
-          wcoeffs(dof++, i * nv * nv + j * nv + k) = 1;
-          wcoeffs(dof++, psize + k * nv * nv + i * nv + j) = 1;
-          wcoeffs(dof++, psize * 2 + j * nv * nv + k * nv + i) = 1;
+          wcoeffs[dof++, i * nv * nv + j * nv + k] = 1;
+          wcoeffs[dof++, psize + k * nv * nv + i * nv + j] = 1;
+          wcoeffs[dof++, psize * 2 + j * nv * nv + k * nv + i] = 1;
         }
       }
     }

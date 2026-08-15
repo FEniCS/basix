@@ -52,7 +52,7 @@ void push_forward(maps::type map_type, Q&& u, const P& U, const R& J,
     assert(U.extent(1) == u.extent(1));
     for (std::size_t i = 0; i < U.extent(0); ++i)
       for (std::size_t j = 0; j < U.extent(1); ++j)
-        u(i, j) = U(i, j);
+        u[i, j] = U[i, j];
     return;
   }
   case maps::type::covariantPiola:
@@ -401,7 +401,7 @@ std::pair<std::vector<T>, std::array<std::size_t, 2>> compute_transformation(
     std::array<T, 3> mp = map_point(
         std::span(pts.data_handle() + p * pts.extent(1), pts.extent(1)));
     for (std::size_t k = 0; k < mapped_pts.extent(1); ++k)
-      mapped_pts(p, k) = mp[k];
+      mapped_pts[p, k] = mp[k];
   }
 
   auto [polyset_vals_b, polyset_shape] = polyset::tabulate(
@@ -429,7 +429,7 @@ std::pair<std::vector<T>, std::array<std::size_t, 2>> compute_transformation(
   for (std::size_t k0 = 0; k0 < result.extent(1); ++k0)
     for (std::size_t k1 = 0; k1 < coeffs.extent(0); ++k1)
       for (std::size_t j = 0; j < vs; ++j)
-        tabulated_data(k0, k1, j) = result(k1 * vs + j, k0);
+        tabulated_data[k0, k1, j] = result[k1 * vs + j, k0];
 
   // J, K and detJ are the same for every point here (a reflection/
   // rotation of the reference cell onto itself, not physical geometry
@@ -466,14 +466,14 @@ std::pair<std::vector<T>, std::array<std::size_t, 2>> compute_transformation(
     // Pack pushed_data
     for (std::size_t k2 = 0; k2 < imat.extent(2); ++k2)
       for (std::size_t k1 = 0; k1 < transform.extent(0); ++k1)
-        pushed_data_i(k2, k1) = pushed_data(k2, k1 + dofstart, i);
+        pushed_data_i[k2, k1] = pushed_data[k2, k1 + dofstart, i];
 
     for (std::size_t d = 0; d < imat.extent(3); ++d)
     {
       // Pack imat
       for (std::size_t k0 = 0; k0 < transform.extent(1); ++k0)
         for (std::size_t k2 = 0; k2 < imat.extent(2); ++k2)
-          imat_id(k0, k2) = imat(k0, i, k2, d);
+          imat_id[k0, k2] = imat[k0, i, k2, d];
 
       // transformT_(k0, k1) = imat_id_(k0, k2) pushed_data_i(k2, k1) +
       // transformT_(k0, k1)
@@ -484,7 +484,7 @@ std::pair<std::vector<T>, std::array<std::size_t, 2>> compute_transformation(
   // Transpose 'transformT' -> 'transform'
   for (std::size_t k0 = 0; k0 < transform.extent(1); ++k0)
     for (std::size_t k1 = 0; k1 < transform.extent(0); ++k1)
-      transform(k1, k0) = transformT(k0, k1);
+      transform[k1, k0] = transformT[k0, k1];
 
   return {std::move(transformb), {transform.extent(0), transform.extent(1)}};
 }

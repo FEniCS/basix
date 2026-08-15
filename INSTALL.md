@@ -63,7 +63,7 @@ pytest test/
 
 ### C++
 
-Basix requires a C++20 compiler and depends on BLAS and LAPACK.
+Basix requires a C++23 compiler and depends on BLAS and LAPACK.
 
 ### Python
 

@@ -69,7 +69,7 @@ FiniteElement<T> basix::element::create_cr(cell::type celltype, int degree,
     for (std::size_t i = 0; i < ft.size(); ++i)
     {
       for (std::size_t j = 0; j < geometry.extent(1); ++j)
-        _x(0, j) += geometry(ft[i], j) / ft.size();
+        _x[0, j] += geometry[ft[i], j] / ft.size();
     }
   }
 
@@ -112,17 +112,17 @@ FiniteElement<T> basix::element::create_cr(cell::type celltype, int degree,
     impl::mdspan_t<const T, 3> phi(_phi.data(), shape);
 
     impl::mdarray_t<T, 2> wcoeffs(ndofs, 9);
-    wcoeffs(0, 0) = 1;
-    wcoeffs(1, 1) = 1;
-    wcoeffs(2, 3) = 1;
+    wcoeffs[0, 0] = 1;
+    wcoeffs[1, 1] = 1;
+    wcoeffs[2, 3] = 1;
     for (int i = 2; i < 9; ++i)
     {
       if (i != 3)
       {
-        wcoeffs(3, i) = 0.0;
+        wcoeffs[3, i] = 0.0;
         for (std::size_t k = 0; k < wts.size(); ++k)
-          wcoeffs(3, i) += wts[k] * (pts(k, 0) + pts(k, 1))
-                           * (pts(k, 0) - pts(k, 1)) * phi(0, i, k);
+          wcoeffs[3, i] += wts[k] * (pts[k, 0] + pts[k, 1])
+                           * (pts[k, 0] - pts[k, 1]) * phi[0, i, k];
       }
     }
 
@@ -147,22 +147,22 @@ FiniteElement<T> basix::element::create_cr(cell::type celltype, int degree,
     impl::mdspan_t<const T, 3> phi(_phi.data(), shape);
 
     impl::mdarray_t<T, 2> wcoeffs(ndofs, 27);
-    wcoeffs(0, 0) = 1;
-    wcoeffs(1, 1) = 1;
-    wcoeffs(2, 3) = 1;
-    wcoeffs(3, 9) = 1;
+    wcoeffs[0, 0] = 1;
+    wcoeffs[1, 1] = 1;
+    wcoeffs[2, 3] = 1;
+    wcoeffs[3, 9] = 1;
     for (int i = 2; i < 27; ++i)
     {
       if (i != 3 and i != 9)
       {
-        wcoeffs(4, i) = 0.0;
-        wcoeffs(5, i) = 0.0;
+        wcoeffs[4, i] = 0.0;
+        wcoeffs[5, i] = 0.0;
         for (std::size_t k = 0; k < wts.size(); ++k)
         {
-          wcoeffs(4, i) += wts[k] * (pts(k, 0) + pts(k, 1))
-                           * (pts(k, 0) - pts(k, 1)) * phi(0, i, k);
-          wcoeffs(5, i) += wts[k] * (pts(k, 0) + pts(k, 2))
-                           * (pts(k, 0) - pts(k, 2)) * phi(0, i, k);
+          wcoeffs[4, i] += wts[k] * (pts[k, 0] + pts[k, 1])
+                           * (pts[k, 0] - pts[k, 1]) * phi[0, i, k];
+          wcoeffs[5, i] += wts[k] * (pts[k, 0] + pts[k, 2])
+                           * (pts[k, 0] - pts[k, 2]) * phi[0, i, k];
         }
       }
     }

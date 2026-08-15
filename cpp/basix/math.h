@@ -197,10 +197,10 @@ std::vector<T> solve(md::mdspan<const T, md::dextents<std::size_t, 2>> A,
       _B(B.extents());
   for (std::size_t i = 0; i < A.extent(0); ++i)
     for (std::size_t j = 0; j < A.extent(1); ++j)
-      _A(i, j) = A(i, j);
+      _A[i, j] = A[i, j];
   for (std::size_t i = 0; i < B.extent(0); ++i)
     for (std::size_t j = 0; j < B.extent(1); ++j)
-      _B(i, j) = B(i, j);
+      _B[i, j] = B[i, j];
 
   int N = _A.extent(0);
   int nrhs = _B.extent(1);
@@ -222,7 +222,7 @@ std::vector<T> solve(md::mdspan<const T, md::dextents<std::size_t, 2>> A,
   md::mdspan<T, md::dextents<std::size_t, 2>> r(rb.data(), _B.extents());
   for (std::size_t i = 0; i < _B.extent(0); ++i)
     for (std::size_t j = 0; j < _B.extent(1); ++j)
-      r(i, j) = _B(i, j);
+      r[i, j] = _B[i, j];
 
   return rb;
 }
@@ -238,7 +238,7 @@ bool is_singular(md::mdspan<const T, md::dextents<std::size_t, 2>> A)
       A.extents());
   for (std::size_t i = 0; i < A.extent(0); ++i)
     for (std::size_t j = 0; j < A.extent(1); ++j)
-      _A(i, j) = A(i, j);
+      _A[i, j] = A[i, j];
 
   std::vector<T> B(A.extent(1), 1);
   int N = _A.extent(0);
@@ -322,11 +322,11 @@ void dot(const U& A, const V& B, W&& C,
     {
       for (std::size_t j = 0; j < B.extent(1); ++j)
       {
-        T C0 = C(i, j);
-        C(i, j) = 0;
-        T& _C = C(i, j);
+        T C0 = C[i, j];
+        C[i, j] = 0;
+        T& _C = C[i, j];
         for (std::size_t k = 0; k < A.extent(1); ++k)
-          _C += A(i, k) * B(k, j);
+          _C += A[i, k] * B[k, j];
         _C = alpha * _C + beta * C0;
       }
     }
@@ -357,7 +357,7 @@ std::vector<T> eye(std::size_t n)
   std::vector<T> I(n * n, 0);
   md::mdspan<T, md::dextents<std::size_t, 2>> Iview(I.data(), n, n);
   for (std::size_t i = 0; i < n; ++i)
-    Iview(i, i) = 1;
+    Iview[i, i] = 1;
   return I;
 }
 
@@ -386,7 +386,7 @@ void orthogonalise(md::mdspan<T, md::dextents<std::size_t, 2>> wcoeffs,
   {
     T norm = 0;
     for (std::size_t k = 0; k < psize; ++k)
-      norm += wcoeffs(i, k) * wcoeffs(i, k);
+      norm += wcoeffs[i, k] * wcoeffs[i, k];
 
     norm = std::sqrt(norm);
     if (norm < 2 * std::numeric_limits<T>::epsilon())
@@ -396,7 +396,7 @@ void orthogonalise(md::mdspan<T, md::dextents<std::size_t, 2>> wcoeffs,
     }
 
     for (std::size_t k = 0; k < psize; ++k)
-      wcoeffs(i, k) /= norm;
+      wcoeffs[i, k] /= norm;
 
     const std::size_t nrem = ndofs - i - 1;
     if (nrem == 0)
@@ -405,9 +405,9 @@ void orthogonalise(md::mdspan<T, md::dextents<std::size_t, 2>> wcoeffs,
     // Row i viewed as a (psize, 1) column and a (1, psize) row (both are
     // just the same contiguous length-psize data), and the remaining
     // rows viewed as an (nrem, psize) block.
-    cmdspan2_t row_col(&wcoeffs(i, 0), psize, 1);
-    cmdspan2_t row_row(&wcoeffs(i, 0), 1, psize);
-    cmdspan2_t tail(&wcoeffs(i + 1, 0), nrem, psize);
+    cmdspan2_t row_col(&wcoeffs[i, 0], psize, 1);
+    cmdspan2_t row_row(&wcoeffs[i, 0], 1, psize);
+    cmdspan2_t tail(&wcoeffs[i + 1, 0], nrem, psize);
 
     // a = tail * row_i
     a_vec.resize(nrem);
@@ -419,10 +419,10 @@ void orthogonalise(md::mdspan<T, md::dextents<std::size_t, 2>> wcoeffs,
     mdspan2_t update_view(update.data(), nrem, psize);
     dot(cmdspan2_t(a_vec.data(), nrem, 1), row_row, update_view);
 
-    mdspan2_t tail_mut(&wcoeffs(i + 1, 0), nrem, psize);
+    mdspan2_t tail_mut(&wcoeffs[i + 1, 0], nrem, psize);
     for (std::size_t j = 0; j < nrem; ++j)
       for (std::size_t k = 0; k < psize; ++k)
-        tail_mut(j, k) -= update_view(j, k);
+        tail_mut[j, k] -= update_view[j, k];
   }
 }
 } // namespace basix::math

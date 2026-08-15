@@ -137,7 +137,7 @@ std::pair<std::vector<T>, std::array<std::size_t, 2>> compute_dual_matrix(
             for (std::size_t i = 0; i < Me.extent(0); ++i)   // Dof index
               for (std::size_t j = 0; j < Me.extent(1); ++j) // Value index
                 for (std::size_t k = 0; k < Me.extent(2); ++k) // Point
-                  D(j, m, dof_index + i) += Me(i, j, k, l) * P(l, m, k);
+                  D[j, m, dof_index + i] += Me[i, j, k, l] * P[l, m, k];
       }
       else
       {
@@ -150,7 +150,7 @@ std::pair<std::vector<T>, std::array<std::size_t, 2>> compute_dual_matrix(
         mdspan_t<T, 2> Pt(Pt_b.data(), P.extent(2), P.extent(1));
         for (std::size_t i = 0; i < Pt.extent(0); ++i)
           for (std::size_t j = 0; j < Pt.extent(1); ++j)
-            Pt(i, j) = P(0, j, i);
+            Pt[i, j] = P[0, j, i];
 
         std::vector<T> De_b(Me.extent(0) * Me.extent(1) * Pt.extent(1));
         mdspan_t<T, 2> De(De_b.data(), Me.extent(0) * Me.extent(1),
@@ -164,7 +164,7 @@ std::pair<std::vector<T>, std::array<std::size_t, 2>> compute_dual_matrix(
         for (std::size_t i = 0; i < Me.extent(0); ++i)
           for (std::size_t j = 0; j < Me.extent(1); ++j)
             for (std::size_t k = 0; k < P.extent(1); ++k)
-              D(j, k, dof_index + i) += De(i * Me.extent(1) + j, k);
+              D[j, k, dof_index + i] += De[i * Me.extent(1) + j, k];
       }
 
       dof_index += M[d][e].extent(0);
@@ -857,13 +857,13 @@ element::make_discontinuous(
     {
       for (std::size_t k0 = 0; k0 < x[i][j].extent(0); ++k0)
         for (std::size_t k1 = 0; k1 < x[i][j].extent(1); ++k1)
-          new_x(k0 + x_n, k1) = x[i][j](k0, k1);
+          new_x[k0 + x_n, k1] = x[i][j][k0, k1];
 
       for (std::size_t k0 = 0; k0 < M[i][j].extent(0); ++k0)
         for (std::size_t k1 = 0; k1 < M[i][j].extent(1); ++k1)
           for (std::size_t k2 = 0; k2 < M[i][j].extent(2); ++k2)
             for (std::size_t k3 = 0; k3 < M[i][j].extent(3); ++k3)
-              new_M(k0 + M_n, k1, k2 + x_n, k3) = M[i][j](k0, k1, k2, k3);
+              new_M[k0 + M_n, k1, k2 + x_n, k3] = M[i][j][k0, k1, k2, k3];
 
       x_n += x[i][j].extent(0);
       M_n += M[i][j].extent(0);
@@ -1130,7 +1130,7 @@ FiniteElement<F>::FiniteElement(
     for (auto& x_e : x_dim)
       for (std::size_t p = 0; p < x_e.extent(0); ++p)
         for (std::size_t k = 0; k < x_e.extent(1); ++k)
-          _points.first.push_back(x_e(p, k));
+          _points.first.push_back(x_e[p, k]);
 
   // Copy into _matM
   const std::size_t value_size
@@ -1179,8 +1179,8 @@ FiniteElement<F>::FiniteElement(
         for (std::size_t k1 = 0; k1 < Mview.extent(1); ++k1)
           for (std::size_t k2 = 0; k2 < Me.extent(2); ++k2)
             for (std::size_t k3 = 0; k3 < Mview.extent(3); ++k3)
-              Mview(k0 + dof_offset, k1, k2 + point_offset, k3)
-                  = Me(k0, k1, k2, k3);
+              Mview[k0 + dof_offset, k1, k2 + point_offset, k3]
+                  = Me[k0, k1, k2, k3];
 
       dof_offset += Me.extent(0);
       point_offset += Me.extent(2);
@@ -1271,7 +1271,7 @@ FiniteElement<F>::FiniteElement(
         F rmin(0), rmax(0), rtot(0);
         for (std::size_t k = 0; k < trans.extent(2); ++k)
         {
-          F r = trans(i, row, k);
+          F r = trans[i, row, k];
           rmin = std::min(r, rmin);
           rmax = std::max(r, rmax);
           rtot += r;
@@ -1286,7 +1286,7 @@ FiniteElement<F>::FiniteElement(
           break;
         }
 
-        if (std::abs(trans(i, row, row) - 1) > eps)
+        if (std::abs(trans[i, row, row] - 1) > eps)
           _dof_transformations_are_identity = false;
       }
     }
@@ -1310,7 +1310,7 @@ FiniteElement<F>::FiniteElement(
           {
             for (std::size_t col = 0; col < trans.extent(1); ++col)
             {
-              if (trans(i, row, col) > 0.5)
+              if (trans[i, row, col] > 0.5)
               {
                 perm[row] = col;
                 inv_perm[col] = row;
@@ -1379,7 +1379,7 @@ FiniteElement<F>::FiniteElement(
                   = {std::vector<F>(dim * dim), {dim, dim}};
               for (std::size_t k0 = 0; k0 < dim; ++k0)
                 for (std::size_t k1 = 0; k1 < dim; ++k1)
-                  mat.first[k0 * dim + k1] = trans(i, k0, k1);
+                  mat.first[k0 * dim + k1] = trans[i, k0, k1];
               std::vector<std::size_t> mat_p = precompute::prepare_matrix(mat);
               etrans.push_back({mat_p, mat});
             }
@@ -1389,7 +1389,7 @@ FiniteElement<F>::FiniteElement(
                   = {std::vector<F>(dim * dim), {dim, dim}};
               for (std::size_t k0 = 0; k0 < dim; ++k0)
                 for (std::size_t k1 = 0; k1 < dim; ++k1)
-                  matT.first[k0 * dim + k1] = trans(i, k1, k0);
+                  matT.first[k0 * dim + k1] = trans[i, k1, k0];
               std::vector<std::size_t> matT_p
                   = precompute::prepare_matrix(matT);
               etransT.push_back({matT_p, matT});
@@ -1399,7 +1399,7 @@ FiniteElement<F>::FiniteElement(
             mdspan_t<F, 2> Mmat(M_b.data(), dim, dim);
             for (std::size_t k0 = 0; k0 < dim; ++k0)
               for (std::size_t k1 = 0; k1 < dim; ++k1)
-                Mmat(k0, k1) = trans(i, k0, k1);
+                Mmat[k0, k1] = trans[i, k0, k1];
 
             // Rotation of a face: this is in the only base transformation
             // such that M^{-1} != M.
@@ -1424,7 +1424,7 @@ FiniteElement<F>::FiniteElement(
                   = {std::vector<F>(dim * dim), {dim, dim}};
               for (std::size_t k0 = 0; k0 < dim; ++k0)
                 for (std::size_t k1 = 0; k1 < dim; ++k1)
-                  mat_inv.first[k0 * dim + k1] = Minv(k0, k1);
+                  mat_inv.first[k0 * dim + k1] = Minv[k0, k1];
               std::vector<std::size_t> mat_inv_p
                   = precompute::prepare_matrix(mat_inv);
               etrans_inv.push_back({mat_inv_p, mat_inv});
@@ -1435,7 +1435,7 @@ FiniteElement<F>::FiniteElement(
                   = {std::vector<F>(dim * dim), {dim, dim}};
               for (std::size_t k0 = 0; k0 < dim; ++k0)
                 for (std::size_t k1 = 0; k1 < dim; ++k1)
-                  mat_invT.first[k0 * dim + k1] = Minv(k1, k0);
+                  mat_invT.first[k0 * dim + k1] = Minv[k1, k0];
               std::vector<std::size_t> mat_invT_p
                   = precompute::prepare_matrix(mat_invT);
               etrans_invT.push_back({mat_invT_p, mat_invT});
@@ -1714,7 +1714,7 @@ FiniteElement<F>::FiniteElement(
     {
       F v = col == row ? 1.0 : 0.0;
       const F eps = 10 * degree * degree * std::numeric_limits<F>::epsilon();
-      if (std::abs(matM(row, col) - v) > eps)
+      if (std::abs(matM[row, col] - v) > eps)
       {
         _interpolation_is_identity = false;
         break;
@@ -1875,14 +1875,14 @@ void FiniteElement<F>::tabulate(int nd, impl::mdspan_t<const F, 2> x,
       for (std::size_t k0 = 0; k0 < basis_data.extent(1); ++k0)
         for (std::size_t k1 = 0; k1 < basis_data.extent(2); ++k1)
           for (std::size_t j = 0; j < vs; ++j)
-            basis_data(p, k0, k1, j) = result(k1 * vs + j, k0);
+            basis_data[p, k0, k1, j] = result[k1 * vs + j, k0];
     }
     else
     {
       for (std::size_t k0 = 0; k0 < basis_data.extent(1); ++k0)
         for (std::size_t k1 = 0; k1 < basis_data.extent(2); ++k1)
           for (std::size_t j = 0; j < vs; ++j)
-            basis_data(p, k0, _dof_ordering[k1], j) = result(k1 * vs + j, k0);
+            basis_data[p, k0, _dof_ordering[k1], j] = result[k1 * vs + j, k0];
     }
   }
 }
@@ -1911,7 +1911,7 @@ FiniteElement<F>::base_transformations() const
   mdspan_t<F, 3> bt(bt_b.data(), shape);
   for (std::size_t i = 0; i < nt; ++i)
     for (std::size_t j = 0; j < ndofs; ++j)
-      bt(i, j, j) = 1.0;
+      bt[i, j, j] = 1.0;
 
   std::size_t dofstart = 0;
   if (_cell_tdim > 0)
@@ -1932,7 +1932,7 @@ FiniteElement<F>::base_transformations() const
         std::size_t entity_ndofs = e.size();
         for (std::size_t i = 0; i < entity_ndofs; ++i)
           for (std::size_t j = 0; j < entity_ndofs; ++j)
-            bt(transform_n, i + dofstart, j + dofstart) = tmp(0, i, j);
+            bt[transform_n, i + dofstart, j + dofstart] = tmp[0, i, j];
 
         ++transform_n;
         dofstart += entity_ndofs;
@@ -1951,12 +1951,12 @@ FiniteElement<F>::base_transformations() const
 
           for (std::size_t i = 0; i < entity_ndofs; ++i)
             for (std::size_t j = 0; j < entity_ndofs; ++j)
-              bt(transform_n, i + dofstart, j + dofstart) = tmp(0, i, j);
+              bt[transform_n, i + dofstart, j + dofstart] = tmp[0, i, j];
           ++transform_n;
 
           for (std::size_t i = 0; i < entity_ndofs; ++i)
             for (std::size_t j = 0; j < entity_ndofs; ++j)
-              bt(transform_n, i + dofstart, j + dofstart) = tmp(1, i, j);
+              bt[transform_n, i + dofstart, j + dofstart] = tmp[1, i, j];
           ++transform_n;
 
           dofstart += entity_ndofs;

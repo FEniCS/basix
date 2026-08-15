@@ -74,13 +74,13 @@ tabulate_bernstein(cell::type celltype, int d, mdspan_t<const T, 2> x)
 
   mdarray_t<T, 2> lambdas(x.extent(1) + 1, x.extent(0));
   for (std::size_t j = 0; j < lambdas.extent(1); ++j)
-    lambdas(0, j) = 1.0;
+    lambdas[0, j] = 1.0;
   for (std::size_t i = 0; i < x.extent(1); ++i)
   {
     for (std::size_t j = 0; j < x.extent(0); ++j)
     {
-      lambdas(0, j) -= x(j, i);
-      lambdas(i + 1, j) = x(j, i);
+      lambdas[0, j] -= x[j, i];
+      lambdas[i + 1, j] = x[j, i];
     }
   }
 
@@ -93,10 +93,10 @@ tabulate_bernstein(cell::type celltype, int d, mdspan_t<const T, 2> x)
   {
     mdarray_t<T, 2>& pl = pow_lambda.emplace_back(d + 1, lambdas.extent(1));
     for (std::size_t j = 0; j < pl.extent(1); ++j)
-      pl(0, j) = 1.0;
+      pl[0, j] = 1.0;
     for (int k = 1; k <= d; ++k)
       for (std::size_t j = 0; j < pl.extent(1); ++j)
-        pl(k, j) = pl(k - 1, j) * lambdas(l, j);
+        pl[k, j] = pl[k - 1, j] * lambdas[l, j];
   }
 
   std::vector<int> powers(lambdas.extent(0), 0);
@@ -108,15 +108,15 @@ tabulate_bernstein(cell::type celltype, int d, mdspan_t<const T, 2> x)
     {
       const int p = choose(d, powers);
       for (std::size_t j = 0; j < values.extent(1); ++j)
-        values(n, j) = p;
+        values[n, j] = p;
     }
 
     for (std::size_t l = 0; l < lambdas.extent(0); ++l)
     {
-      auto pl = mdspan_t<const T, 1>(&pow_lambda[l](powers[l], 0),
+      auto pl = mdspan_t<const T, 1>(&pow_lambda[l][powers[l], 0],
                                      lambdas.extent(1));
       for (std::size_t j = 0; j < values.extent(1); ++j)
-        values(n, j) *= pl(j);
+        values[n, j] *= pl[j];
     }
 
     powers[0] -= 1;
@@ -165,12 +165,12 @@ void tabulate_lagrange_pyramid(
   if (n == 0)
   {
     for (std::size_t j = 0; j < P.extent(1); ++j)
-      P(pyr_idx(0, 0, 0), j) = std::sqrt(3);
+      P[pyr_idx(0, 0, 0), j] = std::sqrt(3);
     return;
   }
 
   for (std::size_t j = 0; j < P.extent(1); ++j)
-    P(pyr_idx(0, 0, 0), j) = 1.0;
+    P[pyr_idx(0, 0, 0), j] = 1.0;
 
   // r = 0
   for (std::size_t p = 0; p <= n; ++p)
@@ -269,7 +269,7 @@ void tabulate_lagrange_pyramid(
       {
         auto pqr = md::submdspan(P, pyr_idx(p, q, r), md::full_extent);
         for (std::size_t i = 0; i < pqr.extent(0); ++i)
-          pqr(i) *= std::sqrt(2 * (q + 0.5) * (p + 0.5)
+          pqr[i] *= std::sqrt(2 * (q + 0.5) * (p + 0.5)
                               * (std::max(p, q) + r + 1.5))
                     * 2;
       }

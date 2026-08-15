@@ -55,7 +55,7 @@ add_library(basix)
 set_target_properties(basix PROPERTIES WINDOWS_EXPORT_ALL_SYMBOLS TRUE)
 
 # Set the C++ standard
-target_compile_features(basix PUBLIC cxx_std_20)
+target_compile_features(basix PUBLIC cxx_std_23)
 
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/basix/version.h.in basix/version.h)
 
@@ -148,7 +148,7 @@ target_include_directories(
 
 target_compile_definitions(
   basix
-  PUBLIC MDSPAN_USE_PAREN_OPERATOR=1 MDSPAN_USE_BRACKET_OPERATOR=0
+  PUBLIC MDSPAN_USE_PAREN_OPERATOR=0 MDSPAN_USE_BRACKET_OPERATOR=1
 )
 
 target_link_libraries(basix PRIVATE BLAS::BLAS LAPACK::LAPACK)

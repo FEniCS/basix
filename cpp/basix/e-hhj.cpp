@@ -40,7 +40,7 @@ FiniteElement<T> basix::element::create_hhj(cell::type celltype, int degree,
 
       const std::size_t s = basis_size;
       for (std::size_t k = 0; k < s; ++k)
-        wcoeffs(yoff * s + k, xoff * s + k) = i == j ? 1.0 : std::sqrt(0.5);
+        wcoeffs[yoff * s + k, xoff * s + k] = i == j ? 1.0 : std::sqrt(0.5);
     }
   }
 
@@ -101,10 +101,10 @@ FiniteElement<T> basix::element::create_hhj(cell::type celltype, int degree,
       for (std::size_t p = 0; p < pts.extent(0); ++p)
       {
         for (std::size_t k = 0; k < _x.extent(1); ++k)
-          _x(p, k) = x0[k];
+          _x[p, k] = x0[k];
         for (std::size_t k0 = 0; k0 + 1 < entity_x.extent(0); ++k0)
           for (std::size_t k1 = 0; k1 < _x.extent(1); ++k1)
-            _x(p, k1) += (entity_x(k0 + 1, k1) - x0[k1]) * pts(p, k0);
+            _x[p, k1] += (entity_x[k0 + 1, k1] - x0[k1]) * pts[p, k0];
       }
 
       auto& _M
@@ -117,9 +117,9 @@ FiniteElement<T> basix::element::create_hhj(cell::type celltype, int degree,
           {
             for (std::size_t k1 = 0; k1 < tdim; ++k1)
             {
-              _M(n, tdim * k0 + k1, q, 0) = normals(e, k0) * normals(e, k1)
+              _M[n, tdim * k0 + k1, q, 0] = normals[e, k0] * normals[e, k1]
                                             * wts[q]
-                                            * moment_values(0, q, n, 0);
+                                            * moment_values[0, q, n, 0];
             }
           }
         }
@@ -152,7 +152,7 @@ FiniteElement<T> basix::element::create_hhj(cell::type celltype, int degree,
       for (std::size_t p = 0; p < pts.extent(0); ++p)
       {
         for (std::size_t k = 0; k < pts.extent(1); ++k)
-          _x(p, k) += pts(p, k);
+          _x[p, k] += pts[p, k];
       }
 
       auto& _M = M[tdim].emplace_back(ndofs * 3, tdim * tdim, pts.extent(0), 1);
@@ -167,16 +167,16 @@ FiniteElement<T> basix::element::create_hhj(cell::type celltype, int degree,
         for (std::size_t q = 0; q < pts.extent(0); ++q)
         {
           // [0, 1], [1, 0]
-          _M(n * 3, 1, q, 0) = 1.0 * wts[q] * moment_values(0, q, n, 0);
-          _M(n * 3, 2, q, 0) = 1.0 * wts[q] * moment_values(0, q, n, 0);
+          _M[n * 3, 1, q, 0] = 1.0 * wts[q] * moment_values[0, q, n, 0];
+          _M[n * 3, 2, q, 0] = 1.0 * wts[q] * moment_values[0, q, n, 0];
           // [-2, 1], [1, 0]
-          _M(n * 3 + 1, 0, q, 0) = -2.0 * wts[q] * moment_values(0, q, n, 0);
-          _M(n * 3 + 1, 1, q, 0) = 1.0 * wts[q] * moment_values(0, q, n, 0);
-          _M(n * 3 + 1, 2, q, 0) = 1.0 * wts[q] * moment_values(0, q, n, 0);
+          _M[n * 3 + 1, 0, q, 0] = -2.0 * wts[q] * moment_values[0, q, n, 0];
+          _M[n * 3 + 1, 1, q, 0] = 1.0 * wts[q] * moment_values[0, q, n, 0];
+          _M[n * 3 + 1, 2, q, 0] = 1.0 * wts[q] * moment_values[0, q, n, 0];
           // [0, 1], [1, -2]
-          _M(n * 3 + 2, 1, q, 0) = -1.0 * wts[q] * moment_values(0, q, n, 0);
-          _M(n * 3 + 2, 2, q, 0) = -1.0 * wts[q] * moment_values(0, q, n, 0);
-          _M(n * 3 + 2, 3, q, 0) = 2.0 * wts[q] * moment_values(0, q, n, 0);
+          _M[n * 3 + 2, 1, q, 0] = -1.0 * wts[q] * moment_values[0, q, n, 0];
+          _M[n * 3 + 2, 2, q, 0] = -1.0 * wts[q] * moment_values[0, q, n, 0];
+          _M[n * 3 + 2, 3, q, 0] = 2.0 * wts[q] * moment_values[0, q, n, 0];
         }
       }
     }
@@ -200,7 +200,7 @@ FiniteElement<T> basix::element::create_hhj(cell::type celltype, int degree,
     for (std::size_t p = 0; p < pts.extent(0); ++p)
     {
       for (std::size_t k = 0; k < pts.extent(1); ++k)
-        _x(p, k) += pts(p, k);
+        _x[p, k] += pts[p, k];
     }
 
     auto& _M = M[tdim].emplace_back(ndofs0 * 4 + ndofs1 * 2, tdim * tdim,
@@ -218,39 +218,39 @@ FiniteElement<T> basix::element::create_hhj(cell::type celltype, int degree,
         for (std::size_t q = 0; q < pts.extent(0); ++q)
         {
           // [0, 1, 1], [1, 0, 1], [1, 1, 0]
-          _M(n * 4, 1, q, 0) = 1.0 * wts[q] * moment_values(0, q, n, 0);
-          _M(n * 4, 2, q, 0) = 1.0 * wts[q] * moment_values(0, q, n, 0);
-          _M(n * 4, 3, q, 0) = 1.0 * wts[q] * moment_values(0, q, n, 0);
-          _M(n * 4, 5, q, 0) = 1.0 * wts[q] * moment_values(0, q, n, 0);
-          _M(n * 4, 6, q, 0) = 1.0 * wts[q] * moment_values(0, q, n, 0);
-          _M(n * 4, 7, q, 0) = 1.0 * wts[q] * moment_values(0, q, n, 0);
+          _M[n * 4, 1, q, 0] = 1.0 * wts[q] * moment_values[0, q, n, 0];
+          _M[n * 4, 2, q, 0] = 1.0 * wts[q] * moment_values[0, q, n, 0];
+          _M[n * 4, 3, q, 0] = 1.0 * wts[q] * moment_values[0, q, n, 0];
+          _M[n * 4, 5, q, 0] = 1.0 * wts[q] * moment_values[0, q, n, 0];
+          _M[n * 4, 6, q, 0] = 1.0 * wts[q] * moment_values[0, q, n, 0];
+          _M[n * 4, 7, q, 0] = 1.0 * wts[q] * moment_values[0, q, n, 0];
 
           // [-6, 1, 1], [1, 0, 1], [1, 1, 0]
-          _M(n * 4 + 1, 0, q, 0) = -6.0 * wts[q] * moment_values(0, q, n, 0);
-          _M(n * 4 + 1, 1, q, 0) = 1.0 * wts[q] * moment_values(0, q, n, 0);
-          _M(n * 4 + 1, 2, q, 0) = 1.0 * wts[q] * moment_values(0, q, n, 0);
-          _M(n * 4 + 1, 3, q, 0) = 1.0 * wts[q] * moment_values(0, q, n, 0);
-          _M(n * 4 + 1, 5, q, 0) = 1.0 * wts[q] * moment_values(0, q, n, 0);
-          _M(n * 4 + 1, 6, q, 0) = 1.0 * wts[q] * moment_values(0, q, n, 0);
-          _M(n * 4 + 1, 7, q, 0) = 1.0 * wts[q] * moment_values(0, q, n, 0);
+          _M[n * 4 + 1, 0, q, 0] = -6.0 * wts[q] * moment_values[0, q, n, 0];
+          _M[n * 4 + 1, 1, q, 0] = 1.0 * wts[q] * moment_values[0, q, n, 0];
+          _M[n * 4 + 1, 2, q, 0] = 1.0 * wts[q] * moment_values[0, q, n, 0];
+          _M[n * 4 + 1, 3, q, 0] = 1.0 * wts[q] * moment_values[0, q, n, 0];
+          _M[n * 4 + 1, 5, q, 0] = 1.0 * wts[q] * moment_values[0, q, n, 0];
+          _M[n * 4 + 1, 6, q, 0] = 1.0 * wts[q] * moment_values[0, q, n, 0];
+          _M[n * 4 + 1, 7, q, 0] = 1.0 * wts[q] * moment_values[0, q, n, 0];
 
           // [0, 1, 1], [1, -6, 1], [1, 1, 0]
-          _M(n * 4 + 2, 1, q, 0) = 1.0 * wts[q] * moment_values(0, q, n, 0);
-          _M(n * 4 + 2, 2, q, 0) = 1.0 * wts[q] * moment_values(0, q, n, 0);
-          _M(n * 4 + 2, 3, q, 0) = 1.0 * wts[q] * moment_values(0, q, n, 0);
-          _M(n * 4 + 2, 4, q, 0) = -6.0 * wts[q] * moment_values(0, q, n, 0);
-          _M(n * 4 + 2, 5, q, 0) = 1.0 * wts[q] * moment_values(0, q, n, 0);
-          _M(n * 4 + 2, 6, q, 0) = 1.0 * wts[q] * moment_values(0, q, n, 0);
-          _M(n * 4 + 2, 7, q, 0) = 1.0 * wts[q] * moment_values(0, q, n, 0);
+          _M[n * 4 + 2, 1, q, 0] = 1.0 * wts[q] * moment_values[0, q, n, 0];
+          _M[n * 4 + 2, 2, q, 0] = 1.0 * wts[q] * moment_values[0, q, n, 0];
+          _M[n * 4 + 2, 3, q, 0] = 1.0 * wts[q] * moment_values[0, q, n, 0];
+          _M[n * 4 + 2, 4, q, 0] = -6.0 * wts[q] * moment_values[0, q, n, 0];
+          _M[n * 4 + 2, 5, q, 0] = 1.0 * wts[q] * moment_values[0, q, n, 0];
+          _M[n * 4 + 2, 6, q, 0] = 1.0 * wts[q] * moment_values[0, q, n, 0];
+          _M[n * 4 + 2, 7, q, 0] = 1.0 * wts[q] * moment_values[0, q, n, 0];
 
           // [0, 1, 1], [1, 0, 1], [1, 1, -6]
-          _M(n * 4 + 3, 1, q, 0) = 1.0 * wts[q] * moment_values(0, q, n, 0);
-          _M(n * 4 + 3, 2, q, 0) = 1.0 * wts[q] * moment_values(0, q, n, 0);
-          _M(n * 4 + 3, 3, q, 0) = 1.0 * wts[q] * moment_values(0, q, n, 0);
-          _M(n * 4 + 3, 5, q, 0) = 1.0 * wts[q] * moment_values(0, q, n, 0);
-          _M(n * 4 + 3, 6, q, 0) = 1.0 * wts[q] * moment_values(0, q, n, 0);
-          _M(n * 4 + 3, 7, q, 0) = 1.0 * wts[q] * moment_values(0, q, n, 0);
-          _M(n * 4 + 3, 8, q, 0) = -6.0 * wts[q] * moment_values(0, q, n, 0);
+          _M[n * 4 + 3, 1, q, 0] = 1.0 * wts[q] * moment_values[0, q, n, 0];
+          _M[n * 4 + 3, 2, q, 0] = 1.0 * wts[q] * moment_values[0, q, n, 0];
+          _M[n * 4 + 3, 3, q, 0] = 1.0 * wts[q] * moment_values[0, q, n, 0];
+          _M[n * 4 + 3, 5, q, 0] = 1.0 * wts[q] * moment_values[0, q, n, 0];
+          _M[n * 4 + 3, 6, q, 0] = 1.0 * wts[q] * moment_values[0, q, n, 0];
+          _M[n * 4 + 3, 7, q, 0] = 1.0 * wts[q] * moment_values[0, q, n, 0];
+          _M[n * 4 + 3, 8, q, 0] = -6.0 * wts[q] * moment_values[0, q, n, 0];
         }
       }
     }
@@ -264,23 +264,23 @@ FiniteElement<T> basix::element::create_hhj(cell::type celltype, int degree,
       for (std::size_t q = 0; q < pts.extent(0); ++q)
       {
         // [0, 0, -1], [0, 0, 1], [-1, 1, 0]
-        _M(ndofs0 * 4 + n * 2, 2, q, 0)
-            = -1.0 * wts[q] * moment_values(0, q, n, 0);
-        _M(ndofs0 * 4 + n * 2, 5, q, 0)
-            = 1.0 * wts[q] * moment_values(0, q, n, 0);
-        _M(ndofs0 * 4 + n * 2, 6, q, 0)
-            = -1.0 * wts[q] * moment_values(0, q, n, 0);
-        _M(ndofs0 * 4 + n * 2, 7, q, 0)
-            = 1.0 * wts[q] * moment_values(0, q, n, 0);
+        _M[ndofs0 * 4 + n * 2, 2, q, 0]
+            = -1.0 * wts[q] * moment_values[0, q, n, 0];
+        _M[ndofs0 * 4 + n * 2, 5, q, 0]
+            = 1.0 * wts[q] * moment_values[0, q, n, 0];
+        _M[ndofs0 * 4 + n * 2, 6, q, 0]
+            = -1.0 * wts[q] * moment_values[0, q, n, 0];
+        _M[ndofs0 * 4 + n * 2, 7, q, 0]
+            = 1.0 * wts[q] * moment_values[0, q, n, 0];
         // [0, -1, 0], [-1, 0, 1], [0, 1, 0]
-        _M(ndofs0 * 4 + n * 2 + 1, 1, q, 0)
-            = -1.0 * wts[q] * moment_values(0, q, n, 0);
-        _M(ndofs0 * 4 + n * 2 + 1, 3, q, 0)
-            = -1.0 * wts[q] * moment_values(0, q, n, 0);
-        _M(ndofs0 * 4 + n * 2 + 1, 5, q, 0)
-            = 1.0 * wts[q] * moment_values(0, q, n, 0);
-        _M(ndofs0 * 4 + n * 2 + 1, 7, q, 0)
-            = 1.0 * wts[q] * moment_values(0, q, n, 0);
+        _M[ndofs0 * 4 + n * 2 + 1, 1, q, 0]
+            = -1.0 * wts[q] * moment_values[0, q, n, 0];
+        _M[ndofs0 * 4 + n * 2 + 1, 3, q, 0]
+            = -1.0 * wts[q] * moment_values[0, q, n, 0];
+        _M[ndofs0 * 4 + n * 2 + 1, 5, q, 0]
+            = 1.0 * wts[q] * moment_values[0, q, n, 0];
+        _M[ndofs0 * 4 + n * 2 + 1, 7, q, 0]
+            = 1.0 * wts[q] * moment_values[0, q, n, 0];
       }
     }
   }

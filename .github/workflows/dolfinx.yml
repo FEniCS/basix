@@ -1,8 +1,7 @@
-name: FEniCSx integration
+name: DOLFINx integration
 
-# Install Basix and run the FFCx and DOLFINx unit tests against it.
-# DOLFINx is built and tested via Spack, exercising the fenics-dolfinx
-# and py-fenics-dolfinx Spack packages (without PETSc).
+# Build and test DOLFINx via Spack against Basix, exercising the
+# fenics-dolfinx and py-fenics-dolfinx Spack packages (without PETSc).
 
 on:
   pull_request:
@@ -18,41 +17,6 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  ffcx:
-    name: Run FFCx tests
-    runs-on: ubuntu-26.04
-    steps:
-      - uses: actions/checkout@v7
-      - name: Load environment variables
-        run: cat .github/workflows/fenicsx-refs.env >> $GITHUB_ENV
-      - name: Set up Python
-        uses: actions/setup-python@v7
-        with:
-          python-version: '3.14'
-      - name: Install dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y libopenblas-dev liblapack-dev graphviz libgraphviz-dev ninja-build
-      - name: Install UFL
-        run: pip install git+https://github.com/${{ env.ufl_repository }}.git@${{ env.ufl_ref }}
-      - name: Install Basix
-        run: pip -v install .[ci]
-      - name: Get FFCx source
-        uses: actions/checkout@v7
-        with:
-          path: ./ffcx
-          repository: ${{ env.ffcx_repository }}
-          ref: ${{ env.ffcx_ref }}
-      - name: Install FFCx
-        run: pip install ./ffcx[ci]
-      - name: Run FFCx tests
-        working-directory: ffcx/test
-        run: >
-          pytest .
-          -n auto
-          --ignore=ffcx/test/test_lnodes.py
-          --ignore=ffcx/test/test_custom_data.py
-
   dolfinx:
     name: Run DOLFINx tests (Spack)
     runs-on: ubuntu-26.04

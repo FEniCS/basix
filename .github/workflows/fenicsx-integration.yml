@@ -84,42 +84,25 @@ jobs:
 
       - uses: actions/checkout@v7
         with:
-          repository: ${{ env.ufl_repository }}
-          ref: ${{ env.ufl_ref }}
-          path: ufl-src
-
-      - uses: actions/checkout@v7
-        with:
-          repository: ${{ env.ffcx_repository }}
-          ref: ${{ env.ffcx_ref }}
-          path: ffcx-src
-
-      - uses: actions/checkout@v7
-        with:
           repository: ${{ env.dolfinx_repository }}
           ref: ${{ env.dolfinx_ref }}
           path: dolfinx-src
 
       - run: |
           echo "BASIX_SHA=$(git -C $GITHUB_WORKSPACE/basix-src rev-parse HEAD)" >> $GITHUB_ENV
-          echo "UFL_SHA=$(git -C $GITHUB_WORKSPACE/ufl-src rev-parse HEAD)" >> $GITHUB_ENV
-          echo "FFCX_SHA=$(git -C $GITHUB_WORKSPACE/ffcx-src rev-parse HEAD)" >> $GITHUB_ENV
           echo "DOLFINX_SHA=$(git -C $GITHUB_WORKSPACE/dolfinx-src rev-parse HEAD)" >> $GITHUB_ENV
 
       - run: |
           spack env create ci basix-src/.github/workflows/spack-config/gh-actions-env.yml
           spack -e ci develop --no-clone --path $GITHUB_WORKSPACE/basix-src fenics-basix@main
           spack -e ci develop --no-clone --path $GITHUB_WORKSPACE/basix-src py-fenics-basix@main
-          spack -e ci develop --no-clone --path $GITHUB_WORKSPACE/ufl-src py-fenics-ufl@main
-          spack -e ci develop --no-clone --path $GITHUB_WORKSPACE/ffcx-src fenics-ufcx@main
-          spack -e ci develop --no-clone --path $GITHUB_WORKSPACE/ffcx-src py-fenics-ffcx@main
           spack -e ci develop --no-clone --path $GITHUB_WORKSPACE/dolfinx-src fenics-dolfinx@main
           spack -e ci develop --no-clone --path $GITHUB_WORKSPACE/dolfinx-src py-fenics-dolfinx@main
           spack -e ci add fenics-basix@main commit=$BASIX_SHA build_type=Developer
           spack -e ci add py-fenics-basix@main commit=$BASIX_SHA +ufl
-          spack -e ci add py-fenics-ufl@main commit=$UFL_SHA
-          spack -e ci add fenics-ufcx@main commit=$FFCX_SHA
-          spack -e ci add py-fenics-ffcx@main commit=$FFCX_SHA
+          spack -e ci add py-fenics-ufl@main
+          spack -e ci add fenics-ufcx@main
+          spack -e ci add py-fenics-ffcx@main
           spack -e ci add fenics-dolfinx@main commit=$DOLFINX_SHA build_type=Developer
           spack -e ci add py-fenics-dolfinx@main commit=$DOLFINX_SHA
           spack -e ci add py-matplotlib py-numba py-pyamg py-pytest py-pytest-xdist py-scipy py-pyvista py-networkx py-mypy catch2 cmake ninja
@@ -138,27 +121,14 @@ jobs:
           cmake --build build/dolfinx-cpp
           ctest --test-dir build/dolfinx-cpp -V --output-on-failure -R unittests
 
-      - name: Run mypy checks
+      - name: Run DOLFINx Python tests
         shell: spack-bash {0}
         run: |
           spack env activate ci
           spack load gcc py-fenics-dolfinx py-mypy
           mypy --config-file dolfinx-src/python/pyproject.toml -p dolfinx --exclude superlu_dist.py
-          cd dolfinx-src/python/
-          mypy test
-
-      - name: Run DOLFINx Python unit tests
-        shell: spack-bash {0}
-        run: |
-          spack env activate ci
-          spack load gcc py-fenics-dolfinx
+          (cd dolfinx-src/python && mypy test)
           python3 -m pytest -n auto dolfinx-src/python/test/unit
-
-      - name: Run DOLFINx Python demos
-        shell: spack-bash {0}
-        run: |
-          spack env activate ci
-          spack load gcc py-fenics-dolfinx
           python3 -m pytest -n auto -m serial --durations 10 dolfinx-src/python/demo/test.py
 
       - name: Push test cache and update index

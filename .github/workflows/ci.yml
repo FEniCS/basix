@@ -121,9 +121,9 @@ jobs:
         shell: spack-bash {0}
         run: |
           spack env activate ci
-          spack load gcc fenics-basix
+          spack load fenics-basix
           cd basix-src/test/test_pkgconfig
-          make run
+          spack build-env --dirty fenics-basix -- make run
 
       - name: Run Python unit tests
         shell: spack-bash {0}

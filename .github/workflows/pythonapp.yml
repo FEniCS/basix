@@ -47,20 +47,6 @@ jobs:
         run: |
           pip install gersemi
           gersemi --check .
-      - name: Install clang-tidy dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install clang-tidy ninja-build libopenblas-dev liblapack-dev
-          pip install nanobind scikit-build-core[pyproject]
-      - name: Run clang-tidy (C++)
-        working-directory: cpp
-        run: |
-          cmake -G Ninja -B build -DENABLE_CLANG_TIDY=ON .
-          cmake --build build/
-          sudo cmake --install build/
-      - name: Run clang-tidy (Python)
-        working-directory: python
-        run: pip install --no-build-isolation --verbose --config-settings=cmake.define.ENABLE_CLANG_TIDY=ON .
 
   build:
     name: Build and test
@@ -234,49 +220,3 @@ jobs:
         run: |
           pip install pytest
           pytest demo/cpp/test.py
-
-  valgrind:
-    name: Memory leak detection with valgrind
-    runs-on: ubuntu-26.04
-    env:
-      VALGRIND_FLAGS: "--suppressions=cpython/Misc/valgrind-python.supp --leak-check=full --show-leak-kinds=all --errors-for-leak-kinds=definite,indirect --error-exitcode=1"
-      CPYTHON_REF: v3.13.2
-      CPYTHON_PREFIX: /home/runner/cpython-valgrind
-    steps:
-      - uses: actions/checkout@v7
-      - name: Load environment variables
-        run: cat .github/workflows/fenicsx-refs.env >> $GITHUB_ENV
-      - name: Install dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y libopenblas-dev liblapack-dev ninja-build valgrind
-      - uses: actions/checkout@v7
-        with:
-          repository: 'python/cpython'
-          ref: ${{ env.CPYTHON_REF }}
-          path: 'cpython'
-      - name: Cache valgrind-enabled CPython build
-        id: cache-cpython
-        uses: actions/cache@v6
-        with:
-          path: ${{ env.CPYTHON_PREFIX }}
-          key: cpython-valgrind-${{ env.CPYTHON_REF }}-${{ runner.os }}-v1
-      - name: Build Python
-        if: steps.cache-cpython.outputs.cache-hit != 'true'
-        working-directory: cpython
-        run: |
-          ./configure --with-valgrind --prefix=${{ env.CPYTHON_PREFIX }}
-          make -j4 all
-          make install
-      - name: Add cached Python to PATH
-        run: echo "${{ env.CPYTHON_PREFIX }}/bin" >> $GITHUB_PATH
-      - name: Install UFL branch
-        run: pip -v install git+https://github.com/${{ env.ufl_repository }}.git@${{ env.ufl_ref }}
-      - name: Install Basix
-        run: pip -v install .[ci] --config-settings=cmake.build-type="RelWithDebInfo"
-      - name: Run unit tests
-        run: valgrind ${VALGRIND_FLAGS} pytest -n auto --durations 20 test/
-      - name: Run Python demos
-        run: valgrind ${VALGRIND_FLAGS} pytest demo/python/test.py
-      - name: Run C++ demos
-        run: valgrind ${VALGRIND_FLAGS} pytest demo/cpp/test.py

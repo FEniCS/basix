@@ -3,9 +3,6 @@ name: FEniCSx integration
 # Install Basix and run the FFCx and DOLFINx unit tests against it.
 
 on:
-  push:
-    branches:
-      - "main"
   pull_request:
     branches:
       - main
@@ -50,7 +47,6 @@ jobs:
 
   dolfinx:
     name: Run DOLFINx tests
-    if: github.event_name != 'push'
     runs-on: ubuntu-24.04
     container: ghcr.io/fenics/test-env:current-openmpi
 

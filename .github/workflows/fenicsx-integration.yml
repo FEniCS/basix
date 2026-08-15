@@ -1,6 +1,8 @@
 name: FEniCSx integration
 
 # Install Basix and run the FFCx and DOLFINx unit tests against it.
+# DOLFINx is built and tested via Spack, exercising the fenics-dolfinx
+# and py-fenics-dolfinx Spack packages (without PETSc).
 
 on:
   pull_request:
@@ -52,62 +54,115 @@ jobs:
           --ignore=ffcx/test/test_custom_data.py
 
   dolfinx:
-    name: Run DOLFINx tests
+    name: Run DOLFINx tests (Spack)
     runs-on: ubuntu-26.04
-    container: ghcr.io/fenics/test-env:current-openmpi
-
+    container: ubuntu:26.04
+    permissions:
+      packages: write
     env:
-      PETSC_ARCH: linux-gnu-complex64-32
-      OMPI_ALLOW_RUN_AS_ROOT: 1
-      OMPI_ALLOW_RUN_AS_ROOT_CONFIRM: 1
-      PRTE_MCA_rmaps_default_mapping_policy: :oversubscribe   # Newer OpenMPI
-      OMPI_MCA_rmaps_base_oversubscribe: true                 # Older OpenMPI
+      GITHUB_USER: ${{ github.actor }}
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
     steps:
-      - uses: actions/checkout@v7
-      - name: Load environment variables
-        run: cat .github/workflows/fenicsx-refs.env >> $GITHUB_ENV
-      - name: Install Basix
-        run: |
-          cmake -G Ninja -DCMAKE_BUILD_TYPE=Developer -B build-dir -S cpp/
-          cmake --build build-dir/
-          cmake --install build-dir/
-          # This tests non-RPATH based linking.
-          ldconfig
-          python3 -m pip -v install -Ccmake.args=-DBASIX_SET_INSTALL_RPATH=OFF --break-system-packages python/
-      - name: Install FEniCS Python components
-        run: |
-          python3 -m pip install --break-system-packages git+https://github.com/${{ env.ufl_repository }}.git@${{ env.ufl_ref }}
-          python3 -m pip install --break-system-packages git+https://github.com/${{ env.ffcx_repository }}.git@${{ env.ffcx_ref }}
-      - name: Get DOLFINx
-        uses: actions/checkout@v7
+      - run: apt-get -y update && apt-get install -y bzip2 ca-certificates file g++ gcc gfortran git gzip lsb-release patch pkg-config python3 tar unzip xz-utils zstd
+
+      - uses: spack/setup-spack@16b756799ede8b28951287f89bcd3fdb32ec1ca3 # v3.0.0
         with:
-          path: ./dolfinx
+          spack_ref: v1.2.2
+          packages_ref: d342cee94fb90fb020776c8bd8500b54a19c63cf
+
+      - uses: actions/checkout@v7
+        with:
+          repository: fenics/spack-fenics
+          path: spack-fenics
+      - run: spack repo add --name fenics $GITHUB_WORKSPACE/spack-fenics/spack_repo/fenics
+
+      - uses: actions/checkout@v7
+        with:
+          path: basix-src
+      - run: cat basix-src/.github/workflows/fenicsx-refs.env >> $GITHUB_ENV
+
+      - uses: actions/checkout@v7
+        with:
+          repository: ${{ env.ufl_repository }}
+          ref: ${{ env.ufl_ref }}
+          path: ufl-src
+
+      - uses: actions/checkout@v7
+        with:
+          repository: ${{ env.ffcx_repository }}
+          ref: ${{ env.ffcx_ref }}
+          path: ffcx-src
+
+      - uses: actions/checkout@v7
+        with:
           repository: ${{ env.dolfinx_repository }}
           ref: ${{ env.dolfinx_ref }}
-      - name: Install DOLFINx (C++)
-        run: |
-          cmake -G Ninja -DCMAKE_BUILD_TYPE=Developer -DBUILD_TESTING=true -B build -S dolfinx/cpp/
-          cmake --build build
-          cmake --install build
+          path: dolfinx-src
+
+      - run: |
+          echo "BASIX_SHA=$(git -C $GITHUB_WORKSPACE/basix-src rev-parse HEAD)" >> $GITHUB_ENV
+          echo "UFL_SHA=$(git -C $GITHUB_WORKSPACE/ufl-src rev-parse HEAD)" >> $GITHUB_ENV
+          echo "FFCX_SHA=$(git -C $GITHUB_WORKSPACE/ffcx-src rev-parse HEAD)" >> $GITHUB_ENV
+          echo "DOLFINX_SHA=$(git -C $GITHUB_WORKSPACE/dolfinx-src rev-parse HEAD)" >> $GITHUB_ENV
+
+      - run: |
+          spack env create ci basix-src/.github/workflows/spack-config/gh-actions-env.yml
+          spack -e ci develop --no-clone --path $GITHUB_WORKSPACE/basix-src fenics-basix@main
+          spack -e ci develop --no-clone --path $GITHUB_WORKSPACE/basix-src py-fenics-basix@main
+          spack -e ci develop --no-clone --path $GITHUB_WORKSPACE/ufl-src py-fenics-ufl@main
+          spack -e ci develop --no-clone --path $GITHUB_WORKSPACE/ffcx-src fenics-ufcx@main
+          spack -e ci develop --no-clone --path $GITHUB_WORKSPACE/ffcx-src py-fenics-ffcx@main
+          spack -e ci develop --no-clone --path $GITHUB_WORKSPACE/dolfinx-src fenics-dolfinx@main
+          spack -e ci develop --no-clone --path $GITHUB_WORKSPACE/dolfinx-src py-fenics-dolfinx@main
+          spack -e ci add fenics-basix@main commit=$BASIX_SHA build_type=Developer
+          spack -e ci add py-fenics-basix@main commit=$BASIX_SHA +ufl
+          spack -e ci add py-fenics-ufl@main commit=$UFL_SHA
+          spack -e ci add fenics-ufcx@main commit=$FFCX_SHA
+          spack -e ci add py-fenics-ffcx@main commit=$FFCX_SHA
+          spack -e ci add fenics-dolfinx@main commit=$DOLFINX_SHA build_type=Developer
+          spack -e ci add py-fenics-dolfinx@main commit=$DOLFINX_SHA
+          spack -e ci add py-matplotlib py-numba py-pyamg py-pytest py-pytest-xdist py-scipy py-pyvista py-networkx py-mypy catch2 cmake ninja
+          spack -e ci concretize -j 4
+          spack -e ci install -j 4 --use-buildcache auto
+
+      - run: spack -e ci buildcache push --base-image ubuntu:26.04 --only dependencies --with-build-dependencies --allow-missing local-buildcache
+        if: ${{ !cancelled() }}
+
       - name: Run DOLFINx C++ unit tests
-        working-directory: build
-        run: ctest -V --output-on-failure -R unittests
-      - name: Install DOLFINx (Python)
+        shell: spack-bash {0}
         run: |
-          python3 -m pip install scikit-build-core
-          python3 -m scikit_build_core.build requires | python3 -c "import sys, json; print(' '.join(json.load(sys.stdin)))" | xargs pip install
-          python3 -m pip -v install --break-system-packages --check-build-dependencies --no-build-isolation 'dolfinx/python/[mypy,test]'
+          spack env activate ci
+          spack load gcc cmake ninja fenics-dolfinx catch2
+          cmake -G Ninja -DCMAKE_BUILD_TYPE=Debug -DBUILD_TESTING=true -B build/dolfinx-cpp -S dolfinx-src/cpp
+          cmake --build build/dolfinx-cpp
+          ctest --test-dir build/dolfinx-cpp -V --output-on-failure -R unittests
+
       - name: Run mypy checks
+        shell: spack-bash {0}
         run: |
-          mypy --config-file dolfinx/python/pyproject.toml -p dolfinx --exclude superlu_dist.py
-          cd dolfinx/python/
+          spack env activate ci
+          spack load gcc py-fenics-dolfinx py-mypy
+          mypy --config-file dolfinx-src/python/pyproject.toml -p dolfinx --exclude superlu_dist.py
+          cd dolfinx-src/python/
           mypy test
-      - name: Install Python demo/test dependencies
-        run: python3 -m pip install --break-system-packages matplotlib numba pyamg pytest pytest-xdist scipy pyvista networkx
+
       - name: Run DOLFINx Python unit tests
-        working-directory: dolfinx
-        run: python3 -m pytest -n auto python/test/unit
+        shell: spack-bash {0}
+        run: |
+          spack env activate ci
+          spack load gcc py-fenics-dolfinx
+          python3 -m pytest -n auto dolfinx-src/python/test/unit
+
       - name: Run DOLFINx Python demos
-        working-directory: dolfinx
-        run: python3 -m pytest -n auto -m serial --durations=10 python/demo/test.py
+        shell: spack-bash {0}
+        run: |
+          spack env activate ci
+          spack load gcc py-fenics-dolfinx
+          python3 -m pytest -n auto -m serial --durations 10 dolfinx-src/python/demo/test.py
+
+      - name: Push test cache and update index
+        if: ${{ !cancelled() }}
+        run: |
+          spack -e ci buildcache push --base-image ubuntu:26.04 --allow-missing --update-index local-buildcache \
+            py-matplotlib py-numba py-pyamg py-pytest py-pytest-xdist py-scipy py-pyvista py-networkx py-mypy catch2 cmake ninja

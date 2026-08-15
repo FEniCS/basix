@@ -98,7 +98,7 @@ jobs:
           spack -e ci add py-fenics-ffcx@main commit=$FFCX_SHA
           spack -e ci add fenics-dolfinx@main commit=$DOLFINX_SHA build_type=Developer
           spack -e ci add py-fenics-dolfinx@main commit=$DOLFINX_SHA
-          spack -e ci add py-matplotlib py-pyamg py-pytest py-pytest-xdist py-scipy py-pyvista py-networkx catch2 cmake ninja
+          spack -e ci add py-matplotlib py-pyamg py-pytest py-pytest-xdist py-scipy py-networkx catch2 cmake ninja
           spack -e ci add py-numba ^llvm~clang~lldb~lld~offload~libomptarget~polly targets=x86
           spack -e ci concretize -j 4
           spack -e ci install -j 4 --use-buildcache auto
@@ -150,4 +150,4 @@ jobs:
           || github.event.pull_request.head.repo.full_name == github.repository) }}
         run: |
           spack -e ci buildcache push --base-image ubuntu:26.04 --allow-missing --update-index local-buildcache \
-            py-matplotlib py-numba py-pyamg py-pytest py-pytest-xdist py-scipy py-pyvista py-networkx catch2 cmake ninja
+            py-matplotlib py-numba py-pyamg py-pytest py-pytest-xdist py-scipy py-networkx catch2 cmake ninja

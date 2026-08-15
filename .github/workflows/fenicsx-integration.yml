@@ -28,7 +28,9 @@ jobs:
         with:
           python-version: '3.14'
       - name: Install dependencies
-        run: sudo apt-get install -y libopenblas-dev liblapack-dev graphviz libgraphviz-dev ninja-build
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libopenblas-dev liblapack-dev graphviz libgraphviz-dev ninja-build
       - name: Install UFL
         run: pip install git+https://github.com/${{ env.ufl_repository }}.git@${{ env.ufl_ref }}
       - name: Install Basix
@@ -101,7 +103,6 @@ jobs:
           mypy --config-file dolfinx/python/pyproject.toml -p dolfinx --exclude superlu_dist.py
           cd dolfinx/python/
           mypy test
-        # mypy demo
       - name: Install Python demo/test dependencies
         run: python3 -m pip install --break-system-packages matplotlib numba pyamg pytest pytest-xdist scipy pyvista networkx
       - name: Run DOLFINx Python unit tests

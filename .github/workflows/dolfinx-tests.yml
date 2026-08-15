@@ -60,13 +60,15 @@ jobs:
           python3 -m pip install scikit-build-core
           python3 -m scikit_build_core.build requires | python3 -c "import sys, json; print(' '.join(json.load(sys.stdin)))" | xargs pip install
           python3 -m pip -v install --break-system-packages --check-build-dependencies --no-build-isolation dolfinx/python/
-      - name: Run mypy checks
-        run: |
-          python3 -m pip install --break-system-packages mypy
-          cd dolfinx/python
-          python3 -m mypy dolfinx --exclude superlu_dist.py
       - name: Install Python demo/test dependencies
         run: python3 -m pip install --break-system-packages matplotlib numba pyamg pytest pytest-xdist scipy pyvista networkx
+      - name: Run mypy checks
+        # numba, scipy and the stub packages must be installed, otherwise
+        # DOLFINx's mypy configuration reports missing imports.
+        run: |
+          python3 -m pip install --break-system-packages mypy scipy-stubs types-cffi types-setuptools
+          cd dolfinx/python
+          python3 -m mypy dolfinx --exclude superlu_dist.py
       - name: Run DOLFINx Python unit tests
         run: |
           cd dolfinx

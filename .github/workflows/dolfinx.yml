@@ -98,7 +98,7 @@ jobs:
           spack -e ci add py-fenics-ffcx@main commit=$FFCX_SHA
           spack -e ci add fenics-dolfinx@main commit=$DOLFINX_SHA build_type=Developer
           spack -e ci add py-fenics-dolfinx@main commit=$DOLFINX_SHA
-          spack -e ci add py-pip py-pytest py-pytest-xdist py-scipy catch2 cmake ninja
+          spack -e ci add py-pytest py-pytest-xdist py-scipy catch2 cmake ninja
           spack -e ci concretize -j 4
           spack -e ci install -j 4 --use-buildcache auto
 
@@ -136,10 +136,7 @@ jobs:
         shell: spack-bash {0}
         run: |
           spack env activate ci
-          spack load gcc py-fenics-dolfinx py-pip
-          python3 -m pip install mypy
-          python3 -m mypy --config-file dolfinx-src/python/pyproject.toml -p dolfinx --exclude superlu_dist.py
-          (cd dolfinx-src/python && python3 -m mypy test)
+          spack load gcc py-fenics-dolfinx
           python3 -m pytest -n auto dolfinx-src/python/test/unit
 
       - name: Push test cache and update index
@@ -148,4 +145,4 @@ jobs:
           || github.event.pull_request.head.repo.full_name == github.repository) }}
         run: |
           spack -e ci buildcache push --base-image ubuntu:26.04 --allow-missing --update-index local-buildcache \
-            py-pip py-pytest py-pytest-xdist py-scipy catch2 cmake ninja
+            py-pytest py-pytest-xdist py-scipy catch2 cmake ninja

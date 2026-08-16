@@ -19,7 +19,7 @@ concurrency:
 
 jobs:
   dolfinx:
-    name: Run DOLFINx tests (Spack)
+    name: Run DOLFINx tests
     runs-on: ubuntu-26.04
     container: ubuntu:26.04
     permissions:

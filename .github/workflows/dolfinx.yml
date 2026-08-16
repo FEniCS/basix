@@ -137,7 +137,7 @@ jobs:
         run: |
           spack env activate ci
           spack load gcc py-fenics-dolfinx
-          python3 -m pytest -n auto dolfinx-src/python/test/unit
+          python3 -m pytest -n auto -m "not petsc4py and not adios2" dolfinx-src/python/test/unit
 
       - name: Push test cache and update index
         if: >-

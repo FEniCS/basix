@@ -16,43 +16,48 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
- valgrind:
+  valgrind:
+    name: Memory leak detection with valgrind
     runs-on: ubuntu-26.04
     env:
       VALGRIND_FLAGS: "--suppressions=cpython/Misc/valgrind-python.supp --leak-check=full --show-leak-kinds=all --errors-for-leak-kinds=definite,indirect --error-exitcode=1"
-      # Slow, but useful for in-depth info: --track-origins=yes --read-var-info=yes
+      CPYTHON_REF: v3.13.2
+      CPYTHON_PREFIX: /home/runner/cpython-valgrind
     steps:
       - uses: actions/checkout@v7
-
+      - name: Load environment variables
+        run: cat .github/workflows/fenicsx-refs.env >> $GITHUB_ENV
       - name: Install dependencies
         run: |
           sudo apt-get update
           sudo apt-get install -y libopenblas-dev liblapack-dev ninja-build valgrind
-
       - uses: actions/checkout@v7
         with:
           repository: 'python/cpython'
-          ref: 'v3.13.2'
+          ref: ${{ env.CPYTHON_REF }}
           path: 'cpython'
-
+      - name: Cache valgrind-enabled CPython build
+        id: cache-cpython
+        uses: actions/cache@v6
+        with:
+          path: ${{ env.CPYTHON_PREFIX }}
+          key: cpython-valgrind-${{ env.CPYTHON_REF }}-${{ runner.os }}-v1
       - name: Build Python
+        if: steps.cache-cpython.outputs.cache-hit != 'true'
         working-directory: cpython
         run: |
-          ./configure --with-valgrind
+          ./configure --with-valgrind --prefix=${{ env.CPYTHON_PREFIX }}
           make -j4 all
-          sudo make install
-
+          make install
+      - name: Add cached Python to PATH
+        run: echo "${{ env.CPYTHON_PREFIX }}/bin" >> $GITHUB_PATH
       - name: Install UFL branch
-        run: pip -v install git+https://github.com/FEniCS/ufl.git
-
+        run: pip -v install git+https://github.com/${{ env.ufl_repository }}.git@${{ env.ufl_ref }}
       - name: Install Basix
         run: pip -v install .[ci] --config-settings=cmake.build-type="RelWithDebInfo"
-
       - name: Run unit tests
         run: valgrind ${VALGRIND_FLAGS} pytest -n auto --durations 20 test/
-
       - name: Run Python demos
         run: valgrind ${VALGRIND_FLAGS} pytest demo/python/test.py
-
       - name: Run C++ demos
         run: valgrind ${VALGRIND_FLAGS} pytest demo/cpp/test.py

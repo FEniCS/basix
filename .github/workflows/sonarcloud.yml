@@ -3,6 +3,9 @@ on:
   pull_request:
     branches:
       - main
+  merge_group:
+    branches:
+      - main
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
@@ -12,12 +15,8 @@ jobs:
   build:
     name: Build
     runs-on: ubuntu-26.04
-    if: (github.event.pull_request.head.repo.full_name == github.repository) || github.ref_name == 'main'
+    if: github.event_name == 'merge_group' || github.event.pull_request.head.repo.full_name == github.repository
     env:
-      SONAR_SCANNER_VERSION:
-        6.1.0.4477 # Find the latest version at:
-        # https://github.com/SonarSource/sonar-scanner-cli/tags
-      SONAR_SERVER_URL: "https://sonarcloud.io"
       BUILD_WRAPPER_OUT_DIR: build_wrapper_output_directory # Directory where build-wrapper output will be placed
 
     steps:
@@ -28,39 +27,17 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y libopenblas-dev liblapack-dev ninja-build
-      - name: Set up JDK
-        uses: actions/setup-java@v5
-        with:
-          distribution: 'zulu'
-          java-version: 17
-      - name: Cache SonarCloud packages
-        uses: actions/cache@v6
-        with:
-          path: ~/.sonar/cache
-          key: ${{ runner.os }}-sonar
-          restore-keys: ${{ runner.os }}-sonar
-      - name: Download and set up sonar-scanner
-        env:
-          SONAR_SCANNER_DOWNLOAD_URL: https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-${{ env.SONAR_SCANNER_VERSION }}-linux-x64.zip
-        run: |
-          mkdir -p $HOME/.sonar
-          wget -O $HOME/.sonar/sonar-scanner.zip ${{ env.SONAR_SCANNER_DOWNLOAD_URL }}
-          unzip -o $HOME/.sonar/sonar-scanner.zip -d $HOME/.sonar/
-          echo "$HOME/.sonar/sonar-scanner-${{ env.SONAR_SCANNER_VERSION }}-linux-x64/bin" >> $GITHUB_PATH
-      - name: Download and set up build-wrapper
-        env:
-          BUILD_WRAPPER_DOWNLOAD_URL: ${{ env.SONAR_SERVER_URL }}/static/cpp/build-wrapper-linux-x86.zip
-        run: |
-          wget -O $HOME/.sonar/build-wrapper-linux-x86.zip ${{ env.BUILD_WRAPPER_DOWNLOAD_URL }}
-          unzip -o $HOME/.sonar/build-wrapper-linux-x86.zip -d $HOME/.sonar/
-          echo "$HOME/.sonar/build-wrapper-linux-x86" >> $GITHUB_PATH
-      - name: Run build-wrapper
+      - name: Install Build Wrapper
+        uses: SonarSource/sonarqube-scan-action/install-build-wrapper@22918119ff8e1ca75a623e15c8296b6ea4fbe28f # v8.2.1
+      - name: Run Build Wrapper
         run: |
           mkdir build
           cmake -S ./cpp -B build
           build-wrapper-linux-x86-64 --out-dir ${{ env.BUILD_WRAPPER_OUT_DIR }} cmake --build build/ --config Release
-      - name: Run sonar-scanner
+      - name: SonarQube Scan
+        uses: SonarSource/sonarqube-scan-action@22918119ff8e1ca75a623e15c8296b6ea4fbe28f # v8.2.1
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        run: sonar-scanner --define sonar.host.url="${{ env.SONAR_SERVER_URL }}" --define sonar.cfamily.build-wrapper-output="${{ env.BUILD_WRAPPER_OUT_DIR }}"
+        with:
+          args: >
+            --define sonar.cfamily.compile-commands=${{ env.BUILD_WRAPPER_OUT_DIR }}/compile_commands.json

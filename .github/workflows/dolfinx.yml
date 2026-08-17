@@ -45,7 +45,7 @@ jobs:
       - uses: spack/setup-spack@16b756799ede8b28951287f89bcd3fdb32ec1ca3 # v3.0.0
         with:
           spack_ref: v1.2.2
-          packages_ref: 55b14e0301eb64d4adc86c213046824f2b17e20c
+          packages_ref: 3966a4802594a2371c3402fba690649215c2bce7 # develop, 2026-08-17
 
       - uses: actions/checkout@v7
         with:

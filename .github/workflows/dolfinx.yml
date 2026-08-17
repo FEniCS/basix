@@ -50,6 +50,7 @@ jobs:
       - uses: actions/checkout@v7
         with:
           repository: fenics/spack-fenics
+          ref: 55b14e0301eb64d4adc86c213046824f2b17e20c # main, 2026-08-15
           path: spack-fenics
       - run: spack repo add --name fenics $GITHUB_WORKSPACE/spack-fenics/spack_repo/fenics
 

@@ -1,4 +1,10 @@
 spack:
+  view: /opt/view
+  config:
+    install_tree:
+      root: /opt/spack
+      padded_length: 128
+
   concretizer:
     unify: true
     reuse: false
@@ -31,7 +37,7 @@ spack:
 
   mirrors:
     local-buildcache:
-      url: oci://ghcr.io/fenics/basix-spack-buildcache
+      url: oci://ghcr.io/fenics/spack-buildcache
       binary: true
       signed: false
       access_pair:

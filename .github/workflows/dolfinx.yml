@@ -112,7 +112,6 @@ jobs:
           # it can never be relocated here (CannotGrowString). Build it
           # fresh so the rest of the install doesn't try to pull that
           # entry; drop once every contributor to the cache is padded.
-          spack -e ci install -j $(nproc) --use-buildcache never py-numpy
           spack -e ci install -j $(nproc) --use-buildcache auto
 
       - run: spack -e ci buildcache push --base-image ubuntu:26.04 --only dependencies --with-build-dependencies --allow-missing local-buildcache

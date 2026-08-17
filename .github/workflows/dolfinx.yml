@@ -34,10 +34,9 @@ jobs:
       OMPI_ALLOW_RUN_AS_ROOT: 1
       OMPI_ALLOW_RUN_AS_ROOT_CONFIRM: 1
       PRTE_MCA_rmaps_default_mapping_policy: :oversubscribe
-      # Pull requests from forks run with a read-only GITHUB_TOKEN
-      # regardless of the 'permissions' requested above, so buildcache
-      # pushes would 401 as soon as they had anything to upload. Reads
-      # are anonymous, so forked builds still take from the cache.
+      # Forked PRs get a read-only GITHUB_TOKEN, so buildcache pushes
+      # would 401; skip them there. Reads are anonymous, so forked
+      # builds still pull from the cache.
       IS_TRUSTED: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}
 
     steps:
@@ -83,11 +82,10 @@ jobs:
           echo "DOLFINX_SHA=$(git -C $GITHUB_WORKSPACE/dolfinx-src rev-parse HEAD)" >> $GITHUB_ENV
           echo "TEST_DEPS=py-pytest py-pytest-xdist py-scipy catch2 cmake ninja" >> $GITHUB_ENV
 
-      # Dev-path and commit-pin the whole stack, so a failure can be
-      # attributed to an exact, recorded set of commits and every package
-      # is rebuilt from source every run rather than served from the
-      # buildcache. UFL/FFCx/DOLFINx are checked out at the repos/refs
-      # pinned in fenicsx-refs.env, not hardcoded to @main.
+      # Dev-path and commit-pin the whole stack: every package is
+      # rebuilt from source (never from the buildcache), and a failure
+      # maps to an exact commit. UFL/FFCx/DOLFINx use the repos/refs
+      # from fenicsx-refs.env, not a hardcoded @main.
       - run: |
           spack env create ci basix-src/.github/workflows/spack-config/gh-actions-env.yml
           spack -e ci develop --no-clone --path $GITHUB_WORKSPACE/basix-src fenics-basix@main

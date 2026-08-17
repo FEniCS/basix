@@ -107,6 +107,12 @@ jobs:
           spack -e ci add py-fenics-dolfinx@main commit=$DOLFINX_SHA build_type=Developer
           spack -e ci add $TEST_DEPS
           spack -e ci concretize -j $(nproc)
+          # The shared buildcache has a py-numpy binary built by another
+          # FEniCS repo's CI before it adopted install-tree padding, so
+          # it can never be relocated here (CannotGrowString). Build it
+          # fresh so the rest of the install doesn't try to pull that
+          # entry; drop once every contributor to the cache is padded.
+          spack -e ci install -j $(nproc) --use-buildcache never py-numpy
           spack -e ci install -j $(nproc) --use-buildcache auto
 
       - run: spack -e ci buildcache push --base-image ubuntu:26.04 --only dependencies --with-build-dependencies --allow-missing local-buildcache

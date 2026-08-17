@@ -34,6 +34,11 @@ jobs:
       OMPI_ALLOW_RUN_AS_ROOT: 1
       OMPI_ALLOW_RUN_AS_ROOT_CONFIRM: 1
       PRTE_MCA_rmaps_default_mapping_policy: :oversubscribe
+      # Pull requests from forks run with a read-only GITHUB_TOKEN
+      # regardless of the 'permissions' requested above, so buildcache
+      # pushes would 401 as soon as they had anything to upload. Reads
+      # are anonymous, so forked builds still take from the cache.
+      IS_TRUSTED: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}
 
     steps:
       - run: apt-get -y update && apt-get install -y bzip2 ca-certificates file g++ gcc gfortran git gzip libgl-dev libosmesa6-dev lsb-release patch pkg-config python3 tar unzip xz-utils zstd
@@ -72,16 +77,17 @@ jobs:
           ref: ${{ env.dolfinx_ref }}
           path: dolfinx-src
 
-      # Dev-path and commit-pin the whole stack (not just Basix), so a
-      # failure can be attributed to an exact, recorded set of commits -
-      # matching how FEniCS/dolfinx's own ci.yml tests itself against
-      # Basix/UFL/FFCx.
       - run: |
-          echo "BASIX_SHA=$(git -C $GITHUB_WORKSPACE/basix-src rev-parse HEAD)" >> $GITHUB_ENV
           echo "UFL_SHA=$(git -C $GITHUB_WORKSPACE/ufl-src rev-parse HEAD)" >> $GITHUB_ENV
           echo "FFCX_SHA=$(git -C $GITHUB_WORKSPACE/ffcx-src rev-parse HEAD)" >> $GITHUB_ENV
           echo "DOLFINX_SHA=$(git -C $GITHUB_WORKSPACE/dolfinx-src rev-parse HEAD)" >> $GITHUB_ENV
+          echo "TEST_DEPS=py-pytest py-pytest-xdist py-scipy catch2 cmake ninja" >> $GITHUB_ENV
 
+      # Dev-path and commit-pin the whole stack, so a failure can be
+      # attributed to an exact, recorded set of commits and every package
+      # is rebuilt from source every run rather than served from the
+      # buildcache. UFL/FFCx/DOLFINx are checked out at the repos/refs
+      # pinned in fenicsx-refs.env, not hardcoded to @main.
       - run: |
           spack env create ci basix-src/.github/workflows/spack-config/gh-actions-env.yml
           spack -e ci develop --no-clone --path $GITHUB_WORKSPACE/basix-src fenics-basix@main
@@ -91,26 +97,19 @@ jobs:
           spack -e ci develop --no-clone --path $GITHUB_WORKSPACE/ffcx-src py-fenics-ffcx@main
           spack -e ci develop --no-clone --path $GITHUB_WORKSPACE/dolfinx-src fenics-dolfinx@main
           spack -e ci develop --no-clone --path $GITHUB_WORKSPACE/dolfinx-src py-fenics-dolfinx@main
-          spack -e ci add fenics-basix@main commit=$BASIX_SHA build_type=Developer
-          spack -e ci add py-fenics-basix@main commit=$BASIX_SHA +ufl
+          spack -e ci add fenics-basix@main commit=${{ github.sha }} build_type=Developer
+          spack -e ci add py-fenics-basix@main commit=${{ github.sha }} +ufl build_type=Developer
           spack -e ci add py-fenics-ufl@main commit=$UFL_SHA
           spack -e ci add fenics-ufcx@main commit=$FFCX_SHA
           spack -e ci add py-fenics-ffcx@main commit=$FFCX_SHA
           spack -e ci add fenics-dolfinx@main commit=$DOLFINX_SHA build_type=Developer
-          spack -e ci add py-fenics-dolfinx@main commit=$DOLFINX_SHA
-          spack -e ci add py-pytest py-pytest-xdist py-scipy catch2 cmake ninja
-          spack -e ci concretize -j 4
-          spack -e ci install -j 4 --use-buildcache auto
+          spack -e ci add py-fenics-dolfinx@main commit=$DOLFINX_SHA build_type=Developer
+          spack -e ci add $TEST_DEPS
+          spack -e ci concretize -j $(nproc)
+          spack -e ci install -j $(nproc) --use-buildcache auto
 
-      # Skipped for pull requests from forks: those run with a read-only
-      # GITHUB_TOKEN regardless of the 'permissions' requested above, so
-      # the push would 401 as soon as it had anything to upload, failing a
-      # contributor's job on a step that tests nothing. Reads are
-      # anonymous, so forked builds still take from the cache.
       - run: spack -e ci buildcache push --base-image ubuntu:26.04 --only dependencies --with-build-dependencies --allow-missing local-buildcache
-        if: >-
-          ${{ !cancelled() && (github.event_name != 'pull_request'
-          || github.event.pull_request.head.repo.full_name == github.repository) }}
+        if: ${{ !cancelled() && env.IS_TRUSTED == 'true' }}
 
       # Configure cpp/test/ standalone (not the whole cpp/ tree with
       # -DBUILD_TESTING=true): it links against the fenics-dolfinx library
@@ -140,9 +139,7 @@ jobs:
           python3 -m pytest -n auto -m "not petsc4py and not adios2" dolfinx-src/python/test/unit
 
       - name: Push test cache and update index
-        if: >-
-          ${{ !cancelled() && (github.event_name != 'pull_request'
-          || github.event.pull_request.head.repo.full_name == github.repository) }}
+        if: ${{ !cancelled() && env.IS_TRUSTED == 'true' }}
         run: |
           spack -e ci buildcache push --base-image ubuntu:26.04 --allow-missing --update-index local-buildcache \
-            py-pytest py-pytest-xdist py-scipy catch2 cmake ninja
+            $TEST_DEPS

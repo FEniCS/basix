@@ -42,8 +42,8 @@ pip -v install --check-build-dependencies -Cbuild-dir="build" \
   --no-build-isolation -e .
 ```
 
-(`--no-build-isolation` requires build dependencies to already be installed —
-see `python/pyproject.toml`.)
+(`--no-build-isolation` requires build dependencies to already be installed,
+e.g. via `pip install --group build`; see `python/pyproject.toml`.)
 
 C++ only:
 

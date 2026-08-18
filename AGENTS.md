@@ -55,7 +55,11 @@ cmake --build build-dir
 
 Requires a C++20 compiler, BLAS, and LAPACK.
 
-Python unit tests (from repo root, after installing `.[test]`):
+Dependency groups (`docs`, `lint`, `test`, `ci`) use PEP 735 syntax and
+require `pip >= 25.1` (or another PEP 735-compliant build frontend) for
+the `--group` flag.
+
+Python unit tests (from repo root, after installing with `pip install --group test .`):
 
 ```console
 pytest test/

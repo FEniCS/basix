@@ -83,7 +83,7 @@ jobs:
         run: python3 -m pip install pip --upgrade
       - uses: actions/checkout@v7
       - name: Install Basix
-        run: python3 -m pip install -Ccmake.build-type="Developer" .[test]
+        run: python3 -m pip install -Ccmake.build-type="Developer" --group test .
       - name: Run tests
         run: |
           python3 -m pytest --durations 20 test/
@@ -102,7 +102,7 @@ jobs:
       - name: Install dependencies (non-Python)
         run: brew install ninja
       - name: Install Basix
-        run: pip -v install -Ccmake.build-type="Developer" .[test]
+        run: pip -v install -Ccmake.build-type="Developer" --group test .
       - name: Run tests
         run: |
           pip install --only-binary :all: pytest-xdist

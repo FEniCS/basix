@@ -71,7 +71,7 @@ jobs:
       - name: Install UFL
         run: pip -v install git+https://github.com/${{ env.ufl_repository }}.git@${{ env.ufl_ref }}
       - name: Install Basix
-        run: pip -v install -Ccmake.build-type="Developer" .[ci]
+        run: pip -v install -Ccmake.build-type="Developer" --group ci .
       - name: Run units tests
         run: pytest -n auto --durations 20 test/
       - name: Run simple CMake integration test
@@ -189,10 +189,10 @@ jobs:
       - name: Install Basix Python wrapper
         run: |
           cd python
-          pip install .[test]
+          pip install --group test .
       - name: Run units tests
         run: |
-          pip install pytest-xdist # in ci extras, but most not needed.
+          pip install pytest-xdist # in ci group, but most not needed.
           pytest -n auto --durations 20 test/
       - name: Run Python demos
         run: pytest demo/python/test.py

@@ -50,7 +50,7 @@ To install Basix and the extra dependencies required to run the Python
 unit tests:
 
 ```console
-pip install .[test]
+pip install --group test .
 ```
 
 From the directory `python/` the tests can be run with:
@@ -71,9 +71,10 @@ When using the standard install approach all build and runtime
 dependencies for the C++ and Python parts of Basix are fetched
 automatically.
 
-Basix specifies sets of optional extras `docs`, `lint`, `optional`,
-`test`, and `ci` for building documentation, linting, enabling optional
-features, testing and for continuous integration, respectively, e.g.:
+Basix specifies the optional extra `optional` for enabling optional
+features, and the dependency groups `docs`, `lint`, `test`, and `ci`
+for building documentation, linting, testing and continuous
+integration, respectively, e.g.:
 ```console
-pip install .[docs,lint]
+pip install --group docs --group lint .
 ```

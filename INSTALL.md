@@ -39,7 +39,8 @@ For a debug and editable build for development:
 pip -v install --check-build-dependencies -Cbuild-dir="build" -Ccmake.build-type="Development" -Cinstall.strip=false --no-build-isolation -e .
 ```
 When using the `--no-build-isolation` option all build dependencies must
-already be installed (see `python/pyproject.toml`).
+already be installed, e.g. via `pip install --group build`
+(see `python/pyproject.toml`).
 
 RPATH manipulation can be disabled by passing
 `-Ccmake.args=-DBASIX_SET_INSTALL_RPATH=FALSE`.
@@ -72,9 +73,9 @@ dependencies for the C++ and Python parts of Basix are fetched
 automatically.
 
 Basix specifies the optional extra `optional` for enabling optional
-features, and the dependency groups `docs`, `lint`, `test`, and `ci`
-for building documentation, linting, testing and continuous
-integration, respectively, e.g.:
+features, and the dependency groups `build`, `docs`, `lint`, `test`,
+and `ci` for installing build dependencies, building documentation,
+linting, testing and continuous integration, respectively, e.g.:
 ```console
 pip install --group docs --group lint .
 ```

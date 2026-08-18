@@ -39,7 +39,8 @@ For a debug and editable build for development:
 pip -v install --check-build-dependencies -Cbuild-dir="build" -Ccmake.build-type="Development" -Cinstall.strip=false --no-build-isolation -e .
 ```
 When using the `--no-build-isolation` option all build dependencies must
-already be installed (see `python/pyproject.toml`).
+already be installed, e.g. via `pip install --group build`
+(see `python/pyproject.toml`).
 
 RPATH manipulation can be disabled by passing
 `-Ccmake.args=-DBASIX_SET_INSTALL_RPATH=FALSE`.
@@ -50,7 +51,7 @@ To install Basix and the extra dependencies required to run the Python
 unit tests:
 
 ```console
-pip install .[test]
+pip install --group test .
 ```
 
 From the directory `python/` the tests can be run with:
@@ -71,9 +72,10 @@ When using the standard install approach all build and runtime
 dependencies for the C++ and Python parts of Basix are fetched
 automatically.
 
-Basix specifies sets of optional extras `docs`, `lint`, `optional`,
-`test`, and `ci` for building documentation, linting, enabling optional
-features, testing and for continuous integration, respectively, e.g.:
+Basix specifies the optional extra `optional` for enabling optional
+features, and the dependency groups `build`, `docs`, `lint`, `test`,
+and `ci` for installing build dependencies, building documentation,
+linting, testing and continuous integration, respectively, e.g.:
 ```console
-pip install .[docs,lint]
+pip install --group docs --group lint .
 ```

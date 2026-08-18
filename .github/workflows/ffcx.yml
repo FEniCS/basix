@@ -34,7 +34,7 @@ jobs:
       - name: Install UFL
         run: pip install git+https://github.com/${{ env.ufl_repository }}.git@${{ env.ufl_ref }}
       - name: Install Basix
-        run: pip -v install .[ci]
+        run: pip -v install --group ci .
       - name: Get FFCx source
         uses: actions/checkout@v7
         with:

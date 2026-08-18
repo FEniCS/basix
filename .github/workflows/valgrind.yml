@@ -54,7 +54,7 @@ jobs:
       - name: Install UFL branch
         run: pip -v install git+https://github.com/${{ env.ufl_repository }}.git@${{ env.ufl_ref }}
       - name: Install Basix
-        run: pip -v install .[ci] --config-settings=cmake.build-type="RelWithDebInfo"
+        run: pip -v install --group ci . --config-settings=cmake.build-type="RelWithDebInfo"
       - name: Run unit tests
         run: valgrind ${VALGRIND_FLAGS} pytest -n auto --durations 20 test/
       - name: Run Python demos

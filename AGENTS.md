@@ -42,8 +42,8 @@ pip -v install --check-build-dependencies -Cbuild-dir="build" \
   --no-build-isolation -e .
 ```
 
-(`--no-build-isolation` requires build dependencies to already be installed —
-see `python/pyproject.toml`.)
+(`--no-build-isolation` requires build dependencies to already be installed,
+e.g. via `pip install --group build`; see `python/pyproject.toml`.)
 
 C++ only:
 
@@ -55,7 +55,11 @@ cmake --build build-dir
 
 Requires a C++20 compiler, BLAS, and LAPACK.
 
-Python unit tests (from repo root, after installing `.[test]`):
+Dependency groups (`build`, `docs`, `lint`, `test`, `ci`) use PEP 735
+syntax and require `pip >= 25.1` (or another PEP 735-compliant build
+frontend) for the `--group` flag.
+
+Python unit tests (from repo root, after installing with `pip install --group test .`):
 
 ```console
 pytest test/

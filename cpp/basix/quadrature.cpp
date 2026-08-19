@@ -4942,8 +4942,6 @@ quadrature::type quadrature::get_default_rule(cell::type celltype, int m)
   {
     if (m <= 3)
       return type::zienkiewicz_taylor;
-    else if (m <= 8)
-      return type::keast;
     else if (m <= 15)
       return type::xiao_gimbutas;
     else

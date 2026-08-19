@@ -19,6 +19,9 @@ spack:
       # rebuilds from source instead of being pulled as a binary.
       require:
       - target=x86_64_v3
+      providers:
+        blas: [netlib-lapack]
+        lapack: [netlib-lapack]
 
     # Use the container's mesa instead of building one. mesa@25.0.5 (the
     # newest version the pinned packages_ref knows) does not compile

@@ -78,4 +78,4 @@ def get_include() -> str:
     Returns:
         Absolute path of the include directory.
     """
-    return os.path.join(os.path.dirname(os.path.abspath(__file__)), "include")
+    return os.path.join(os.path.dirname(os.path.abspath(__file__)), "wrappers")

@@ -19,10 +19,11 @@ introducing a new pattern.
   geometry, quadrature, polysets, interpolation, dof transformations, etc.).
 - `cpp/CMakeLists.txt` — C++ library build.
 - `python/basix/` — Python package (thin wrappers around the C++ core).
-- `python/wrapper.cpp` — nanobind bindings exposing the C++ core to Python;
-  the shared helpers and templates live in
-  `python/basix_wrappers/basix_wrappers.h`, which is installed into the
-  Python package (locate it with `basix.get_include()`).
+- `python/basix/wrappers/basix_wrappers.cpp` — nanobind bindings exposing
+  the C++ core to Python; the shared helpers and templates live alongside
+  it in `python/basix/wrappers/basix_wrappers/basix_wrappers.h`. The header
+  sits inside the Python package so that `wheel.packages` ships it;
+  downstream nanobind wrappers locate it with `basix.get_include()`.
 - `test/` — Python unit tests (pytest), plus `test/test_cmake` and
   `test/test_pkgconfig` integration tests for the installed C++ library.
 - `demo/` — C++ and Python demos, also exercised in CI.

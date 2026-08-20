@@ -52,7 +52,12 @@ find_package(nanobind CONFIG REQUIRED)
 if(NOT "${SKBUILD_SABI_VERSION}" STREQUAL "")
   set(NANOBIND_SABI "STABLE_ABI")
 endif()
-nanobind_add_module(_basixcpp NB_SUPPRESS_WARNINGS ${NANOBIND_SABI} wrapper.cpp)
+nanobind_add_module(
+  _basixcpp
+  NB_SUPPRESS_WARNINGS
+  ${NANOBIND_SABI}
+  basix/wrappers/basix_wrappers.cpp
+)
 target_compile_features(_basixcpp PRIVATE cxx_std_20)
 
 # Windows requires all symbols to be manually exported; this exports them
@@ -191,12 +196,6 @@ else()
   install(TARGETS _basixcpp LIBRARY DESTINATION basix)
   install(FILES ${CMAKE_CURRENT_BINARY_DIR}/_basixcpp.pyi DESTINATION basix)
 endif()
-
-# Install the nanobind helper header.
-install(
-  FILES basix_wrappers/basix_wrappers.h
-  DESTINATION basix/include/basix_wrappers
-)
 
 # py.typed (PEP 561 marker) is not a tracked source file - write it
 # directly at install time on both platforms rather than relying on

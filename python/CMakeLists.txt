@@ -7,10 +7,7 @@ if(TARGET basix)
   add_library(Basix::basix ALIAS basix)
 else()
   find_package(Basix REQUIRED)
-  if(
-    CMAKE_BUILD_TYPE STREQUAL "Developer"
-    AND CMAKE_VERSION VERSION_GREATER_EQUAL 3.25
-  )
+  if(CMAKE_BUILD_TYPE STREQUAL "Developer")
     # This enables warnings from Basix headers even though they are a SYSTEM
     # dependency.
     set_target_properties(Basix::basix PROPERTIES SYSTEM OFF)

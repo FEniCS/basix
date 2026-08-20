@@ -57,7 +57,12 @@ find_package(nanobind CONFIG REQUIRED)
 if(NOT "${SKBUILD_SABI_VERSION}" STREQUAL "")
   set(NANOBIND_SABI "STABLE_ABI")
 endif()
-nanobind_add_module(_basixcpp NB_SUPPRESS_WARNINGS ${NANOBIND_SABI} wrapper.cpp)
+nanobind_add_module(
+  _basixcpp
+  NB_SUPPRESS_WARNINGS
+  ${NANOBIND_SABI}
+  basix/wrappers/basix_wrappers.cpp
+)
 target_compile_features(_basixcpp PRIVATE cxx_std_20)
 
 # Windows requires all symbols to be manually exported; this exports them

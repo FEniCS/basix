@@ -2,63 +2,61 @@
 // FEniCS Project
 // SPDX-License-Identifier:    MIT
 
+#pragma once
+
+#include <array>
 #include <basix/cell.h>
 #include <basix/element-families.h>
 #include <basix/finite-element.h>
-#include <basix/indexing.h>
 #include <basix/interpolation.h>
-#include <basix/lattice.h>
 #include <basix/maps.h>
 #include <basix/mdspan.hpp>
-#include <basix/polynomials.h>
 #include <basix/polyset.h>
-#include <basix/quadrature.h>
 #include <basix/sobolev-spaces.h>
-#include <memory>
+#include <cstddef>
+#include <functional>
+#include <initializer_list>
+#include <map>
 #include <nanobind/nanobind.h>
 #include <nanobind/ndarray.h>
-#include <nanobind/stl/optional.h>
-#include <nanobind/stl/pair.h>
-#include <nanobind/stl/string.h>
-#include <nanobind/stl/tuple.h>
-#include <nanobind/stl/variant.h>
-#include <nanobind/stl/vector.h>
+#include <numeric>
 #include <span>
+#include <stdexcept>
 #include <string>
 #include <type_traits>
-#include <variant>
+#include <utility>
 #include <vector>
 
-namespace nb = nanobind;
-using namespace nb::literals;
-
-using namespace basix;
-
+namespace basix_wrappers
+{
+/// mdspan with dynamic extents in all `d` dimensions.
 template <typename T, std::size_t d>
-using mdspan_t = md::mdspan<T, md::dextents<std::size_t, d>>;
+using mdspan_t
+    = basix::md::mdspan<T, basix::md::dextents<std::size_t, d>>;
 
-namespace
+/// Convert a cell type to its Python-facing string name.
+inline std::string cell_type_to_str(basix::cell::type type)
 {
-std::string cell_type_to_str(cell::type type)
-{
-  static const std::map<cell::type, std::string> type_to_name
-      = {{cell::type::point, "point"},
-         {cell::type::interval, "interval"},
-         {cell::type::triangle, "triangle"},
-         {cell::type::tetrahedron, "tetrahedron"},
-         {cell::type::quadrilateral, "quadrilateral"},
-         {cell::type::pyramid, "pyramid"},
-         {cell::type::prism, "prism"},
-         {cell::type::hexahedron, "hexahedron"}};
+  static const std::map<basix::cell::type, std::string> type_to_name
+      = {{basix::cell::type::point, "point"},
+         {basix::cell::type::interval, "interval"},
+         {basix::cell::type::triangle, "triangle"},
+         {basix::cell::type::tetrahedron, "tetrahedron"},
+         {basix::cell::type::quadrilateral, "quadrilateral"},
+         {basix::cell::type::pyramid, "pyramid"},
+         {basix::cell::type::prism, "prism"},
+         {basix::cell::type::hexahedron, "hexahedron"}};
   auto it = type_to_name.find(type);
   if (it == type_to_name.end())
     throw std::runtime_error("Can't find type");
   return it->second;
 }
 
+/// Create a NumPy array that takes ownership of the data in `x`.
 template <typename V>
 auto as_nbarray(V&& x, std::size_t ndim, const std::size_t* shape)
 {
+  namespace nb = nanobind;
   using _V = std::decay_t<V>;
   _V* ptr = new _V(std::move(x));
   return nb::ndarray<typename _V::value_type, nb::numpy>(
@@ -66,18 +64,23 @@ auto as_nbarray(V&& x, std::size_t ndim, const std::size_t* shape)
       nb::capsule(ptr, [](void* p) noexcept { delete (_V*)p; }));
 }
 
+/// Create a NumPy array that takes ownership of the data in `x`.
 template <typename V>
 auto as_nbarray(V&& x, const std::initializer_list<std::size_t> shape)
 {
   return as_nbarray(x, shape.size(), shape.begin());
 }
 
+/// Create a one-dimensional NumPy array that takes ownership of the data
+/// in `x`.
 template <typename V>
 auto as_nbarray(V&& x)
 {
   return as_nbarray(std::move(x), {x.size()});
 }
 
+/// Create a NumPy array from a (data, shape) pair, taking ownership of
+/// the data.
 template <typename V, std::size_t U>
 auto as_nbarrayp(std::pair<V, std::array<std::size_t, U>>&& x)
 {
@@ -97,9 +100,18 @@ R dispatch_dtype(char dtype, F&& f)
     throw std::runtime_error("Unsupported finite element dtype.");
 }
 
+/// Wrap the scalar-type dependent parts of the interface, i.e.
+/// `FiniteElement` and the functions that create or act on one.
+/// @param m The nanobind module.
+/// @param type String representation of the scalar type (e.g.
+/// "float32", "float64").
 template <typename T>
-void declare_float(nb::module_& m, const std::string& type)
+void declare_float(nanobind::module_& m, const std::string& type)
 {
+  namespace nb = nanobind;
+  using namespace nb::literals;
+  using basix::FiniteElement;
+
   std::string name = "FiniteElement_" + type;
   nb::class_<FiniteElement<T>>(m, name.c_str())
       .def("tabulate",
@@ -115,7 +127,7 @@ void declare_float(nb::module_& m, const std::string& type)
       .def("permute_subentity_closure",
            [](const FiniteElement<T>& self,
               const nb::ndarray<std::int32_t, nb::ndim<1>, nb::c_contig>& d,
-              std::uint32_t entity_info, cell::type entity_type)
+              std::uint32_t entity_info, basix::cell::type entity_type)
            {
              std::span<std::int32_t> _d(d.data(), d.shape(0));
              self.permute_subentity_closure(_d, entity_info, entity_type);
@@ -124,7 +136,8 @@ void declare_float(nb::module_& m, const std::string& type)
       .def("permute_subentity_closure",
            [](const FiniteElement<T>& self,
               const nb::ndarray<std::int32_t, nb::ndim<1>, nb::c_contig>& d,
-              std::uint32_t cell_info, cell::type entity_type, int entity_index)
+              std::uint32_t cell_info, basix::cell::type entity_type,
+              int entity_index)
            {
              std::span<std::int32_t> _d(d.data(), d.shape(0));
              self.permute_subentity_closure(_d, cell_info, entity_type, entity_index);
@@ -133,7 +146,7 @@ void declare_float(nb::module_& m, const std::string& type)
       .def("permute_subentity_closure_inv",
            [](const FiniteElement<T>& self,
               const nb::ndarray<std::int32_t, nb::ndim<1>, nb::c_contig>& d,
-              std::uint32_t entity_info, cell::type entity_type)
+              std::uint32_t entity_info, basix::cell::type entity_type)
            {
              std::span<std::int32_t> _d(d.data(), d.shape(0));
              self.permute_subentity_closure_inv(_d, entity_info, entity_type);
@@ -142,7 +155,8 @@ void declare_float(nb::module_& m, const std::string& type)
       .def("permute_subentity_closure_inv",
            [](const FiniteElement<T>& self,
               const nb::ndarray<std::int32_t, nb::ndim<1>, nb::c_contig>& d,
-              std::uint32_t cell_info, cell::type entity_type, int entity_index)
+              std::uint32_t cell_info, basix::cell::type entity_type,
+              int entity_index)
            {
              std::span<std::int32_t> _d(d.data(), d.shape(0));
              self.permute_subentity_closure_inv(_d, cell_info, entity_type, entity_index);
@@ -388,7 +402,7 @@ void declare_float(nb::module_& m, const std::string& type)
   std::string custom_name = "create_custom_element_" + type;
   m.def(
       custom_name.c_str(),
-      [](cell::type cell_type, const std::vector<std::size_t>& value_shape,
+      [](basix::cell::type cell_type, const std::vector<std::size_t>& value_shape,
          const nb::ndarray<const T, nb::ndim<2>, nb::c_contig>& wcoeffs,
          std::vector<
              std::vector<nb::ndarray<const T, nb::ndim<2>, nb::c_contig>>>
@@ -396,10 +410,10 @@ void declare_float(nb::module_& m, const std::string& type)
          std::vector<
              std::vector<nb::ndarray<const T, nb::ndim<4>, nb::c_contig>>>
              M,
-         int interpolation_nderivs, maps::type map_type,
-         sobolev::space sobolev_space, bool discontinuous,
+         int interpolation_nderivs, basix::maps::type map_type,
+         basix::sobolev::space sobolev_space, bool discontinuous,
          int embedded_subdegree, int embedded_superdegree,
-         polyset::type poly_type) -> FiniteElement<T>
+         basix::polyset::type poly_type) -> FiniteElement<T>
       {
         if (x.size() != 4)
           throw std::runtime_error("x has the wrong size");
@@ -416,7 +430,7 @@ void declare_float(nb::module_& m, const std::string& type)
           }
         }
 
-        std::array<std::vector<impl::mdspan_t<const T, 4>>, 4> _M;
+        std::array<std::vector<basix::impl::mdspan_t<const T, 4>>, 4> _M;
         for (int i = 0; i < 4; ++i)
         {
           for (std::size_t j = 0; j < M[i].size(); ++j)
@@ -452,310 +466,13 @@ void declare_float(nb::module_& m, const std::string& type)
 
   m.def(
       ("tabulate_polynomial_set_" + type).c_str(),
-      [](cell::type celltype, polyset::type polytype, int d, int n,
+      [](basix::cell::type celltype, basix::polyset::type polytype, int d, int n,
          const nb::ndarray<const T, nb::ndim<2>, nb::c_contig>& x)
       {
         mdspan_t<const T, 2> _x(x.data(), x.shape(0), x.shape(1));
-        return as_nbarrayp(polyset::tabulate(celltype, polytype, d, n, _x));
+        return as_nbarrayp(basix::polyset::tabulate(celltype, polytype, d, n, _x));
       },
       "celltype"_a, "ptype"_a, "degree"_a, "nderiv"_a, "pts"_a.noconvert());
 }
 
-} // namespace
-
-NB_MODULE(_basixcpp, m)
-{
-  m.doc() = "Interface to the Basix C++ library.";
-  m.attr("__version__") = basix::version();
-
-  m.def("topology", &cell::topology, "celltype"_a);
-  m.def(
-      "geometry",
-      [](cell::type celltype)
-      { return as_nbarrayp(cell::geometry<double>(celltype)); },
-      "celltype"_a);
-  m.def(
-      "sub_entity_type",
-      [](cell::type celltype, int dim, int index)
-      { return cell::sub_entity_type(celltype, dim, index); },
-      "celltype"_a, "dim"_a, "index"_a);
-  m.def("sub_entity_connectivity", &cell::sub_entity_connectivity, "celltype"_a);
-  m.def(
-      "sub_entity_geometry",
-      [](cell::type celltype, int dim, int index)
-      {
-        return as_nbarrayp(
-            cell::sub_entity_geometry<double>(celltype, dim, index));
-      },
-      "celltype"_a, "dim"_a, "index"_a);
-  m.def("subentity_types", &cell::subentity_types, "celltype"_a);
-  m.def("sobolev_space_intersection", &sobolev::space_intersection, "space1"_a, "space2"_a);
-
-  nb::enum_<lattice::type>(m, "LatticeType", nb::is_arithmetic(),
-                           "Lattice type.")
-      .value("equispaced", lattice::type::equispaced)
-      .value("gll", lattice::type::gll)
-      .value("chebyshev", lattice::type::chebyshev)
-      .value("gl", lattice::type::gl);
-  nb::enum_<lattice::simplex_method>(
-      m, "LatticeSimplexMethod", nb::is_arithmetic(), "Lattice simplex method.")
-      .value("none", lattice::simplex_method::none)
-      .value("warp", lattice::simplex_method::warp)
-      .value("isaac", lattice::simplex_method::isaac)
-      .value("centroid", lattice::simplex_method::centroid);
-
-  nb::enum_<polynomials::type>(m, "PolynomialType", nb::is_arithmetic(),
-                               "Polynomial type.")
-      .value("legendre", polynomials::type::legendre)
-      .value("lagrange", polynomials::type::lagrange)
-      .value("bernstein", polynomials::type::bernstein);
-
-  m.def(
-      "tabulate_polynomials",
-      [](polynomials::type polytype, cell::type celltype, int d,
-         const nb::ndarray<const double, nb::ndim<2>, nb::c_contig>& x)
-      {
-        mdspan_t<const double, 2> _x(x.data(), x.shape(0), x.shape(1));
-        return as_nbarrayp(polynomials::tabulate(polytype, celltype, d, _x));
-      },
-      "ptype"_a, "celltype"_a, "degree"_a, "pts"_a);
-  m.def("polynomials_dim", &polynomials::dim, "ptype"_a, "celltype"_a, "degree"_a);
-  m.def(
-      "create_lattice",
-      [](cell::type celltype, int n, lattice::type type, bool exterior,
-         lattice::simplex_method method)
-      {
-        return as_nbarrayp(
-            lattice::create<double>(celltype, n, type, exterior, method));
-      },
-      "celltype"_a, "n"_a, "ltype"_a, "exterior"_a, "method"_a);
-
-  nb::enum_<maps::type>(m, "MapType", nb::is_arithmetic(), "Element map type.")
-      .value("identity", maps::type::identity)
-      .value("L2Piola", maps::type::L2Piola)
-      .value("covariantPiola", maps::type::covariantPiola)
-      .value("contravariantPiola", maps::type::contravariantPiola)
-      .value("doubleCovariantPiola", maps::type::doubleCovariantPiola)
-      .value("doubleContravariantPiola", maps::type::doubleContravariantPiola);
-
-  nb::enum_<sobolev::space>(m, "SobolevSpace", nb::is_arithmetic(),
-                            "Sobolev space.")
-      .value("L2", sobolev::space::L2)
-      .value("H1", sobolev::space::H1)
-      .value("H2", sobolev::space::H2)
-      .value("H3", sobolev::space::H3)
-      .value("HInf", sobolev::space::HInf)
-      .value("HDiv", sobolev::space::HDiv)
-      .value("HCurl", sobolev::space::HCurl)
-      .value("HEin", sobolev::space::HEin)
-      .value("HDivDiv", sobolev::space::HDivDiv);
-
-  nb::enum_<quadrature::type>(m, "QuadratureType", nb::is_arithmetic(),
-                              "Quadrature type.")
-      .value("default", quadrature::type::Default)
-      .value("gauss_jacobi", quadrature::type::gauss_jacobi)
-      .value("gll", quadrature::type::gll)
-      .value("xiao_gimbutas", quadrature::type::xiao_gimbutas);
-
-  nb::enum_<cell::type>(m, "CellType", nb::is_arithmetic(), "Cell type.")
-      .value("point", cell::type::point)
-      .value("interval", cell::type::interval)
-      .value("triangle", cell::type::triangle)
-      .value("tetrahedron", cell::type::tetrahedron)
-      .value("quadrilateral", cell::type::quadrilateral)
-      .value("hexahedron", cell::type::hexahedron)
-      .value("prism", cell::type::prism)
-      .value("pyramid", cell::type::pyramid);
-
-  m.def("cell_volume", &cell::volume<double>, "celltype"_a);
-  m.def(
-      "cell_facet_normals",
-      [](cell::type cell_type)
-      { return as_nbarrayp(cell::facet_normals<double>(cell_type)); },
-      "celltype"_a);
-  m.def(
-      "cell_facet_reference_volumes",
-      [](cell::type cell_type)
-      { return as_nbarray(cell::facet_reference_volumes<double>(cell_type)); },
-      "celltype"_a);
-  m.def(
-      "cell_facet_outward_normals",
-      [](cell::type cell_type)
-      { return as_nbarrayp(cell::facet_outward_normals<double>(cell_type)); },
-      "celltype"_a);
-  m.def(
-      "cell_facet_orientations",
-      [](cell::type cell_type)
-      {
-        std::vector<bool> c = cell::facet_orientations(cell_type);
-        std::vector<std::uint8_t> c8(c.begin(), c.end());
-        return c8;
-      },
-      "celltype"_a);
-  m.def(
-      "cell_facet_jacobians",
-      [](cell::type cell_type)
-      { return as_nbarrayp(cell::facet_jacobians<double>(cell_type)); },
-      "celltype"_a);
-
-  m.def(
-      "cell_edge_jacobians",
-      [](cell::type cell_type)
-      { return as_nbarrayp(cell::edge_jacobians<double>(cell_type)); },
-      "celltype"_a);
-
-  nb::enum_<element::family>(m, "ElementFamily", nb::is_arithmetic(),
-                             "Finite element family.")
-      .value("custom", element::family::custom)
-      .value("P", element::family::P)
-      .value("BDM", element::family::BDM)
-      .value("RT", element::family::RT)
-      .value("N1E", element::family::N1E)
-      .value("N2E", element::family::N2E)
-      .value("Regge", element::family::Regge)
-      .value("HHJ", element::family::HHJ)
-      .value("bubble", element::family::bubble)
-      .value("serendipity", element::family::serendipity)
-      .value("DPC", element::family::DPC)
-      .value("CR", element::family::CR)
-      .value("Hermite", element::family::Hermite)
-      .value("iso", element::family::iso);
-
-  nb::enum_<element::lagrange_variant>(
-      m, "LagrangeVariant", nb::is_arithmetic(), "Lagrange element variant.")
-      .value("unset", element::lagrange_variant::unset)
-      .value("equispaced", element::lagrange_variant::equispaced)
-      .value("gll_warped", element::lagrange_variant::gll_warped)
-      .value("gll_isaac", element::lagrange_variant::gll_isaac)
-      .value("gll_centroid", element::lagrange_variant::gll_centroid)
-      .value("chebyshev_warped", element::lagrange_variant::chebyshev_warped)
-      .value("chebyshev_isaac", element::lagrange_variant::chebyshev_isaac)
-      .value("chebyshev_centroid",
-             element::lagrange_variant::chebyshev_centroid)
-      .value("gl_warped", element::lagrange_variant::gl_warped)
-      .value("gl_isaac", element::lagrange_variant::gl_isaac)
-      .value("gl_centroid", element::lagrange_variant::gl_centroid)
-      .value("legendre", element::lagrange_variant::legendre)
-      .value("bernstein", element::lagrange_variant::bernstein);
-
-  nb::enum_<element::dpc_variant>(m, "DPCVariant", nb::is_arithmetic(),
-                                  "DPC variant.")
-      .value("unset", element::dpc_variant::unset)
-      .value("simplex_equispaced", element::dpc_variant::simplex_equispaced)
-      .value("simplex_gll", element::dpc_variant::simplex_gll)
-      .value("horizontal_equispaced",
-             element::dpc_variant::horizontal_equispaced)
-      .value("horizontal_gll", element::dpc_variant::horizontal_gll)
-      .value("diagonal_equispaced", element::dpc_variant::diagonal_equispaced)
-      .value("diagonal_gll", element::dpc_variant::diagonal_gll)
-      .value("legendre", element::dpc_variant::legendre);
-
-  m.def(
-      "create_element",
-      [](element::family family_name, cell::type cell, int degree,
-         element::lagrange_variant lagrange_variant,
-         element::dpc_variant dpc_variant, bool discontinuous,
-         const std::vector<int>& dof_ordering, char dtype)
-          -> std::variant<FiniteElement<float>, FiniteElement<double>>
-      {
-        return dispatch_dtype<
-            std::variant<FiniteElement<float>, FiniteElement<double>>>(
-            dtype,
-            [&]<typename T>()
-            {
-              return basix::create_element<T>(family_name, cell, degree,
-                                               lagrange_variant, dpc_variant,
-                                               discontinuous, dof_ordering);
-            });
-      },
-      "family"_a, "celltype"_a, "degree"_a, "lagrange_variant"_a, "dpc_variant"_a,
-      "discontinuous"_a, "dof_ordering"_a, "dtype"_a);
-
-  m.def(
-      "create_tp_element",
-      [](element::family family_name, cell::type cell, int degree,
-         element::lagrange_variant lagrange_variant,
-         element::dpc_variant dpc_variant, bool discontinuous, char dtype)
-          -> std::variant<FiniteElement<float>, FiniteElement<double>>
-      {
-        return dispatch_dtype<
-            std::variant<FiniteElement<float>, FiniteElement<double>>>(
-            dtype,
-            [&]<typename T>()
-            {
-              return basix::create_tp_element<T>(family_name, cell, degree,
-                                                  lagrange_variant,
-                                                  dpc_variant, discontinuous);
-            });
-      },
-      "family"_a, "celltype"_a, "degree"_a, "lagrange_variant"_a, "dpc_variant"_a,
-      "discontinuous"_a, "dtype"_a);
-
-  m.def(
-      "tp_factors",
-      [](element::family family_name, cell::type cell, int degree,
-         element::lagrange_variant lagrange_variant,
-         element::dpc_variant dpc_variant, bool discontinuous,
-         const std::vector<int>& dof_ordering, char dtype)
-          -> std::optional<
-              std::variant<std::vector<std::vector<FiniteElement<float>>>,
-                           std::vector<std::vector<FiniteElement<double>>>>>
-      {
-        return dispatch_dtype<std::optional<
-            std::variant<std::vector<std::vector<FiniteElement<float>>>,
-                         std::vector<std::vector<FiniteElement<double>>>>>>(
-            dtype,
-            [&]<typename T>()
-            {
-              return basix::tp_factors<T>(family_name, cell, degree,
-                                          lagrange_variant, dpc_variant,
-                                          discontinuous, dof_ordering);
-            });
-      },
-      "family"_a, "celltype"_a, "degree"_a, "lagrange_variant"_a, "dpc_variant"_a,
-      "discontinuous"_a, "dof_ordering"_a, "dtype"_a);
-
-  m.def("tp_dof_ordering", &basix::tp_dof_ordering, "family"_a, "celltype"_a, "degree"_a,
-        "lagrange_variant"_a, "dpc_variant"_a, "discontinuous"_a);
-  m.def("lex_dof_ordering", &basix::lex_dof_ordering, "family"_a, "celltype"_a, "degree"_a,
-        "lagrange_variant"_a, "dpc_variant"_a, "discontinuous"_a);
-
-  nb::enum_<polyset::type>(m, "PolysetType", nb::is_arithmetic(),
-                           "Polyset type.")
-      .value("standard", polyset::type::standard)
-      .value("macroedge", polyset::type::macroedge);
-
-  m.def("superset", &polyset::superset, "cell"_a, "type1"_a, "type2"_a);
-  m.def("restriction", &polyset::restriction, "ptype"_a, "cell"_a, "restriction_cell"_a);
-
-  m.def(
-      "make_quadrature",
-      [](quadrature::type rule, cell::type celltype, polyset::type polytype,
-         int m)
-      {
-        auto [pts, w]
-            = quadrature::make_quadrature<double>(rule, celltype, polytype, m);
-        std::array shape{w.size(), pts.size() / w.size()};
-        return std::pair(as_nbarray(std::move(pts), shape.size(), shape.data()),
-                         as_nbarray(std::move(w)));
-      },
-      "rule"_a, "cell"_a, "polyset_type"_a, "degree"_a);
-
-  m.def(
-      "gauss_jacobi_rule",
-      [](double a, int m)
-      {
-        auto [pts, w] = quadrature::gauss_jacobi_rule<double>(a, m);
-        return std::pair(as_nbarray(std::move(pts)),
-                         as_nbarray(std::move(w)));
-      },
-      "alpha"_a, "npoints"_a);
-
-  m.def("index", nb::overload_cast<int>(&basix::indexing::idx), "p"_a);
-  m.def("index", nb::overload_cast<int, int>(&basix::indexing::idx), "p"_a, "q"_a);
-  m.def("index", nb::overload_cast<int, int, int>(&basix::indexing::idx), "p"_a, "q"_a,
-        "r"_a);
-
-  declare_float<float>(m, "float32");
-  declare_float<double>(m, "float64");
-}
+} // namespace basix_wrappers

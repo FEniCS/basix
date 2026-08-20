@@ -192,6 +192,12 @@ else()
   install(FILES ${CMAKE_CURRENT_BINARY_DIR}/_basixcpp.pyi DESTINATION basix)
 endif()
 
+# Install the nanobind helper header.
+install(
+  FILES basix_wrappers/basix_wrappers.h
+  DESTINATION basix/include/basix_wrappers
+)
+
 # py.typed (PEP 561 marker) is not a tracked source file - write it
 # directly at install time on both platforms rather than relying on
 # nanobind's MARKER_FILE option, which requires importing the freshly

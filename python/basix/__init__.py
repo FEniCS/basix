@@ -12,6 +12,7 @@ functionality can be used via this Python interface.
 # Template placeholder for injecting Windows dll directories in CI
 # WINDOWSDLL
 
+import os
 from importlib.metadata import metadata
 
 from basix import cell, finite_element, lattice, polynomials, quadrature, sobolev_spaces
@@ -57,6 +58,7 @@ __all__ = [
     "create_tp_element",
     "finite_element",
     "geometry",
+    "get_include",
     "index",
     "lattice",
     "make_quadrature",
@@ -68,3 +70,12 @@ __all__ = [
     "tabulate_polynomials",
     "topology",
 ]
+
+
+def get_include() -> str:
+    """Directory holding the Basix nanobind helper headers.
+
+    Returns:
+        Absolute path of the include directory.
+    """
+    return os.path.join(os.path.dirname(os.path.abspath(__file__)), "include")

@@ -22,7 +22,7 @@ cmake --build build-dir
 cmake --install build-dir
 ```
 
-Using the CMake build type `Release` or `RelWithDebug` is strongly recommended
+Using the CMake build type `Release` or `RelWithDebInfo` is strongly recommended
 for performance.
 
 

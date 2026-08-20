@@ -38,6 +38,7 @@ ignore_missing_imports = true
 
 [tool.scikit-build]
 wheel.packages = ["basix"]
+wheel.exclude = ["*.cpp"]
 
 [tool.scikit-build.cmake.define]
 # Set to FALSE to disable all install RPATH adjustments

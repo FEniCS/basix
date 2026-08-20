@@ -49,6 +49,9 @@ jobs:
 
       - name: Build wheels
         uses: pypa/cibuildwheel@v4.2.0
+        env:
+          BASIX_NANOBIND_SPLIT: "true"
+          CIBW_ENVIRONMENT_PASS_LINUX: BASIX_NANOBIND_SPLIT
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v7

@@ -14,7 +14,8 @@ authors = [
     { email = "fenics-steering-council@googlegroups.com" },
     { name = "FEniCS Steering Council" },
 ]
-dependencies = ["numpy>=2"]
+# Allows split mode to override.
+dynamic = ["dependencies"]
 
 [project.urls]
 homepage = "https://fenicsproject.org"
@@ -43,10 +44,28 @@ wheel.packages = ["python/basix"]
 # Set to FALSE to disable install RPATH adjustments
 BASIX_SET_INSTALL_RPATH = "TRUE"
 
+[tool.scikit-build.metadata.dependencies]
+provider = "scikit_build_core.metadata.template"
+result = ["numpy>=2"]
+
+# Stable ABI wheels; cibuildwheel sets CIBUILDWHEEL itself.
+[[tool.scikit-build.overrides]]
+if.env.CIBUILDWHEEL = true
+wheel.py-api = "cp312"
+
+# nanobind split mode, see INSTALL.md. Must come after the previous override. 
+[[tool.scikit-build.overrides]]
+if.env.BASIX_NANOBIND_SPLIT = true
+inherit.cmake.define = "append"
+cmake.define.BASIX_NANOBIND_SPLIT = "ON"
+# nanobind-backend is needed at build time too - stub generation imports the extension.
+build.requires = ["nanobind>=3.0.0.dev3", "nanobind-backend>=1.0.0.dev3"]
+metadata.dependencies.provider = "scikit_build_core.metadata.template"
+metadata.dependencies.result = ["numpy>=2", "nanobind-backend>=1.0.0.dev3"]
+wheel.py-api = "cp311"
+
 [tool.cibuildwheel]
-build-frontend = { name = "build", args = [
-    "-Cwheel.py-api=cp312",
-] }
+build-frontend = { name = "build" }
 build = [
     "cp3{11,12,13,14}-manylinux_x86_64",
     "cp3{11,12,13,14}-manylinux_aarch64",
@@ -67,7 +86,6 @@ test-groups = ["test"]
 [tool.cibuildwheel.windows]
 # Pin VCPKG_INSTALLED_DIR so the DLLs are at a fixed path.
 build-frontend = { name = "build", args = [
-    "-Cwheel.py-api=cp312",
     "-Ccmake.args=-DVCPKG_INSTALLED_DIR=C:/vcpkg_installed",
     "-Ccmake.args=-DCMAKE_TOOLCHAIN_FILE=C:/vcpkg/scripts/buildsystems/vcpkg.cmake",
 ] }

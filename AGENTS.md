@@ -20,6 +20,8 @@ introducing a new pattern.
 - `cpp/CMakeLists.txt` — C++ library build.
 - `python/basix/` — Python package (thin wrappers around the C++ core).
 - `python/wrapper.cpp` — nanobind bindings exposing the C++ core to Python.
+  Optionally built in nanobind split mode (`BASIX_NANOBIND_SPLIT=true`, off by
+  default, enabled for wheels) — see `INSTALL.md`.
 - `test/` — Python unit tests (pytest), plus `test/test_cmake` and
   `test/test_pkgconfig` integration tests for the installed C++ library.
 - `demo/` — C++ and Python demos, also exercised in CI.

@@ -36,6 +36,17 @@ add_feature_info(
   "Set rpath of _basixcpp to location of installed C++ library"
 )
 
+option(
+  BASIX_NANOBIND_SPLIT
+  "Build _basixcpp in nanobind split mode (requires nanobind >= 3.0)"
+  OFF
+)
+add_feature_info(
+  BASIX_NANOBIND_SPLIT
+  BASIX_NANOBIND_SPLIT
+  "Build _basixcpp in nanobind split mode (requires nanobind >= 3.0)"
+)
+
 feature_summary(WHAT ALL)
 
 # Detect the installed nanobind package and import it into CMake
@@ -48,11 +59,18 @@ execute_process(
 list(APPEND CMAKE_PREFIX_PATH "${NB_DIR}")
 find_package(nanobind CONFIG REQUIRED)
 
-# Create the binding library
-if(NOT "${SKBUILD_SABI_VERSION}" STREQUAL "")
-  set(NANOBIND_SABI "STABLE_ABI")
+# nanobind < 3.0 ignores BACKEND_MODULE silently.
+if(BASIX_NANOBIND_SPLIT AND nanobind_VERSION VERSION_LESS 3.0)
+  message(FATAL_ERROR "BASIX_NANOBIND_SPLIT requires nanobind >= 3.0.")
 endif()
-nanobind_add_module(_basixcpp NB_SUPPRESS_WARNINGS ${NANOBIND_SABI} wrapper.cpp)
+
+# Create the binding library
+if(BASIX_NANOBIND_SPLIT)
+  set(NANOBIND_MODE BACKEND_MODULE nanobind_backend)
+elseif(NOT "${SKBUILD_SABI_VERSION}" STREQUAL "")
+  set(NANOBIND_MODE STABLE_ABI)
+endif()
+nanobind_add_module(_basixcpp NB_SUPPRESS_WARNINGS ${NANOBIND_MODE} wrapper.cpp)
 target_compile_features(_basixcpp PRIVATE cxx_std_20)
 
 # Windows requires all symbols to be manually exported; this exports them

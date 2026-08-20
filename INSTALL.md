@@ -36,7 +36,7 @@ pip install .
 
 For a debug and editable build for development:
 ```console
-pip -v install --check-build-dependencies -Cbuild-dir="build" -Ccmake.build-type="Development" -Cinstall.strip=false --no-build-isolation -e .
+pip -v install --check-build-dependencies -Cbuild-dir="build" -Ccmake.build-type="Developer" -Cinstall.strip=false --no-build-isolation -e .
 ```
 When using the `--no-build-isolation` option all build dependencies must
 already be installed, e.g. via `pip install --group build`

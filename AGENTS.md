@@ -38,7 +38,7 @@ Editable/development install:
 ```console
 cd python
 pip -v install --check-build-dependencies -Cbuild-dir="build" \
-  -Ccmake.build-type="Development" -Cinstall.strip=false \
+  -Ccmake.build-type="Developer" -Cinstall.strip=false \
   --no-build-isolation -e .
 ```
 

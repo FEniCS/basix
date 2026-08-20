@@ -53,9 +53,7 @@ result = ["numpy>=2"]
 if.env.CIBUILDWHEEL = true
 wheel.py-api = "cp312"
 
-# nanobind split mode, see INSTALL.md. Must come after the block above to win on
-# py-api. The '.dev' specifiers are what make pip accept the (currently
-# unreleased) nanobind 3.0 prereleases.
+# nanobind split mode, see INSTALL.md. Must come after the previous override. 
 [[tool.scikit-build.overrides]]
 if.env.BASIX_NANOBIND_SPLIT = true
 inherit.cmake.define = "append"

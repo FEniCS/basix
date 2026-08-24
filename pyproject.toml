@@ -59,9 +59,9 @@ if.env.BASIX_NANOBIND_SPLIT = true
 inherit.cmake.define = "append"
 cmake.define.BASIX_NANOBIND_SPLIT = "ON"
 # nanobind-backend is needed at build time too - stub generation imports the extension.
-build.requires = ["nanobind>=3.0.0.dev3", "nanobind-backend>=1.0.0.dev3"]
+build.requires = ["nanobind>=3", "nanobind-backend>=1"]
 metadata.dependencies.provider = "scikit_build_core.metadata.template"
-metadata.dependencies.result = ["numpy>=2", "nanobind-backend>=1.0.0.dev3"]
+metadata.dependencies.result = ["numpy>=2", "nanobind-backend>=1"]
 wheel.py-api = "cp311"
 
 [tool.cibuildwheel]

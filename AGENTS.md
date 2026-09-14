@@ -79,19 +79,20 @@ ruff check .           # Python linting
 gersemi --check .      # CMake file formatting (2-space indent, see .gersemirc)
 ```
 
-Type checking uses [Pyrefly](https://pyrefly.org) (`pyrefly.toml`, run over
-`python/basix`, `demo/python`, and `test`); it needs Basix built and
-installed first (it resolves `basix`'s own compiled-extension types), so run
-it from an installed environment:
+Type checking uses [Pyrefly](https://pyrefly.org) (`[tool.pyrefly]` in the
+repository-root `pyproject.toml`, run over `python/basix`, `demo/python`,
+and `test`); it needs Basix built and installed first (it resolves
+`basix`'s own compiled-extension types), so run it from an installed
+environment, from the repository root:
 
 ```console
 pip install pyrefly
-pyrefly check --config pyrefly.toml
+pyrefly check
 ```
 
 Pre-existing diagnostics are recorded in `pyrefly-baseline.json` and do not
 fail CI; new diagnostics do. Regenerate the baseline after fixing or adding
-to it with `pyrefly check --config pyrefly.toml --update-baseline`.
+to it with `pyrefly check --update-baseline`.
 
 C++ formatting follows `.clang-format`; `clang-tidy` runs in CI with
 `WarningsAsErrors: "*"` (performance checks only, see `.clang-tidy`).

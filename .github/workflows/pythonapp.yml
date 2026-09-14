@@ -71,7 +71,7 @@ jobs:
       # ruff/gersemi in the lint job) to resolve basix's own types.
       - name: Pyrefly check
         if: ${{ matrix.python-version == '3.13' }}
-        run: pyrefly check --config pyrefly.toml --error-stale-baseline
+        run: pyrefly check --error-stale-baseline
       - name: Run units tests
         run: pytest -n auto --durations 20 test/
       - name: Run simple CMake integration test

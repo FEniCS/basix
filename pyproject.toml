@@ -36,6 +36,21 @@ ci = ["pyrefly", "pytest-xdist", { include-group = "docs" }, { include-group = "
 [tool.pytest.ini_options]
 testpaths = ["test"]
 
+[tool.pyrefly]
+# Lives at the repository root, not python/pyproject.toml, since test/ and
+# demo/python sit outside python/.
+project-includes = ["python/basix", "demo/python", "test"]
+project-excludes = ["**/__pycache__", "**/node_modules"]
+# Without this, Pyrefly's default excludes drop python/ itself (detected as
+# an editable-install search root) from project-includes.
+disable-project-excludes-heuristics = true
+baseline = "pyrefly-baseline.json"
+# basix._basixcpp: compiled extension, only resolvable when built. numba,
+# sympy: untyped/third-party stubs unrelated to basix's own typing.
+replace-imports-with-any = ["basix._basixcpp", "numba", "numba.*", "sympy", "sympy.*"]
+# ufl ships no py.typed; matplotlib/pylit stubs are irrelevant here.
+ignore-missing-imports = ["ufl", "ufl.*", "matplotlib", "matplotlib.*", "mpl_toolkits.*", "pylit"]
+
 [tool.scikit-build]
 wheel.packages = ["python/basix"]
 wheel.exclude = ["*.cpp"]

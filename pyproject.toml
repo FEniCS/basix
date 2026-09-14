@@ -40,7 +40,6 @@ testpaths = ["test"]
 # Lives at the repository root, not python/pyproject.toml, since test/ and
 # demo/python sit outside python/.
 project-includes = ["python/basix", "demo/python", "test"]
-project-excludes = ["**/__pycache__", "**/node_modules"]
 # Without this, Pyrefly's default excludes drop python/ itself (detected as
 # an editable-install search root) from project-includes.
 disable-project-excludes-heuristics = true

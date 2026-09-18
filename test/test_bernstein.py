@@ -163,6 +163,8 @@ def test_element(celltype, degree):
         derivs = [(0,), (1,), (2,), (3,)]
     elif celltype == basix.CellType.triangle:
         derivs = [(n - i, i) for n in range(4) for i in range(n + 1)]
+    else:
+        raise NotImplementedError
 
     for k in derivs:
         wsym = np.zeros_like(wtab[0])

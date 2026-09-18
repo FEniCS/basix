@@ -71,16 +71,16 @@ def test_continuity_interval_facet(degree, element, variant):
         pytest.skip()
 
     facets = [
-        [
+        (
             np.array([0, 0]),
             np.array([1, 0]),
             {basix.CellType.triangle: 2, basix.CellType.quadrilateral: 0},
-        ],
-        [
+        ),
+        (
             np.array([0, 0]),
             np.array([0, 1]),
             {basix.CellType.triangle: 1, basix.CellType.quadrilateral: 1},
-        ],
+        ),
     ]
 
     for start, end, cellmap in facets:
@@ -112,24 +112,24 @@ def test_continuity_triangle_facet(degree, element, variant):
         pytest.skip()
 
     facets = [
-        [
+        (
             np.array([0, 0, 0]),
             np.array([1, 0, 0]),
             np.array([0, 1, 0]),
             {basix.CellType.tetrahedron: 3, basix.CellType.prism: 0},
-        ],
-        [
+        ),
+        (
             np.array([0, 0, 0]),
             np.array([1, 0, 0]),
             np.array([0, 0, 1]),
             {basix.CellType.tetrahedron: 2, basix.CellType.pyramid: 1},
-        ],
-        [
+        ),
+        (
             np.array([0, 0, 0]),
             np.array([0, 1, 0]),
             np.array([0, 0, 1]),
             {basix.CellType.tetrahedron: 1, basix.CellType.pyramid: 2},
-        ],
+        ),
     ]
 
     for v0, v1, v2, cellmap in facets:
@@ -164,27 +164,27 @@ def test_continuity_quadrilateral_facet(degree, element, variant):
         pytest.skip()
 
     facets = [
-        [
+        (
             np.array([0, 0, 0]),
             np.array([1, 0, 0]),
             np.array([0, 1, 0]),
             np.array([1, 1, 0]),
             {basix.CellType.hexahedron: 0, basix.CellType.pyramid: 0},
-        ],
-        [
+        ),
+        (
             np.array([0, 0, 0]),
             np.array([1, 0, 0]),
             np.array([0, 0, 1]),
             np.array([1, 0, 1]),
             {basix.CellType.hexahedron: 1, basix.CellType.prism: 1},
-        ],
-        [
+        ),
+        (
             np.array([0, 0, 0]),
             np.array([0, 1, 0]),
             np.array([0, 0, 1]),
             np.array([0, 1, 1]),
             {basix.CellType.hexahedron: 2, basix.CellType.prism: 2},
-        ],
+        ),
     ]
 
     for v0, v1, v2, v3, cellmap in facets:

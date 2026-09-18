@@ -1,0 +1,158 @@
+{
+  "errors": [
+    {
+      "column": 5,
+      "path": "demo/python/demo_custom_element_conforming_cr.py",
+      "name": "missing-attribute",
+      "concise_description": "Object of class `NoneType` has no attribute `plot`",
+      "severity": "error"
+    },
+    {
+      "column": 5,
+      "path": "demo/python/demo_custom_element_conforming_cr.py",
+      "name": "missing-attribute",
+      "concise_description": "Object of class `NoneType` has no attribute `scatter`",
+      "severity": "error"
+    },
+    {
+      "column": 5,
+      "path": "demo/python/demo_custom_element_conforming_cr.py",
+      "name": "missing-attribute",
+      "concise_description": "Object of class `NoneType` has no attribute `plot`",
+      "severity": "error"
+    },
+    {
+      "column": 5,
+      "path": "demo/python/demo_custom_element_conforming_cr.py",
+      "name": "missing-attribute",
+      "concise_description": "Object of class `NoneType` has no attribute `scatter`",
+      "severity": "error"
+    },
+    {
+      "column": 9,
+      "path": "python/basix/ufl.py",
+      "name": "bad-override",
+      "concise_description": "Class member `_BasixElement.get_tensor_product_representation` overrides parent class `_ElementBase` in an inconsistent manner",
+      "severity": "error"
+    },
+    {
+      "column": 13,
+      "path": "python/basix/ufl.py",
+      "name": "unbound-name",
+      "concise_description": "`e` may be uninitialized",
+      "severity": "error"
+    },
+    {
+      "column": 14,
+      "path": "test/test_bernstein.py",
+      "name": "unbound-name",
+      "concise_description": "`derivs` may be uninitialized",
+      "severity": "error"
+    },
+    {
+      "column": 46,
+      "path": "test/test_continuity.py",
+      "name": "unsupported-operation",
+      "concise_description": "`-` is not supported between `dict[Unknown, int]` and `dict[Unknown, int]`",
+      "severity": "error"
+    },
+    {
+      "column": 29,
+      "path": "test/test_continuity.py",
+      "name": "unsupported-operation",
+      "concise_description": "`-` is not supported between `dict[Unknown, int]` and `dict[Unknown, int]`",
+      "severity": "error"
+    },
+    {
+      "column": 50,
+      "path": "test/test_continuity.py",
+      "name": "unsupported-operation",
+      "concise_description": "`-` is not supported between `dict[Unknown, int]` and `dict[Unknown, int]`",
+      "severity": "error"
+    },
+    {
+      "column": 28,
+      "path": "test/test_continuity.py",
+      "name": "unsupported-operation",
+      "concise_description": "`+` is not supported between `dict[Unknown, int]` and `dict[Unknown, int]`",
+      "severity": "error"
+    },
+    {
+      "column": 37,
+      "path": "test/test_continuity.py",
+      "name": "unsupported-operation",
+      "concise_description": "`+` is not supported between `dict[Unknown, int]` and `dict[Unknown, int]`",
+      "severity": "error"
+    },
+    {
+      "column": 29,
+      "path": "test/test_continuity.py",
+      "name": "unsupported-operation",
+      "concise_description": "`-` is not supported between `dict[Unknown, int]` and `dict[Unknown, int]`",
+      "severity": "error"
+    },
+    {
+      "column": 50,
+      "path": "test/test_continuity.py",
+      "name": "unsupported-operation",
+      "concise_description": "`-` is not supported between `dict[Unknown, int]` and `dict[Unknown, int]`",
+      "severity": "error"
+    },
+    {
+      "column": 44,
+      "path": "test/test_interpolation_between_elements.py",
+      "name": "unbound-name",
+      "concise_description": "`p_family` may be uninitialized",
+      "severity": "error"
+    },
+    {
+      "column": 28,
+      "path": "test/test_mappings.py",
+      "name": "unbound-name",
+      "concise_description": "`points` may be uninitialized",
+      "severity": "error"
+    },
+    {
+      "column": 47,
+      "path": "test/test_mappings.py",
+      "name": "unbound-name",
+      "concise_description": "`physical_vs` may be uninitialized",
+      "severity": "error"
+    },
+    {
+      "column": 32,
+      "path": "test/test_polynomials.py",
+      "name": "bad-argument-type",
+      "concise_description": "Argument `Unknown | None` is not assignable to parameter `x` with type `Buffer | SupportsFloat | SupportsIndex | str` in function `float.__new__`",
+      "severity": "error"
+    },
+    {
+      "column": 58,
+      "path": "test/test_quadrature.py",
+      "name": "bad-argument-type",
+      "concise_description": "Argument `Buffer | _NestedSequence[bytes | complex | str] | _NestedSequence[_SupportsArray[dtype]] | _SupportsArray[dtype] | bytes | complex | str` is not assignable to parameter `iter1` with type `Iterable[@_]` in function `zip.__new__`",
+      "severity": "error"
+    },
+    {
+      "column": 63,
+      "path": "test/test_quadrature.py",
+      "name": "bad-argument-type",
+      "concise_description": "Argument `Buffer | _NestedSequence[bytes | complex | str] | _NestedSequence[_SupportsArray[dtype]] | _SupportsArray[dtype] | bytes | complex | str` is not assignable to parameter `iter2` with type `Iterable[@_]` in function `zip.__new__`",
+      "severity": "error"
+    },
+    {
+      "column": 41,
+      "path": "test/test_tensor_products.py",
+      "name": "unbound-name",
+      "concise_description": "`values2` may be uninitialized",
+      "severity": "error"
+    },
+    {
+      "column": 64,
+      "path": "test/test_version.py",
+      "name": "missing-attribute",
+      "concise_description": "No attribute `_basixcpp` in module `basix`",
+      "severity": "error"
+    }
+  ]
+}

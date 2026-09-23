@@ -1,7 +1,13 @@
 cmake_minimum_required(VERSION 3.21)
 
 # Set the version
-project(Basix VERSION 0.12.0.0 LANGUAGES CXX)
+project(
+  Basix
+  VERSION 0.12.0.0
+  DESCRIPTION "Finite element definition and tabulation runtime library"
+  HOMEPAGE_URL "https://github.com/FEniCS/basix"
+  LANGUAGES CXX
+)
 include(GNUInstallDirs)
 
 if(SKBUILD)
@@ -282,8 +288,6 @@ if(CMAKE_VERSION VERSION_GREATER_EQUAL "4.3")
     DEFAULT_TARGETS basix
     DEFAULT_CONFIGURATIONS Release
     LICENSE MIT
-    DESCRIPTION "Finite element definition and tabulation runtime library"
-    HOMEPAGE_URL "https://github.com/FEniCS/basix"
     COMPONENT Development
   )
 endif()

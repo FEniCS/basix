@@ -5,7 +5,7 @@ project(
   Basix
   VERSION 0.12.0.0
   DESCRIPTION "Finite element definition and tabulation runtime library"
-  HOMEPAGE_URL "https://github.com/FEniCS/basix"
+  HOMEPAGE_URL "https://fenicsproject.org"
   LANGUAGES CXX
 )
 include(GNUInstallDirs)

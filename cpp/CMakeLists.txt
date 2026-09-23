@@ -272,6 +272,22 @@ install(
   DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/basix
 )
 
+# Install a Common Package Specification (CPS) file. install(PACKAGE_INFO)
+# is stable as of CMake 4.3.
+if(CMAKE_VERSION VERSION_GREATER_EQUAL "4.3")
+  install(
+    PACKAGE_INFO Basix
+    EXPORT BasixTargets
+    VERSION ${PROJECT_VERSION}
+    DEFAULT_TARGETS basix
+    DEFAULT_CONFIGURATIONS Release
+    LICENSE MIT
+    DESCRIPTION "Finite element definition and tabulation runtime library"
+    HOMEPAGE_URL "https://github.com/FEniCS/basix"
+    COMPONENT Development
+  )
+endif()
+
 # Configure and install pkg-config file
 get_target_property(PKG_BASIX_DEFINITIONS basix INTERFACE_COMPILE_DEFINITIONS)
 set(PKG_DEFINITIONS)

@@ -207,7 +207,24 @@ jobs:
       - name: Run pkg-config integration test
         run: |
           cd test/test_pkgconfig
-          make run
+          make run-shared
+
+      # A static build puts BLAS/LAPACK in Libs.private, since a static
+      # consumer (unlike a shared one) must link them itself; installed to
+      # its own prefix so it doesn't clobber the shared install above.
+      - name: Install Basix (static)
+        run: |
+          cmake -G Ninja -DCMAKE_BUILD_TYPE=Developer -DBUILD_SHARED_LIBS=OFF \
+            -DCMAKE_INSTALL_PREFIX=$PWD/static-install -B build-dir-static -S cpp
+          cmake --build build-dir-static
+          cmake --install build-dir-static
+          test -n "$(find static-install -name libbasix.a -print -quit)"
+      - name: Run pkg-config integration test (static)
+        run: |
+          cd test/test_pkgconfig
+          make clean
+          export PKG_CONFIG_PATH=$GITHUB_WORKSPACE/static-install/lib/pkgconfig:$PKG_CONFIG_PATH
+          make run-static
       - name: Set up Python
         uses: actions/setup-python@v7
         with:

@@ -340,7 +340,7 @@ void apply_matrix(std::span<const std::size_t> v_size_t,
 /// permutation.
 /// @param[in] n The number of blocks in the data.
 template <typename T, typename E>
-void apply_tranpose_matrix_right(
+void apply_transpose_matrix_right(
     std::span<const std::size_t> v_size_t,
     md::mdspan<const T, md::dextents<std::size_t, 2>> M, std::span<E> data,
     std::size_t offset = 0, std::size_t n = 1)

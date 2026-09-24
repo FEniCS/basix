@@ -151,7 +151,7 @@ class FiniteElement(Generic[T]):
         return cast(npt.NDArray[T], self._e.pull_back(u, J, detJ, K))
 
     def T_apply(self, data: npt.NDArray[T], block_size: int, cell_info: int) -> None:
-        """Apply DOF transformations to some data in-place.
+        """Pre-apply DOF transformations to some data in-place.
 
         Note:
             This function is designed to be called at runtime, so its
@@ -165,8 +165,81 @@ class FiniteElement(Generic[T]):
         """
         self._e.T_apply(cast(Any, data), block_size, cell_info)
 
-    def Tt_apply_right(self, data: npt.NDArray[T], block_size: int, cell_info: int) -> None:
+    def Tinv_apply(self, data: npt.NDArray[T], block_size: int, cell_info: int) -> None:
+        """Pre-apply inverse DOF transformations to some data in-place.
+
+        Note:
+            This function is designed to be called at runtime, so its
+            performance is critical.
+
+        Args:
+            data: The data
+            block_size: The number of data points per DOF
+            cell_info: The permutation info for the cell
+
+        """
+        self._e.Tinv_apply(cast(Any, data), block_size, cell_info)
+
+    def Tt_apply(self, data: npt.NDArray[T], block_size: int, cell_info: int) -> None:
+        """Pre-apply transpose DOF transformations to some data in-place.
+
+        Note:
+            This function is designed to be called at runtime, so its
+            performance is critical.
+
+        Args:
+            data: The data.
+            block_size: The number of data points per DOF.
+            cell_info: The permutation info for the cell.
+        """
+        self._e.Tt_apply(cast(Any, data), block_size, cell_info)
+
+    def Tt_inv_apply(self, data: npt.NDArray[T], block_size: int, cell_info: int) -> None:
+        """Pre-apply inverse transpose DOF transformations to some data in-place.
+
+        Note:
+            This function is designed to be called at runtime, so its
+            performance is critical.
+
+        Args:
+            data: The data.
+            block_size: The number of data points per DOF.
+            cell_info: The permutation info for the cell.
+        """
+        self._e.Tt_inv_apply(cast(Any, data), block_size, cell_info)
+
+    def T_apply_right(self, data: npt.NDArray[T], block_size: int, cell_info: int) -> None:
         """Post-apply DOF transformations to some transposed data in-place.
+
+        Note:
+            This function is designed to be called at runtime, so its
+            performance is critical.
+
+        Args:
+            data: The data
+            block_size: The number of data points per DOF
+            cell_info: The permutation info for the cell
+
+        """
+        self._e.T_apply_right(cast(Any, data), block_size, cell_info)
+
+    def Tinv_apply_right(self, data: npt.NDArray[T], block_size: int, cell_info: int) -> None:
+        """Post-apply inverse DOF transformations to some transposed data in-place.
+
+        Note:
+            This function is designed to be called at runtime, so its
+            performance is critical.
+
+        Args:
+            data: The data
+            block_size: The number of data points per DOF
+            cell_info: The permutation info for the cell
+
+        """
+        self._e.Tinv_apply_right(cast(Any, data), block_size, cell_info)
+
+    def Tt_apply_right(self, data: npt.NDArray[T], block_size: int, cell_info: int) -> None:
+        """Post-apply transpose DOF transformations to some transposed data in-place.
 
         Note:
             This function is designed to be called at runtime, so its
@@ -179,8 +252,8 @@ class FiniteElement(Generic[T]):
         """
         self._e.Tt_apply_right(cast(Any, data), block_size, cell_info)
 
-    def Tt_inv_apply(self, data: npt.NDArray[T], block_size: int, cell_info: int) -> None:
-        """Pre-apply inverse transpose DOF transformations to some data.
+    def Tt_inv_apply_right(self, data: npt.NDArray[T], block_size: int, cell_info: int) -> None:
+        """Post-apply inverse transpose DOF transformations to some transposed data in-place.
 
         Note:
             This function is designed to be called at runtime, so its
@@ -191,7 +264,7 @@ class FiniteElement(Generic[T]):
             block_size: The number of data points per DOF.
             cell_info: The permutation info for the cell.
         """
-        self._e.Tt_inv_apply(cast(Any, data), block_size, cell_info)
+        self._e.Tt_inv_apply_right(cast(Any, data), block_size, cell_info)
 
     def base_transformations(self) -> npt.NDArray[T]:
         r"""Get the base transformations.

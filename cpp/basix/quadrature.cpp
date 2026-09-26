@@ -4931,6 +4931,8 @@ quadrature::type quadrature::get_default_rule(cell::type celltype, int m)
   {
     if (m <= 1)
       return type::zienkiewicz_taylor;
+    else if (m == 3)
+      return type::gauss_jacobi;
     else if (m <= 6)
       return type::strang_fix;
     else if (m <= 30)

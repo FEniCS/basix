@@ -337,8 +337,11 @@ function(_basix_pkgconfig_resolve_target target out_var)
       string(TOUPPER "${CMAKE_BUILD_TYPE}" _cfg_upper)
       list(APPEND _candidates "IMPORTED_LOCATION_${_cfg_upper}")
     endif()
-    list(APPEND _candidates IMPORTED_LOCATION_RELEASE IMPORTED_LOCATION_NOCONFIG
-         IMPORTED_LOCATION
+    list(
+      APPEND _candidates
+      IMPORTED_LOCATION_RELEASE
+      IMPORTED_LOCATION_NOCONFIG
+      IMPORTED_LOCATION
     )
     foreach(_prop ${_candidates})
       get_target_property(_loc "${_target}" "${_prop}")

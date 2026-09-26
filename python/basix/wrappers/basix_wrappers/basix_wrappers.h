@@ -114,108 +114,159 @@ void declare_float(nanobind::module_& m, const std::string& type)
 
   std::string name = "FiniteElement_" + type;
   nb::class_<FiniteElement<T>>(m, name.c_str())
-      .def("tabulate",
-           [](const FiniteElement<T>& self, int n,
-              const nb::ndarray<const T, nb::ndim<2>, nb::c_contig>& x)
-           {
-             mdspan_t<const T, 2> _x(x.data(), x.shape(0), x.shape(1));
-             return as_nbarrayp(self.tabulate(n, _x));
-           },
-           "n"_a, "x"_a)
-      .def("__eq__", &FiniteElement<T>::operator==, nb::sig("def __eq__(self, arg: object, /) -> bool"))
+      .def(
+          "tabulate",
+          [](const FiniteElement<T>& self, int n,
+             const nb::ndarray<const T, nb::ndim<2>, nb::c_contig>& x)
+          {
+            mdspan_t<const T, 2> _x(x.data(), x.shape(0), x.shape(1));
+            return as_nbarrayp(self.tabulate(n, _x));
+          },
+          "n"_a, "x"_a)
+      .def("__eq__", &FiniteElement<T>::operator==,
+           nb::sig("def __eq__(self, arg: object, /) -> bool"))
       .def("hash", &FiniteElement<T>::hash)
-      .def("permute_subentity_closure",
-           [](const FiniteElement<T>& self,
-              const nb::ndarray<std::int32_t, nb::ndim<1>, nb::c_contig>& d,
-              std::uint32_t entity_info, basix::cell::type entity_type)
-           {
-             std::span<std::int32_t> _d(d.data(), d.shape(0));
-             self.permute_subentity_closure(_d, entity_info, entity_type);
-           },
-           "d"_a.noconvert(), "entity_info"_a, "entity_type"_a)
-      .def("permute_subentity_closure",
-           [](const FiniteElement<T>& self,
-              const nb::ndarray<std::int32_t, nb::ndim<1>, nb::c_contig>& d,
-              std::uint32_t cell_info, basix::cell::type entity_type,
-              int entity_index)
-           {
-             std::span<std::int32_t> _d(d.data(), d.shape(0));
-             self.permute_subentity_closure(_d, cell_info, entity_type, entity_index);
-           },
-           "d"_a.noconvert(), "cell_info"_a, "entity_type"_a, "entity_index"_a)
-      .def("permute_subentity_closure_inv",
-           [](const FiniteElement<T>& self,
-              const nb::ndarray<std::int32_t, nb::ndim<1>, nb::c_contig>& d,
-              std::uint32_t entity_info, basix::cell::type entity_type)
-           {
-             std::span<std::int32_t> _d(d.data(), d.shape(0));
-             self.permute_subentity_closure_inv(_d, entity_info, entity_type);
-           },
-           "d"_a.noconvert(), "entity_info"_a, "entity_type"_a)
-      .def("permute_subentity_closure_inv",
-           [](const FiniteElement<T>& self,
-              const nb::ndarray<std::int32_t, nb::ndim<1>, nb::c_contig>& d,
-              std::uint32_t cell_info, basix::cell::type entity_type,
-              int entity_index)
-           {
-             std::span<std::int32_t> _d(d.data(), d.shape(0));
-             self.permute_subentity_closure_inv(_d, cell_info, entity_type, entity_index);
-           },
-           "d"_a.noconvert(), "cell_info"_a, "entity_type"_a, "entity_index"_a)
-      .def("push_forward",
-           [](const FiniteElement<T>& self,
-              const nb::ndarray<const T, nb::ndim<3>, nb::c_contig>& U,
-              const nb::ndarray<const T, nb::ndim<3>, nb::c_contig>& J,
-              const nb::ndarray<const T, nb::ndim<1>, nb::c_contig>& detJ,
-              const nb::ndarray<const T, nb::ndim<3>, nb::c_contig>& K)
-           {
-             auto u = self.push_forward(
-                 mdspan_t<const T, 3>(U.data(), U.shape(0), U.shape(1),
-                                      U.shape(2)),
-                 mdspan_t<const T, 3>(J.data(), J.shape(0), J.shape(1),
-                                      J.shape(2)),
-                 std::span<const T>(detJ.data(), detJ.shape(0)),
-                 mdspan_t<const T, 3>(K.data(), K.shape(0), K.shape(1),
-                                      K.shape(2)));
-             return as_nbarrayp(std::move(u));
-           },
-           "U"_a, "J"_a, "detJ"_a, "K"_a)
-      .def("pull_back",
-           [](const FiniteElement<T>& self,
-              const nb::ndarray<const T, nb::ndim<3>, nb::c_contig>& u,
-              const nb::ndarray<const T, nb::ndim<3>, nb::c_contig>& J,
-              const nb::ndarray<const T, nb::ndim<1>, nb::c_contig>& detJ,
-              const nb::ndarray<const T, nb::ndim<3>, nb::c_contig>& K)
-           {
-             auto U = self.pull_back(
-                 mdspan_t<const T, 3>(u.data(), u.shape(0), u.shape(1),
-                                      u.shape(2)),
-                 mdspan_t<const T, 3>(J.data(), J.shape(0), J.shape(1),
-                                      J.shape(2)),
-                 std::span<const T>(detJ.data(), detJ.shape(0)),
-                 mdspan_t<const T, 3>(K.data(), K.shape(0), K.shape(1),
-                                      K.shape(2)));
-             return as_nbarrayp(std::move(U));
-           },
-           "u"_a, "J"_a, "detJ"_a, "K"_a)
-      .def("T_apply", [](const FiniteElement<T>& self,
-                         const nb::ndarray<T, nb::ndim<1>, nb::c_contig>& u, int n,
-                         std::uint32_t cell_info)
-           { self.T_apply(std::span(u.data(), u.size()), n, cell_info); },
-           "u"_a.noconvert(), "n"_a, "cell_info"_a)
-      .def("Tt_apply_right",
-           [](const FiniteElement<T>& self,
-              const nb::ndarray<T, nb::ndim<1>, nb::c_contig>& u, int n,
-              std::uint32_t cell_info) {
-             self.Tt_apply_right(std::span(u.data(), u.size()), n,
-                                cell_info);
-           },
-           "u"_a.noconvert(), "n"_a, "cell_info"_a)
-      .def("Tt_inv_apply", [](const FiniteElement<T>& self,
-                              const nb::ndarray<T, nb::ndim<1>, nb::c_contig>& u,
-                              int n, std::uint32_t cell_info)
-           { self.Tt_inv_apply(std::span(u.data(), u.size()), n, cell_info); },
-           "u"_a.noconvert(), "n"_a, "cell_info"_a)
+      .def(
+          "permute_subentity_closure",
+          [](const FiniteElement<T>& self,
+             const nb::ndarray<std::int32_t, nb::ndim<1>, nb::c_contig>& d,
+             std::uint32_t entity_info, basix::cell::type entity_type)
+          {
+            std::span<std::int32_t> _d(d.data(), d.shape(0));
+            self.permute_subentity_closure(_d, entity_info, entity_type);
+          },
+          "d"_a.noconvert(), "entity_info"_a, "entity_type"_a)
+      .def(
+          "permute_subentity_closure",
+          [](const FiniteElement<T>& self,
+             const nb::ndarray<std::int32_t, nb::ndim<1>, nb::c_contig>& d,
+             std::uint32_t cell_info, basix::cell::type entity_type,
+             int entity_index)
+          {
+            std::span<std::int32_t> _d(d.data(), d.shape(0));
+            self.permute_subentity_closure(_d, cell_info, entity_type,
+                                           entity_index);
+          },
+          "d"_a.noconvert(), "cell_info"_a, "entity_type"_a, "entity_index"_a)
+      .def(
+          "permute_subentity_closure_inv",
+          [](const FiniteElement<T>& self,
+             const nb::ndarray<std::int32_t, nb::ndim<1>, nb::c_contig>& d,
+             std::uint32_t entity_info, basix::cell::type entity_type)
+          {
+            std::span<std::int32_t> _d(d.data(), d.shape(0));
+            self.permute_subentity_closure_inv(_d, entity_info, entity_type);
+          },
+          "d"_a.noconvert(), "entity_info"_a, "entity_type"_a)
+      .def(
+          "permute_subentity_closure_inv",
+          [](const FiniteElement<T>& self,
+             const nb::ndarray<std::int32_t, nb::ndim<1>, nb::c_contig>& d,
+             std::uint32_t cell_info, basix::cell::type entity_type,
+             int entity_index)
+          {
+            std::span<std::int32_t> _d(d.data(), d.shape(0));
+            self.permute_subentity_closure_inv(_d, cell_info, entity_type,
+                                               entity_index);
+          },
+          "d"_a.noconvert(), "cell_info"_a, "entity_type"_a, "entity_index"_a)
+      .def(
+          "push_forward",
+          [](const FiniteElement<T>& self,
+             const nb::ndarray<const T, nb::ndim<3>, nb::c_contig>& U,
+             const nb::ndarray<const T, nb::ndim<3>, nb::c_contig>& J,
+             const nb::ndarray<const T, nb::ndim<1>, nb::c_contig>& detJ,
+             const nb::ndarray<const T, nb::ndim<3>, nb::c_contig>& K)
+          {
+            auto u = self.push_forward(
+                mdspan_t<const T, 3>(U.data(), U.shape(0), U.shape(1),
+                                     U.shape(2)),
+                mdspan_t<const T, 3>(J.data(), J.shape(0), J.shape(1),
+                                     J.shape(2)),
+                std::span<const T>(detJ.data(), detJ.shape(0)),
+                mdspan_t<const T, 3>(K.data(), K.shape(0), K.shape(1),
+                                     K.shape(2)));
+            return as_nbarrayp(std::move(u));
+          },
+          "U"_a, "J"_a, "detJ"_a, "K"_a)
+      .def(
+          "pull_back",
+          [](const FiniteElement<T>& self,
+             const nb::ndarray<const T, nb::ndim<3>, nb::c_contig>& u,
+             const nb::ndarray<const T, nb::ndim<3>, nb::c_contig>& J,
+             const nb::ndarray<const T, nb::ndim<1>, nb::c_contig>& detJ,
+             const nb::ndarray<const T, nb::ndim<3>, nb::c_contig>& K)
+          {
+            auto U
+                = self.pull_back(mdspan_t<const T, 3>(u.data(), u.shape(0),
+                                                      u.shape(1), u.shape(2)),
+                                 mdspan_t<const T, 3>(J.data(), J.shape(0),
+                                                      J.shape(1), J.shape(2)),
+                                 std::span<const T>(detJ.data(), detJ.shape(0)),
+                                 mdspan_t<const T, 3>(K.data(), K.shape(0),
+                                                      K.shape(1), K.shape(2)));
+            return as_nbarrayp(std::move(U));
+          },
+          "u"_a, "J"_a, "detJ"_a, "K"_a)
+      .def(
+          "T_apply",
+          [](const FiniteElement<T>& self,
+             const nb::ndarray<T, nb::ndim<1>, nb::c_contig>& u, int n,
+             std::uint32_t cell_info)
+          { self.T_apply(std::span(u.data(), u.size()), n, cell_info); },
+          "u"_a.noconvert(), "n"_a, "cell_info"_a)
+      .def(
+          "Tinv_apply",
+          [](const FiniteElement<T>& self,
+             const nb::ndarray<T, nb::ndim<1>, nb::c_contig>& u, int n,
+             std::uint32_t cell_info)
+          { self.Tinv_apply(std::span(u.data(), u.size()), n, cell_info); },
+          "u"_a.noconvert(), "n"_a, "cell_info"_a)
+      .def(
+          "Tt_apply",
+          [](const FiniteElement<T>& self,
+             const nb::ndarray<T, nb::ndim<1>, nb::c_contig>& u, int n,
+             std::uint32_t cell_info)
+          { self.Tt_apply(std::span(u.data(), u.size()), n, cell_info); },
+          "u"_a.noconvert(), "n"_a, "cell_info"_a)
+      .def(
+          "Tt_inv_apply",
+          [](const FiniteElement<T>& self,
+             const nb::ndarray<T, nb::ndim<1>, nb::c_contig>& u, int n,
+             std::uint32_t cell_info)
+          { self.Tt_inv_apply(std::span(u.data(), u.size()), n, cell_info); },
+          "u"_a.noconvert(), "n"_a, "cell_info"_a)
+      .def(
+          "T_apply_right",
+          [](const FiniteElement<T>& self,
+             const nb::ndarray<T, nb::ndim<1>, nb::c_contig>& u, int n,
+             std::uint32_t cell_info)
+          { self.T_apply_right(std::span(u.data(), u.size()), n, cell_info); },
+          "u"_a.noconvert(), "n"_a, "cell_info"_a)
+      .def(
+          "Tinv_apply_right",
+          [](const FiniteElement<T>& self,
+             const nb::ndarray<T, nb::ndim<1>, nb::c_contig>& u, int n,
+             std::uint32_t cell_info) {
+            self.Tinv_apply_right(std::span(u.data(), u.size()), n, cell_info);
+          },
+          "u"_a.noconvert(), "n"_a, "cell_info"_a)
+      .def(
+          "Tt_apply_right",
+          [](const FiniteElement<T>& self,
+             const nb::ndarray<T, nb::ndim<1>, nb::c_contig>& u, int n,
+             std::uint32_t cell_info)
+          { self.Tt_apply_right(std::span(u.data(), u.size()), n, cell_info); },
+          "u"_a.noconvert(), "n"_a, "cell_info"_a)
+      .def(
+          "Tt_inv_apply_right",
+          [](const FiniteElement<T>& self,
+             const nb::ndarray<T, nb::ndim<1>, nb::c_contig>& u, int n,
+             std::uint32_t cell_info) {
+            self.Tt_inv_apply_right(std::span(u.data(), u.size()), n,
+                                    cell_info);
+          },
+          "u"_a.noconvert(), "n"_a, "cell_info"_a)
       .def("base_transformations", [](const FiniteElement<T>& self)
            { return as_nbarrayp(self.base_transformations()); })
       .def("entity_transformations",

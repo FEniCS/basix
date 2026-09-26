@@ -307,9 +307,6 @@ endif()
 
 # Only a static Basix::basix needs its consumers to also link
 # BLAS/LAPACK, so they go in Libs.private.
-# Resolving BLAS::BLAS/LAPACK::LAPACK's own IMPORTED_LOCATION, rather
-# than the raw BLAS_LIBRARIES/LAPACK_LIBRARIES variables, keeps this in
-# sync with what basix actually links.
 # macOS frameworks aren't valid bare linker arguments, so translate them to -framework.
 function(_basix_pkgconfig_append lib out_var)
   set(_result "${${out_var}}")

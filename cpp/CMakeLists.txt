@@ -305,21 +305,12 @@ if(_cxx_standard)
   string(APPEND PKG_CXXFLAGS " -std=c++${_cxx_standard}")
 endif()
 
-# BLAS/LAPACK are linked PRIVATE, so only a *static* Basix::basix needs
-# consumers to also link them (a shared library resolves its own private
-# dependencies). List them in Libs.private, which `pkg-config --libs`
-# ignores but `pkg-config --static --libs` includes.
-#
-# Resolve the actual BLAS::BLAS/LAPACK::LAPACK targets' own
-# IMPORTED_LOCATION rather than the raw BLAS_LIBRARIES/LAPACK_LIBRARIES
-# variables: those are plain strings, not per-config imported targets,
-# so with a multi-config generator they can end up pointing at the
-# debug variant, or naming a library file that doesn't match what was
-# actually installed. Reading the target's own resolved location can't
-# drift from what basix itself actually links against.
-# macOS frameworks (e.g. Accelerate) are not valid bare linker
-# arguments, so translate those to `-framework <name>`; everything
-# else is appended unchanged.
+# Only a static Basix::basix needs its consumers to also link
+# BLAS/LAPACK, so they go in Libs.private.
+# Resolving BLAS::BLAS/LAPACK::LAPACK's own IMPORTED_LOCATION, rather
+# than the raw BLAS_LIBRARIES/LAPACK_LIBRARIES variables, keeps this in
+# sync with what basix actually links.
+# macOS frameworks aren't valid bare linker arguments, so translate them to -framework.
 function(_basix_pkgconfig_append lib out_var)
   set(_result "${${out_var}}")
   if(lib MATCHES "\\.framework$")
@@ -363,10 +354,7 @@ function(_basix_pkgconfig_resolve_target target out_var)
   if(_loc)
     _basix_pkgconfig_append("${_loc}" _result)
   else()
-    # No resolvable location on this target itself (e.g. an INTERFACE
-    # library, or an IMPORTED target with no location set): recurse
-    # into whatever it links, so a target wrapping other targets or
-    # plain linker flags is still fully expanded.
+    # Recurse into what an INTERFACE target links to expand it fully.
     get_target_property(_iface_libs "${_target}" INTERFACE_LINK_LIBRARIES)
     if(_iface_libs)
       foreach(_lib ${_iface_libs})

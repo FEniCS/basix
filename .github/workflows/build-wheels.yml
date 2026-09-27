@@ -47,9 +47,7 @@ jobs:
         with:
           ref: ${{ github.event.inputs.basix_ref }}
 
-      # The Windows wheel builds with Ninja, which needs cl.exe on PATH. The
-      # Visual Studio generator located it itself. ARM64 wheels are built on a
-      # native ARM64 runner, so the host architecture is the target.
+      # Ninja needs cl.exe on PATH. ARM64 wheels build on a native ARM64 runner.
       - name: Set up MSVC (Windows)
         if: runner.os == 'Windows'
         uses: ilammy/msvc-dev-cmd@v1

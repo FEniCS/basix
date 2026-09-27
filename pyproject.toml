@@ -96,7 +96,15 @@ build-frontend = { name = "build", args = [
 # --ignore-existing keeps basix.dll under its usual name, as downstream C++
 # consumers may link against it. --with-mangle still mangles its dependencies,
 # which delvewheel copies in from from vcpkg.
-repair-wheel-command = 'delvewheel repair --ignore-existing --with-mangle --add-path "C:/vcpkg_installed/x64-windows/bin;C:/vcpkg_installed/arm64-windows/bin" -w {dest_dir} -v {wheel}'
+#
+# msvcp140.dll and msvcp140_atomic_wait.dll are excluded. delvewheel already
+# leaves vcruntime140.dll and vcruntime140_1.dll to the system, and they ship
+# in the same redistributable, so bundling only msvcp140 does not make the
+# wheel self-contained. It also took whichever copy came first on PATH, and a
+# private mangled C++ runtime gives a second heap and a second set of CRT
+# state in any process that also loads DOLFINx, which passes C++ objects
+# across the module boundary.
+repair-wheel-command = 'delvewheel repair --ignore-existing --with-mangle --exclude "msvcp140.dll;msvcp140_atomic_wait.dll" --add-path "C:/vcpkg_installed/x64-windows/bin;C:/vcpkg_installed/arm64-windows/bin" -w {dest_dir} -v {wheel}'
 test-command = [
     "cmake -B build-dir -S {project}/test/test_cmake -DPython3_EXECUTABLE=%VIRTUAL_ENV%\\Scripts\\python.exe",
     "cmake --build build-dir",

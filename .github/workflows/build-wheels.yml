@@ -38,6 +38,7 @@ jobs:
   build_wheels:
     name: Build wheels on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 90
     strategy:
       matrix:
         os: [ubuntu-26.04, ubuntu-26.04-arm, macos-26, macos-26-intel, windows-11-arm, windows-2022]
@@ -46,6 +47,13 @@ jobs:
       - uses: actions/checkout@v7
         with:
           ref: ${{ github.event.inputs.basix_ref }}
+
+      # Ninja needs cl.exe on PATH. ARM64 wheels build on a native ARM64 runner.
+      - name: Set up MSVC (Windows)
+        if: runner.os == 'Windows'
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: ${{ runner.arch == 'ARM64' && 'arm64' || 'x64' }}
 
       - name: Build wheels
         uses: pypa/cibuildwheel@v4.2.0

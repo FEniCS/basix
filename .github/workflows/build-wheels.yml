@@ -38,6 +38,7 @@ jobs:
   build_wheels:
     name: Build wheels on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 90
     strategy:
       matrix:
         os: [ubuntu-26.04, ubuntu-26.04-arm, macos-26, macos-26-intel, windows-11-arm, windows-2022]

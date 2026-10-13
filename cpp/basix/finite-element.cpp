@@ -1225,14 +1225,30 @@ FiniteElement<F>::FiniteElement(
       }
     }
 
-    // Apply permutation to _points (for interpolation)
-    std::vector<F> new_points(_points.first.size());
-    assert(_points.second[0] == _dof_ordering.size());
-    const int gdim = _points.second[1];
-    for (std::size_t d = 0; d < _dof_ordering.size(); ++d)
-      for (int i = 0; i < gdim; ++i)
-        new_points[gdim * _dof_ordering[d] + i] = _points.first[gdim * d + i];
-    _points = {new_points, _points.second};
+    // Apply permutation to _points when point and DOF counts match
+    const bool reorder_points = _points.second[0] == _dof_ordering.size();
+    if (reorder_points)
+    {
+      std::vector<F> new_points(_points.first.size());
+      const int gdim = _points.second[1];
+      for (std::size_t d = 0; d < _dof_ordering.size(); ++d)
+        for (int i = 0; i < gdim; ++i)
+          new_points[gdim * _dof_ordering[d] + i] = _points.first[gdim * d + i];
+      _points = {new_points, _points.second};
+    }
+
+    // Apply permutation to interpolation matrix DOFs and reordered points
+    std::vector<F> new_matM(_matM.first.size());
+    mdspan_t<F, 4> new_Mview(new_matM.data(), num_dofs, value_size, num_points1,
+                           nderivs);
+    for (std::size_t i = 0; i < num_dofs; ++i)
+      for (std::size_t j = 0; j < value_size; ++j)
+        for (std::size_t k = 0; k < num_points1; ++k)
+          for (std::size_t l = 0; l < nderivs; ++l)
+            new_Mview(_dof_ordering[i], j, reorder_points ? _dof_ordering[k] : k,
+                      l)
+                = Mview(i, j, k, l);
+    _matM.first = std::move(new_matM);
   }
 
   const std::vector<std::vector<std::vector<std::vector<int>>>> connectivity

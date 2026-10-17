@@ -14,5 +14,8 @@ for file in os.listdir(path):
 
 @pytest.mark.parametrize("demo", demos)
 def test_demo(demo):
+    if demo == "demo_numba_kernels.py":
+        # Numba is not available on all platforms that Basix supports
+        pytest.importorskip("numba")
     ret = subprocess.run([sys.executable, demo], cwd=str(path), check=True)
     assert ret.returncode == 0

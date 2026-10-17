@@ -28,6 +28,9 @@ enum class type
 
 /// @brief Get the Gauss-Jacobi rule for the interval for integrating
 /// f(x) * (1-x)^a on the interval [0, 1].
+///
+/// The rule is exact for f a polynomial of degree `2 * m - 1`.
+///
 /// @tparam T The floating point type.
 /// @param[in] a The exponent a.
 /// @param[in] m The number of points.
@@ -59,13 +62,23 @@ quadrature::type get_default_rule(cell::type celltype, int m);
 
 /// @brief Get Gauss-Lobatto-Legendre (GLL) points on the interval [0,
 /// 1].
+///
+/// Two of the points are the endpoints of the interval. They are
+/// returned first, in the order 0, 1, followed by the interior points
+/// in increasing order, to match the Basix ordering of degrees of
+/// freedom on an interval.
+///
 /// @tparam T The floating point type.
-/// @param[in] m Number of points.
+/// @param[in] m Number of points, at least two.
 /// @return Array of GLL points.
 template <std::floating_point T>
 std::vector<T> get_gll_points(int m);
 
 /// @brief Get Gauss-Legendre (GL) points on the interval [0, 1].
+///
+/// The points are the interior points of the interval, in increasing
+/// order.
+///
 /// @tparam T The floating point type.
 /// @param[in] m Number of points
 /// @return Array of GL points.

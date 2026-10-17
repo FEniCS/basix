@@ -3,6 +3,8 @@
 // SPDX-License-Identifier:    MIT
 
 #include "precompute.h"
+#include <cstddef>
+#include <span>
 
 using namespace basix;
 

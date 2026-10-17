@@ -13,8 +13,13 @@
 #include "polyset.h"
 #include "quadrature.h"
 #include "sobolev-spaces.h"
+#include <algorithm>
 #include <array>
+#include <cassert>
 #include <concepts>
+#include <cstddef>
+#include <stdexcept>
+#include <tuple>
 #include <vector>
 
 using namespace basix;
@@ -165,6 +170,7 @@ impl::mdarray_t<T, 2> create_nedelec_3d_space(int degree)
       impl::mdspan_t<T, 2>(Ab[1].data(), ns, npts),
       impl::mdspan_t<T, 2>(Ab[2].data(), ns, npts)};
   for (std::size_t i = 0; i < ns; ++i)
+  {
     for (std::size_t k = 0; k < npts; ++k)
     {
       const T p = wts[k] * phi(0, ns0 + i, k);
@@ -172,6 +178,7 @@ impl::mdarray_t<T, 2> create_nedelec_3d_space(int degree)
       A[1](i, k) = p * pts(k, 1);
       A[2](i, k) = p * pts(k, 2);
     }
+  }
 
   // W[dim] = A[dim] * B
   std::array<std::vector<T>, 3> Wb{std::vector<T>(ns * ncols),

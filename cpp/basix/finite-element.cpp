@@ -18,13 +18,23 @@
 #include "math.h"
 #include "polyset.h"
 #include <algorithm>
+#include <array>
 #include <basix/version.h>
+#include <cassert>
 #include <cmath>
 #include <concepts>
+#include <cstddef>
+#include <functional>
 #include <limits>
+#include <map>
 #include <numeric>
 #include <optional>
+#include <span>
 #include <stdexcept>
+#include <string>
+#include <tuple>
+#include <utility>
+#include <vector>
 
 #define str_macro(X) #X
 #define str(X) str_macro(X)
@@ -334,8 +344,10 @@ basix::create_tp_element(element::family family, cell::type cell, int degree,
       family, cell, degree, lvariant, dvariant, discontinuous);
 
   if (!dof_ordering.has_value())
+  {
     throw std::runtime_error(
         "Element does not have tensor product factorisation.");
+  }
 
   return create_element<T>(family, cell, degree, lvariant, dvariant,
                            discontinuous, *dof_ordering);
@@ -359,7 +371,9 @@ basix::tp_factors(element::family family, cell::type cell, int degree,
       family, cell, degree, lvariant, dvariant, discontinuous);
   if (!tp_dofs.has_value() || tp_dofs->empty()
       || tp_dofs.value() != dof_ordering)
+  {
     return std::nullopt;
+  }
 
   switch (family)
   {
@@ -506,8 +520,9 @@ basix::tp_dof_ordering(element::family family, cell::type cell, int degree,
   return dof_ordering;
 }
 //-----------------------------------------------------------------------------
-std::vector<int> basix::lex_dof_ordering(element::family family, cell::type cell,
-                                         int degree, element::lagrange_variant,
+std::vector<int> basix::lex_dof_ordering(element::family family,
+                                         cell::type cell, int degree,
+                                         element::lagrange_variant,
                                          element::dpc_variant, bool)
 {
   std::vector<int> dof_ordering;
@@ -676,7 +691,8 @@ std::vector<int> basix::lex_dof_ordering(element::family family, cell::type cell
         perm.push_back(3);
       }
 
-      assert((int)perm.size() == (degree + 1) * (degree + 2) * (degree + 3) / 6);
+      assert((int)perm.size()
+             == (degree + 1) * (degree + 2) * (degree + 3) / 6);
       break;
     }
     case cell::type::prism:
@@ -923,17 +939,21 @@ FiniteElement<T> basix::create_custom_element(
 
   // Check that wcoeffs have the correct shape
   if (wcoeffs.extent(1) != psize * value_size)
+  {
     throw std::runtime_error("wcoeffs has incorrect number of columns ("
                              + std::to_string(wcoeffs.extent(1))
                              + "): should be equal to number of polynomials ("
                              + std::to_string(psize)
                              + ") multiplied by value size ("
                              + std::to_string(value_size) + ")");
+  }
   if (wcoeffs.extent(0) != ndofs)
+  {
     throw std::runtime_error("wcoeffs has incorrect number of rows ("
                              + std::to_string(wcoeffs.extent(0))
                              + "): should be equal to number of DOFs ("
                              + std::to_string(ndofs) + ")");
+  }
 
   std::vector<T> wcoeffs_ortho_b(wcoeffs.extent(0) * wcoeffs.extent(1));
   { // scope
@@ -973,7 +993,9 @@ FiniteElement<T> basix::create_custom_element(
         != (i > tdim ? 0
                      : static_cast<std::size_t>(
                            cell::num_sub_entities(cell_type, i))))
+    {
       throw std::runtime_error("M has incorrect number of entities");
+    }
     for (std::size_t j = 0; j < M[i].size(); ++j)
     {
       if (M[i][j].extent(2) != x[i][j].extent(0))
@@ -1176,11 +1198,19 @@ FiniteElement<F>::FiniteElement(
     for (auto& Me : M[d])
     {
       for (std::size_t k0 = 0; k0 < Me.extent(0); ++k0)
+      {
         for (std::size_t k1 = 0; k1 < Mview.extent(1); ++k1)
+        {
           for (std::size_t k2 = 0; k2 < Me.extent(2); ++k2)
+          {
             for (std::size_t k3 = 0; k3 < Mview.extent(3); ++k3)
+            {
               Mview(k0 + dof_offset, k1, k2 + point_offset, k3)
                   = Me(k0, k1, k2, k3);
+            }
+          }
+        }
+      }
 
       dof_offset += Me.extent(0);
       point_offset += Me.extent(2);

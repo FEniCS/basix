@@ -10,6 +10,9 @@
 #include "quadrature.h"
 #include "sobolev-spaces.h"
 #include <array>
+#include <concepts>
+#include <cstddef>
+#include <stdexcept>
 #include <vector>
 
 using namespace basix;
@@ -26,28 +29,38 @@ FiniteElement<T> basix::element::create_bubble(cell::type celltype, int degree,
   {
   case cell::type::interval:
     if (degree < 2)
+    {
       throw std::runtime_error(
           "Bubble element on an interval must have degree at least 2");
+    }
     break;
   case cell::type::triangle:
     if (degree < 3)
+    {
       throw std::runtime_error(
           "Bubble element on a triangle must have degree at least 3");
+    }
     break;
   case cell::type::tetrahedron:
     if (degree < 4)
+    {
       throw std::runtime_error(
           "Bubble element on a tetrahedron must have degree at least 4");
+    }
     break;
   case cell::type::quadrilateral:
     if (degree < 2)
+    {
       throw std::runtime_error("Bubble element on a quadrilateral interval "
                                "must have degree at least 2");
+    }
     break;
   case cell::type::hexahedron:
     if (degree < 2)
+    {
       throw std::runtime_error(
           "Bubble element on a hexahedron must have degree at least 2");
+    }
     break;
   default:
     throw std::runtime_error("Unsupported cell type");
@@ -186,8 +199,8 @@ FiniteElement<T> basix::element::create_bubble(cell::type celltype, int degree,
     for (std::size_t j = 0; j < psize; ++j)
       B(k, j) = wts[k] * bubble[k] * phi(0, j, k);
   math::dot(phi1, B,
-           impl::mdspan_t<T, 2>(wcoeffs.data(), wcoeffs.extent(0),
-                                wcoeffs.extent(1)));
+            impl::mdspan_t<T, 2>(wcoeffs.data(), wcoeffs.extent(0),
+                                 wcoeffs.extent(1)));
 
   math::orthogonalise<T>(wcoeffs);
 

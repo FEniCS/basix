@@ -8,6 +8,7 @@
 #include "polyset.h"
 #include <array>
 #include <concepts>
+#include <cstddef>
 #include <tuple>
 #include <utility>
 #include <vector>

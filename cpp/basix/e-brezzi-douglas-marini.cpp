@@ -12,6 +12,12 @@
 #include "moments.h"
 #include "polyset.h"
 #include "sobolev-spaces.h"
+#include <array>
+#include <cassert>
+#include <concepts>
+#include <cstddef>
+#include <stdexcept>
+#include <tuple>
 #include <vector>
 
 using namespace basix;

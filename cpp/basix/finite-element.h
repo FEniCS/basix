@@ -12,13 +12,16 @@
 #include "precompute.h"
 #include "sobolev-spaces.h"
 #include <array>
+#include <cassert>
 #include <concepts>
+#include <cstddef>
 #include <cstdint>
 #include <functional>
 #include <map>
 #include <numeric>
 #include <optional>
 #include <span>
+#include <stdexcept>
 #include <string>
 #include <tuple>
 #include <utility>
@@ -769,7 +772,8 @@ public:
   /// @return The entity transformations for the sub-entities of this
   /// element. The shape for each cell is (ntransformations, ndofs,
   /// ndofs)
-  const std::map<cell::type, std::pair<std::vector<F>, std::array<std::size_t, 3>>>&
+  const std::map<cell::type,
+                 std::pair<std::vector<F>, std::array<std::size_t, 3>>>&
   entity_transformations() const
   {
     return _entity_transformations;
@@ -1655,7 +1659,8 @@ tp_dof_ordering(element::family family, cell::type cell, int degree,
 /// same DOFs, but they will all be associated with the interior of the cell.
 /// @return A vector containing the dof ordering
 std::vector<int> lex_dof_ordering(element::family family, cell::type cell,
-                                  int degree, element::lagrange_variant lvariant,
+                                  int degree,
+                                  element::lagrange_variant lvariant,
                                   element::dpc_variant dvariant,
                                   bool discontinuous);
 

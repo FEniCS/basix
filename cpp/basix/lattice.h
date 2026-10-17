@@ -7,6 +7,7 @@
 #include "cell.h"
 #include <array>
 #include <concepts>
+#include <cstddef>
 #include <utility>
 #include <vector>
 
@@ -19,14 +20,14 @@ namespace basix::lattice
 /// intended for internal use only.
 enum class type
 {
-  equispaced = 0, /*!< Equally spaced points */
-  gll = 1,        /*!< Gauss-Lobatto-Legendre (GLL) points */
-  chebyshev = 2,  /*!< Chebyshev points */
-  gl = 4,         /*!< Gauss-Legendre (GL) points */
-  chebyshev_plus_endpoints
-  = 10, /*!< Chebyshev points plus the endpoints of the interval */
-  gl_plus_endpoints
-  = 11, /*!< Gauss-Legendre (GL) points plus the endpoints of the interval */
+  equispaced = 0,                /*!< Equally spaced points */
+  gll = 1,                       /*!< Gauss-Lobatto-Legendre (GLL) points */
+  chebyshev = 2,                 /*!< Chebyshev points */
+  gl = 4,                        /*!< Gauss-Legendre (GL) points */
+  chebyshev_plus_endpoints = 10, /*!< Chebyshev points plus the endpoints of the
+                                    interval */
+  gl_plus_endpoints = 11, /*!< Gauss-Legendre (GL) points plus the endpoints of
+                             the interval */
 };
 
 /// @brief The method used to generate points inside simplices.

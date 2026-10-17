@@ -57,6 +57,29 @@ group](https://fenicsproject.discourse.group/).
 Information about how to contribute to Basix can be found
 [here](CONTRIBUTING.md).
 
+## Testing
+
+After installing Basix and the Python test dependencies (see
+[INSTALL.md](INSTALL.md)), run the Python unit tests from the repository
+root:
+
+```console
+pytest test/
+```
+
+The C++ unit tests require an installed Basix and Catch2 3. From the
+repository root, configure, build, and run them with:
+
+```console
+cmake -DCMAKE_BUILD_TYPE=Developer -B build-dir-test -S cpp/test
+cmake --build build-dir-test
+ctest --test-dir build-dir-test --output-on-failure
+```
+
+On Windows with a multi-configuration generator, build with
+`--config Release` and run CTest with `-C Release`, matching the installed
+Basix configuration.
+
 ## Supported elements
 
 ### Interval

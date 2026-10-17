@@ -7,10 +7,15 @@
 #include "mdspan.hpp"
 #include <algorithm>
 #include <array>
+#include <cassert>
 #include <cmath>
 #include <concepts>
+#include <cstddef>
+#include <iterator>
 #include <numeric>
 #include <span>
+#include <stdexcept>
+#include <utility>
 #include <vector>
 
 using namespace basix;
@@ -4931,6 +4936,8 @@ quadrature::type quadrature::get_default_rule(cell::type celltype, int m)
   {
     if (m <= 1)
       return type::zienkiewicz_taylor;
+    else if (m == 3)
+      return type::gauss_jacobi;
     else if (m <= 6)
       return type::strang_fix;
     else if (m <= 30)

@@ -6,8 +6,15 @@
 #include "math.h"
 #include "mdspan.hpp"
 #include <algorithm>
+#include <array>
+#include <cassert>
 #include <cmath>
 #include <concepts>
+#include <cstddef>
+#include <stdexcept>
+#include <string>
+#include <utility>
+#include <vector>
 
 using namespace basix;
 

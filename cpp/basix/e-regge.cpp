@@ -10,7 +10,13 @@
 #include "polyset.h"
 #include "quadrature.h"
 #include "sobolev-spaces.h"
+#include <array>
 #include <cmath>
+#include <concepts>
+#include <cstddef>
+#include <stdexcept>
+#include <tuple>
+#include <vector>
 
 using namespace basix;
 namespace md = md::MDSPAN_IMPL_PROPOSED_NAMESPACE;

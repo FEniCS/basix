@@ -8,6 +8,7 @@
 #include "element-families.h"
 #include "finite-element.h"
 #include <concepts>
+#include <vector>
 
 namespace basix::element
 {

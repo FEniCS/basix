@@ -8,8 +8,13 @@
 #include "mdspan.hpp"
 #include <algorithm>
 #include <array>
+#include <cassert>
 #include <cmath>
+#include <concepts>
+#include <cstddef>
 #include <stdexcept>
+#include <utility>
+#include <vector>
 
 using namespace basix;
 using namespace basix::indexing;
@@ -1443,13 +1448,19 @@ void tabulate_polyset_hexahedron_macroedge_derivs(
           for (std::size_t i = n - j; i > n - j - dy; --i)
             value *= -i;
           for (std::size_t dx = 0; dx <= nderiv - dy; ++dx)
+          {
             for (std::size_t dz = 0; dz <= nderiv - dx - dy; ++dz)
+            {
               for (std::size_t jx = 0; jx < 2 * n + 1; ++jx)
+              {
                 for (std::size_t jz = 0; jz < 2 * n + 1; ++jz)
                 {
                   P(idx(dx, dy, dz), hex_idx(jx, j + 1, jz), p) *= value;
                   P(idx(dx, dy, dz), hex_idx(jx, j + n + 1, jz), p) *= 0.0;
                 }
+              }
+            }
+          }
         }
         else
         {
@@ -1549,13 +1560,19 @@ void tabulate_polyset_hexahedron_macroedge_derivs(
           for (std::size_t i = n - j; i > n - j - dz; --i)
             value *= -i;
           for (std::size_t dx = 0; dx <= nderiv - dz; ++dx)
+          {
             for (std::size_t dy = 0; dy <= nderiv - dx - dz; ++dy)
+            {
               for (std::size_t jx = 0; jx < 2 * n + 1; ++jx)
+              {
                 for (std::size_t jy = 0; jy < 2 * n + 1; ++jy)
                 {
                   P(idx(dx, dy, dz), hex_idx(jx, jy, j + 1), p) *= value;
                   P(idx(dx, dy, dz), hex_idx(jx, jy, j + n + 1), p) *= 0.0;
                 }
+              }
+            }
+          }
         }
         else
         {
@@ -1845,8 +1862,10 @@ void tabulate_polyset_tetrahedron_derivs(
               auto p0m2z = md::submdspan(P, idx(kx, ky, kz - 1),
                                          idx(0, 0, p - 2), md::full_extent);
               for (std::size_t i = 0; i < p00.size(); ++i)
+              {
                 p00[i] -= kz * ((x1[i] * 2.0 - 1.0) + (x2[i] * 2.0 - 1.0))
                           * p0m2z[i] * (a - 1.0);
+              }
             }
 
             if (kz > 1)
@@ -1874,11 +1893,13 @@ void tabulate_polyset_tetrahedron_derivs(
           auto p00 = md::submdspan(P, idx(kx, ky, kz), idx(0, 0, p),
                                    md::full_extent);
           for (std::size_t i = 0; i < p10.size(); ++i)
+          {
             p10[i]
                 = p00[i]
                   * ((1.0 + (x1[i] * 2.0 - 1.0)) * p
                      + (2.0 + (x1[i] * 2.0 - 1.0) * 3.0 + (x2[i] * 2.0 - 1.0))
                            * 0.5);
+          }
           if (ky > 0)
           {
             auto p0y = md::submdspan(P, idx(kx, ky - 1, kz), idx(0, 0, p),
@@ -2159,9 +2180,8 @@ void tabulate_polyset_pyramid_derivs(
 
             if (q > 1)
             {
-              auto _p2
-                  = md::submdspan(P, idx(kx, ky, kz), pyr_idx(p, q - 2, 0),
-                                  md::full_extent);
+              auto _p2 = md::submdspan(P, idx(kx, ky, kz), pyr_idx(p, q - 2, 0),
+                                       md::full_extent);
               for (std::size_t i = 0; i < pq0.size(); ++i)
                 pq0[i] -= a * _p2[i];
               if (kz > 0)

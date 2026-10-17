@@ -1,8 +1,8 @@
 // Copyright (C) 2021-2024 Igor Baratta and Garth N. Wells
 //
-// This file is part of DOLFINx (https://www.fenicsproject.org)
+// This file is part of Basix (https://www.fenicsproject.org)
 //
-// SPDX-License-Identifier:    LGPL-3.0-or-later
+// SPDX-License-Identifier:    MIT
 
 #pragma once
 
@@ -10,11 +10,15 @@
 #include "types.h"
 #include <algorithm>
 #include <array>
+#include <cassert>
 #include <cmath>
 #include <concepts>
+#include <cstddef>
+#include <limits>
 #include <span>
 #include <stdexcept>
 #include <string>
+#include <type_traits>
 #include <utility>
 #include <vector>
 
@@ -197,8 +201,10 @@ std::vector<T> solve(md::mdspan<const T, md::dextents<std::size_t, 2>> A,
   if (A.extent(0) != A.extent(1))
     throw std::runtime_error("Matrix A must be square to solve A X = B.");
   if (A.extent(0) != B.extent(0))
+  {
     throw std::runtime_error("Matrix A and matrix B must have the same "
                              "number of rows to solve A X = B.");
+  }
 
   // Copy A and B to column-major storage
   mdex::mdarray<T, md::dextents<std::size_t, 2>, md::layout_left> _A(
@@ -243,8 +249,10 @@ template <std::floating_point T>
 bool is_singular(md::mdspan<const T, md::dextents<std::size_t, 2>> A)
 {
   if (A.extent(0) != A.extent(1))
+  {
     throw std::runtime_error(
         "Matrix A must be square to test for singularity.");
+  }
 
   // Copy to column major matrix
   mdex::mdarray<T, md::dextents<std::size_t, 2>, md::layout_left> _A(
@@ -328,11 +336,15 @@ void dot(const U& A, const V& B, W&& C,
   using T = typename std::decay_t<U>::value_type;
 
   if (A.extent(1) != B.extent(0))
+  {
     throw std::runtime_error("Matrix dimension mismatch: A.extent(1) != "
                              "B.extent(0) in dot(A, B, C).");
+  }
   if (C.extent(0) != A.extent(0) or C.extent(1) != B.extent(1))
+  {
     throw std::runtime_error("Output matrix C has the wrong shape in "
                              "dot(A, B, C).");
+  }
   if (A.extent(0) * B.extent(1) * A.extent(1) < 256)
   {
     for (std::size_t i = 0; i < A.extent(0); ++i)

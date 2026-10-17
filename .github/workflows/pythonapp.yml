@@ -198,18 +198,23 @@ jobs:
         run: pytest demo/cpp/test.py
 
   build-cpp-only:
-    name: Build C++ part only and run demos
+    name: Build C++ part only and run tests and demos
     runs-on: ubuntu-26.04
     needs: [lint]
     steps:
       - uses: actions/checkout@v7
       - name: Install dependencies
-        run: sudo apt-get install -y libopenblas-dev liblapack-dev ninja-build
+        run: sudo apt-get install -y catch2 libopenblas-dev liblapack-dev ninja-build
       - name: Install Basix
         run: |
           cmake -G Ninja -DCMAKE_BUILD_TYPE=Developer -B build-dir -S cpp
           cmake --build build-dir
           sudo cmake --install build-dir
+      - name: Run C++ unit tests
+        run: |
+          cmake -G Ninja -DCMAKE_BUILD_TYPE=Developer -B build-dir-test -S cpp/test
+          cmake --build build-dir-test
+          ctest --test-dir build-dir-test --output-on-failure
       - name: Run pkg-config integration test
         run: |
           cd test/test_pkgconfig

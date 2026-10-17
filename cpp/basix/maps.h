@@ -7,6 +7,8 @@
 #include "mdspan.hpp"
 #include "types.h"
 #include <algorithm>
+#include <cassert>
+#include <cstddef>
 #include <stdexcept>
 #include <type_traits>
 

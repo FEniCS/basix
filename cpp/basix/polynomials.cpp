@@ -6,7 +6,12 @@
 #include "indexing.h"
 #include "mdspan.hpp"
 #include "polyset.h"
+#include <algorithm>
+#include <array>
+#include <cassert>
+#include <cmath>
 #include <concepts>
+#include <cstddef>
 #include <stdexcept>
 #include <utility>
 #include <vector>
@@ -269,9 +274,11 @@ void tabulate_lagrange_pyramid(
       {
         auto pqr = md::submdspan(P, pyr_idx(p, q, r), md::full_extent);
         for (std::size_t i = 0; i < pqr.extent(0); ++i)
+        {
           pqr(i) *= std::sqrt(2 * (q + 0.5) * (p + 0.5)
                               * (std::max(p, q) + r + 1.5))
                     * 2;
+        }
       }
     }
   }

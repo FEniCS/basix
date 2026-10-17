@@ -5,8 +5,15 @@
 #include "interpolation.h"
 #include "finite-element.h"
 #include "math.h"
+#include <array>
 #include <concepts>
+#include <cstddef>
 #include <exception>
+#include <functional>
+#include <numeric>
+#include <stdexcept>
+#include <utility>
+#include <vector>
 
 using namespace basix;
 

@@ -135,10 +135,30 @@ Ruff config (`pyproject.toml`): line length 100, Google-style docstrings
 - Follow `.clang-format`: 2-space indentation, an 80-column limit, and
   Allman braces. Run `clang-format -i` on touched C++ source and header
   files, including nanobind wrappers.
-- Braces may be omitted when both the control statement and its body
-  each fit on one line. This also applies to nested loops satisfying
-  the same condition. Brace bodies when the control statement or body
-  spans multiple lines; judge each arm of an `if`/`else` separately.
+- **Control statements and braces**: braces may be omitted around the
+  body of a control statement when every control statement involved
+  occupies a single line and the body directly following occupies a
+  single line. A chain of nested control statements that meets both
+  conditions needs no braces at any level, e.g.
+
+  ```cpp
+  if (num_nodes == 5)
+    return 14;
+  else
+    return 0;
+
+  for (std::size_t i = 0; i < A.extent(1); ++i)
+    for (std::size_t j = 0; j < B.extent(0); ++j)
+      C(i, j) += A(j, i);
+  ```
+
+  Brace the body otherwise: when the control statement wraps onto a
+  second line, or when the body spans multiple lines. The two arms of
+  an `if`/`else` are judged separately, so one may be braced and the
+  other not. `clang-format` neither adds nor removes these braces, so
+  the choice is checked in review; it does split a body off the line
+  its control statement is on, so `if (c) return x;` is never the
+  formatted form.
 - Use `#pragma once` in headers. Include the headers for the symbols
   used directly, including standard-library types, rather than relying
   on transitive includes. Let `clang-format` sort includes, keeping
@@ -230,7 +250,8 @@ Ruff config (`pyproject.toml`): line length 100, Google-style docstrings
 ## Conventions
 
 - `cpp/basix/mdspan.hpp` is a vendored third-party header (reference
-  implementation of `std::mdspan`) — never edit it. It's also excluded from
+  implementation of `std::mdspan`). Do not modify or reformat it; exclude
+  it from repository-wide style fixes. It's also excluded from
   `clang-tidy` via `HeaderFilterRegex` in `.clang-tidy`.
 - C++ source files use a `// Copyright (c) <years> <authors>` + FEniCS
   Project + `SPDX-License-Identifier: MIT` header block.

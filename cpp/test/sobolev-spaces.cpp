@@ -24,11 +24,13 @@ TEST_CASE("Sobolev space intersection", "[sobolev]")
   SECTION("The intersection is symmetric")
   {
     for (auto s0 : spaces)
+    {
       for (auto s1 : spaces)
       {
         CHECK(sobolev::space_intersection(s0, s1)
               == sobolev::space_intersection(s1, s0));
       }
+    }
   }
 
   SECTION("The H^k spaces are nested")

@@ -14,6 +14,7 @@
 #include <basix/polyset.h>
 #include <basix/sobolev-spaces.h>
 #include <cstddef>
+#include <cstdint>
 #include <functional>
 #include <initializer_list>
 #include <map>
@@ -31,8 +32,7 @@ namespace basix_wrappers
 {
 /// mdspan with dynamic extents in all `d` dimensions.
 template <typename T, std::size_t d>
-using mdspan_t
-    = basix::md::mdspan<T, basix::md::dextents<std::size_t, d>>;
+using mdspan_t = basix::md::mdspan<T, basix::md::dextents<std::size_t, d>>;
 
 /// Convert a cell type to its Python-facing string name.
 inline std::string cell_type_to_str(basix::cell::type type)
@@ -247,7 +247,8 @@ void declare_float(nanobind::module_& m, const std::string& type)
           "Tinv_apply_right",
           [](const FiniteElement<T>& self,
              const nb::ndarray<T, nb::ndim<1>, nb::c_contig>& u, int n,
-             std::uint32_t cell_info) {
+             std::uint32_t cell_info)
+          {
             self.Tinv_apply_right(std::span(u.data(), u.size()), n, cell_info);
           },
           "u"_a.noconvert(), "n"_a, "cell_info"_a)
@@ -262,7 +263,8 @@ void declare_float(nanobind::module_& m, const std::string& type)
           "Tt_inv_apply_right",
           [](const FiniteElement<T>& self,
              const nb::ndarray<T, nb::ndim<1>, nb::c_contig>& u, int n,
-             std::uint32_t cell_info) {
+             std::uint32_t cell_info)
+          {
             self.Tt_inv_apply_right(std::span(u.data(), u.size()), n,
                                     cell_info);
           },
@@ -279,8 +281,7 @@ void declare_float(nanobind::module_& m, const std::string& type)
              for (const auto& [key, data] : self.entity_transformations())
              {
                t[cell_type_to_str(key).c_str()] = as_nbarrayp(
-                   std::pair<std::vector<T>, std::array<std::size_t, 3>>(
-                       data));
+                   std::pair<std::vector<T>, std::array<std::size_t, 3>>(data));
              }
              return t;
            })
@@ -397,8 +398,7 @@ void declare_float(nanobind::module_& m, const std::string& type)
           {
             const std::array<std::vector<std::pair<std::vector<T>,
                                                    std::array<std::size_t, 4>>>,
-                             4>& _M
-                = self.M();
+                             4>& _M = self.M();
             std::vector<std::vector<nb::ndarray<const T, nb::numpy>>> M(4);
             for (int i = 0; i < 4; ++i)
             {
@@ -418,8 +418,7 @@ void declare_float(nanobind::module_& m, const std::string& type)
           {
             const std::array<std::vector<std::pair<std::vector<T>,
                                                    std::array<std::size_t, 2>>>,
-                             4>& _x
-                = self.x();
+                             4>& _x = self.x();
             std::vector<std::vector<nb::ndarray<const T, nb::numpy>>> x(4);
             for (int i = 0; i < 4; ++i)
             {
@@ -453,7 +452,8 @@ void declare_float(nanobind::module_& m, const std::string& type)
   std::string custom_name = "create_custom_element_" + type;
   m.def(
       custom_name.c_str(),
-      [](basix::cell::type cell_type, const std::vector<std::size_t>& value_shape,
+      [](basix::cell::type cell_type,
+         const std::vector<std::size_t>& value_shape,
          const nb::ndarray<const T, nb::ndim<2>, nb::c_contig>& wcoeffs,
          std::vector<
              std::vector<nb::ndarray<const T, nb::ndim<2>, nb::c_contig>>>
@@ -515,15 +515,15 @@ void declare_float(nanobind::module_& m, const std::string& type)
       },
       "e0"_a, "e1"_a);
 
-  m.def(
-      ("tabulate_polynomial_set_" + type).c_str(),
-      [](basix::cell::type celltype, basix::polyset::type polytype, int d, int n,
-         const nb::ndarray<const T, nb::ndim<2>, nb::c_contig>& x)
-      {
-        mdspan_t<const T, 2> _x(x.data(), x.shape(0), x.shape(1));
-        return as_nbarrayp(basix::polyset::tabulate(celltype, polytype, d, n, _x));
-      },
-      "celltype"_a, "ptype"_a, "degree"_a, "nderiv"_a, "pts"_a.noconvert());
+  m.def(("tabulate_polynomial_set_" + type).c_str(),
+        [](basix::cell::type celltype, basix::polyset::type polytype, int d,
+           int n, const nb::ndarray<const T, nb::ndim<2>, nb::c_contig>& x)
+        {
+          mdspan_t<const T, 2> _x(x.data(), x.shape(0), x.shape(1));
+          return as_nbarrayp(
+              basix::polyset::tabulate(celltype, polytype, d, n, _x));
+        },
+        "celltype"_a, "ptype"_a, "degree"_a, "nderiv"_a, "pts"_a.noconvert());
 }
 
 } // namespace basix_wrappers

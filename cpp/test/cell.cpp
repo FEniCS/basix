@@ -133,11 +133,13 @@ TEST_CASE("Facet outward normals are unit vectors pointing out of the cell",
   {
     std::vector<double> fmidpoint(tdim, 0.0);
     for (int v : facets[f])
+    {
       for (std::size_t j = 0; j < tdim; ++j)
       {
         fmidpoint[j]
             += x[v * xshape[1] + j] / static_cast<double>(facets[f].size());
       }
+    }
 
     double norm2 = 0.0, dot = 0.0;
     for (std::size_t j = 0; j < tdim; ++j)

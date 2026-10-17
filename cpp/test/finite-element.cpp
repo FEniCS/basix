@@ -110,12 +110,14 @@ TEST_CASE("Entity DOFs partition the element degrees of freedom",
     REQUIRE(static_cast<int>(edofs[dim].size())
             == cell::num_sub_entities(celltype, dim));
     for (const auto& dofs : edofs[dim])
+    {
       for (int dof : dofs)
       {
         REQUIRE(dof >= 0);
         REQUIRE(dof < e.dim());
         ++count[dof];
       }
+    }
   }
 
   // Every DOF is associated with exactly one entity

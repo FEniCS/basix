@@ -146,7 +146,9 @@ TEST_CASE("Derivative indexing is triangular", "[polyset]")
   {
     std::vector<bool> seen(polyset::nderivs(cell::type::tetrahedron, n), false);
     for (int p = 0; p <= n; ++p)
+    {
       for (int q = 0; p + q <= n; ++q)
+      {
         for (int r = 0; p + q + r <= n; ++r)
         {
           const int i = indexing::idx(p, q, r);
@@ -154,6 +156,8 @@ TEST_CASE("Derivative indexing is triangular", "[polyset]")
           REQUIRE(!seen[i]);
           seen[i] = true;
         }
+      }
+    }
     CHECK(std::ranges::all_of(seen, [](bool b) { return b; }));
   }
 }

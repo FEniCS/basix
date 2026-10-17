@@ -11,6 +11,10 @@
 #include "quadrature.h"
 #include "sobolev-spaces.h"
 #include <array>
+#include <concepts>
+#include <cstddef>
+#include <stdexcept>
+#include <tuple>
 #include <vector>
 
 using namespace basix;
@@ -121,8 +125,10 @@ FiniteElement<T> basix::element::create_cr(cell::type celltype, int degree,
       {
         wcoeffs(3, i) = 0.0;
         for (std::size_t k = 0; k < wts.size(); ++k)
+        {
           wcoeffs(3, i) += wts[k] * (pts(k, 0) + pts(k, 1))
                            * (pts(k, 0) - pts(k, 1)) * phi(0, i, k);
+        }
       }
     }
 

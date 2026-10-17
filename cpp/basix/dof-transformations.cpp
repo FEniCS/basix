@@ -8,10 +8,17 @@
 #include "polyset.h"
 #include <algorithm>
 #include <array>
+#include <cassert>
 #include <concepts>
+#include <cstddef>
 #include <functional>
+#include <iterator>
+#include <map>
 #include <span>
+#include <stdexcept>
 #include <tuple>
+#include <utility>
+#include <vector>
 
 using namespace basix;
 
@@ -369,8 +376,7 @@ std::pair<std::vector<T>, std::array<std::size_t, 2>> compute_transformation(
     mdspan_t<const T, 2> coeffs, const mdarray_t<T, 2>& J, T detJ,
     const mdarray_t<T, 2>& K,
     const std::function<std::array<T, 3>(std::span<const T>)>& map_point,
-    int degree,
-    int tdim, int entity, std::size_t vs, const maps::type map_type,
+    int degree, int tdim, int entity, std::size_t vs, const maps::type map_type,
     const polyset::type ptype)
 {
   if (x[tdim].size() == 0 or x[tdim][entity].extent(0) == 0)
@@ -421,8 +427,8 @@ std::pair<std::vector<T>, std::array<std::size_t, 2>> compute_transformation(
   // separate calls each preceded by a column-extraction copy -- same
   // pattern as FiniteElement::tabulate().
   assert(coeffs.extent(1) == vs * static_cast<std::size_t>(psize));
-  mdspan_t<const T, 2> coeffs_flat(coeffs.data_handle(),
-                                   coeffs.extent(0) * vs, psize);
+  mdspan_t<const T, 2> coeffs_flat(coeffs.data_handle(), coeffs.extent(0) * vs,
+                                   psize);
   std::vector<T> result_b(polyset_vals.extent(1) * coeffs.extent(0) * vs);
   mdspan_t<T, 2> result(result_b.data(), coeffs.extent(0) * vs,
                         polyset_vals.extent(1));
@@ -442,8 +448,7 @@ std::pair<std::vector<T>, std::array<std::size_t, 2>> compute_transformation(
     mdspan_t<const T, 2> tab_all(tabulated_data_b.data(),
                                  npts * tabulated_data.extent(1),
                                  tabulated_data.extent(2));
-    mdspan_t<T, 2> pushed_all(pushed_data.data(),
-                              npts * pushed_data.extent(1),
+    mdspan_t<T, 2> pushed_all(pushed_data.data(), npts * pushed_data.extent(1),
                               pushed_data.extent(2));
     push_forward(map_type, pushed_all, tab_all, J, detJ, K);
   }
@@ -535,8 +540,7 @@ template std::map<cell::type,
 doftransforms::compute_entity_transformations(
     cell::type,
     const std::array<
-        std::vector<md::mdspan<const float, md::dextents<std::size_t, 2>>>,
-        4>&,
+        std::vector<md::mdspan<const float, md::dextents<std::size_t, 2>>>, 4>&,
     std::array<
         std::vector<md::mdspan<const float, md::dextents<std::size_t, 4>>>, 4>,
     md::mdspan<const float, md::dextents<std::size_t, 2>>, int, std::size_t,

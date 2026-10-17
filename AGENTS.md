@@ -19,7 +19,11 @@ introducing a new pattern.
   geometry, quadrature, polysets, interpolation, dof transformations, etc.).
 - `cpp/CMakeLists.txt` — C++ library build.
 - `python/basix/` — Python package (thin wrappers around the C++ core).
-- `python/wrapper.cpp` — nanobind bindings exposing the C++ core to Python.
+- `python/basix/wrappers/basix_wrappers.cpp` — nanobind bindings exposing
+  the C++ core to Python; the shared helpers and templates live alongside
+  it in `python/basix/wrappers/basix_wrappers/basix_wrappers.h`. The header
+  sits inside the Python package so that `wheel.packages` ships it;
+  downstream nanobind wrappers locate it with `basix.get_include()`.
   Optionally built in nanobind split mode (`BASIX_NANOBIND_SPLIT=true`, off by
   default, enabled for wheels) — see `INSTALL.md`.
 - `test/` — Python unit tests (pytest), plus `test/test_cmake` and
@@ -40,7 +44,7 @@ Editable/development install:
 ```console
 cd python
 pip -v install --check-build-dependencies -Cbuild-dir="build" \
-  -Ccmake.build-type="Development" -Cinstall.strip=false \
+  -Ccmake.build-type="Developer" -Cinstall.strip=false \
   --no-build-isolation -e .
 ```
 
@@ -74,10 +78,23 @@ Run before opening a PR — CI enforces all of these:
 ```console
 ruff format .          # Python formatting
 ruff check .           # Python linting
-mypy python/basix      # type checking
-mypy demo/python
 gersemi --check .      # CMake file formatting (2-space indent, see .gersemirc)
 ```
+
+Type checking uses [Pyrefly](https://pyrefly.org) (`[tool.pyrefly]` in the
+repository-root `pyproject.toml`, run over `python/basix`, `demo/python`,
+and `test`); it needs Basix built and installed first (it resolves
+`basix`'s own compiled-extension types), so run it from an installed
+environment, from the repository root:
+
+```console
+pip install pyrefly
+pyrefly check
+```
+
+Pre-existing diagnostics are recorded in `pyrefly-baseline.json` and do not
+fail CI; new diagnostics do. Regenerate the baseline after fixing or adding
+to it with `pyrefly check --update-baseline`.
 
 C++ formatting follows `.clang-format`; `clang-tidy` runs in CI with
 `WarningsAsErrors: "*"` (performance checks only, see `.clang-tidy`).

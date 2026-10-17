@@ -1,0 +1,53 @@
+{
+  "errors": [
+    {
+      "column": 5,
+      "path": "demo/python/demo_custom_element_conforming_cr.py",
+      "name": "missing-attribute",
+      "concise_description": "Object of class `NoneType` has no attribute `plot`",
+      "severity": "error"
+    },
+    {
+      "column": 5,
+      "path": "demo/python/demo_custom_element_conforming_cr.py",
+      "name": "missing-attribute",
+      "concise_description": "Object of class `NoneType` has no attribute `scatter`",
+      "severity": "error"
+    },
+    {
+      "column": 5,
+      "path": "demo/python/demo_custom_element_conforming_cr.py",
+      "name": "missing-attribute",
+      "concise_description": "Object of class `NoneType` has no attribute `plot`",
+      "severity": "error"
+    },
+    {
+      "column": 5,
+      "path": "demo/python/demo_custom_element_conforming_cr.py",
+      "name": "missing-attribute",
+      "concise_description": "Object of class `NoneType` has no attribute `scatter`",
+      "severity": "error"
+    },
+    {
+      "column": 32,
+      "path": "test/test_polynomials.py",
+      "name": "bad-argument-type",
+      "concise_description": "Argument `Unknown | None` is not assignable to parameter `x` with type `Buffer | SupportsFloat | SupportsIndex | str` in function `float.__new__`",
+      "severity": "error"
+    },
+    {
+      "column": 58,
+      "path": "test/test_quadrature.py",
+      "name": "bad-argument-type",
+      "concise_description": "Argument `Buffer | _NestedSequence[bytes | complex | str] | _NestedSequence[_SupportsArray[dtype]] | _SupportsArray[dtype] | bytes | complex | str` is not assignable to parameter `iter1` with type `Iterable[@_]` in function `zip.__new__`",
+      "severity": "error"
+    },
+    {
+      "column": 63,
+      "path": "test/test_quadrature.py",
+      "name": "bad-argument-type",
+      "concise_description": "Argument `Buffer | _NestedSequence[bytes | complex | str] | _NestedSequence[_SupportsArray[dtype]] | _SupportsArray[dtype] | bytes | complex | str` is not assignable to parameter `iter2` with type `Iterable[@_]` in function `zip.__new__`",
+      "severity": "error"
+    }
+  ]
+}

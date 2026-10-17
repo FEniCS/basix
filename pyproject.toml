@@ -1,5 +1,5 @@
 [build-system]
-requires = ["scikit-build-core[pyproject]>=0.11", "nanobind>=2.5.0"]
+requires = ["scikit-build-core[pyproject]>=0.11.2", "nanobind>=2.5.0"]
 build-backend = "scikit_build_core.build"
 
 [project]
@@ -28,17 +28,32 @@ optional = ["numba; (sys_platform != 'darwin' or platform_machine != 'x86_64') a
 
 [dependency-groups]
 # Keep build in sync with [build-system].requires above.
-build = ["scikit-build-core[pyproject]>=0.11", "nanobind>=2.5.0"]
+build = ["scikit-build-core[pyproject]>=0.11.2", "nanobind>=2.5.0"]
 docs = ["markdown", "pylit3", "pyyaml", "sphinx", "pydata-sphinx-theme"]
 lint = ["ruff", "gersemi"]
 test = ["pytest", "sympy", "scipy", "matplotlib", "fenics-basix[optional]"]
-ci = ["mypy", "pytest-xdist", { include-group = "docs" }, { include-group = "lint" }, { include-group = "test" }]
+ci = ["pyrefly", "pytest-xdist", { include-group = "docs" }, { include-group = "lint" }, { include-group = "test" }]
 
 [tool.pytest.ini_options]
 testpaths = ["test"]
 
+[tool.pyrefly]
+# Lives at the repository root, not python/pyproject.toml, since test/ and
+# demo/python sit outside python/.
+project-includes = ["python/basix", "demo/python", "test"]
+# Without this, Pyrefly's default excludes drop python/ itself (detected as
+# an editable-install search root) from project-includes.
+disable-project-excludes-heuristics = true
+baseline = "pyrefly-baseline.json"
+# basix._basixcpp: compiled extension, only resolvable when built. numba,
+# sympy: untyped/third-party stubs unrelated to basix's own typing.
+replace-imports-with-any = ["basix._basixcpp", "numba", "numba.*", "sympy", "sympy.*"]
+# ufl ships no py.typed; matplotlib/pylit stubs are irrelevant here.
+ignore-missing-imports = ["ufl", "ufl.*", "matplotlib", "matplotlib.*", "mpl_toolkits.*", "pylit"]
+
 [tool.scikit-build]
 wheel.packages = ["python/basix"]
+wheel.exclude = ["*.cpp"]
 
 [tool.scikit-build.cmake.define]
 # Set to FALSE to disable install RPATH adjustments
@@ -53,15 +68,15 @@ result = ["numpy>=2"]
 if.env.CIBUILDWHEEL = true
 wheel.py-api = "cp312"
 
-# nanobind split mode, see INSTALL.md. Must come after the previous override. 
+# nanobind split mode, see INSTALL.md. Must come after the previous override.
 [[tool.scikit-build.overrides]]
 if.env.BASIX_NANOBIND_SPLIT = true
 inherit.cmake.define = "append"
 cmake.define.BASIX_NANOBIND_SPLIT = "ON"
 # nanobind-backend is needed at build time too - stub generation imports the extension.
-build.requires = ["nanobind>=3", "nanobind-backend"]
+build.requires = ["nanobind>=3", "nanobind-backend>=1.0"]
 metadata.dependencies.provider = "scikit_build_core.metadata.template"
-metadata.dependencies.result = ["numpy>=2", "nanobind-backend"]
+metadata.dependencies.result = ["numpy>=2", "nanobind-backend>=1.0"]
 wheel.py-api = "cp311"
 
 [tool.cibuildwheel]
@@ -84,15 +99,20 @@ test-requires = ["pytest-xdist"]
 test-groups = ["test"]
 
 [tool.cibuildwheel.windows]
-# Pin VCPKG_INSTALLED_DIR so the DLLs are at a fixed path.
+# Pin VCPKG_INSTALLED_DIR so the DLLs are at a fixed path. Ninja because the
+# multi-config Visual Studio generator resolved release builds against debug
+# import libraries.
 build-frontend = { name = "build", args = [
+    "-Ccmake.args=-GNinja",
+    "-Ccmake.build-type=Release",
     "-Ccmake.args=-DVCPKG_INSTALLED_DIR=C:/vcpkg_installed",
     "-Ccmake.args=-DCMAKE_TOOLCHAIN_FILE=C:/vcpkg/scripts/buildsystems/vcpkg.cmake",
 ] }
 # --ignore-existing keeps basix.dll under its usual name, as downstream C++
 # consumers may link against it. --with-mangle still mangles its dependencies,
 # which delvewheel copies in from from vcpkg.
-repair-wheel-command = 'delvewheel repair --ignore-existing --with-mangle --add-path "C:/vcpkg_installed/x64-windows/bin;C:/vcpkg_installed/arm64-windows/bin" -w {dest_dir} -v {wheel}'
+# The MSVC runtime is a system dependency, as vcruntime140 already is.
+repair-wheel-command = 'delvewheel repair --ignore-existing --with-mangle --exclude "msvcp140.dll;msvcp140_atomic_wait.dll" --add-path "C:/vcpkg_installed/x64-windows/bin;C:/vcpkg_installed/arm64-windows/bin" -w {dest_dir} -v {wheel}'
 test-command = [
     "cmake -B build-dir -S {project}/test/test_cmake -DPython3_EXECUTABLE=%VIRTUAL_ENV%\\Scripts\\python.exe",
     "cmake --build build-dir --config Release",
@@ -111,9 +131,6 @@ environment = { "MACOSX_DEPLOYMENT_TARGET" = "10.14" }
 archs = [
     "native",
 ]
-
-[tool.mypy]
-ignore_missing_imports = true
 
 [tool.ruff]
 line-length = 100

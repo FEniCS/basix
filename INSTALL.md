@@ -22,7 +22,7 @@ cmake --build build-dir
 cmake --install build-dir
 ```
 
-Using the CMake build type `Release` or `RelWithDebug` is strongly recommended
+Using the CMake build type `Release` or `RelWithDebInfo` is strongly recommended
 for performance.
 
 
@@ -36,7 +36,7 @@ pip install .
 
 For a debug and editable build for development:
 ```console
-pip -v install --check-build-dependencies -Cbuild-dir="build" -Ccmake.build-type="Development" -Cinstall.strip=false --no-build-isolation -e .
+pip -v install --check-build-dependencies -Cbuild-dir="build" -Ccmake.build-type="Developer" -Cinstall.strip=false --no-build-isolation -e .
 ```
 When using the `--no-build-isolation` option all build dependencies must
 already be installed, e.g. via `pip install --group build`
@@ -49,9 +49,20 @@ RPATH manipulation can be disabled by passing
 
 The Python extension can be built in [nanobind split
 mode](https://nanobind.readthedocs.io/en/latest/split_mode.html) by setting
-`BASIX_NANOBIND_SPLIT=true` in the environment. It requires nanobind >= 3.0 and
-adds `nanobind-backend` as a run-time dependency. Off by default, used for the
-wheels built by `.github/workflows/build-wheels.yml`.
+`BASIX_NANOBIND_SPLIT=true` in the environment, for either the combined install
+from the repository root or the separate Python install from `python/`:
+
+```console
+BASIX_NANOBIND_SPLIT=true pip install .
+```
+
+It requires nanobind >= 3.0 and adds `nanobind-backend>=1.0` as a build and
+runtime dependency. When using `--no-build-isolation`, install these two
+dependencies first. Split mode produces a `cp311-abi3` wheel usable on
+supported CPython versions from 3.11 onwards. It is off by default and enabled
+for the wheels built by `.github/workflows/build-wheels.yml`. Without split
+mode, the existing interpreter-specific and Python 3.12 stable ABI builds
+remain available.
 
 ## Running the unit tests
 

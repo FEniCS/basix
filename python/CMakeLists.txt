@@ -7,6 +7,11 @@ if(TARGET basix)
   add_library(Basix::basix ALIAS basix)
 else()
   find_package(Basix REQUIRED)
+  if(CMAKE_BUILD_TYPE STREQUAL "Developer")
+    # This enables warnings from Basix headers even though they are a SYSTEM
+    # dependency.
+    set_target_properties(Basix::basix PROPERTIES SYSTEM OFF)
+  endif()
 endif()
 
 find_package(
@@ -70,7 +75,12 @@ if(BASIX_NANOBIND_SPLIT)
 elseif(NOT "${SKBUILD_SABI_VERSION}" STREQUAL "")
   set(NANOBIND_MODE STABLE_ABI)
 endif()
-nanobind_add_module(_basixcpp NB_SUPPRESS_WARNINGS ${NANOBIND_MODE} wrapper.cpp)
+nanobind_add_module(
+  _basixcpp
+  NB_SUPPRESS_WARNINGS
+  ${NANOBIND_MODE}
+  basix/wrappers/basix_wrappers.cpp
+)
 target_compile_features(_basixcpp PRIVATE cxx_std_20)
 
 # Windows requires all symbols to be manually exported; this exports them

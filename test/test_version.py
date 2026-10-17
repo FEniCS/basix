@@ -7,6 +7,7 @@ import re
 import pytest
 
 import basix
+import basix._basixcpp
 
 
 def is_canonical(version):

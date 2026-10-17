@@ -36,6 +36,8 @@ def run_map_test(e, J, detJ, K, reference_value_size, physical_value_size):
                 for k in range(N + 1 - i - j)
             ]
         )
+    else:
+        raise NotImplementedError
     values = e.tabulate(0, points)[0]
 
     _J = np.array([J for p in points])
@@ -78,6 +80,8 @@ def test_mappings_2d_to_3d(element_type, element_args):
         physical_vs = 3
     elif e.value_size == 4:
         physical_vs = 9
+    else:
+        raise NotImplementedError
     run_map_test(e, J, detJ, K, e.value_size, physical_vs)
 
 

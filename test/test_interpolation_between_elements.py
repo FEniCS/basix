@@ -246,6 +246,8 @@ def test_degree_bounds(cell_type, degree, element_type, element_args):
         p_family = basix.ElementFamily.P
     elif element.polyset_type == basix.PolysetType.macroedge:
         p_family = basix.ElementFamily.iso
+    else:
+        raise NotImplementedError
 
     if element.embedded_superdegree >= 0:
         # The element being tested should be a subset of this Lagrange space

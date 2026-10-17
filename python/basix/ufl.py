@@ -319,7 +319,9 @@ class _ElementBase(_AbstractFiniteElement):
     def dtype(self) -> _npt.DTypeLike:
         """Element float type."""
 
-    def get_tensor_product_representation(self):
+    def get_tensor_product_representation(
+        self,
+    ) -> list[list[_basix.finite_element.FiniteElement]] | None:
         """Get the element's tensor product factorisation."""
         return None
 
@@ -1687,7 +1689,7 @@ def enriched_element(
             if e.map_type != map_type:
                 raise ValueError("Enriched elements on different map types not supported.")
 
-    dtype = e.dtype
+    dtype = elements[0].dtype
     hcd = min(e.embedded_subdegree for e in elements)
     hd = max(e.embedded_superdegree for e in elements)
     ss = _basix.sobolev_spaces.intersection([e.basix_sobolev_space for e in elements])

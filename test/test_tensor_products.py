@@ -57,7 +57,7 @@ def test_tensor_product_factorisation(cell_type, degree, element_type, element_a
                     e.tabulate(d, p.reshape(1, -1))[d, 0, :, 0] for e, p, d in zip(fs, point, ds)
                 ]
                 values2 = tensor_product(*evals)
-            assert np.allclose(values1, values2)
+                assert np.allclose(values1, values2)
 
 
 @pytest.mark.parametrize("degree", range(1, 9))

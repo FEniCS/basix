@@ -5,7 +5,7 @@
 # import os
 # import sys
 # sys.path.insert(0, os.path.abspath('.'))
-import datetime
+import datetime as dt
 
 import basix
 
@@ -39,7 +39,7 @@ master_doc = "index"
 
 # General information about the project.
 project = "Basix"
-now = datetime.datetime.now()
+now = dt.datetime.now()
 date = now.date()
 copyright = f"{date.year}, FEniCS Project"
 author = "FEniCS Project"

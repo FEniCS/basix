@@ -305,20 +305,69 @@ if(_cxx_standard)
   string(APPEND PKG_CXXFLAGS " -std=c++${_cxx_standard}")
 endif()
 
-# BLAS/LAPACK are linked PRIVATE, so only a *static* Basix::basix needs
-# consumers to also link them (a shared library resolves its own private
-# dependencies). List them in Libs.private, which `pkg-config --libs`
-# ignores but `pkg-config --static --libs` includes. macOS frameworks
-# (e.g. Accelerate) are not valid bare linker arguments, so translate
-# those to `-framework <name>`.
-set(_pkg_libs_private)
-foreach(_lib ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
-  if(_lib MATCHES "\\.framework$")
-    get_filename_component(_fw_name "${_lib}" NAME_WE)
-    list(APPEND _pkg_libs_private "-framework" "${_fw_name}")
+# Only a static Basix::basix needs its consumers to also link
+# BLAS/LAPACK, so they go in Libs.private.
+# macOS frameworks aren't valid bare linker arguments, so translate them to -framework.
+function(_basix_pkgconfig_append lib out_var)
+  set(_result "${${out_var}}")
+  if(lib MATCHES "\\.framework$")
+    get_filename_component(_fw_name "${lib}" NAME_WE)
+    list(APPEND _result "-framework" "${_fw_name}")
   else()
-    list(APPEND _pkg_libs_private "${_lib}")
+    list(APPEND _result "${lib}")
   endif()
+  set(${out_var} "${_result}" PARENT_SCOPE)
+endfunction()
+
+function(_basix_pkgconfig_resolve_target target out_var)
+  set(_result "${${out_var}}")
+  string(REGEX REPLACE "^\\$<LINK_ONLY:(.*)>$" "\\1" _target "${target}")
+  if(NOT TARGET "${_target}")
+    # Not a CMake target: already a plain linker flag/path.
+    _basix_pkgconfig_append("${_target}" _result)
+    set(${out_var} "${_result}" PARENT_SCOPE)
+    return()
+  endif()
+
+  get_target_property(_type "${_target}" TYPE)
+  set(_loc)
+  if(NOT _type STREQUAL "INTERFACE_LIBRARY")
+    set(_candidates)
+    if(CMAKE_BUILD_TYPE)
+      string(TOUPPER "${CMAKE_BUILD_TYPE}" _cfg_upper)
+      list(APPEND _candidates "IMPORTED_LOCATION_${_cfg_upper}")
+    endif()
+    list(
+      APPEND _candidates
+      IMPORTED_LOCATION_RELEASE
+      IMPORTED_LOCATION_NOCONFIG
+      IMPORTED_LOCATION
+    )
+    foreach(_prop ${_candidates})
+      get_target_property(_loc "${_target}" "${_prop}")
+      if(_loc)
+        break()
+      endif()
+    endforeach()
+  endif()
+
+  if(_loc)
+    _basix_pkgconfig_append("${_loc}" _result)
+  else()
+    # Recurse into what an INTERFACE target links to expand it fully.
+    get_target_property(_iface_libs "${_target}" INTERFACE_LINK_LIBRARIES)
+    if(_iface_libs)
+      foreach(_lib ${_iface_libs})
+        _basix_pkgconfig_resolve_target("${_lib}" _result)
+      endforeach()
+    endif()
+  endif()
+  set(${out_var} "${_result}" PARENT_SCOPE)
+endfunction()
+
+set(_pkg_libs_private)
+foreach(_target BLAS::BLAS LAPACK::LAPACK)
+  _basix_pkgconfig_resolve_target("${_target}" _pkg_libs_private)
 endforeach()
 string(REPLACE ";" " " PKG_LIBS_PRIVATE "${_pkg_libs_private}")
 

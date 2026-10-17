@@ -61,7 +61,8 @@ pytest test/
 ```
 
 The C++ unit tests in `cpp/test/` are built against an installed Basix
-and require [Catch2](https://github.com/catchorg/Catch2) 3:
+and require [Catch2](https://github.com/catchorg/Catch2) 3. From the
+repository root:
 
 ```console
 cmake -DCMAKE_BUILD_TYPE=Developer -B build-dir-test -S cpp/test

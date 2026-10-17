@@ -173,10 +173,10 @@ enum class type
 /// array index.
 ///
 /// - The second index is the basis function index.
-/// @todo Does the order for the second index need to be documented?
 ///
 /// - The third index is the point, with index `i` corresponding to the
 /// point in row `i` of @p x.
+/// @todo Does the order for the second index need to be documented?
 template <std::floating_point T>
 std::pair<std::vector<T>, std::array<std::size_t, 3>>
 tabulate(cell::type celltype, polyset::type ptype, int d, int n,
@@ -211,9 +211,9 @@ tabulate(cell::type celltype, polyset::type ptype, int d, int n,
 /// The function basix::indexing::idx maps tuples `(p, q, r)` to the array
 /// index.
 /// - The second index is the basis function index.
-/// @todo Does the order for the second index need to be documented?
 /// - The third index is the point, with index `i` corresponding to the
 /// point in row `i` of `x`.
+/// @todo Does the order for the second index need to be documented?
 /// @param[in] celltype Cell type
 /// @param[in] ptype The polynomial type
 /// @param[in] d Polynomial degree

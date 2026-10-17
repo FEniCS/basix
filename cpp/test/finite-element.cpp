@@ -6,7 +6,6 @@
 #include <basix/cell.h>
 #include <basix/element-families.h>
 #include <basix/finite-element.h>
-#include <basix/indexing.h>
 #include <basix/maps.h>
 #include <basix/polyset.h>
 #include <basix/quadrature.h>
@@ -16,7 +15,6 @@
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/generators/catch_generators.hpp>
 #include <cstddef>
-#include <numeric>
 #include <span>
 #include <vector>
 

@@ -34,6 +34,8 @@ def string_to_type(rule: str) -> QuadratureType:
         return QuadratureType.gauss_jacobi
     elif rule == "Xiao-Gimbutas":
         return QuadratureType.xiao_gimbutas
+    elif rule == "Witherden-Vincent":
+        return QuadratureType.witherden_vincent
 
     return QuadratureType[rule]
 

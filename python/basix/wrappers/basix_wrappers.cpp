@@ -3,6 +3,7 @@
 // SPDX-License-Identifier:    MIT
 
 #include "basix_wrappers/basix_wrappers.h"
+#include <array>
 #include <basix/cell.h>
 #include <basix/element-families.h>
 #include <basix/finite-element.h>
@@ -13,6 +14,7 @@
 #include <basix/polyset.h>
 #include <basix/quadrature.h>
 #include <basix/sobolev-spaces.h>
+#include <cstdint>
 #include <nanobind/nanobind.h>
 #include <nanobind/ndarray.h>
 #include <nanobind/stl/optional.h>
@@ -21,8 +23,6 @@
 #include <nanobind/stl/tuple.h>
 #include <nanobind/stl/variant.h>
 #include <nanobind/stl/vector.h>
-#include <array>
-#include <cstdint>
 #include <optional>
 #include <utility>
 #include <variant>
@@ -41,16 +41,12 @@ NB_MODULE(_basixcpp, m)
 
   m.def("topology", &cell::topology, "celltype"_a);
   m.def(
-      "geometry",
-      [](cell::type celltype)
-      { return as_nbarrayp(cell::geometry<double>(celltype)); },
-      "celltype"_a);
-  m.def(
-      "sub_entity_type",
-      [](cell::type celltype, int dim, int index)
-      { return cell::sub_entity_type(celltype, dim, index); },
-      "celltype"_a, "dim"_a, "index"_a);
-  m.def("sub_entity_connectivity", &cell::sub_entity_connectivity, "celltype"_a);
+      "geometry", [](cell::type celltype)
+      { return as_nbarrayp(cell::geometry<double>(celltype)); }, "celltype"_a);
+  m.def("sub_entity_type", &cell::sub_entity_type, "celltype"_a, "dim"_a,
+        "index"_a);
+  m.def("sub_entity_connectivity", &cell::sub_entity_connectivity,
+        "celltype"_a);
   m.def(
       "sub_entity_geometry",
       [](cell::type celltype, int dim, int index)
@@ -60,7 +56,8 @@ NB_MODULE(_basixcpp, m)
       },
       "celltype"_a, "dim"_a, "index"_a);
   m.def("subentity_types", &cell::subentity_types, "celltype"_a);
-  m.def("sobolev_space_intersection", &sobolev::space_intersection, "space1"_a, "space2"_a);
+  m.def("sobolev_space_intersection", &sobolev::space_intersection, "space1"_a,
+        "space2"_a);
 
   nb::enum_<lattice::type>(m, "LatticeType", nb::is_arithmetic(),
                            "Lattice type.")
@@ -90,7 +87,8 @@ NB_MODULE(_basixcpp, m)
         return as_nbarrayp(polynomials::tabulate(polytype, celltype, d, _x));
       },
       "ptype"_a, "celltype"_a, "degree"_a, "pts"_a);
-  m.def("polynomials_dim", &polynomials::dim, "ptype"_a, "celltype"_a, "degree"_a);
+  m.def("polynomials_dim", &polynomials::dim, "ptype"_a, "celltype"_a,
+        "degree"_a);
   m.def(
       "create_lattice",
       [](cell::type celltype, int n, lattice::type type, bool exterior,
@@ -140,18 +138,15 @@ NB_MODULE(_basixcpp, m)
 
   m.def("cell_volume", &cell::volume<double>, "celltype"_a);
   m.def(
-      "cell_facet_normals",
-      [](cell::type cell_type)
+      "cell_facet_normals", [](cell::type cell_type)
       { return as_nbarrayp(cell::facet_normals<double>(cell_type)); },
       "celltype"_a);
   m.def(
-      "cell_facet_reference_volumes",
-      [](cell::type cell_type)
+      "cell_facet_reference_volumes", [](cell::type cell_type)
       { return as_nbarray(cell::facet_reference_volumes<double>(cell_type)); },
       "celltype"_a);
   m.def(
-      "cell_facet_outward_normals",
-      [](cell::type cell_type)
+      "cell_facet_outward_normals", [](cell::type cell_type)
       { return as_nbarrayp(cell::facet_outward_normals<double>(cell_type)); },
       "celltype"_a);
   m.def(
@@ -164,14 +159,12 @@ NB_MODULE(_basixcpp, m)
       },
       "celltype"_a);
   m.def(
-      "cell_facet_jacobians",
-      [](cell::type cell_type)
+      "cell_facet_jacobians", [](cell::type cell_type)
       { return as_nbarrayp(cell::facet_jacobians<double>(cell_type)); },
       "celltype"_a);
 
   m.def(
-      "cell_edge_jacobians",
-      [](cell::type cell_type)
+      "cell_edge_jacobians", [](cell::type cell_type)
       { return as_nbarrayp(cell::edge_jacobians<double>(cell_type)); },
       "celltype"_a);
 
@@ -232,15 +225,16 @@ NB_MODULE(_basixcpp, m)
         return dispatch_dtype<
             std::variant<FiniteElement<float>, FiniteElement<double>>>(
             dtype,
-            [&]<typename T>()
+            [&family_name, &cell, &degree, &lagrange_variant, &dpc_variant,
+             &discontinuous, &dof_ordering]<typename T>()
             {
               return basix::create_element<T>(family_name, cell, degree,
-                                               lagrange_variant, dpc_variant,
-                                               discontinuous, dof_ordering);
+                                              lagrange_variant, dpc_variant,
+                                              discontinuous, dof_ordering);
             });
       },
-      "family"_a, "celltype"_a, "degree"_a, "lagrange_variant"_a, "dpc_variant"_a,
-      "discontinuous"_a, "dof_ordering"_a, "dtype"_a);
+      "family"_a, "celltype"_a, "degree"_a, "lagrange_variant"_a,
+      "dpc_variant"_a, "discontinuous"_a, "dof_ordering"_a, "dtype"_a);
 
   m.def(
       "create_tp_element",
@@ -252,15 +246,16 @@ NB_MODULE(_basixcpp, m)
         return dispatch_dtype<
             std::variant<FiniteElement<float>, FiniteElement<double>>>(
             dtype,
-            [&]<typename T>()
+            [&family_name, &cell, &degree, &lagrange_variant, &dpc_variant,
+             &discontinuous]<typename T>()
             {
               return basix::create_tp_element<T>(family_name, cell, degree,
-                                                  lagrange_variant,
-                                                  dpc_variant, discontinuous);
+                                                 lagrange_variant, dpc_variant,
+                                                 discontinuous);
             });
       },
-      "family"_a, "celltype"_a, "degree"_a, "lagrange_variant"_a, "dpc_variant"_a,
-      "discontinuous"_a, "dtype"_a);
+      "family"_a, "celltype"_a, "degree"_a, "lagrange_variant"_a,
+      "dpc_variant"_a, "discontinuous"_a, "dtype"_a);
 
   m.def(
       "tp_factors",
@@ -276,20 +271,21 @@ NB_MODULE(_basixcpp, m)
             std::variant<std::vector<std::vector<FiniteElement<float>>>,
                          std::vector<std::vector<FiniteElement<double>>>>>>(
             dtype,
-            [&]<typename T>()
+            [&family_name, &cell, &degree, &lagrange_variant, &dpc_variant,
+             &discontinuous, &dof_ordering]<typename T>()
             {
               return basix::tp_factors<T>(family_name, cell, degree,
                                           lagrange_variant, dpc_variant,
                                           discontinuous, dof_ordering);
             });
       },
-      "family"_a, "celltype"_a, "degree"_a, "lagrange_variant"_a, "dpc_variant"_a,
-      "discontinuous"_a, "dof_ordering"_a, "dtype"_a);
+      "family"_a, "celltype"_a, "degree"_a, "lagrange_variant"_a,
+      "dpc_variant"_a, "discontinuous"_a, "dof_ordering"_a, "dtype"_a);
 
-  m.def("tp_dof_ordering", &basix::tp_dof_ordering, "family"_a, "celltype"_a, "degree"_a,
-        "lagrange_variant"_a, "dpc_variant"_a, "discontinuous"_a);
-  m.def("lex_dof_ordering", &basix::lex_dof_ordering, "family"_a, "celltype"_a, "degree"_a,
-        "lagrange_variant"_a, "dpc_variant"_a, "discontinuous"_a);
+  m.def("tp_dof_ordering", &basix::tp_dof_ordering, "family"_a, "celltype"_a,
+        "degree"_a, "lagrange_variant"_a, "dpc_variant"_a, "discontinuous"_a);
+  m.def("lex_dof_ordering", &basix::lex_dof_ordering, "family"_a, "celltype"_a,
+        "degree"_a, "lagrange_variant"_a, "dpc_variant"_a, "discontinuous"_a);
 
   nb::enum_<polyset::type>(m, "PolysetType", nb::is_arithmetic(),
                            "Polyset type.")
@@ -297,7 +293,8 @@ NB_MODULE(_basixcpp, m)
       .value("macroedge", polyset::type::macroedge);
 
   m.def("superset", &polyset::superset, "cell"_a, "type1"_a, "type2"_a);
-  m.def("restriction", &polyset::restriction, "ptype"_a, "cell"_a, "restriction_cell"_a);
+  m.def("restriction", &polyset::restriction, "ptype"_a, "cell"_a,
+        "restriction_cell"_a);
 
   m.def(
       "make_quadrature",
@@ -317,15 +314,15 @@ NB_MODULE(_basixcpp, m)
       [](double a, int m)
       {
         auto [pts, w] = quadrature::gauss_jacobi_rule<double>(a, m);
-        return std::pair(as_nbarray(std::move(pts)),
-                         as_nbarray(std::move(w)));
+        return std::pair(as_nbarray(std::move(pts)), as_nbarray(std::move(w)));
       },
       "alpha"_a, "npoints"_a);
 
   m.def("index", nb::overload_cast<int>(&basix::indexing::idx), "p"_a);
-  m.def("index", nb::overload_cast<int, int>(&basix::indexing::idx), "p"_a, "q"_a);
-  m.def("index", nb::overload_cast<int, int, int>(&basix::indexing::idx), "p"_a, "q"_a,
-        "r"_a);
+  m.def("index", nb::overload_cast<int, int>(&basix::indexing::idx), "p"_a,
+        "q"_a);
+  m.def("index", nb::overload_cast<int, int, int>(&basix::indexing::idx), "p"_a,
+        "q"_a, "r"_a);
 
   declare_float<float>(m, "float32");
   declare_float<double>(m, "float64");

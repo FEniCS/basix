@@ -11,7 +11,13 @@
 #include "polyset.h"
 #include "quadrature.h"
 #include "sobolev-spaces.h"
+#include <array>
+#include <cassert>
 #include <cmath>
+#include <concepts>
+#include <cstddef>
+#include <stdexcept>
+#include <tuple>
 #include <vector>
 
 using namespace basix;

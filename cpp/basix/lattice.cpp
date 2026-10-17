@@ -8,11 +8,17 @@
 #include "polyset.h"
 #include "quadrature.h"
 #include <algorithm>
+#include <array>
 #include <cassert>
 #include <cmath>
 #include <concepts>
+#include <cstddef>
+#include <iterator>
 #include <math.h>
 #include <numeric>
+#include <span>
+#include <stdexcept>
+#include <utility>
 #include <vector>
 
 using namespace basix;

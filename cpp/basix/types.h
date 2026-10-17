@@ -1,8 +1,10 @@
 // Copyright (C) 2025 Paul T. Kühner
 //
-// This file is part of DOLFINx (https://www.fenicsproject.org)
+// This file is part of Basix (https://www.fenicsproject.org)
 //
-// SPDX-License-Identifier:    LGPL-3.0-or-later
+// SPDX-License-Identifier:    MIT
+
+#pragma once
 
 #include "mdspan.hpp"
 

@@ -9,7 +9,10 @@
 #include <basix/finite-element.h>
 #include <basix/mdspan.hpp>
 #include <basix/types.h>
+#include <cassert>
+#include <cstddef>
 #include <iostream>
+#include <vector>
 
 template <typename T, std::size_t d>
 using mdspan_t = basix::md::mdspan<T, basix::md::dextents<std::size_t, d>>;

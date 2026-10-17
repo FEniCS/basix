@@ -14,7 +14,14 @@
 #include "polyset.h"
 #include "quadrature.h"
 #include "sobolev-spaces.h"
+#include <array>
+#include <cassert>
 #include <concepts>
+#include <cstddef>
+#include <numeric>
+#include <stdexcept>
+#include <tuple>
+#include <vector>
 
 using namespace basix;
 
@@ -80,7 +87,9 @@ impl::mdarray_t<T, 2> make_serendipity_space_3d(int degree)
   int row_n = 0;
 
   for (int i = 0; i <= degree; ++i)
+  {
     for (int j = 0; j <= degree - i + (i == 1 || i == degree ? 1 : 0); ++j)
+    {
       for (int k = 0; k <= degree - i - j + (i == 1 || i == degree ? 1 : 0)
                                + (j == 1 || j == degree ? 1 : 0)
                                + (i + j == degree && i != 1 && i != degree
@@ -88,8 +97,12 @@ impl::mdarray_t<T, 2> make_serendipity_space_3d(int degree)
                                       ? 1
                                       : 0);
            ++k)
+      {
         wcoeffs(row_n++, i * (degree + 1) * (degree + 1) + j * (degree + 1) + k)
             = 1;
+      }
+    }
+  }
 
   assert((std::size_t)row_n == ndofs);
 
@@ -219,8 +232,7 @@ impl::mdarray_t<T, 2> make_serendipity_div_space_3d(int degree)
         for (int d = 0; d < 3; ++d)
         {
           wcoeffs(row_n++, d * psize + i * (degree + 2) * (degree + 2)
-                               + j * (degree + 2) + k)
-              = 1;
+                               + j * (degree + 2) + k) = 1;
         }
       }
     }
@@ -245,7 +257,8 @@ impl::mdarray_t<T, 2> make_serendipity_div_space_3d(int degree)
   // Precompute pts(:,dim1(a))^index * pts(:,dim2(a))^(degree-index) once
   // per (a, index) instead of recomputing it inside the (k, d) loop
   // below.
-  constexpr std::array<std::array<int, 2>, 3> pow_dims{{{1, 2}, {0, 2}, {0, 1}}};
+  constexpr std::array<std::array<int, 2>, 3> pow_dims{
+      {{1, 2}, {0, 2}, {0, 1}}};
   std::array<std::vector<std::vector<T>>, 3> pow_factor;
   for (std::size_t a = 0; a < 3; ++a)
   {
@@ -474,8 +487,7 @@ impl::mdarray_t<T, 2> make_serendipity_curl_space_3d(int degree)
         for (int d = 0; d < 3; ++d)
         {
           wcoeffs(row_n++, d * psize + i * (degree + 2) * (degree + 2)
-                               + j * (degree + 2) + k)
-              = 1;
+                               + j * (degree + 2) + k) = 1;
         }
       }
     }
@@ -500,7 +512,8 @@ impl::mdarray_t<T, 2> make_serendipity_curl_space_3d(int degree)
   // Precompute pts(:,dim1(a))^index * pts(:,dim2(a))^(degree-1-index), see
   // make_serendipity_div_space_3d above; a negative loop bound below
   // yields zero extra multiplications, as before.
-  constexpr std::array<std::array<int, 2>, 3> pow_dims{{{0, 2}, {1, 2}, {0, 1}}};
+  constexpr std::array<std::array<int, 2>, 3> pow_dims{
+      {{0, 2}, {1, 2}, {0, 1}}};
   std::array<std::vector<std::vector<T>>, 3> pow_factor;
   for (std::size_t a = 0; a < 3; ++a)
   {
@@ -603,7 +616,7 @@ impl::mdarray_t<T, 2> make_serendipity_curl_space_3d(int degree)
   // of pts(:,d2)^i[d2], one power reduced and scaled by i[d2]) instead of
   // recomputing it inside the k loop.
   auto compute_d_factor
-      = [&](int d, const std::array<int, 3>& i) -> std::vector<T>
+      = [&wts, &pts](int d, const std::array<int, 3>& i) -> std::vector<T>
   {
     std::vector<T> p(wts.size(), 1.0);
     for (int d2 = 0; d2 < 3; ++d2)
@@ -993,8 +1006,10 @@ FiniteElement<T> element::create_serendipity(cell::type celltype, int degree,
     if (degree < 3)
       lvariant = element::lagrange_variant::equispaced;
     else
+    {
       throw std::runtime_error("serendipity elements of degree > 2 need to be "
                                "given a Lagrange variant.");
+    }
   }
 
   if (dvariant == element::dpc_variant::unset
@@ -1003,8 +1018,10 @@ FiniteElement<T> element::create_serendipity(cell::type celltype, int degree,
     if (degree == 4)
       dvariant = element::dpc_variant::simplex_equispaced;
     if (degree > 4)
+    {
       throw std::runtime_error(
           "serendipity elements of degree > 4 need to be given a DPC variant.");
+    }
   }
 
   const std::size_t tdim = cell::topological_dimension(celltype);
@@ -1199,8 +1216,7 @@ FiniteElement<T> element::create_dpc(cell::type celltype, int degree,
         for (int k = 0; k <= degree - i - j; ++k)
         {
           wcoeffs(row_n++,
-                  i * (degree + 1) * (degree + 1) + j * (degree + 1) + k)
-              = 1;
+                  i * (degree + 1) * (degree + 1) + j * (degree + 1) + k) = 1;
         }
       }
     }

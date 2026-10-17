@@ -23,9 +23,13 @@
 #include <basix/finite-element.h>
 #include <basix/lattice.h>
 #include <basix/types.h>
+#include <cstddef>
 #include <iomanip>
 #include <iostream>
+#include <map>
 #include <span>
+#include <string>
+#include <vector>
 
 using T = double;
 

@@ -10,7 +10,14 @@
 #include "polyset.h"
 #include "quadrature.h"
 #include "sobolev-spaces.h"
+#include <array>
 #include <cmath>
+#include <concepts>
+#include <cstddef>
+#include <span>
+#include <stdexcept>
+#include <tuple>
+#include <vector>
 
 using namespace basix;
 
@@ -76,15 +83,13 @@ FiniteElement<T> basix::element::create_hhj(cell::type celltype, int degree,
     // unrelated locals of the same name used below for interior dofs.
     cell::type ct = cell::sub_entity_type(celltype, facet_dim, 0);
 
-    const std::size_t ndofs
-        = polyset::dim(ct, polyset::type::standard, degree);
+    const std::size_t ndofs = polyset::dim(ct, polyset::type::standard, degree);
     const auto [ptsbuffer, wts] = quadrature::make_quadrature<T>(
         quadrature::type::Default, ct, polyset::type::standard, 2 * degree);
     impl::mdspan_t<const T, 2> pts(ptsbuffer.data(), wts.size(), facet_dim);
 
-    FiniteElement<T> moment_space
-        = create_lagrange<T>(ct, degree, element::lagrange_variant::legendre,
-                             true);
+    FiniteElement<T> moment_space = create_lagrange<T>(
+        ct, degree, element::lagrange_variant::legendre, true);
     const auto [phib, phishape] = moment_space.tabulate(0, pts);
     impl::mdspan_t<const T, 4> moment_values(phib.data(), phishape);
 

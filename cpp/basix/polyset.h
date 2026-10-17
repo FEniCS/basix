@@ -9,6 +9,7 @@
 #include "types.h"
 #include <array>
 #include <concepts>
+#include <cstddef>
 #include <utility>
 #include <vector>
 
@@ -160,8 +161,8 @@ enum class type
 /// @param[in] x Points at which to evaluate the basis. The shape is
 /// (number of points, geometric dimension).
 /// @return Polynomial sets, for each derivative, tabulated at points.
-/// The shape is `(number of derivatives computed, number of points,
-/// basis index)`.
+/// The shape is `(number of derivatives computed, basis index, number
+/// of points)`.
 ///
 /// - The first index is the derivative. The first entry is the basis
 /// itself. Derivatives are stored in triangular (2D) or tetrahedral
@@ -172,11 +173,11 @@ enum class type
 /// The function basix::indexing::idx maps tuples `(p, q, r)` to the
 /// array index.
 ///
-/// - The second index is the point, with index `i` corresponding to the
-/// point in row `i` of @p x.
+/// - The second index is the basis function index.
 ///
-/// - The third index is the basis function index.
-/// @todo Does the order for the third index need to be documented?
+/// - The third index is the point, with index `i` corresponding to the
+/// point in row `i` of @p x.
+/// @todo Does the order for the second index need to be documented?
 template <std::floating_point T>
 std::pair<std::vector<T>, std::array<std::size_t, 3>>
 tabulate(cell::type celltype, polyset::type ptype, int d, int n,
@@ -200,8 +201,8 @@ tabulate(cell::type celltype, polyset::type ptype, int d, int n,
 /// finite element, so its performance is critical.
 ///
 /// @param[in,out] P Polynomial sets, for each derivative, tabulated at
-/// points. The shape is `(number of derivatives computed, number of
-/// points, basis index)`.
+/// points. The shape is `(number of derivatives computed, basis index,
+/// number of points)`.
 /// - The first index is the derivative. The first entry is the basis
 /// itself. Derivatives are stored in triangular (2D) or tetrahedral
 /// (3D) ordering, eg if `(p, q)` denotes `p` order derivative with
@@ -210,10 +211,10 @@ tabulate(cell::type celltype, polyset::type ptype, int d, int n,
 /// [5] -> (0, 2), [6] -> (3, 0),...
 /// The function basix::indexing::idx maps tuples `(p, q, r)` to the array
 /// index.
-/// - The second index is the point, with index `i` corresponding to the
+/// - The second index is the basis function index.
+/// - The third index is the point, with index `i` corresponding to the
 /// point in row `i` of `x`.
-/// - The third index is the basis function index.
-/// @todo Does the order for the third index need to be documented?
+/// @todo Does the order for the second index need to be documented?
 /// @param[in] celltype Cell type
 /// @param[in] ptype The polynomial type
 /// @param[in] d Polynomial degree

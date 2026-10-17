@@ -8,6 +8,16 @@
 #include "math.h"
 #include "quadrature.h"
 #include "types.h"
+#include <array>
+#include <cassert>
+#include <concepts>
+#include <cstddef>
+#include <functional>
+#include <numeric>
+#include <stdexcept>
+#include <tuple>
+#include <utility>
+#include <vector>
 
 using namespace basix;
 

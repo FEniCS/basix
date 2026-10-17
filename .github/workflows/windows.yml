@@ -105,6 +105,12 @@ jobs:
           cmake --install build-dir --config Release --prefix D:/a/basix/install
           echo "D:/a/basix/install/bin" | Out-File -Append -FilePath $env:GITHUB_PATH -Encoding utf8
 
+      - name: Run C++ unit tests
+        run: |
+          cmake -DCMAKE_TOOLCHAIN_FILE=C:/vcpkg/scripts/buildsystems/vcpkg.cmake -DBasix_DIR=D:/a/basix/install/lib/cmake/basix -B build-dir-test -S cpp/test
+          cmake --build build-dir-test --config Release
+          ctest --test-dir build-dir-test -C Release --output-on-failure
+
       - name: Install Basix (Python)
         run: |
           cd python

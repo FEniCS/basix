@@ -6,11 +6,14 @@
 
 #include "math.h"
 #include "mdspan.hpp"
+#include <array>
 #include <concepts>
+#include <cstddef>
 #include <cstdint>
 #include <span>
 #include <tuple>
 #include <type_traits>
+#include <utility>
 #include <vector>
 
 /// Matrix and permutation pre-computation
@@ -109,11 +112,14 @@ void prepare_permutation(std::span<std::size_t> perm);
 /// - `P2[0]` is 1, so we swap `A[0]` and `A[1]`. After this,
 ///   `A = [b, a, c, d, e, f]`.
 ///
-/// - `P2[1]` is 4, so we swap `A[1]` and `A[4]`. After this, `A = [b, e, c, d, a, f]`.
+/// - `P2[1]` is 4, so we swap `A[1]` and `A[4]`. After this, `A = [b, e, c, d,
+/// a, f]`.
 ///
-/// - `P2[2]` is 4, so we swap `A[2]` and `A[4]`. After this, `A = [b, e, a, d, c, f]`.
+/// - `P2[2]` is 4, so we swap `A[2]` and `A[4]`. After this, `A = [b, e, a, d,
+/// c, f]`.
 ///
-/// - `P2[3]` is 5, so we swap `A[3]` and `A[5]`. After this, `A = [b,e,a,f,c,d]`.
+/// - `P2[3]` is 5, so we swap `A[3]` and `A[5]`. After this, `A =
+/// [b,e,a,f,c,d]`.
 ///
 /// - `P2[4]` is 4, so we swap `A[4]` and `A[4]`. This changes nothing.
 ///
@@ -312,8 +318,7 @@ void apply_matrix(std::span<const std::size_t> v_size_t,
         const U Mij = static_cast<U>(M(dim - i, j));
         for (std::size_t b = 0; b < n; ++b)
         {
-          data[n * (offset + dim - i) + b]
-              += Mij * data[n * (offset + j) + b];
+          data[n * (offset + dim - i) + b] += Mij * data[n * (offset + j) + b];
         }
       }
     }

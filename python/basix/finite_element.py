@@ -598,11 +598,25 @@ class FiniteElement(Generic[T]):
 
     @property
     def interpolation_matrix(self) -> npt.NDArray[T]:
-        """Interpolation points.
+        """Weights mapping function samples to degrees of freedom.
 
-        Coordinates on the reference element where a function need to be
-        evaluated in order to interpolate it in the finite element
-        space.
+        Shape is ``(dim, value_size * num_points * num_derivatives)``,
+        where ``num_points`` is the number of rows in :attr:`points` and
+        ``num_derivatives`` counts all partial derivatives up to
+        :attr:`interpolation_nderivs`, including the function value.
+        Derivatives use the same ordering as :meth:`tabulate`.
+
+        Columns are flattened in row-major order from
+        ``(component, point, derivative)``. Arrange the function values
+        and derivatives in this order, flatten them, then multiply by
+        this matrix to obtain the DOF coefficients on the reference cell.
+        When no derivatives are required, the point weights for each
+        component of a DOF are contiguous.
+
+        The matrix can also be reshaped without copying to
+        ``(dim, value_size, num_points, num_derivatives)``. For interpolation
+        tensors and points associated with individual entities, see
+        :attr:`M` and :attr:`x`.
         """
         return cast(npt.NDArray[T], self._e.interpolation_matrix)
 
@@ -631,7 +645,13 @@ class FiniteElement(Generic[T]):
     def M(self) -> list[list[npt.NDArray[T]]]:
         """Interpolation matrices for each sub-entity.
 
-        See C++ documentation for details.
+        ``M[d][e]`` has shape
+        ``(num_entity_dofs, value_size, num_entity_points, num_derivatives)``
+        for entity ``e`` of dimension ``d``. Points are given by
+        ``x[d][e]`` and derivatives use the ordering of :meth:`tabulate`.
+        Contracting the last three axes with function samples gives the
+        DOFs listed in ``entity_dofs[d][e]``. These tensors are available
+        for both built-in and custom elements.
         """
         return cast(list[list[npt.NDArray[T]]], self._e.M)
 

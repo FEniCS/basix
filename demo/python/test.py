@@ -1,3 +1,4 @@
+import importlib.util
 import os
 import subprocess
 import sys
@@ -15,7 +16,11 @@ for file in os.listdir(path):
 @pytest.mark.parametrize("demo", demos)
 def test_demo(demo):
     if demo == "demo_numba_kernels.py":
-        # Numba is not available on all platforms that Basix supports
-        pytest.importorskip("numba")
+        # Numba is not available on all platforms that Basix supports.
+        # Locate it without importing it: the demo runs in a subprocess,
+        # so importing Numba here would only load its shared libraries
+        # into the process that runs under valgrind.
+        if importlib.util.find_spec("numba") is None:
+            pytest.skip("Numba is not available")
     ret = subprocess.run([sys.executable, demo], cwd=str(path), check=True)
     assert ret.returncode == 0

@@ -24,6 +24,8 @@ introducing a new pattern.
   it in `python/basix/wrappers/basix_wrappers/basix_wrappers.h`. The header
   sits inside the Python package so that `wheel.packages` ships it;
   downstream nanobind wrappers locate it with `basix.get_include()`.
+- `cpp/test/` — C++ unit tests (Catch2 + CTest), built as a standalone
+  CMake project against an installed Basix.
 - `test/` — Python unit tests (pytest), plus `test/test_cmake` and
   `test/test_pkgconfig` integration tests for the installed C++ library.
 - `demo/` — C++ and Python demos, also exercised in CI.
@@ -67,6 +69,14 @@ Python unit tests (from repo root, after installing with `pip install --group te
 
 ```console
 pytest test/
+```
+
+C++ unit tests (requires Catch2 3 and an installed Basix):
+
+```console
+cmake -DCMAKE_BUILD_TYPE=Developer -B build-dir-test -S cpp/test
+cmake --build build-dir-test
+ctest --test-dir build-dir-test --output-on-failure
 ```
 
 ## Linting and formatting

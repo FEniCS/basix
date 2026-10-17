@@ -60,6 +60,15 @@ From the directory `python/` the tests can be run with:
 pytest test/
 ```
 
+The C++ unit tests in `cpp/test/` are built against an installed Basix
+and require [Catch2](https://github.com/catchorg/Catch2) 3:
+
+```console
+cmake -DCMAKE_BUILD_TYPE=Developer -B build-dir-test -S cpp/test
+cmake --build build-dir-test
+ctest --test-dir build-dir-test --output-on-failure
+```
+
 ## Dependencies
 
 ### C++

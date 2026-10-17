@@ -66,7 +66,19 @@ def parametrize_over_elements(degree, reference=None, discontinuous=False):
             if k < 4:
                 elementlist.append((c, ElementFamily.P, k, [LagrangeVariant.equispaced]))
 
-        # Elements on all cells except pyramid
+        # Warped GLL elements on all cells
+        for c in [
+            CellType.interval,
+            CellType.triangle,
+            CellType.tetrahedron,
+            CellType.quadrilateral,
+            CellType.hexahedron,
+            CellType.prism,
+            CellType.pyramid,
+        ]:
+            elementlist.append((c, ElementFamily.P, k, [LagrangeVariant.gll_warped]))
+
+        # Isaac's GLL elements on all cells except pyramid
         for c in [
             CellType.interval,
             CellType.triangle,
@@ -76,7 +88,6 @@ def parametrize_over_elements(degree, reference=None, discontinuous=False):
             CellType.prism,
         ]:
             elementlist.append((c, ElementFamily.P, k, [LagrangeVariant.gll_isaac]))
-            elementlist.append((c, ElementFamily.P, k, [LagrangeVariant.gll_warped]))
 
         # Elements on all cells except prism and pyramid
         for c in [

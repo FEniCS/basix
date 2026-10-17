@@ -221,6 +221,37 @@ std::vector<T> warp_function(lattice::type lattice_type, int n,
   return w;
 }
 //-----------------------------------------------------------------------------
+
+/// Evaluate the warp function at points `x` in [0, 1], shifted so that
+/// the displacement is exactly zero at the two endpoints.
+///
+/// The warp is interpolated through a Lagrange basis, so it vanishes at
+/// the endpoints only up to rounding. Where a blending factor damps the
+/// displacement at a vertex, as in create_tri_warped, that error is
+/// harmless, but the pyramid blending factors below all degenerate to
+/// one at the apex, so the residuals accumulate there and would move
+/// the apex off the cell by a few epsilon. The polyset on a pyramid is
+/// expressed in the collapsed coordinates `x / (1 - z)` and `y / (1 -
+/// z)`, so such a point tabulates to nonsense.
+template <std::floating_point T>
+std::vector<T> warp_function_zero_ends(lattice::type lattice_type, int n,
+                                       std::span<const T> x)
+{
+  // Evaluate at the endpoints alongside x, then subtract the linear
+  // interpolant of the two endpoint residuals
+  std::vector<T> xe(x.begin(), x.end());
+  xe.push_back(0.0);
+  xe.push_back(1.0);
+  std::vector<T> w = warp_function<T>(lattice_type, n, xe);
+  const T w0 = w[x.size()];
+  const T w1 = w[x.size() + 1];
+  w.resize(x.size());
+  for (std::size_t i = 0; i < w.size(); ++i)
+    w[i] -= (1.0 - x[i]) * w0 + x[i] * w1;
+
+  return w;
+}
+//-----------------------------------------------------------------------------
 template <std::floating_point T>
 std::pair<std::vector<T>, std::array<std::size_t, 2>>
 create_quad(std::size_t n, lattice::type lattice_type, bool exterior)
@@ -785,10 +816,147 @@ create_pyramid_equispaced(int n, bool exterior)
   return {std::move(xb), shape};
 }
 //-----------------------------------------------------------------------------
+
+/// Weight applied to the warp along the edge of a triangle on which the
+/// barycentric coordinate `l2` vanishes, in terms of the other two
+/// barycentric coordinates. It is one on that edge and decays away from
+/// it. The coordinates are formed from lattice indices by the caller,
+/// so comparing `l2` against zero is exact, and the denominators are
+/// bounded below by `l2` elsewhere.
+template <std::floating_point T>
+constexpr T blending_factor(T l0, T l1, T l2)
+{
+  if (l2 == 0.0)
+    return 1.0;
+  else
+    return 4.0 * l0 * l1 / ((2.0 * l0 + l2) * (2.0 * l1 + l2));
+}
+//-----------------------------------------------------------------------------
+
+/// Warp points: see Hesthaven and Warburton, Nodal Discontinuous
+/// Galerkin Methods, pp. 175-180,
+/// https://doi.org/10.1007/978-0-387-72067-8_6
+///
+/// Each point is displaced by a blend of the one-dimensional warps
+/// along the eight edges of the pyramid. The blending factors are
+/// chosen so that the points on the quadrilateral base are those of
+/// create_quad and the points on each triangular face are those of
+/// create_tri_warped, which is what allows the lattice to be used on a
+/// mesh containing pyramids alongside hexahedra and tetrahedra.
+template <std::floating_point T>
+std::pair<std::vector<T>, std::array<std::size_t, 2>>
+create_pyramid_warped(int n, lattice::type lattice_type, bool exterior)
+{
+  const T h = 1.0 / static_cast<T>(n);
+  const int b = exterior ? 0 : 1;
+  const int m = n - 3 * b;
+
+  std::array<std::size_t, 2> shape
+      = {static_cast<std::size_t>((m + 1) * (m + 2) * (2 * m + 3) / 6), 3};
+  std::vector<T> xb(shape[0] * shape[1]);
+  md::mdspan<T, md::extents<std::size_t, md::dynamic_extent, 3>> x(xb.data(),
+                                                                   shape);
+
+  // The displacement of each point is a weighted sum of six warp
+  // values: four for the edges that meet at the apex, and two for the
+  // directions of the base. The arguments of the warp function and the
+  // weights are computed for all points first, so that the warp
+  // function (which solves a dense system) is evaluated once.
+  std::vector<T> rb(shape[0] * 6), wtb(shape[0] * 6);
+  md::mdspan<T, md::extents<std::size_t, md::dynamic_extent, 6>> r(rb.data(),
+                                                                   shape[0], 6);
+  md::mdspan<T, md::extents<std::size_t, md::dynamic_extent, 6>> wt(
+      wtb.data(), shape[0], 6);
+
+  std::size_t c = 0;
+  for (int k = 0; k < m + 1; ++k)
+  {
+    for (int j = 0; j < m + 1 - k; ++j)
+    {
+      for (int i = 0; i < m + 1 - k; ++i, ++c)
+      {
+        // Indices of the point in the degree n lattice
+        const int p = i + b, q = j + b, s = k + b;
+        x(c, 0) = h * p;
+        x(c, 1) = h * q;
+        x(c, 2) = h * s;
+
+        // Barycentric coordinates of the triangle in the x-z plane
+        // (l0, l1, l2) and of the triangle in the y-z plane (l3, l4,
+        // l5), so l1 and l4 are both z. They are formed from the
+        // lattice indices so that a coordinate that should vanish is
+        // exactly zero.
+        const T l0 = h * p, l1 = h * s, l2 = h * (n - p - s);
+        const T l3 = h * q, l4 = h * s, l5 = h * (n - q - s);
+
+        // Blending factor for each of the six edges of the two
+        // triangles
+        const T b0 = blending_factor(l2, l1, l0);
+        const T b1 = blending_factor(l2, l0, l1);
+        const T b2 = blending_factor(l1, l0, l2);
+        const T b3 = blending_factor(l5, l4, l3);
+        const T b4 = blending_factor(l5, l3, l4);
+        const T b5 = blending_factor(l3, l4, l5);
+
+        // Face selecting functions, which blend between adjacent
+        // triangular faces. They are not needed where the edge that
+        // they belong to degenerates, which is also where they are
+        // undefined.
+        T f0 = 0.0, f1 = 0.0, f2 = 0.0, f3 = 0.0;
+        if (l0 != 0.0)
+        {
+          f0 = l0 / (l0 + l3);
+          f1 = l0 / (l0 + l5);
+        }
+
+        if (l2 != 0.0)
+        {
+          f2 = l2 / (l2 + l3);
+          f3 = l2 / (l2 + l5);
+        }
+
+        // Positions along each of the four edges that meet at the
+        // apex, computed so that they use the barycentric coordinates
+        // of the triangle if the point lies on a triangular face, and
+        // along the two directions of the base. The warp function takes
+        // its argument in [0, 1], so the positions are mapped from
+        // [-1, 1].
+        r(c, 0) = 0.5 * (1.0 + (l1 - l2) * f0 + (l4 - l5) * (1.0 - f0));
+        r(c, 1) = 0.5 * (1.0 + (l1 - l2) * f1 + (l4 - l3) * (1.0 - f1));
+        r(c, 2) = 0.5 * (1.0 + (l1 - l0) * f2 + (l4 - l5) * (1.0 - f2));
+        r(c, 3) = 0.5 * (1.0 + (l1 - l0) * f3 + (l4 - l3) * (1.0 - f3));
+        r(c, 4) = 0.5 * (1.0 + l0 - l2);
+        r(c, 5) = 0.5 * (1.0 + l3 - l5);
+
+        wt(c, 0) = b0 * b3;
+        wt(c, 1) = b0 * b5;
+        wt(c, 2) = b2 * b3;
+        wt(c, 3) = b2 * b5;
+        wt(c, 4) = b1;
+        wt(c, 5) = b4;
+      }
+    }
+  }
+
+  const std::vector<T> wb = warp_function_zero_ends<T>(lattice_type, n, rb);
+  md::mdspan<const T, md::extents<std::size_t, md::dynamic_extent, 6>> w(
+      wb.data(), shape[0], 6);
+  for (std::size_t i = 0; i < shape[0]; ++i)
+  {
+    const T w0 = wt(i, 0) * w(i, 0), w1 = wt(i, 1) * w(i, 1);
+    const T w2 = wt(i, 2) * w(i, 2), w3 = wt(i, 3) * w(i, 3);
+    x(i, 0) += -w2 - w3 + wt(i, 4) * w(i, 4);
+    x(i, 1) += -w1 - w3 + wt(i, 5) * w(i, 5);
+    x(i, 2) += w0 + w1 + w2 + w3;
+  }
+
+  return {std::move(xb), shape};
+}
+//-----------------------------------------------------------------------------
 template <std::floating_point T>
 std::pair<std::vector<T>, std::array<std::size_t, 2>>
 create_pyramid(int n, lattice::type lattice_type, bool exterior,
-               lattice::simplex_method /*simplex_method*/)
+               lattice::simplex_method simplex_method)
 {
   if (n == 0)
     return {{0.4, 0.4, 0.2}, {1, 3}};
@@ -796,8 +964,35 @@ create_pyramid(int n, lattice::type lattice_type, bool exterior,
     return create_pyramid_equispaced<T>(n, exterior);
   else
   {
-    throw std::runtime_error(
-        "Non-equispaced points on pyramids not supported yet.");
+    switch (simplex_method)
+    {
+    case lattice::simplex_method::warp:
+      return create_pyramid_warped<T>(n, lattice_type, exterior);
+    case lattice::simplex_method::isaac:
+    {
+      throw std::runtime_error(
+          "Points matching Isaac's points on a triangle are not implemented "
+          "on a pyramid yet.");
+    }
+    case lattice::simplex_method::centroid:
+    {
+      throw std::runtime_error(
+          "The centroid method is not implemented on a pyramid.");
+    }
+    case lattice::simplex_method::none:
+    {
+      // Methods will all agree when n <= 3
+      if (n <= 3)
+        return create_pyramid_warped<T>(n, lattice_type, exterior);
+      else
+      {
+        throw std::runtime_error(
+            "A simplex type must be given to create points on a pyramid.");
+      }
+    }
+    default:
+      throw std::runtime_error("Unrecognised simplex type.");
+    }
   }
 }
 } // namespace

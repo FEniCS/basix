@@ -45,6 +45,25 @@ already be installed, e.g. via `pip install --group build`
 RPATH manipulation can be disabled by passing
 `-Ccmake.args=-DBASIX_SET_INSTALL_RPATH=FALSE`.
 
+### nanobind split mode (optional)
+
+The Python extension can be built in [nanobind split
+mode](https://nanobind.readthedocs.io/en/latest/split_mode.html) by setting
+`BASIX_NANOBIND_SPLIT=true` in the environment, for either the combined install
+from the repository root or the separate Python install from `python/`:
+
+```console
+BASIX_NANOBIND_SPLIT=true pip install .
+```
+
+It requires nanobind >= 3.0 and adds `nanobind-backend>=1.0` as a build and
+runtime dependency. When using `--no-build-isolation`, install these two
+dependencies first. Split mode produces a `cp311-abi3` wheel usable on
+supported CPython versions from 3.11 onwards. It is off by default and enabled
+for the wheels built by `.github/workflows/build-wheels.yml`. Without split
+mode, the existing interpreter-specific and Python 3.12 stable ABI builds
+remain available.
+
 ## Running the unit tests
 
 To install Basix and the extra dependencies required to run the Python

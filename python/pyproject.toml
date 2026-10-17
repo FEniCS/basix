@@ -1,5 +1,5 @@
 [build-system]
-requires = ["scikit-build-core[pyproject]>=0.11", "nanobind>=2.5.0"]
+requires = ["scikit-build-core[pyproject]>=0.11.2", "nanobind>=2.5.0"]
 build-backend = "scikit_build_core.build"
 
 [project]
@@ -14,7 +14,8 @@ authors = [
     { email = "fenics-steering-council@googlegroups.com" },
     { name = "FEniCS Steering Council" },
 ]
-dependencies = ["numpy>=2"]
+# Allows split mode to override.
+dynamic = ["dependencies"]
 
 [project.urls]
 homepage = "https://fenicsproject.org"
@@ -27,7 +28,7 @@ optional = ["numba; (sys_platform != 'darwin' or platform_machine != 'x86_64') a
 
 [dependency-groups]
 # Keep in sync with [build-system].requires above.
-build = ["scikit-build-core[pyproject]>=0.11", "nanobind>=2.5.0"]
+build = ["scikit-build-core[pyproject]>=0.11.2", "nanobind>=2.5.0"]
 docs = ["markdown", "pylit3", "pyyaml", "sphinx", "pydata-sphinx-theme"]
 lint = ["ruff", "gersemi"]
 test = ["pytest", "sympy", "scipy", "matplotlib", "fenics-basix[optional]"]
@@ -40,3 +41,18 @@ wheel.exclude = ["*.cpp"]
 [tool.scikit-build.cmake.define]
 # Set to FALSE to disable all install RPATH adjustments
 BASIX_SET_INSTALL_RPATH = "TRUE"
+
+[tool.scikit-build.metadata.dependencies]
+provider = "scikit_build_core.metadata.template"
+result = ["numpy>=2"]
+
+# Keep split-mode settings in sync with the repository-root pyproject.toml.
+[[tool.scikit-build.overrides]]
+if.env.BASIX_NANOBIND_SPLIT = true
+inherit.cmake.define = "append"
+cmake.define.BASIX_NANOBIND_SPLIT = "ON"
+# Stub generation imports the extension, so the backend is also a build dependency.
+build.requires = ["nanobind>=3", "nanobind-backend>=1.0"]
+metadata.dependencies.provider = "scikit_build_core.metadata.template"
+metadata.dependencies.result = ["numpy>=2", "nanobind-backend>=1.0"]
+wheel.py-api = "cp311"

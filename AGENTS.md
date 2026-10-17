@@ -26,6 +26,8 @@ introducing a new pattern.
   it in `python/basix/wrappers/basix_wrappers/basix_wrappers.h`. The header
   sits inside the Python package so that `wheel.packages` ships it;
   downstream nanobind wrappers locate it with `basix.get_include()`.
+  Optionally built in nanobind split mode (`BASIX_NANOBIND_SPLIT=true`, off by
+  default, enabled for wheels) — see `INSTALL.md`.
 - `cpp/test/` — C++ unit tests (Catch2 + CTest), built as a standalone
   CMake project against an installed Basix.
 - `test/` — Python unit tests (pytest), plus `test/test_cmake` and

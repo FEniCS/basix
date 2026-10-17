@@ -144,6 +144,8 @@ jobs:
     name: Build Python using '--no-build-isolation'
     runs-on: ubuntu-26.04
     needs: [lint]
+    env:
+      BASIX_NANOBIND_SPLIT: "true"
     steps:
       - uses: actions/checkout@v7
       - name: Set up Python
@@ -153,17 +155,21 @@ jobs:
       - name: Install dependencies
         run: sudo apt-get install -y libopenblas-dev liblapack-dev ninja-build
       - name: Install Python dependencies
-        run: pip install nanobind scikit-build-core[pyproject]
+        # Exercise the minimum backend version needed by the metadata template.
+        run: pip install nanobind 'scikit-build-core[pyproject]==0.11.2'
       - name: Install Basix
         run: |
-          pip install scikit-build-core
           python -m scikit_build_core.build requires | python -c "import sys, json; print(' '.join(json.load(sys.stdin)))" | xargs pip install
           pip install --no-build-isolation .
+      - name: Import Basix
+        run: python -c "import basix"
 
   build-separately:
     name: Build C++ and Python parts separately and run tests
     runs-on: ubuntu-26.04
     needs: [lint]
+    env:
+      BASIX_NANOBIND_SPLIT: "true"
     steps:
       - uses: actions/checkout@v7
       - name: Set up Python

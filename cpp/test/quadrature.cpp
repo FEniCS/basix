@@ -13,6 +13,7 @@
 #include <cmath>
 #include <cstddef>
 #include <numeric>
+#include <utility>
 #include <vector>
 
 using namespace basix;
@@ -120,4 +121,53 @@ TEST_CASE("The default quadrature rule agrees with the rule it selects",
     CHECK(p0[i] == Catch::Approx(p1[i]).margin(1e-14));
   for (std::size_t i = 0; i < w0.size(); ++i)
     CHECK(w0[i] == Catch::Approx(w1[i]).margin(1e-14));
+}
+
+TEST_CASE("Tensor-product rules are products of the interval rule",
+          "[quadrature]")
+{
+  auto rule = GENERATE(quadrature::type::gauss_jacobi, quadrature::type::gll);
+  auto m = GENERATE(range(1, 9));
+  auto [celltype, tdim]
+      = GENERATE(std::pair{cell::type::quadrilateral, std::size_t(2)},
+                 std::pair{cell::type::hexahedron, std::size_t(3)});
+
+  auto [p1, w1] = quadrature::make_quadrature<double>(
+      rule, cell::type::interval, polyset::type::standard, m);
+  auto [p, w] = quadrature::make_quadrature<double>(rule, celltype,
+                                                    polyset::type::standard, m);
+
+  const std::size_t np = w1.size();
+  REQUIRE(w.size() == static_cast<std::size_t>(std::pow(np, tdim)));
+  REQUIRE(p.size() == w.size() * tdim);
+
+  // Point i has multi-index given by the digits of i in base np, with
+  // the last direction varying fastest
+  for (std::size_t i = 0; i < w.size(); ++i)
+  {
+    double weight = 1.0;
+    for (std::size_t d = tdim, s = i; d-- > 0; s /= np)
+    {
+      CHECK(p[i * tdim + d] == Catch::Approx(p1[s % np]).margin(1e-15));
+      weight *= w1[s % np];
+    }
+
+    CHECK(w[i] == Catch::Approx(weight).margin(1e-15));
+  }
+}
+
+TEST_CASE("Gauss-Legendre points match the interval quadrature rule",
+          "[quadrature]")
+{
+  // A Gauss-Legendre rule that is exact to degree 2m - 1 uses m points,
+  // which are the points returned by get_gl_points(m)
+  auto m = GENERATE(range(1, 9));
+  auto pts = quadrature::get_gl_points<double>(m);
+  auto [p, w] = quadrature::make_quadrature<double>(
+      quadrature::type::gauss_jacobi, cell::type::interval,
+      polyset::type::standard, 2 * m - 1);
+
+  REQUIRE(p.size() == pts.size());
+  for (std::size_t i = 0; i < pts.size(); ++i)
+    CHECK(pts[i] == Catch::Approx(p[i]).margin(1e-15));
 }

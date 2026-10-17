@@ -1864,28 +1864,6 @@ std::size_t FiniteElement<F>::hash() const
 }
 //-----------------------------------------------------------------------------
 template <std::floating_point F>
-std::pair<std::vector<F>, std::array<std::size_t, 4>>
-FiniteElement<F>::tabulate(int nd, impl::mdspan_t<const F, 2> x) const
-{
-  std::array<std::size_t, 4> shape = tabulate_shape(nd, x.extent(0));
-  std::vector<F> data(shape[0] * shape[1] * shape[2] * shape[3]);
-  tabulate(nd, x, mdspan_t<F, 4>(data.data(), shape));
-  return {std::move(data), shape};
-}
-//-----------------------------------------------------------------------------
-template <std::floating_point F>
-std::pair<std::vector<F>, std::array<std::size_t, 4>>
-FiniteElement<F>::tabulate(int nd, std::span<const F> x,
-                           std::array<std::size_t, 2> shape) const
-{
-  std::array<std::size_t, 4> phishape = tabulate_shape(nd, shape[0]);
-  std::vector<F> datab(phishape[0] * phishape[1] * phishape[2] * phishape[3]);
-  tabulate(nd, mdspan_t<const F, 2>(x.data(), shape[0], shape[1]),
-           mdspan_t<F, 4>(datab.data(), phishape));
-  return {std::move(datab), phishape};
-}
-//-----------------------------------------------------------------------------
-template <std::floating_point F>
 void FiniteElement<F>::tabulate(int nd, impl::mdspan_t<const F, 2> x,
                                 mdspan_t<F, 4> basis_data) const
 {

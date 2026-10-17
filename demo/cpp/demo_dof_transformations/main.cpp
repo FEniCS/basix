@@ -195,8 +195,12 @@ int main(int argc, char* argv[])
     // does not match its direction on the reference, then we need to
     // adjust the tabulated data.
 
-    const auto [original_data, orig_shape] = nedelec.tabulate(0, points);
-    auto [mod_data, mod_shape] = nedelec.tabulate(0, points);
+    const auto tab_shape = nedelec.tabulate_shape(0, points.extent(0));
+    std::vector<T> mod_data(tab_shape[0] * tab_shape[1] * tab_shape[2]
+                            * tab_shape[3]);
+    nedelec.tabulate(0, points,
+                     basix::md::mdspan<T, basix::md::dextents<std::size_t, 4>>(
+                         mod_data.data(), tab_shape));
     std::span<T> data(mod_data.data(), mod_data.size());
 
     // If the direction of edge 2 in the physical cell is reflected, it

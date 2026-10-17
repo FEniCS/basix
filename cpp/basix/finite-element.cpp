@@ -1268,17 +1268,25 @@ FiniteElement<F>::FiniteElement(
     }
 
     // Apply permutation to interpolation matrix DOFs and reordered points
-    std::vector<F> new_matM(_matM.first.size());
-    mdspan_t<F, 4> new_Mview(new_matM.data(), num_dofs, value_size, num_points1,
-                           nderivs);
+    std::vector<F> new_mat_m(_matM.first.size());
+    mdspan_t<F, 4> new_m_view(new_mat_m.data(), num_dofs, value_size,
+                              num_points1, nderivs);
     for (std::size_t i = 0; i < num_dofs; ++i)
+    {
       for (std::size_t j = 0; j < value_size; ++j)
+      {
         for (std::size_t k = 0; k < num_points1; ++k)
+        {
           for (std::size_t l = 0; l < nderivs; ++l)
-            new_Mview(_dof_ordering[i], j, reorder_points ? _dof_ordering[k] : k,
-                      l)
+          {
+            new_m_view(_dof_ordering[i], j,
+                       reorder_points ? _dof_ordering[k] : k, l)
                 = Mview(i, j, k, l);
-    _matM.first = std::move(new_matM);
+          }
+        }
+      }
+    }
+    _matM.first = std::move(new_mat_m);
   }
 
   const std::vector<std::vector<std::vector<std::vector<int>>>> connectivity

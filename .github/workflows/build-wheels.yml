@@ -55,8 +55,14 @@ jobs:
         with:
           arch: ${{ runner.arch == 'ARM64' && 'arm64' || 'x64' }}
 
+      - name: Load environment variables
+        shell: bash
+        run: cat .github/workflows/fenicsx-refs.env >> "$GITHUB_ENV"
+
       - name: Build wheels
         uses: pypa/cibuildwheel@v4.3.1
+        env:
+          CIBW_BEFORE_TEST: pip install git+https://github.com/${{ env.ufl_repository }}.git@${{ env.ufl_ref }}
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v7
@@ -87,6 +93,12 @@ jobs:
 
       - name: Install from sdist
         run: python -m pip install dist/*.tar.gz
+
+      - name: Load environment variables
+        run: cat .github/workflows/fenicsx-refs.env >> "$GITHUB_ENV"
+
+      - name: Install UFL
+        run: python -m pip -v install git+https://github.com/${{ env.ufl_repository }}.git@${{ env.ufl_ref }}
 
       - name: Test installed package
         run: |

@@ -23,7 +23,7 @@ documentation = "https://docs.fenicsproject.org"
 
 [project.optional-dependencies]
 # llvmlite (numba) is not built for x86_64 on macOS or arm64 on Windows.
-optional = ["numba; (sys_platform != 'darwin' or platform_machine != 'x86_64') and (sys_platform != 'win32' or platform_machine != 'ARM64')", "fenics-ufl@git+https://github.com/fenics/ufl"]
+optional = ["numba; (sys_platform != 'darwin' or platform_machine != 'x86_64') and (sys_platform != 'win32' or platform_machine != 'ARM64')", "fenics-ufl>=2026.3.0.dev0"]
 
 [dependency-groups]
 # Keep in sync with [build-system].requires above.

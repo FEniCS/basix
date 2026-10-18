@@ -255,7 +255,7 @@ include(CMakePackageConfigHelpers)
 write_basic_package_version_file(
   BasixConfigVersion.cmake
   VERSION ${PROJECT_VERSION}
-  COMPATIBILITY AnyNewerVersion
+  COMPATIBILITY SameMinorVersion
 )
 configure_package_config_file(
   BasixConfig.cmake.in

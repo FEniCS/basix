@@ -132,7 +132,8 @@ set_target_properties(
     PUBLIC_HEADER basix/finite-element.h
     PRIVATE_HEADER "${HEADERS_basix}"
     VERSION ${PROJECT_VERSION}
-    SOVERSION ${PROJECT_VERSION_MAJOR}
+    # Each 0.x minor release can break the ABI.
+    SOVERSION ${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}
 )
 
 if(ENABLE_CLANG_TIDY)

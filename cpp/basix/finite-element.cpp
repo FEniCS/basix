@@ -195,6 +195,17 @@ void combine_hashes(std::size_t& a, std::size_t b)
   a ^= b + 0x9e3779b9 + (a << 6) + (a >> 2);
 }
 //-----------------------------------------------------------------------------
+template <std::floating_point F, std::size_t N>
+void combine_array_hash(
+    std::size_t& h,
+    const std::pair<std::vector<F>, std::array<std::size_t, N>>& a)
+{
+  for (std::size_t n : a.second)
+    combine_hashes(h, std::hash<std::size_t>{}(n));
+  for (F v : a.first)
+    combine_hashes(h, std::hash<F>{}(v));
+}
+//-----------------------------------------------------------------------------
 } // namespace
 //-----------------------------------------------------------------------------
 template <std::floating_point T>
@@ -1786,22 +1797,13 @@ bool FiniteElement<F>::operator==(const FiniteElement& e) const
   else if (family() == element::family::custom
            and e.family() == element::family::custom)
   {
-    bool coeff_equal = false;
-    if (_coeffs.first.size() == e.coefficient_matrix().first.size()
-        and _coeffs.second == e.coefficient_matrix().second
-        and std::ranges::equal(_coeffs.first, e.coefficient_matrix().first,
-                               [](auto x, auto y)
-                               { return std::abs(x - y) < 1.0e-10; }))
-    {
-      coeff_equal = true;
-    }
-
     return cell_type() == e.cell_type() and discontinuous() == e.discontinuous()
            and map_type() == e.map_type()
            and sobolev_space() == e.sobolev_space()
            and value_shape() == e.value_shape()
            and embedded_superdegree() == e.embedded_superdegree()
-           and embedded_subdegree() == e.embedded_subdegree() and coeff_equal
+           and embedded_subdegree() == e.embedded_subdegree()
+           and _wcoeffs == e._wcoeffs and _x == e._x and _M == e._M
            and entity_dofs() == e.entity_dofs()
            and dof_ordering() == e.dof_ordering()
            and polyset_type() == e.polyset_type();
@@ -1820,42 +1822,42 @@ bool FiniteElement<F>::operator==(const FiniteElement& e) const
 template <std::floating_point F>
 std::size_t FiniteElement<F>::hash() const
 {
-  std::size_t dof_ordering_hash = 0;
-  for (std::size_t i = 0; i < dof_ordering().size(); ++i)
-  {
-    if (dof_ordering()[i] != static_cast<int>(i))
-    {
-      combine_hashes(dof_ordering_hash,
-                     std::hash<int>{}(dof_ordering()[i] - i));
-    }
-  }
-
   std::size_t h = std::hash<int>{}(static_cast<int>(family()));
-  combine_hashes(h, dof_ordering_hash);
-  combine_hashes(h, dof_ordering_hash);
   combine_hashes(h, std::hash<int>{}(static_cast<int>(cell_type())));
+  combine_hashes(h, std::hash<bool>{}(discontinuous()));
   combine_hashes(h, std::hash<int>{}(static_cast<int>(lagrange_variant())));
   combine_hashes(h, std::hash<int>{}(static_cast<int>(dpc_variant())));
   combine_hashes(h, std::hash<int>{}(static_cast<int>(sobolev_space())));
   combine_hashes(h, std::hash<int>{}(static_cast<int>(map_type())));
 
+  // An identity ordering hashes as no ordering. Otherwise hash every entry
+  // in turn, so the position of each entry counts.
+  const std::vector<int>& ordering = dof_ordering();
+  bool identity = true;
+  for (std::size_t i = 0; i < ordering.size(); ++i)
+    identity = identity and ordering[i] == static_cast<int>(i);
+  if (!identity)
+  {
+    for (int d : ordering)
+      combine_hashes(h, std::hash<int>{}(d));
+  }
+
   if (family() == element::family::custom)
   {
-    std::size_t coeff_hash = 0;
-    for (auto i : _coeffs.first)
-    {
-      // This takes five decimal places of each matrix entry. We should revisit
-      // this
-      combine_hashes(coeff_hash, int(i * 100000));
-    }
-    std::size_t vs_hash = 0;
-    for (std::size_t i = 0; i < value_shape().size(); ++i)
-      combine_hashes(vs_hash, std::hash<int>{}(value_shape()[i]));
-    combine_hashes(h, coeff_hash);
+    for (std::size_t n : value_shape())
+      combine_hashes(h, std::hash<std::size_t>{}(n));
     combine_hashes(h, std::hash<int>{}(embedded_superdegree()));
     combine_hashes(h, std::hash<int>{}(embedded_subdegree()));
     combine_hashes(h, std::hash<int>{}(static_cast<int>(polyset_type())));
-    combine_hashes(h, vs_hash);
+
+    // Hash the defining data exactly, as operator== compares it
+    combine_array_hash(h, _wcoeffs);
+    for (const auto& x_d : _x)
+      for (const auto& x : x_d)
+        combine_array_hash(h, x);
+    for (const auto& M_d : _M)
+      for (const auto& M : M_d)
+        combine_array_hash(h, M);
   }
   else
     combine_hashes(h, std::hash<int>{}(degree()));

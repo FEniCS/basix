@@ -168,39 +168,30 @@ elseif(BASIX_SET_INSTALL_RPATH)
   set_target_properties(_basixcpp PROPERTIES INSTALL_RPATH ${_basix_dir})
 endif()
 
-# Generate nanobind type stubs (.pyi). On UNIX-like systems the freshly
-# built module can be imported directly from the build tree (rpath
-# resolves its dependencies), so stubs are generated at build time. On
-# Windows, _basixcpp cannot be imported until it is installed next to
-# its dependent DLLs, so stub generation is deferred to install time -
-# nanobind installs the .pyi automatically in that mode.
+# Generate nanobind type stubs (.pyi) at build time. On Windows the module
+# can only be imported if its dependent DLLs sit next to it, so copy them.
 if(WIN32)
-  # This *must* be called prior to nanobind_add_stub
-  install(TARGETS _basixcpp LIBRARY DESTINATION basix)
-
-  # DEPENDS is redundant in INSTALL_TIME mode - _basixcpp must be installed.
-  nanobind_add_stub(
-      _basixcpp_stub
-      MODULE basix._basixcpp
-      INSTALL_TIME
-      VERBOSE
-      OUTPUT
-        basix/_basixcpp.pyi
+  add_custom_command(
+    TARGET _basixcpp
+    POST_BUILD
+    COMMAND
+      ${CMAKE_COMMAND} -E copy_directory $<TARGET_FILE_DIR:Basix::basix>
+      $<TARGET_FILE_DIR:_basixcpp>
   )
-else()
-  nanobind_add_stub(
-      _basixcpp_stub
-      MODULE _basixcpp
-      PYTHON_PATH $<TARGET_FILE_DIR:_basixcpp>
-      DEPENDS _basixcpp
-      VERBOSE
-      OUTPUT
-        _basixcpp.pyi
-  )
-
-  install(TARGETS _basixcpp LIBRARY DESTINATION basix)
-  install(FILES ${CMAKE_CURRENT_BINARY_DIR}/_basixcpp.pyi DESTINATION basix)
 endif()
+
+nanobind_add_stub(
+  _basixcpp_stub
+  MODULE _basixcpp
+  PYTHON_PATH $<TARGET_FILE_DIR:_basixcpp>
+  DEPENDS _basixcpp
+  VERBOSE
+  OUTPUT
+    _basixcpp.pyi
+)
+
+install(TARGETS _basixcpp LIBRARY DESTINATION basix)
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/_basixcpp.pyi DESTINATION basix)
 
 # py.typed (PEP 561 marker) is not a tracked source file - write it
 # directly at install time on both platforms rather than relying on

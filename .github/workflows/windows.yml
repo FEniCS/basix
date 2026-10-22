@@ -20,30 +20,18 @@ jobs:
   build-combined:
     name: Combined build and test
     runs-on: windows-2022
-    permissions:
-      packages: write
     env:
-      USERNAME: FEniCS
-      VCPKG_EXE: C:/vcpkg/vcpkg
-      FEED_URL: https://nuget.pkg.github.com/FEniCS/index.json
-      VCPKG_BINARY_SOURCES: "clear;nuget,https://nuget.pkg.github.com/FEniCS/index.json,readwrite"
+      VCPKG_BINARY_SOURCES: "clear;files,${{ github.workspace }}/vcpkg-cache,readwrite"
 
     steps:
-      - name: Add NuGet sources
-        shell: pwsh
-        run: |
-          .$(${{ env.VCPKG_EXE }} fetch nuget) `
-            sources add `
-            -Source "${{ env.FEED_URL }}" `
-            -StorePasswordInClearText `
-            -Name GitHubPackages `
-            -UserName "${{ env.USERNAME }}" `
-            -Password "${{ secrets.GITHUB_TOKEN }}"
-          .$(${{ env.VCPKG_EXE }} fetch nuget) `
-            setapikey "${{ secrets.GITHUB_TOKEN }}" `
-            -Source "${{ env.FEED_URL }}"
-
       - uses: actions/checkout@v7
+
+      - name: Cache vcpkg binaries
+        uses: actions/cache@v6
+        with:
+          path: ${{ github.workspace }}/vcpkg-cache
+          key: vcpkg-combined-${{ hashFiles('**/vcpkg.json') }}
+          restore-keys: vcpkg-combined-
 
       - name: Set up Python
         uses: actions/setup-python@v7
@@ -78,22 +66,22 @@ jobs:
     name: Split build and test
     runs-on: windows-2022
     env:
-      VCPKG_BINARY_SOURCES: "clear;x-gha,readwrite"
+      VCPKG_BINARY_SOURCES: "clear;files,${{ github.workspace }}/vcpkg-cache,readwrite"
     steps:
       - uses: actions/checkout@v7
+
+      - name: Cache vcpkg binaries
+        uses: actions/cache@v6
+        with:
+          path: ${{ github.workspace }}/vcpkg-cache
+          key: vcpkg-split-${{ hashFiles('**/vcpkg.json') }}
+          restore-keys: vcpkg-split-
 
       - name: Insert add_dll_directory calls
         working-directory: python/basix
         run: |
           (Get-Content __init__.py).Replace('# WINDOWSDLL', 'import os; os.add_dll_directory("D:/a/basix/install/bin")') | Set-Content __init__.py
           Get-Content __init__.py
-
-      - name: Export GitHub Actions cache environment variables
-        uses: actions/github-script@v9
-        with:
-          script: |
-            core.exportVariable('ACTIONS_CACHE_URL', process.env.ACTIONS_CACHE_URL || '');
-            core.exportVariable('ACTIONS_RUNTIME_TOKEN', process.env.ACTIONS_RUNTIME_TOKEN || '');
 
       - name: Set up Python
         uses: actions/setup-python@v7

@@ -33,8 +33,10 @@ basix::compute_interpolation_operator(const FiniteElement<T>& element_from,
   }
 
   const auto [points, pts_shape] = element_to.points();
-  const auto [tab_b, tab_shape] = element_from.tabulate(
-      0, mdspan_t<const T, 2>(points.data(), pts_shape));
+  const auto tab_shape = element_from.tabulate_shape(0, pts_shape[0]);
+  std::vector<T> tab_b(tab_shape[0] * tab_shape[1] * tab_shape[2]
+                       * tab_shape[3]);
+  element_from.tabulate(0, points, pts_shape, tab_b);
   mdspan_t<const T, 4> tab(tab_b.data(), tab_shape);
   const auto [imb, imshape] = element_to.interpolation_matrix();
   mdspan_t<const T, 2> i_m(imb.data(), imshape);

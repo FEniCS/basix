@@ -12,6 +12,7 @@
 #include <concepts>
 #include <cstddef>
 #include <iterator>
+#include <numbers>
 #include <numeric>
 #include <span>
 #include <stdexcept>
@@ -22,30 +23,54 @@ using namespace basix;
 
 template <typename T, std::size_t d>
 using mdspan_t = md::mdspan<T, md::dextents<std::size_t, d>>;
-template <typename T, std::size_t d>
-using mdarray_t = mdex::mdarray<T, md::dextents<std::size_t, d>>;
 
 namespace
 {
 //----------------------------------------------------------------------------
 
-/// Generate the recursion coefficients alpha_k, beta_k
+/// @brief Three-term recurrence coefficients for the monic Jacobi
+/// polynomials.
 ///
-/// P_{k+1}(x) = (x-alpha_k)*P_{k}(x) - beta_k P_{k-1}(x)
+/// The monic Jacobi polynomials \f$\pi_k\f$, which are orthogonal on
+/// \f$[-1, 1]\f$ with respect to the weight \f$w(x) = (1 - x)^a (1 +
+/// x)^b\f$, satisfy
+/// \f[
+///   \pi_{k + 1}(x) = (x - \alpha_k) \pi_k(x) - \beta_k \pi_{k -
+///   1}(x), \qquad \pi_{-1} = 0, \quad \pi_0 = 1,
+/// \f]
+/// with, writing \f$\nu_k = 2 k + a + b\f$,
+/// \f[
+///   \alpha_0 = \frac{b - a}{a + b + 2}, \qquad
+///   \alpha_k = \frac{b^2 - a^2}{\nu_k (\nu_k + 2)}, \qquad
+///   \beta_k = \frac{4 k (k + a) (k + b) (k + a + b)}
+///                   {\nu_k^2 (\nu_k + 1) (\nu_k - 1)}
+/// \f]
+/// for \f$k \ge 1\f$. These are the monic polynomials, scaled
+/// differently from the Jacobi polynomials \f$P_k^{(a, b)}\f$ that
+/// ::jacobi_value_deriv evaluates.
 ///
-/// for the Jacobi polynomials which are orthogonal on [-1,1]
-/// with respect to the weight w(x)=[(1-x)^a]*[(1+x)^b]
+/// The recurrence does not determine \f$\beta_0\f$. It is set to the
+/// zeroth moment of the weight,
+/// \f[
+///   \beta_0 = \int_{-1}^{1} w(x) \, \mathrm{d} x
+///            = \frac{2^{a + b + 1} \, \Gamma(a + 1) \, \Gamma(b +
+///              1)}{\Gamma(a + b + 2)},
+/// \f]
+/// which is the normalisation ::gauss needs to scale the quadrature
+/// weights.
 ///
-/// Adapted from the MATLAB code by Dirk Laurie and Walter Gautschi
-/// http://www.cs.purdue.edu/archives/2002/wxg/codes/r_jacobi.m
+/// Adapted from the MATLAB code by Dirk Laurie and Walter Gautschi,
+/// http://www.cs.purdue.edu/archives/2002/wxg/codes/r_jacobi.m.
 ///
-/// @param[in] N polynomial order
-/// @param[in] a weight parameter
-/// @param[in] b weight parameter
-/// @returns (0) alpha and (1) beta recursion coefficients
+/// @param[in] N Number of coefficients to compute.
+/// @param[in] a Weight exponent \f$a > -1\f$.
+/// @param[in] b Weight exponent \f$b > -1\f$.
+/// @return Coefficients (0) \f$\alpha_0, \ldots, \alpha_{N - 1}\f$
+/// and (1) \f$\beta_0, \ldots, \beta_{N - 1}\f$.
 template <std::floating_point T>
 std::array<std::vector<T>, 2> rec_jacobi(int N, T a, T b)
 {
+  assert(N > 0);
   const T nu = (b - a) / (a + b + 2.0);
   const T mu = std::pow(2.0, (a + b + 1)) * std::tgamma(a + 1.0)
                * std::tgamma(b + 1.0) / std::tgamma(a + b + 2.0);
@@ -76,18 +101,46 @@ std::array<std::vector<T>, 2> rec_jacobi(int N, T a, T b)
 }
 //----------------------------------------------------------------------------
 
-/// @todo Add detail on alpha and beta
-/// @brief Compute Gauss points and weights on the domain [-1, 1] using
-/// the Golub-Welsch algorithm
+/// @brief Compute a Gauss quadrature rule on \f$[-1, 1]\f$ from
+/// three-term recurrence coefficients, using the Golub-Welsch
+/// algorithm.
 ///
-/// https://en.wikipedia.org/wiki/Gaussian_quadrature#The_Golub-Welsch_algorithm
-/// @param[in] alpha
-/// @param[in] beta
-/// @return (0) coordinates and (1) weights
+/// Given \f$n\f$ pairs of coefficients of the polynomials that are
+/// orthogonal with respect to a weight \f$w\f$, this computes the
+/// points \f$x_i\f$ and weights \f$w_i\f$ for which
+/// \f[
+///   \int_{-1}^{1} f(x) \, w(x) \, \mathrm{d} x
+///     = \sum_{i = 0}^{n - 1} w_i f(x_i)
+/// \f]
+/// holds for every polynomial \f$f\f$ of degree at most \f$2 n -
+/// 1\f$, the highest degree attainable with \f$n\f$ points.
+///
+/// The points are the eigenvalues of the symmetric tridiagonal Jacobi
+/// matrix \f$J\f$ assembled from the coefficients,
+/// \f[
+///   J_{ii} = \alpha_i, \qquad
+///   J_{i, i + 1} = J_{i + 1, i} = \sqrt{\beta_{i + 1}},
+/// \f]
+/// and the weights are
+/// \f[
+///   w_i = \beta_0 \, v_{0, i}^2,
+/// \f]
+/// where \f$v_{\cdot, i}\f$ is the eigenvector of \f$J\f$ for
+/// \f$x_i\f$ scaled to unit length and \f$v_{0, i}\f$ is its first
+/// component. See
+/// https://en.wikipedia.org/wiki/Gaussian_quadrature#The_Golub-Welsch_algorithm.
+///
+/// @param[in] alpha Diagonal recurrence coefficients, see ::rec_jacobi.
+/// @param[in] beta Off-diagonal recurrence coefficients, see
+/// ::rec_jacobi. Note that `beta[0]` does not appear in \f$J\f$: it is
+/// the zeroth moment of the weight and sets the scale of the weights.
+/// @return (0) points, in increasing order, and (1) weights.
 template <std::floating_point T>
 std::array<std::vector<T>, 2> gauss(std::span<const T> alpha,
                                     std::span<const T> beta)
 {
+  assert(!alpha.empty());
+  assert(alpha.size() == beta.size());
   std::vector<T> Abuffer(alpha.size() * alpha.size(), 0);
   mdspan_t<T, 2> A(Abuffer.data(), alpha.size(), alpha.size());
   for (std::size_t i = 0; i < alpha.size(); ++i)
@@ -109,33 +162,65 @@ std::array<std::vector<T>, 2> gauss(std::span<const T> alpha,
 }
 //----------------------------------------------------------------------------
 
-/// @brief Compute the Lobatto nodes and weights with the preassigned
-/// nodes xl1, xl2
+/// @brief Compute a quadrature rule on \f$[-1, 1]\f$ with two
+/// prescribed points.
 ///
-/// Based on the section 7 of the paper "Some modified matrix eigenvalue
-/// problems", https://doi.org/10.1137/1015032.
+/// Given \f$n\f$ pairs of recurrence coefficients of the polynomials
+/// that are orthogonal with respect to a weight \f$w\f$, this
+/// computes the \f$n\f$-point rule that has \f$x_1\f$ and
+/// \f$x_2\f$ among its points and is exact for every polynomial of
+/// degree at most \f$2 n - 3\f$. Prescribing two points costs two
+/// degrees relative to the Gauss rule of ::gauss on the same number of
+/// points. Prescribing the ends of the interval gives the
+/// Gauss-Lobatto rule.
 ///
-/// @param[in] alpha recursion coefficients
-/// @param[in] beta recursion coefficients
-/// @param[in] xl1 assigned node location
-/// @param[in] xl2 assigned node location
-/// @returns (0) quadrature positions and (1) quadrature weights.
+/// Only the last pair of coefficients is changed. Let \f$\pi_k\f$ be
+/// the monic orthogonal polynomials generated by the coefficients and
+/// let
+/// \f[
+///   g(y) = -\frac{\pi_{n - 2}(y)}{\pi_{n - 1}(y)},
+/// \f]
+/// which the loop below evaluates as a continued fraction, running the
+/// recurrence in the ratio of consecutive polynomials rather than in
+/// the polynomials themselves. Replacing the last coefficients by
+/// \f[
+///   \alpha_{n - 1} = \frac{g(x_1) x_2 - g(x_2) x_1}{g(x_1) - g(x_2)},
+///   \qquad
+///   \beta_{n - 1} = \frac{x_2 - x_1}{g(x_1) - g(x_2)}
+/// \f]
+/// makes \f$x_1\f$ and \f$x_2\f$ eigenvalues of the Jacobi matrix,
+/// so ::gauss returns them among the points. See Section 7 of G. H.
+/// Golub, "Some modified matrix eigenvalue problems", SIAM Rev. 15
+/// (1973) 318-334, https://doi.org/10.1137/1015032.
+///
+/// @param[in] alpha Diagonal recurrence coefficients, see ::rec_jacobi.
+/// @param[in] beta Off-diagonal recurrence coefficients, see
+/// ::rec_jacobi.
+/// @param[in] xl1 First prescribed point \f$x_1\f$.
+/// @param[in] xl2 Second prescribed point \f$x_2\f$.
+/// @return (0) points, in increasing order, and (1) weights. With the
+/// prescribed points at the ends of the interval they are the first and
+/// last entries.
 template <std::floating_point T>
 std::array<std::vector<T>, 2> lobatto(std::span<const T> alpha,
                                       std::span<const T> beta, T xl1, T xl2)
 {
+  assert(alpha.size() >= 2);
   assert(alpha.size() == beta.size());
 
-  // Solve tridiagonal system using Thomas algorithm
+  // Evaluate the continued fraction for g(xl1) and g(xl2), running the
+  // recurrence for pi_{k} / pi_{k - 1} rather than for pi_k itself
   T g1(0.0), g2(0.0);
   const std::size_t n = alpha.size();
   for (std::size_t i = 1; i < n - 1; ++i)
   {
-    g1 = std::sqrt(beta[i]) / (alpha[i] - xl1 - std::sqrt(beta[i - 1]) * g1);
-    g2 = std::sqrt(beta[i]) / (alpha[i] - xl2 - std::sqrt(beta[i - 1]) * g2);
+    g1 = std::sqrt(beta[i])
+         / (alpha[i - 1] - xl1 - std::sqrt(beta[i - 1]) * g1);
+    g2 = std::sqrt(beta[i])
+         / (alpha[i - 1] - xl2 - std::sqrt(beta[i - 1]) * g2);
   }
-  g1 = 1.0 / (alpha[n - 1] - xl1 - std::sqrt(beta[n - 2]) * g1);
-  g2 = 1.0 / (alpha[n - 1] - xl2 - std::sqrt(beta[n - 2]) * g2);
+  g1 = 1.0 / (alpha[n - 2] - xl1 - std::sqrt(beta[n - 2]) * g1);
+  g2 = 1.0 / (alpha[n - 2] - xl2 - std::sqrt(beta[n - 2]) * g2);
 
   std::vector<T> alpha_l(alpha.begin(), alpha.end());
   alpha_l[n - 1] = (g1 * xl2 - g2 * xl1) / (g1 - g2);
@@ -146,88 +231,40 @@ std::array<std::vector<T>, 2> lobatto(std::span<const T> alpha,
 }
 //-----------------------------------------------------------------------------
 
-/// Evaluate the nth Jacobi polynomial and derivatives with weight
-/// parameters (a, 0) at points x
-/// @param[in] a Jacobi weight a
-/// @param[in] n Order of polynomial
-/// @param[in] nderiv Number of derivatives (if zero, just compute
-/// polynomial itself)
-/// @param[in] x Points at which to evaluate
-/// @return Array of polynomial derivative values (rows) at points
-/// (columns)
-template <std::floating_point T>
-mdarray_t<T, 2> compute_jacobi_deriv(T a, std::size_t n, std::size_t nderiv,
-                                     std::span<const T> x)
-{
-  std::vector<std::size_t> shape = {x.size()};
-  mdarray_t<T, 3> J(nderiv + 1, n + 1, x.size());
-  mdarray_t<T, 2> Jd(n + 1, x.size());
-  for (std::size_t i = 0; i < nderiv + 1; ++i)
-  {
-    if (i == 0)
-    {
-      for (std::size_t j = 0; j < Jd.extent(1); ++j)
-        Jd(0, j) = 1.0;
-    }
-    else
-    {
-      for (std::size_t j = 0; j < Jd.extent(1); ++j)
-        Jd(0, j) = 0.0;
-    }
-
-    if (n > 0)
-    {
-      if (i == 0)
-      {
-        for (std::size_t j = 0; j < Jd.extent(1); ++j)
-          Jd(1, j) = (x[j] * (a + 2.0) + a) * 0.5;
-      }
-      else if (i == 1)
-      {
-        for (std::size_t j = 0; j < Jd.extent(1); ++j)
-          Jd(1, j) = a * 0.5 + 1;
-      }
-      else
-      {
-        for (std::size_t j = 0; j < Jd.extent(1); ++j)
-          Jd(1, j) = 0.0;
-      }
-    }
-
-    for (std::size_t j = 2; j < n + 1; ++j)
-    {
-      const T a1 = 2 * j * (j + a) * (2 * j + a - 2);
-      const T a2 = (2 * j + a - 1) * (a * a) / a1;
-      const T a3 = (2 * j + a - 1) * (2 * j + a) / (2 * j * (j + a));
-      const T a4 = 2 * (j + a - 1) * (j - 1) * (2 * j + a) / a1;
-      for (std::size_t k = 0; k < Jd.extent(1); ++k)
-        Jd(j, k) = Jd(j - 1, k) * (x[k] * a3 + a2) - Jd(j - 2, k) * a4;
-      if (i > 0)
-      {
-        for (std::size_t k = 0; k < Jd.extent(1); ++k)
-          Jd(j, k) += i * a3 * J(i - 1, j - 1, k);
-      }
-    }
-
-    for (std::size_t j = 0; j < Jd.extent(0); ++j)
-      for (std::size_t k = 0; k < Jd.extent(1); ++k)
-        J(i, j, k) = Jd(j, k);
-  }
-
-  mdarray_t<T, 2> result(nderiv + 1, x.size());
-  for (std::size_t i = 0; i < result.extent(0); ++i)
-    for (std::size_t j = 0; j < result.extent(1); ++j)
-      result(i, j) = J(i, n, j);
-
-  return result;
-}
-//----------------------------------------------------------------------------
-
-/// Evaluate the mth Jacobi polynomial and its first derivative, with
-/// weight parameters (a, 0), at a single point x. Same recurrence as
-/// compute_jacobi_deriv (nderiv = 1), but tracks only the last two
-/// values of each sequence in scalars rather than allocating
-/// (2, m+1, x.size()) arrays per Newton iteration.
+/// @brief Evaluate the Jacobi polynomial \f$P_m^{(a, 0)}\f$ and its
+/// first derivative at a point.
+///
+/// The Jacobi polynomials with weight exponents \f$(a, 0)\f$ start
+/// from \f$P_0^{(a, 0)} = 1\f$ and \f$P_1^{(a, 0)}(x) =
+/// \frac{1}{2} \left[ (a + 2) x + a \right]\f$, and satisfy, for
+/// \f$j \ge 2\f$,
+/// \f[
+///   P_j^{(a, 0)}(x) = (c_1 x + c_2) P_{j - 1}^{(a, 0)}(x)
+///                   - c_3 P_{j - 2}^{(a, 0)}(x),
+/// \f]
+/// where, with \f$d = 2 j (j + a) (2 j + a - 2)\f$,
+/// \f[
+///   c_1 = \frac{(2 j + a - 1)(2 j + a)}{2 j (j + a)}, \qquad
+///   c_2 = \frac{(2 j + a - 1) a^2}{d}, \qquad
+///   c_3 = \frac{2 (j + a - 1)(j - 1)(2 j + a)}{d}.
+/// \f]
+/// Differentiating the recurrence gives one of the same shape for the
+/// derivatives, with an extra term,
+/// \f[
+///   \frac{\mathrm{d} P_j^{(a, 0)}}{\mathrm{d} x}
+///     = (c_1 x + c_2) \frac{\mathrm{d} P_{j - 1}^{(a, 0)}}
+///       {\mathrm{d} x}
+///     - c_3 \frac{\mathrm{d} P_{j - 2}^{(a, 0)}}{\mathrm{d} x}
+///     + c_1 P_{j - 1}^{(a, 0)},
+/// \f]
+/// so the two sequences are advanced together. Only the last two values
+/// of each are kept, so no storage proportional to `m` is needed.
+///
+/// @param[in] a Jacobi weight exponent \f$a > -1\f$.
+/// @param[in] m Degree of the polynomial.
+/// @param[in] x Point in \f$[-1, 1]\f$ at which to evaluate.
+/// @return (0) \f$P_m^{(a, 0)}(x)\f$ and (1) \f$\mathrm{d} P_m^{(a,
+/// 0)} / \mathrm{d} x\,(x)\f$.
 template <std::floating_point T>
 std::array<T, 2> jacobi_value_deriv(T a, std::size_t m, T x)
 {
@@ -241,12 +278,12 @@ std::array<T, 2> jacobi_value_deriv(T a, std::size_t m, T x)
 
   for (std::size_t j = 2; j < m + 1; ++j)
   {
-    const T a1 = 2 * j * (j + a) * (2 * j + a - 2);
-    const T a2 = (2 * j + a - 1) * (a * a) / a1;
-    const T a3 = (2 * j + a - 1) * (2 * j + a) / (2 * j * (j + a));
-    const T a4 = 2 * (j + a - 1) * (j - 1) * (2 * j + a) / a1;
-    const T p2 = p1 * (x * a3 + a2) - p0 * a4;
-    const T d2 = d1 * (x * a3 + a2) - d0 * a4 + a3 * p1;
+    const T d = 2 * j * (j + a) * (2 * j + a - 2);
+    const T c2 = (2 * j + a - 1) * (a * a) / d;
+    const T c1 = (2 * j + a - 1) * (2 * j + a) / (2 * j * (j + a));
+    const T c3 = 2 * (j + a - 1) * (j - 1) * (2 * j + a) / d;
+    const T p2 = p1 * (x * c1 + c2) - p0 * c3;
+    const T d2 = d1 * (x * c1 + c2) - d0 * c3 + c1 * p1;
     p0 = p1;
     p1 = p2;
     d0 = d1;
@@ -257,34 +294,68 @@ std::array<T, 2> jacobi_value_deriv(T a, std::size_t m, T x)
 }
 //-----------------------------------------------------------------------------
 
-/// Computes the m roots of \f$P_{m}^{a,0}\f$ on [-1,1] by Newton's
-/// method. The initial guesses are the Chebyshev points.  Algorithm
-/// implemented from the pseudocode given by Karniadakis and Sherwin.
+/// @brief Compute the `m` roots of \f$P_m^{(a, 0)}\f$ on \f$[-1,
+/// 1]\f$.
+///
+/// The roots of a Jacobi polynomial are real, simple, and lie in the
+/// open interval. They are found one at a time, in increasing order, by
+/// Newton's method applied to the polynomial deflated by the roots
+/// already located. With \f$x_0, \ldots, x_{k - 1}\f$ known, Newton's
+/// method is applied to
+/// \f[
+///   F(x) = \frac{P_m^{(a, 0)}(x)}{\prod_{i < k} (x - x_i)},
+/// \f]
+/// which has the remaining roots of \f$P_m^{(a, 0)}\f$ but none of
+/// those already found. Since \f$F' / F = P' / P - \sum_{i < k} (x -
+/// x_i)^{-1}\f$, the Newton update needs no extra polynomial
+/// evaluations,
+/// \f[
+///   \delta = \frac{P_m^{(a, 0)}(x)}
+///     {\dfrac{\mathrm{d} P_m^{(a, 0)}}{\mathrm{d} x}(x)
+///      - P_m^{(a, 0)}(x) \sum_{i < k} \dfrac{1}{x - x_i}},
+/// \f]
+/// and the iteration cannot fall back onto a root already found. The
+/// initial guess for root \f$k\f$ is the Chebyshev point \f$-\cos
+/// \left[ (2 k + 1) \pi / (2 m) \right]\f$, averaged with the
+/// previous root to keep the iteration above it. Follows the pseudocode
+/// of Karniadakis and Sherwin, "Spectral/hp Element Methods for
+/// Computational Fluid Dynamics", 2nd ed., Appendix B.
+///
+/// @param[in] a Jacobi weight exponent \f$a > -1\f$.
+/// @param[in] m Number of roots.
+/// @return The roots, in increasing order.
 template <std::floating_point T>
 std::vector<T> compute_gauss_jacobi_points(T a, int m)
 {
+  // Newton's method converges quadratically, so an update below eps
+  // leaves a root accurate to around eps^2, i.e. close to double
+  // precision. In single precision the update can stagnate at the level
+  // of roundoff without ever reaching eps, in which case the iteration
+  // runs to max_iter with the root already accurate to single
+  // precision.
   constexpr T eps = 1.0e-8;
   constexpr int max_iter = 100;
   std::vector<T> x(m);
   for (int k = 0; k < m; ++k)
   {
     // Initial guess
-    x[k] = -std::cos((2.0 * k + 1.0) * M_PI / (2.0 * m));
+    x[k] = -std::cos((2.0 * k + 1.0) * std::numbers::pi / (2.0 * m));
     if (k > 0)
       x[k] = 0.5 * (x[k] + x[k - 1]);
 
-    int j = 0;
-    while (j < max_iter)
+    for (int j = 0; j < max_iter; ++j)
     {
+      // Sum over the roots already found deflates the polynomial, so
+      // that Newton's method cannot converge back onto one of them
       T s = 0;
       for (int i = 0; i < k; ++i)
         s += 1.0 / (x[k] - x[i]);
-      auto [f0, f1] = jacobi_value_deriv<T>(a, m, x[k]);
-      T delta = f0 / (f1 - f0 * s);
+
+      auto [f, df] = jacobi_value_deriv<T>(a, m, x[k]);
+      T delta = f / (df - f * s);
       x[k] -= delta;
       if (std::abs(delta) < eps)
         break;
-      ++j;
     }
   }
 
@@ -292,35 +363,134 @@ std::vector<T> compute_gauss_jacobi_points(T a, int m)
 }
 //-----------------------------------------------------------------------------
 
-/// @note Computes on [-1, 1]
+/// @brief Compute a Gauss-Jacobi quadrature rule on \f$[-1, 1]\f$.
+///
+/// The rule has `m` points and satisfies
+/// \f[
+///   \int_{-1}^{1} f(x) (1 - x)^a \, \mathrm{d} x
+///     = \sum_{i = 0}^{m - 1} w_i f(x_i)
+/// \f]
+/// for every polynomial \f$f\f$ of degree at most \f$2 m - 1\f$. The
+/// points are the roots \f$x_i\f$ of \f$P_m^{(a, 0)}\f$ and the
+/// weights are
+/// \f[
+///   w_i = \frac{2^{a + 1}}
+///              {(1 - x_i^2) \left[ \dfrac{\mathrm{d} P_m^{(a, 0)}}
+///               {\mathrm{d} x}(x_i) \right]^2}.
+/// \f]
+/// All of the weights are positive and all of the points lie in the
+/// open interval.
+///
+/// @param[in] a Jacobi weight exponent \f$a > -1\f$.
+/// @param[in] m Number of points.
+/// @return (0) points, in increasing order, and (1) weights.
 template <std::floating_point T>
 std::array<std::vector<T>, 2> compute_gauss_jacobi_rule(T a, int m)
 {
   std::vector<T> pts = compute_gauss_jacobi_points<T>(a, m);
-  mdarray_t<T, 2> Jd = compute_jacobi_deriv<T>(a, m, 1, pts);
-  T a1 = std::pow(2.0, a + 1.0);
+  const T a1 = std::pow(2.0, a + 1.0);
   std::vector<T> wts(m);
   for (int i = 0; i < m; ++i)
   {
-    T x = pts[i];
-    T f = Jd(1, i);
-    wts[i] = a1 / (1.0 - x * x) / (f * f);
+    const T x = pts[i];
+    const T df = jacobi_value_deriv<T>(a, m, x)[1];
+    wts[i] = a1 / (1.0 - x * x) / (df * df);
   }
 
   return {std::move(pts), std::move(wts)};
 }
 //-----------------------------------------------------------------------------
+
+/// @brief Compute a Gauss-Jacobi quadrature rule on \f$[0, 1]\f$.
+///
+/// The rule has `m` points and satisfies
+/// \f[
+///   \int_0^1 f(X) (1 - X)^a \, \mathrm{d} X
+///     = \sum_{i = 0}^{m - 1} w_i f(X_i)
+/// \f]
+/// for every polynomial \f$f\f$ of degree at most \f$2 m - 1\f$. It
+/// is the rule of ::compute_gauss_jacobi_rule carried over by
+/// \f$X = (x + 1) / 2\f$. That map gives \f$\mathrm{d} x = 2 \,
+/// \mathrm{d} X\f$ and \f$1 - x = 2 (1 - X)\f$, so
+/// \f[
+///   \int_{-1}^{1} f\!\left( \frac{x + 1}{2} \right) (1 - x)^a \,
+///   \mathrm{d} x
+///     = 2^{a + 1} \int_0^1 f(X) (1 - X)^a \, \mathrm{d} X,
+/// \f]
+/// and the weights are those of the rule on \f$[-1, 1]\f$ divided by
+/// \f$2^{a + 1}\f$. The points are unchanged in number and remain in
+/// the open interval.
+///
+/// @param[in] a Jacobi weight exponent \f$a > -1\f$.
+/// @param[in] m Number of points.
+/// @return (0) points, in increasing order, and (1) weights.
+template <std::floating_point T>
+std::array<std::vector<T>, 2> gauss_jacobi_rule_01(T a, int m)
+{
+  auto [pts, wts] = compute_gauss_jacobi_rule<T>(a, m);
+  const T s = std::pow(2.0, a + 1.0);
+  for (std::size_t i = 0; i < pts.size(); ++i)
+  {
+    pts[i] = 0.5 * (pts[i] + 1.0);
+    wts[i] /= s;
+  }
+
+  return {std::move(pts), std::move(wts)};
+}
+//-----------------------------------------------------------------------------
+
+/// @brief Compute a Gauss-Legendre quadrature rule on the reference
+/// interval \f$[0, 1]\f$.
+///
+/// This is ::gauss_jacobi_rule_01 with weight exponent \f$a = 0\f$,
+/// so the rule has `m` points, all of them in the open interval, and
+/// \f[
+///   \int_0^1 f(X) \, \mathrm{d} X = \sum_{i = 0}^{m - 1} w_i f(X_i)
+/// \f]
+/// for every polynomial \f$f\f$ of degree at most \f$2 m - 1\f$.
+/// No rule on `m` points is exact to a higher degree.
+///
+/// @param[in] m Number of points.
+/// @return (0) points, in increasing order, and (1) weights.
 template <std::floating_point T>
 std::array<std::vector<T>, 2> make_quadrature_line(int m)
 {
-  auto [ptx, wx] = compute_gauss_jacobi_rule<T>(0.0, m);
-  std::ranges::transform(wx, wx.begin(),
-                         [](auto w) { return static_cast<T>(0.5 * w); });
-  std::ranges::transform(ptx, ptx.begin(), [](auto x)
-                         { return static_cast<T>(0.5 * (x + 1.0)); });
-  return {std::move(ptx), std::move(wx)};
+  return gauss_jacobi_rule_01<T>(0, m);
 }
 //-----------------------------------------------------------------------------
+
+/// @brief Compute a quadrature rule on the reference triangle by
+/// collapsing a tensor-product rule on the square.
+///
+/// The Duffy transformation
+/// \f[
+///   (u, v) \mapsto (X, Y) = \left( u (1 - v), \; v \right)
+/// \f]
+/// maps the unit square onto the reference triangle, degenerating the
+/// edge \f$v = 1\f$ of the square to the vertex \f$(0, 1)\f$. Its
+/// Jacobian determinant is \f$1 - v\f$, so
+/// \f[
+///   \int_0^1 \!\! \int_0^{1 - Y} f(X, Y) \, \mathrm{d} X \,
+///   \mathrm{d} Y
+///     = \int_0^1 \!\! \int_0^1 f\big( u (1 - v), v \big) (1 - v)
+///       \, \mathrm{d} u \, \mathrm{d} v.
+/// \f]
+/// The factor \f$1 - v\f$ is absorbed exactly by taking a
+/// Gauss-Jacobi rule with weight exponent \f$a = 1\f$ in the \f$v\f$
+/// direction, alongside a Gauss-Legendre rule in \f$u\f$.
+///
+/// A polynomial of total degree \f$d\f$ on the triangle pulls back to
+/// a combination of terms \f$u^p (1 - v)^p v^q\f$ with \f$p + q \le
+/// d\f$, which is of degree at most \f$d\f$ in \f$u\f$ and at most
+/// \f$d\f$ in \f$v\f$. Both one-dimensional rules are exact to
+/// degree \f$2 m - 1\f$, so the \f$m^2\f$-point rule is exact for
+/// polynomials of total degree \f$2 m - 1\f$, and no higher. It
+/// therefore uses more points than a rule designed directly on the
+/// triangle, but it is available at every degree.
+///
+/// @param[in] m Number of points in each direction.
+/// @return (0) points, flattened row-major with shape `(m * m, 2)`, and
+/// (1) weights.
 template <std::floating_point T>
 std::array<std::vector<T>, 2> make_quadrature_triangle_collapsed(std::size_t m)
 {
@@ -330,7 +500,7 @@ std::array<std::vector<T>, 2> make_quadrature_triangle_collapsed(std::size_t m)
   std::vector<T> pts(m * m * 2);
   mdspan_t<T, 2> x(pts.data(), m * m, 2);
   std::vector<T> wts(m * m);
-  int c = 0;
+  std::size_t c = 0;
   for (std::size_t i = 0; i < m; ++i)
   {
     for (std::size_t j = 0; j < m; ++j)
@@ -345,6 +515,27 @@ std::array<std::vector<T>, 2> make_quadrature_triangle_collapsed(std::size_t m)
   return {std::move(pts), std::move(wts)};
 }
 //-----------------------------------------------------------------------------
+
+/// @brief Compute a quadrature rule on the reference tetrahedron by
+/// collapsing a tensor-product rule on the cube.
+///
+/// This is the three-dimensional counterpart of
+/// ::make_quadrature_triangle_collapsed, collapsing the unit cube onto
+/// the reference tetrahedron with
+/// \f[
+///   (u, v, w) \mapsto (X, Y, Z)
+///     = \left( u (1 - v)(1 - w), \; v (1 - w), \; w \right).
+/// \f]
+/// The Jacobian determinant is \f$(1 - v)(1 - w)^2\f$, absorbed by
+/// Gauss-Jacobi rules with weight exponents \f$a = 1\f$ in the
+/// \f$v\f$ direction and \f$a = 2\f$ in the \f$w\f$ direction,
+/// alongside a Gauss-Legendre rule in \f$u\f$. By the same counting
+/// as for the triangle, the \f$m^3\f$-point rule is exact for
+/// polynomials of total degree \f$2 m - 1\f$, and no higher.
+///
+/// @param[in] m Number of points in each direction.
+/// @return (0) points, flattened row-major with shape `(m * m * m, 3)`,
+/// and (1) weights.
 template <std::floating_point T>
 std::array<std::vector<T>, 2>
 make_quadrature_tetrahedron_collapsed(std::size_t m)
@@ -356,7 +547,7 @@ make_quadrature_tetrahedron_collapsed(std::size_t m)
   std::vector<T> pts(m * m * m * 3);
   mdspan_t<T, 2> x(pts.data(), m * m * m, 3);
   std::vector<T> wts(m * m * m);
-  int c = 0;
+  std::size_t c = 0;
   for (std::size_t i = 0; i < m; ++i)
   {
     for (std::size_t j = 0; j < m; ++j)
@@ -375,6 +566,55 @@ make_quadrature_tetrahedron_collapsed(std::size_t m)
   return {std::move(pts), std::move(wts)};
 }
 //-----------------------------------------------------------------------------
+
+/// @brief Form the `dim`-fold tensor product of a one-dimensional
+/// quadrature rule with itself.
+///
+/// The point with multi-index \f$(i_0, \ldots, i_{d - 1})\f$ has
+/// coordinates \f$(p_{i_0}, \ldots, p_{i_{d - 1}})\f$ and weight
+/// \f$w_{i_0} \cdots w_{i_{d - 1}}\f$. Points are ordered
+/// lexicographically by multi-index, with the last index varying
+/// fastest.
+///
+/// @param[in] p One-dimensional points.
+/// @param[in] w One-dimensional weights.
+/// @param[in] dim Number of directions, at most three.
+/// @return (0) points, flattened row-major with shape
+/// `(p.size()^dim, dim)`, and (1) weights.
+template <std::floating_point T>
+std::array<std::vector<T>, 2>
+tensor_product(std::span<const T> p, std::span<const T> w, std::size_t dim)
+{
+  assert(p.size() == w.size());
+  assert(dim > 0 and dim <= 3);
+
+  const std::size_t np = p.size();
+  std::size_t num_points = 1;
+  for (std::size_t d = 0; d < dim; ++d)
+    num_points *= np;
+
+  std::vector<T> pts(num_points * dim);
+  mdspan_t<T, 2> x(pts.data(), num_points, dim);
+  std::vector<T> wts(num_points);
+  std::array<std::size_t, 3> index = {0, 0, 0};
+  for (std::size_t i = 0; i < num_points; ++i)
+  {
+    for (std::size_t d = dim, s = i; d-- > 0; s /= np)
+      index[d] = s % np;
+
+    T weight = w[index[0]];
+    x(i, 0) = p[index[0]];
+    for (std::size_t d = 1; d < dim; ++d)
+    {
+      x(i, d) = p[index[d]];
+      weight *= w[index[d]];
+    }
+    wts[i] = weight;
+  }
+
+  return {std::move(pts), std::move(wts)};
+}
+//-----------------------------------------------------------------------------
 template <std::floating_point T>
 std::array<std::vector<T>, 2> make_gauss_jacobi_quadrature(cell::type celltype,
                                                            std::size_t m)
@@ -386,45 +626,13 @@ std::array<std::vector<T>, 2> make_gauss_jacobi_quadrature(cell::type celltype,
     return make_quadrature_line<T>(np);
   case cell::type::quadrilateral:
   {
-    auto [QptsL, QwtsL] = make_quadrature_line<T>(np);
-    std::vector<T> pts(np * np * 2);
-    mdspan_t<T, 2> x(pts.data(), np * np, 2);
-    std::vector<T> wts(np * np);
-    int c = 0;
-    for (std::size_t i = 0; i < np; ++i)
-    {
-      for (std::size_t j = 0; j < np; ++j)
-      {
-        x(c, 0) = QptsL[i];
-        x(c, 1) = QptsL[j];
-        wts[c] = QwtsL[i] * QwtsL[j];
-        ++c;
-      }
-    }
-    return {std::move(pts), std::move(wts)};
+    auto [pts, wts] = make_quadrature_line<T>(np);
+    return tensor_product<T>(pts, wts, 2);
   }
   case cell::type::hexahedron:
   {
-    auto [QptsL, QwtsL] = make_quadrature_line<T>(np);
-    std::vector<T> pts(np * np * np * 3);
-    mdspan_t<T, 2> x(pts.data(), np * np * np, 3);
-    std::vector<T> wts(np * np * np);
-    int c = 0;
-    for (std::size_t i = 0; i < np; ++i)
-    {
-      for (std::size_t j = 0; j < np; ++j)
-      {
-        for (std::size_t k = 0; k < np; ++k)
-        {
-          x(c, 0) = QptsL[i];
-          x(c, 1) = QptsL[j];
-          x(c, 2) = QptsL[k];
-          wts[c] = QwtsL[i] * QwtsL[j] * QwtsL[k];
-          ++c;
-        }
-      }
-    }
-    return {std::move(pts), std::move(wts)};
+    auto [pts, wts] = make_quadrature_line<T>(np);
+    return tensor_product<T>(pts, wts, 3);
   }
   case cell::type::prism:
   {
@@ -474,12 +682,32 @@ std::array<std::vector<T>, 2> make_gauss_jacobi_quadrature(cell::type celltype,
 
 //-----------------------------------------------------------------------------
 
-/// The Gauss-Lobatto-Legendre quadrature rules on the interval using
-/// Greg von Winckel's implementation. This facilitates implementing
-/// spectral elements. The quadrature rule uses m points for a degree of
-/// precision of 2m-3.
+/// @brief Compute a Gauss-Lobatto-Legendre quadrature rule on the
+/// reference interval \f$[0, 1]\f$.
+///
+/// The rule has `m` points, two of which are the ends of the interval,
+/// and satisfies
+/// \f[
+///   \int_0^1 f(X) \, \mathrm{d} X = \sum_{i = 0}^{m - 1} w_i f(X_i)
+/// \f]
+/// for every polynomial \f$f\f$ of degree at most \f$2 m - 3\f$.
+/// Prescribing the two endpoints costs two degrees relative to the
+/// Gauss-Legendre rule of ::make_quadrature_line on the same number of
+/// points. It is what makes the rule useful for spectral element
+/// methods, where the quadrature points double as the nodes of a nodal
+/// basis and the mass matrix is then diagonal.
+///
+/// The rule comes from ::lobatto applied to the Legendre recurrence
+/// coefficients, that is \f$a = b = 0\f$ in ::rec_jacobi, with
+/// \f$\pm 1\f$ prescribed, carried over to \f$[0, 1]\f$ by \f$X =
+/// (x + 1) / 2\f$ with the weights halved.
+///
+/// @param[in] m Number of points, at least two.
+/// @return (0) points and (1) weights. The two endpoints come first, to
+/// match the Basix ordering of degrees of freedom on an interval, and
+/// the interior points follow in increasing order.
 template <std::floating_point T>
-std::array<std::vector<T>, 2> compute_gll_rule(int m)
+std::array<std::vector<T>, 2> make_gll_line(int m)
 {
   if (m < 2)
   {
@@ -487,29 +715,22 @@ std::array<std::vector<T>, 2> compute_gll_rule(int m)
         "Gauss-Lobatto-Legendre quadrature invalid for fewer than 2 points");
   }
 
-  // Calculate the recursion coefficients
-  // auto [alpha, beta] = rec_jacobi<T>(m, 0.0, 0.0);
-  std::array<std::vector<T>, 2> coeffs = rec_jacobi<T>(m, 0.0, 0.0);
+  auto [alpha, beta] = rec_jacobi<T>(m, T(0), T(0));
+  auto [pts, wts] = lobatto<T>(alpha, beta, T(-1), T(1));
 
-  // Compute Lobatto nodes and weights
-  auto [xs_ref, ws_ref] = lobatto<T>(std::span<const T>(coeffs[0]),
-                                     std::span<const T>(coeffs[1]), -1.0, 1.0);
+  // Move the point at x = 1 to the front, after the point at x = -1,
+  // and shift the interior points up
+  std::rotate(pts.rbegin(), pts.rbegin() + 1, pts.rend() - 1);
+  std::rotate(wts.rbegin(), wts.rbegin() + 1, wts.rend() - 1);
 
-  // Reorder to match 1d dof ordering
-  std::rotate(xs_ref.rbegin(), xs_ref.rbegin() + 1, xs_ref.rend() - 1);
-  std::rotate(ws_ref.rbegin(), ws_ref.rbegin() + 1, ws_ref.rend() - 1);
-  return {xs_ref, ws_ref};
-}
-//-----------------------------------------------------------------------------
-template <std::floating_point T>
-std::array<std::vector<T>, 2> make_gll_line(int m)
-{
-  auto [ptx, wx] = compute_gll_rule<T>(m);
-  std::ranges::transform(wx, wx.begin(),
-                         [](auto w) { return static_cast<T>(0.5 * w); });
-  std::ranges::transform(ptx, ptx.begin(), [](auto x)
-                         { return static_cast<T>(0.5 * (x + 1.0)); });
-  return {ptx, wx};
+  // Map from [-1, 1] to [0, 1]
+  for (std::size_t i = 0; i < pts.size(); ++i)
+  {
+    pts[i] = 0.5 * (pts[i] + 1.0);
+    wts[i] *= 0.5;
+  }
+
+  return {std::move(pts), std::move(wts)};
 }
 //-----------------------------------------------------------------------------
 template <std::floating_point T>
@@ -523,45 +744,13 @@ std::array<std::vector<T>, 2> make_gll_quadrature(cell::type celltype,
     return make_gll_line<T>(np);
   case cell::type::quadrilateral:
   {
-    auto [QptsL, QwtsL] = make_gll_line<T>(np);
-    std::vector<T> pts(np * np * 2);
-    mdspan_t<T, 2> x(pts.data(), np * np, 2);
-    std::vector<T> wts(np * np);
-    int c = 0;
-    for (std::size_t i = 0; i < np; ++i)
-    {
-      for (std::size_t j = 0; j < np; ++j)
-      {
-        x(c, 0) = QptsL[i];
-        x(c, 1) = QptsL[j];
-        wts[c] = QwtsL[i] * QwtsL[j];
-        ++c;
-      }
-    }
-    return {std::move(pts), std::move(wts)};
+    auto [pts, wts] = make_gll_line<T>(np);
+    return tensor_product<T>(pts, wts, 2);
   }
   case cell::type::hexahedron:
   {
-    auto [QptsL, QwtsL] = make_gll_line<T>(np);
-    std::vector<T> pts(np * np * np * 3);
-    mdspan_t<T, 2> x(pts.data(), np * np * np, 3);
-    std::vector<T> wts(np * np * np);
-    int c = 0;
-    for (std::size_t i = 0; i < np; ++i)
-    {
-      for (std::size_t j = 0; j < np; ++j)
-      {
-        for (std::size_t k = 0; k < np; ++k)
-        {
-          x(c, 0) = QptsL[i];
-          x(c, 1) = QptsL[j];
-          x(c, 2) = QptsL[k];
-          wts[c] = QwtsL[i] * QwtsL[j] * QwtsL[k];
-          ++c;
-        }
-      }
-    }
-    return {std::move(pts), std::move(wts)};
+    auto [pts, wts] = make_gll_line<T>(np);
+    return tensor_product<T>(pts, wts, 3);
   }
   case cell::type::prism:
     throw std::runtime_error("Prism not yet supported");
@@ -4961,14 +5150,7 @@ quadrature::type quadrature::get_default_rule(cell::type celltype, int m)
 template <std::floating_point T>
 std::array<std::vector<T>, 2> quadrature::gauss_jacobi_rule(T a, int m)
 {
-  auto [pts, wts] = compute_gauss_jacobi_rule(a, m);
-  for (std::size_t i = 0; i < wts.size(); ++i)
-  {
-    pts[i] += 1.0;
-    pts[i] /= 2.0;
-    wts[i] /= std::pow(2.0, a + 1);
-  }
-  return {std::move(pts), std::move(wts)};
+  return gauss_jacobi_rule_01<T>(a, m);
 }
 //-----------------------------------------------------------------------------
 template <std::floating_point T>
@@ -5009,10 +5191,7 @@ quadrature::make_quadrature(quadrature::type rule, cell::type celltype,
 template <std::floating_point T>
 std::vector<T> quadrature::get_gl_points(int m)
 {
-  std::vector<T> pts = compute_gauss_jacobi_points<T>(0, m);
-  std::ranges::transform(pts, pts.begin(),
-                         [](auto x) { return static_cast<T>(0.5 + 0.5 * x); });
-  return pts;
+  return make_quadrature_line<T>(m)[0];
 }
 //-----------------------------------------------------------------------------
 template <std::floating_point T>

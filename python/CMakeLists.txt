@@ -175,9 +175,8 @@ if(WIN32)
     TARGET _basixcpp
     POST_BUILD
     COMMAND
-      ${CMAKE_COMMAND} -E copy_if_different -t $<TARGET_FILE_DIR:_basixcpp>
-      $<TARGET_RUNTIME_DLLS:_basixcpp>
-    COMMAND_EXPAND_LISTS
+      ${CMAKE_COMMAND} -E copy_directory $<TARGET_FILE_DIR:Basix::basix>
+      $<TARGET_FILE_DIR:_basixcpp>
   )
 endif()
 

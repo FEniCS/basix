@@ -168,30 +168,61 @@ elseif(BASIX_SET_INSTALL_RPATH)
   set_target_properties(_basixcpp PROPERTIES INSTALL_RPATH ${_basix_dir})
 endif()
 
-# Generate nanobind type stubs (.pyi) at build time. On Windows the module
-# can only be imported if its dependent DLLs sit next to it, so copy them.
+# Generate nanobind type stubs (.pyi). On Windows the module can only be
+# imported once its dependent DLLs sit beside it, so stubs are generated at
+# install time. The DLLs are installed for that step only and removed after,
+# leaving delvewheel to vendor them.
 if(WIN32)
-  add_custom_command(
-    TARGET _basixcpp
-    POST_BUILD
-    COMMAND
-      ${CMAKE_COMMAND} -E copy_directory $<TARGET_FILE_DIR:Basix::basix>
-      $<TARGET_FILE_DIR:_basixcpp>
+  install(TARGETS _basixcpp LIBRARY DESTINATION basix)
+
+  install(CODE "set(_basix_installed_before \${CMAKE_INSTALL_MANIFEST_FILES})")
+  if(TARGET basix)
+    set(_basix_dll_set dependencies)
+  else()
+    set(_basix_dll_set basix_stub_dependencies)
+    install(
+      IMPORTED_RUNTIME_ARTIFACTS Basix::basix
+      RUNTIME_DEPENDENCY_SET ${_basix_dll_set}
+      RUNTIME DESTINATION basix
+    )
+  endif()
+  install(
+    RUNTIME_DEPENDENCY_SET ${_basix_dll_set} DESTINATION basix
+    PRE_EXCLUDE_REGEXES [[api-ms-win-.*]] [[ext-ms-.*]]
+    POST_EXCLUDE_REGEXES [[.*(\\|/)system32(\\|/).*\.dll]]
   )
+  nanobind_add_stub(
+    _basixcpp_stub
+    MODULE basix._basixcpp
+    INSTALL_TIME
+    VERBOSE
+    OUTPUT
+      basix/_basixcpp.pyi
+  )
+
+  install(
+    CODE
+      "
+    set(_basix_stub_dlls \${CMAKE_INSTALL_MANIFEST_FILES})
+    list(REMOVE_ITEM _basix_stub_dlls \${_basix_installed_before})
+    list(FILTER _basix_stub_dlls INCLUDE REGEX \\.dll\$)
+    file(REMOVE \${_basix_stub_dlls})
+  "
+  )
+else()
+  nanobind_add_stub(
+    _basixcpp_stub
+    MODULE _basixcpp
+    PYTHON_PATH $<TARGET_FILE_DIR:_basixcpp>
+    DEPENDS _basixcpp
+    VERBOSE
+    OUTPUT
+      _basixcpp.pyi
+  )
+
+  install(TARGETS _basixcpp LIBRARY DESTINATION basix)
+  install(FILES ${CMAKE_CURRENT_BINARY_DIR}/_basixcpp.pyi DESTINATION basix)
 endif()
-
-nanobind_add_stub(
-  _basixcpp_stub
-  MODULE _basixcpp
-  PYTHON_PATH $<TARGET_FILE_DIR:_basixcpp>
-  DEPENDS _basixcpp
-  VERBOSE
-  OUTPUT
-    _basixcpp.pyi
-)
-
-install(TARGETS _basixcpp LIBRARY DESTINATION basix)
-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/_basixcpp.pyi DESTINATION basix)
 
 # py.typed (PEP 561 marker) is not a tracked source file - write it
 # directly at install time on both platforms rather than relying on

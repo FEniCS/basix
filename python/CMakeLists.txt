@@ -196,6 +196,7 @@ if(WIN32)
     MODULE basix._basixcpp
     INSTALL_TIME
     VERBOSE
+    MARKER_FILE basix/py.typed
     OUTPUT
       basix/_basixcpp.pyi
   )
@@ -216,17 +217,16 @@ else()
     PYTHON_PATH $<TARGET_FILE_DIR:_basixcpp>
     DEPENDS _basixcpp
     VERBOSE
+    MARKER_FILE py.typed
     OUTPUT
       _basixcpp.pyi
   )
 
   install(TARGETS _basixcpp LIBRARY DESTINATION basix)
-  install(FILES ${CMAKE_CURRENT_BINARY_DIR}/_basixcpp.pyi DESTINATION basix)
+  install(
+    FILES
+      ${CMAKE_CURRENT_BINARY_DIR}/_basixcpp.pyi
+      ${CMAKE_CURRENT_BINARY_DIR}/py.typed
+    DESTINATION basix
+  )
 endif()
-
-# py.typed (PEP 561 marker) is not a tracked source file - write it
-# directly at install time on both platforms rather than relying on
-# nanobind's MARKER_FILE option, which requires importing the freshly
-# built module (unreliable on Windows, see above) and would otherwise
-# write a build artifact into the source tree on UNIX.
-install(CODE "file(WRITE \"\${CMAKE_INSTALL_PREFIX}/basix/py.typed\" \"\")")

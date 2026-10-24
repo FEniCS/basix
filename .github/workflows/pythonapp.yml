@@ -90,6 +90,8 @@ jobs:
           cd doc/cpp
           doxygen
       - name: Build Python documentation
+        env:
+          DOCS_VERSION: ${{ github.ref_name }}
         run: |
           export BASIX_VERSION=`python3 -c "import basix; print(basix.__version__)"`
           cd doc/python

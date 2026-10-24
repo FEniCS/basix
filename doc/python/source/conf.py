@@ -7,6 +7,7 @@
 # sys.path.insert(0, os.path.abspath('.'))
 import datetime as dt
 import os
+import re
 
 import basix
 
@@ -84,11 +85,12 @@ html_title = f"{project} documentation"
 
 # Version switcher. FEniCS/docs generates the version list from the
 # published documentation. CI sets DOCS_VERSION to the branch or tag
-# name the documentation is published under.
+# name the documentation is published under. The list has one entry per
+# release, shared by its .postN builds.
 html_theme_options = {
     "switcher": {
         "json_url": "https://docs.fenicsproject.org/basix/switcher-python.json",
-        "version_match": os.environ.get("DOCS_VERSION", "main"),
+        "version_match": re.sub(r"\.post\d+$", "", os.environ.get("DOCS_VERSION", "main")),
     },
     "navbar_end": ["version-switcher", "theme-switcher", "navbar-icon-links"],
     # The version list is fetched by the browser; don't fetch it at build time

@@ -132,7 +132,7 @@ set_target_properties(
     PUBLIC_HEADER basix/finite-element.h
     PRIVATE_HEADER "${HEADERS_basix}"
     VERSION ${PROJECT_VERSION}
-    SOVERSION ${PROJECT_VERSION_MAJOR}
+    SOVERSION ${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}
 )
 
 if(ENABLE_CLANG_TIDY)
@@ -255,7 +255,7 @@ include(CMakePackageConfigHelpers)
 write_basic_package_version_file(
   BasixConfigVersion.cmake
   VERSION ${PROJECT_VERSION}
-  COMPATIBILITY AnyNewerVersion
+  COMPATIBILITY SameMinorVersion
 )
 configure_package_config_file(
   BasixConfig.cmake.in

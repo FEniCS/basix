@@ -94,6 +94,23 @@ class FiniteElement(Generic[T]):
         """
         return cast(npt.NDArray[T], self._e.tabulate(n, cast(Any, x)))
 
+    def tabulate_shape(self, nd: int, num_points: int) -> tuple[int, int, int, int]:
+        """Shape of the array that :func:`tabulate` returns.
+
+        This is also the shape of the buffer that must be provided to
+        the tabulation function in :mod:`basix.numba_helpers`.
+
+        Args:
+            nd: The order of derivatives, up to and including, to
+                compute. Use 0 for the basis functions only.
+            num_points: The number of points at which to tabulate.
+
+        Returns:
+            The shape ``(derivative, point, basis fn index, value
+            index)``.
+        """
+        return self._e.tabulate_shape(nd, num_points)
+
     def __eq__(self, other) -> bool:
         """Test element for equality."""
         try:

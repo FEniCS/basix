@@ -95,7 +95,11 @@ FiniteElement<T> element::create_regge(cell::type celltype, int degree,
 
       FiniteElement moment_space = create_lagrange<T>(
           ct, degree + 1 - d, element::lagrange_variant::legendre, true);
-      const auto [phib, phishape] = moment_space.tabulate(0, pts);
+      const auto phishape = moment_space.tabulate_shape(0, pts.extent(0));
+      std::vector<T> phib(phishape[0] * phishape[1] * phishape[2]
+                          * phishape[3]);
+      moment_space.tabulate(0, pts,
+                            impl::mdspan_t<T, 4>(phib.data(), phishape));
       impl::mdspan_t<const T, 4> moment_values(phib.data(), phishape);
 
       // Loop over entities of dimension dim

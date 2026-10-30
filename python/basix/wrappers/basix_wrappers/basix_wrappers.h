@@ -120,7 +120,10 @@ void declare_float(nanobind::module_& m, const std::string& type)
              const nb::ndarray<const T, nb::ndim<2>, nb::c_contig>& x)
           {
             mdspan_t<const T, 2> _x(x.data(), x.shape(0), x.shape(1));
-            return as_nbarrayp(self.tabulate(n, _x));
+            const auto shape = self.tabulate_shape(n, x.shape(0));
+            std::vector<T> data(shape[0] * shape[1] * shape[2] * shape[3]);
+            self.tabulate(n, _x, mdspan_t<T, 4>(data.data(), shape));
+            return as_nbarray(std::move(data), shape.size(), shape.data());
           },
           "n"_a, "x"_a)
       .def("__eq__", &FiniteElement<T>::operator==,

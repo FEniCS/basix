@@ -81,10 +81,11 @@ FiniteElement<T> basix::element::create_hermite(cell::type celltype, int degree,
 
   if (tdim == 3)
   {
-    x[3] = std::vector<impl::mdarray_t<T, 2>>(topology[2].size(),
+    const std::size_t num_ent = cell::num_sub_entities(celltype, 3);
+    x[3] = std::vector<impl::mdarray_t<T, 2>>(num_ent,
                                               impl::mdarray_t<T, 2>(0, tdim));
     M[3] = std::vector<impl::mdarray_t<T, 4>>(
-        topology[2].size(), impl::mdarray_t<T, 4>(0, 1, 0, deriv_count));
+        num_ent, impl::mdarray_t<T, 4>(0, 1, 0, deriv_count));
   }
 
   std::array<std::vector<mdspan_t<const T, 2>>, 4> xview = impl::to_mdspan(x);

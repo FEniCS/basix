@@ -576,3 +576,46 @@ def test_point_outside_cell_gives_warning(dim, component):
             4,
             basix.PolysetType.standard,
         )
+
+
+def test_mismatched_entity_dofs():
+    """Test sub-entities of the same type must have the same number of DOFs.
+
+    The DOF transformations are computed from a single representative
+    sub-entity of each type and applied to every sub-entity of that type, so
+    an element whose edges carry differing numbers of DOFs (for example an
+    anisotropic tensor-product element on a hexahedron) cannot be
+    represented. See https://github.com/FEniCS/basix/issues/1067.
+    """
+    lagrange = cached_create_element(
+        basix.ElementFamily.P, CellType.quadrilateral, 2, (basix.LagrangeVariant.gll_warped,)
+    )
+
+    # Move the point evaluation on edge 1 onto edge 0, so that the four
+    # edges hold 2, 0, 1 and 1 DOFs. This leaves the space, the DOFs and
+    # hence the dual matrix unchanged; only the entity the DOF is attached
+    # to differs.
+    x = [[j.copy() for j in i] for i in lagrange.x]
+    M = [[j.copy() for j in i] for i in lagrange.M]
+    x[1][0] = np.vstack([x[1][0], x[1][1]])
+    x[1][1] = np.zeros((0, 2))
+    M[1][0] = np.zeros((2, 1, 2, 1))
+    M[1][0][0, 0, 0, 0] = 1.0
+    M[1][0][1, 0, 1, 0] = 1.0
+    M[1][1] = np.zeros((0, 1, 0, 1))
+
+    with pytest.raises(RuntimeError, match="same number of DOFs"):
+        basix.create_custom_element(
+            CellType.quadrilateral,
+            (),
+            lagrange.wcoeffs,
+            x,
+            M,
+            0,
+            basix.MapType.identity,
+            basix.SobolevSpace.H1,
+            False,
+            2,
+            2,
+            basix.PolysetType.standard,
+        )

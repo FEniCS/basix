@@ -1188,6 +1188,31 @@ FiniteElement<F>::FiniteElement(
         "Number of entity dofs does not match total number of dofs");
   }
 
+  // The DOF transformations are computed once per sub-entity type, from a
+  // single representative sub-entity, and then applied to every
+  // sub-entity of that type. All sub-entities of a given type must
+  // therefore carry the same number of DOFs. An element that violates
+  // this, e.g. an anisotropic tensor-product element on a hexahedron, would
+  // have different transformations on entities of the same dimension - this is
+  // not currently supported.
+  for (std::size_t d = 0; d <= _cell_tdim; ++d)
+  {
+    std::map<cell::type, std::size_t> ndofs;
+    for (std::size_t e = 0; e < M[d].size(); ++e)
+    {
+      auto [it, inserted]
+          = ndofs.try_emplace(_cell_subentity_types[d][e], M[d][e].extent(0));
+      if (!inserted and it->second != M[d][e].extent(0))
+      {
+        throw std::runtime_error(
+            "All sub-entities of the same type must have the same number of "
+            "DOFs, but sub-entities of dimension "
+            + std::to_string(d) + " have " + std::to_string(it->second)
+            + " and " + std::to_string(M[d][e].extent(0)) + " DOFs.");
+      }
+    }
+  }
+
   _entity_transformations = doftransforms::compute_entity_transformations(
       cell_type, x, M,
       mdspan_t<const F, 2>(_coeffs.first.data(), _coeffs.second),
@@ -1626,6 +1651,9 @@ FiniteElement<F>::FiniteElement(
         auto& trans2 = _eperm.at(cell::type::triangle);
         auto& trans3 = _eperm_inv.at(cell::type::triangle);
 
+        // Each edge of the sub-entity carries the same number of DOFs
+        // (checked in the constructor), so a single test covers every
+        // edge used below.
         if (!dofs[1][0].empty())
         {
           precompute::apply_permutation(trans1, std::span(rot), dofs[1][0][0]);
@@ -1732,6 +1760,9 @@ FiniteElement<F>::FiniteElement(
         auto& trans2 = _eperm.at(cell::type::quadrilateral);
         auto& trans3 = _eperm_inv.at(cell::type::quadrilateral);
 
+        // Each edge of the sub-entity carries the same number of DOFs
+        // (checked in the constructor), so a single test covers every
+        // edge used below.
         if (!dofs[1][0].empty())
         {
           precompute::apply_permutation(trans1, std::span(rot), dofs[1][1][0]);

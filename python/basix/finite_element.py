@@ -744,6 +744,15 @@ def create_custom_element(
 ) -> FiniteElement[T]:
     """Create a custom finite element.
 
+    Note:
+        The DOF transformations are computed from a single
+        representative sub-entity of each type and applied to every
+        sub-entity of that type, so all sub-entities of the same type
+        must carry the same number of DOFs. An element that attaches,
+        say, different numbers of DOFs to different edges of a cell, as
+        an anisotropic tensor-product element on a hexahedron does,
+        cannot be represented and is rejected.
+
     Args:
         cell_type: Element cell type.
         value_shape: Value shape of the element.

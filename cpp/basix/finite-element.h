@@ -1591,7 +1591,16 @@ private:
   std::array<array4_t, 4> _M;
 };
 
-/// Create a custom finite element
+/// @brief Create a custom finite element.
+///
+/// @note The DOF transformations are computed from a single
+/// representative sub-entity of each type and applied to every
+/// sub-entity of that type, so all sub-entities of the same type must
+/// carry the same number of DOFs. An element that attaches, say,
+/// different numbers of DOFs to different edges of a cell, as an
+/// anisotropic tensor-product element on a hexahedron does, cannot be
+/// represented and is rejected.
+///
 /// @param[in] cell_type The cell type
 /// @param[in] value_shape The value shape of the element
 /// @param[in] wcoeffs Matrices for the kth value index containing the

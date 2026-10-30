@@ -14,13 +14,24 @@
 namespace basix::quadrature
 {
 
-/// Quadrature type
+/// @brief Quadrature type.
+///
+/// @note `witherden_vincent` denotes the symmetric rules of F. D.
+/// Witherden and P. E. Vincent, "On the identification of symmetric
+/// quadrature rules for finite element methods", Comput. Math. Appl. 69
+/// (2015) 1232-1241, https://doi.org/10.1016/j.camwa.2015.03.017. They
+/// are available on intervals, triangles, quadrilaterals, tetrahedra,
+/// hexahedra, prisms and pyramids, and all have positive weights and
+/// points inside the cell. On a pyramid the rules are exact for
+/// polynomials only, unlike the collapsed Gauss-Jacobi rules, which are
+/// also exact for the rational pyramid polyset.
 enum class type
 {
   Default = 0,
   gauss_jacobi = 1,
   gll = 2,
   xiao_gimbutas = 3,
+  witherden_vincent = 4,
   zienkiewicz_taylor = 20,
   keast = 21,
   strang_fix = 22,

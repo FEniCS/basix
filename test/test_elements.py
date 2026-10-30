@@ -229,3 +229,65 @@ def test_hash():
     for i, d0 in enumerate(different_elements):
         for d1 in different_elements[:i]:
             assert hash(d0) != hash(d1)
+
+
+def test_hash_dof_ordering():
+    """Orderings with the same offsets at different positions hash differently."""
+    P, quad = basix.ElementFamily.P, basix.CellType.quadrilateral
+    e0 = basix.create_element(P, quad, 1, dof_ordering=[1, 0, 2, 3])
+    e1 = basix.create_element(P, quad, 1, dof_ordering=[0, 1, 3, 2])
+    assert e0 != e1
+    assert hash(e0) != hash(e1)
+
+
+def test_hash_discontinuous():
+    P, tri = basix.ElementFamily.P, basix.CellType.triangle
+    e0 = basix.create_element(P, tri, 1)
+    e1 = basix.create_element(P, tri, 1, discontinuous=True)
+    assert e0 != e1
+    assert hash(e0) != hash(e1)
+
+
+def _custom_p1_triangle(wcoeffs):
+    z = np.zeros((0, 2))
+    x = [
+        [np.array([[0.0, 0.0]]), np.array([[1.0, 0.0]]), np.array([[0.0, 1.0]])],
+        [z, z, z],
+        [z],
+        [],
+    ]
+    z = np.zeros((0, 1, 0, 1))
+    M = [
+        [np.array([[[[1.0]]]]), np.array([[[[1.0]]]]), np.array([[[[1.0]]]])],
+        [z, z, z],
+        [z],
+        [],
+    ]
+    return basix.create_custom_element(
+        basix.CellType.triangle,
+        (),
+        wcoeffs,
+        x,
+        M,
+        0,
+        basix.MapType.identity,
+        basix.SobolevSpace.H1,
+        False,
+        1,
+        1,
+        basix.PolysetType.standard,
+    )
+
+
+def test_hash_custom_element():
+    """Custom elements are equal, and hash equally, exactly when their data match."""
+    e0 = _custom_p1_triangle(np.eye(3))
+    e1 = _custom_p1_triangle(np.eye(3))
+    assert e0 == e1
+    assert hash(e0) == hash(e1)
+
+    wcoeffs = np.eye(3)
+    wcoeffs[0, 1] = 1.0e-12
+    e2 = _custom_p1_triangle(wcoeffs)
+    assert e0 != e2
+    assert hash(e0) != hash(e2)

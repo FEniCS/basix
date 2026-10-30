@@ -348,11 +348,15 @@ public:
 
   /// @brief Check if two elements are the same
   /// @note This operator compares the element properties, e.g. family,
-  /// degree, etc, and not computed numerical data
+  /// degree, etc, and not computed numerical data. Custom elements are
+  /// compared on the exact data that defines them.
   /// @return True if elements are the same
   bool operator==(const FiniteElement& e) const;
 
-  /// Get a unique hash of this element
+  /// @brief Hash of this element.
+  /// @note Equal elements, as compared by `operator==`, have equal
+  /// hashes.
+  /// @return The hash
   std::size_t hash() const;
 
   /// @brief Array shape for tabulate basis values and derivatives at

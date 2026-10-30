@@ -60,7 +60,7 @@ jobs:
         run: cat .github/workflows/fenicsx-refs.env >> "$GITHUB_ENV"
 
       - name: Build wheels
-        uses: pypa/cibuildwheel@v4.3.1
+        uses: pypa/cibuildwheel@v4.3.4
         env:
           CIBW_BEFORE_TEST: pip install git+https://github.com/${{ env.ufl_repository }}.git@${{ env.ufl_ref }}
 

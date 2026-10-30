@@ -101,8 +101,7 @@ def test_continuity_interval_facet(degree, element, variant):
 def test_continuity_triangle_facet(degree, element, variant):
     """Test continuity between neighbouring cells of different types."""
     elements = {}
-    # , basix.CellType.pyramid]:
-    for cell in [basix.CellType.tetrahedron, basix.CellType.prism]:
+    for cell in [basix.CellType.tetrahedron, basix.CellType.prism, basix.CellType.pyramid]:
         try:
             elements[cell] = cached_create_element(element, cell, degree, tuple(variant))
         except RuntimeError:
@@ -153,8 +152,7 @@ def test_continuity_triangle_facet(degree, element, variant):
 def test_continuity_quadrilateral_facet(degree, element, variant):
     """Test continuity between neighbouring cells of different types."""
     elements = {}
-    # , basix.CellType.pyramid]:
-    for cell in [basix.CellType.hexahedron, basix.CellType.prism]:
+    for cell in [basix.CellType.hexahedron, basix.CellType.prism, basix.CellType.pyramid]:
         try:
             elements[cell] = cached_create_element(element, cell, degree, tuple(variant))
         except RuntimeError:

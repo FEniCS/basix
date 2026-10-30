@@ -1181,8 +1181,9 @@ FiniteElement<F>::FiniteElement(
   // single representative sub-entity, and then applied to every
   // sub-entity of that type. All sub-entities of a given type must
   // therefore carry the same number of DOFs. An element that violates
-  // this, e.g. an anisotropic tensor-product element on a hexahedron, has
-  // no well-defined entity transformations.
+  // this, e.g. an anisotropic tensor-product element on a hexahedron, would
+  // have different transformations on entities of the same dimension - this is
+  // not currently supported.
   for (std::size_t d = 0; d <= _cell_tdim; ++d)
   {
     std::map<cell::type, std::size_t> ndofs;

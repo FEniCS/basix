@@ -2,6 +2,12 @@
 requires = ["scikit-build-core[pyproject]>=0.11", "nanobind>=2.5.0"]
 build-backend = "scikit_build_core.build"
 
+[external]
+# PEP 725 (draft). CMake checks that the compiler supports C++20.
+build-requires = ["dep:generic/cmake@>=3.21", "dep:virtual/compiler/cxx"]
+# The Python-only build links against an installed Basix C++ library.
+host-requires = ["dep:github/fenics/basix"]
+
 [project]
 name = "fenics-basix"
 version = "0.12.0.dev0"

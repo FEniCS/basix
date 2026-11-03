@@ -80,11 +80,20 @@ ctest --test-dir build-dir-test --output-on-failure
 
 Basix requires a C++20 compiler and depends on BLAS and LAPACK.
 
+### External dependency metadata
+
+Both `pyproject.toml` files declare non-Python build dependencies in an
+`[external]` table using the draft [PEP 725](https://peps.python.org/pep-0725/)
+format and dependency identifiers described by
+[PEP 804](https://peps.python.org/pep-0804/). In the future this will allow Basix
+to be built on all packaging platforms supporting PEP 804, without duplicating
+non-Python build dependency information.
+
 ### Python
 
-When using the standard install approach all build and runtime
-dependencies for the C++ and Python parts of Basix are fetched
-automatically.
+Python build and runtime dependencies are fetched automatically by pip
+when using the standard install approach. Building from source also
+requires the external dependencies described above.
 
 Basix specifies the optional extra `optional` for enabling optional
 features, and the dependency groups `build`, `docs`, `lint`, `test`,

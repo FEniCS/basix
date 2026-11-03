@@ -100,6 +100,158 @@ R dispatch_dtype(char dtype, F&& f)
     throw std::runtime_error("Unsupported finite element dtype.");
 }
 
+namespace impl
+{
+/// @brief Value size of data on a physical cell for a given map type.
+///
+/// This matches the convention used by `FiniteElement::push_forward`
+/// and `FiniteElement::pull_back`.
+/// @param[in] map_type The map type.
+/// @param[in] gdim The geometric dimension of the physical cell.
+/// @param[in] reference_value_size The value size of data on the
+/// reference cell.
+/// @return The physical value size, or 0 if `map_type` is not
+/// supported.
+constexpr std::size_t physical_value_size(basix::maps::type map_type,
+                                          std::size_t gdim,
+                                          std::size_t reference_value_size)
+{
+  switch (map_type)
+  {
+  case basix::maps::type::identity:
+    return reference_value_size;
+  case basix::maps::type::covariantPiola:
+  case basix::maps::type::contravariantPiola:
+    return gdim;
+  case basix::maps::type::doubleCovariantPiola:
+  case basix::maps::type::doubleContravariantPiola:
+    return gdim * gdim;
+  default:
+    return 0;
+  }
+}
+
+/// @brief Tabulate basis functions, for calling from a Numba-compiled
+/// kernel.
+///
+/// This function uses no Python API, allows no C++ exception to escape
+/// into just-in-time compiled code, and does not require the GIL. Its
+/// address is exposed to Python by `declare_float`.
+///
+/// @param[in] element Address of a `basix::FiniteElement<T>`. The
+/// caller is responsible for keeping the element alive for the duration
+/// of the call.
+/// @param[in] nd The number of derivatives to compute.
+/// @param[in] x The points at which to tabulate, with row-major layout
+/// and shape `(num_points, tdim)`.
+/// @param[in] num_points The number of points.
+/// @param[out] basis Buffer for the basis values, with row-major layout
+/// and shape `element.tabulate_shape(nd, num_points)`.
+/// @return 0 on success, -1 if the call raised an exception.
+template <typename T>
+int numba_tabulate(const void* element, int nd, const T* x,
+                   std::size_t num_points, T* basis) noexcept
+{
+  try
+  {
+    const basix::FiniteElement<T>& e
+        = *static_cast<const basix::FiniteElement<T>*>(element);
+    const std::size_t tdim = basix::cell::topological_dimension(e.cell_type());
+    const std::array<std::size_t, 4> shape = e.tabulate_shape(nd, num_points);
+    e.tabulate(nd, mdspan_t<const T, 2>(x, num_points, tdim),
+               mdspan_t<T, 4>(basis, shape));
+    return 0;
+  }
+  catch (...)
+  {
+    return -1;
+  }
+}
+
+/// @brief Push values forward to, or pull them back from, a physical
+/// cell, for calling from a Numba-compiled kernel.
+///
+/// Values are mapped in groups that share a Jacobian. Unlike
+/// `FiniteElement::push_forward` and `FiniteElement::pull_back`, this
+/// function writes into a caller-provided buffer and performs no heap
+/// allocation.
+///
+/// This function uses no Python API, allows no C++ exception to escape
+/// into just-in-time compiled code, and does not require the GIL. Its
+/// address is exposed to Python by `declare_float`.
+///
+/// @param[in] element Address of a `basix::FiniteElement<T>`. The
+/// caller is responsible for keeping the element alive for the duration
+/// of the call.
+/// @param[in] inverse If 0, push `values` forward to the physical cell.
+/// Otherwise, pull `values` back to the reference cell.
+/// @param[in] num_jacobians The number of groups of points that share a
+/// Jacobian.
+/// @param[in] num_points The number of points in each group.
+/// @param[in] gdim The geometric dimension of the physical cell.
+/// @param[in] values The values to map, with row-major layout and shape
+/// `(num_jacobians, num_points, vs)`, where `vs` is the physical value
+/// size for a pull-back and the reference value size for a
+/// push-forward.
+/// @param[in] J The Jacobians, with row-major layout and shape
+/// `(num_jacobians, gdim, tdim)`.
+/// @param[in] detJ The Jacobian determinants, with length
+/// `num_jacobians`.
+/// @param[in] K The inverses of the Jacobians, with row-major layout
+/// and shape `(num_jacobians, tdim, gdim)`.
+/// @param[out] out Buffer for the mapped values, with row-major layout
+/// and shape `(num_jacobians, num_points, vs)`, where `vs` is the
+/// reference value size for a pull-back and the physical value size for
+/// a push-forward.
+/// @return 0 on success, -1 if the map is not supported or the call
+/// raised an exception.
+template <typename T>
+int numba_map(const void* element, int inverse, std::size_t num_jacobians,
+              std::size_t num_points, std::size_t gdim, const T* values,
+              const T* J, const T* detJ, const T* K, T* out) noexcept
+{
+  try
+  {
+    const basix::FiniteElement<T>& e
+        = *static_cast<const basix::FiniteElement<T>*>(element);
+    const std::size_t tdim = basix::cell::topological_dimension(e.cell_type());
+    const std::size_t rvs
+        = std::accumulate(e.value_shape().begin(), e.value_shape().end(),
+                          std::size_t{1}, std::multiplies{});
+    const std::size_t pvs = physical_value_size(e.map_type(), gdim, rvs);
+    if (pvs == 0)
+      return -1;
+
+    using in_t = mdspan_t<const T, 2>;
+    using out_t = mdspan_t<T, 2>;
+    const std::size_t in_vs = inverse ? pvs : rvs;
+    const std::size_t out_vs = inverse ? rvs : pvs;
+
+    // map_fn returns a std::function holding a captureless lambda, so
+    // building it here (rather than per Jacobian) keeps the loop free of
+    // allocation.
+    auto map = e.template map_fn<out_t, in_t, in_t, in_t>();
+    for (std::size_t i = 0; i < num_jacobians; ++i)
+    {
+      out_t _out(out + i * num_points * out_vs, num_points, out_vs);
+      in_t _in(values + i * num_points * in_vs, num_points, in_vs);
+      in_t _J(J + i * gdim * tdim, gdim, tdim);
+      in_t _K(K + i * tdim * gdim, tdim, gdim);
+      if (inverse)
+        map(_out, _in, _K, 1 / detJ[i], _J);
+      else
+        map(_out, _in, _J, detJ[i], _K);
+    }
+
+    return 0;
+  }
+  catch (...)
+  {
+    return -1;
+  }
+}
+} // namespace impl
+
 /// Wrap the scalar-type dependent parts of the interface, i.e.
 /// `FiniteElement` and the functions that create or act on one.
 /// @param m The nanobind module.
@@ -112,8 +264,17 @@ void declare_float(nanobind::module_& m, const std::string& type)
   using namespace nb::literals;
   using basix::FiniteElement;
 
+  // Addresses of the native entry points that basix.numba_helpers
+  // registers with LLVM for use inside Numba-compiled kernels.
+  m.def(("_numba_tabulate_address_" + type).c_str(), []()
+        { return reinterpret_cast<std::uintptr_t>(&impl::numba_tabulate<T>); });
+  m.def(("_numba_map_address_" + type).c_str(),
+        []() { return reinterpret_cast<std::uintptr_t>(&impl::numba_map<T>); });
+
   std::string name = "FiniteElement_" + type;
   nb::class_<FiniteElement<T>>(m, name.c_str())
+      .def_prop_ro("_address", [](const FiniteElement<T>& self)
+                   { return reinterpret_cast<std::uintptr_t>(&self); })
       .def(
           "tabulate",
           [](const FiniteElement<T>& self, int n,
@@ -123,6 +284,16 @@ void declare_float(nanobind::module_& m, const std::string& type)
             return as_nbarrayp(self.tabulate(n, _x));
           },
           "n"_a, "x"_a)
+      .def(
+          "tabulate_shape",
+          [](const FiniteElement<T>& self, std::size_t nd,
+             std::size_t num_points)
+          {
+            std::array<std::size_t, 4> shape
+                = self.tabulate_shape(nd, num_points);
+            return nb::make_tuple(shape[0], shape[1], shape[2], shape[3]);
+          },
+          "nd"_a, "num_points"_a)
       .def("__eq__", &FiniteElement<T>::operator==,
            nb::sig("def __eq__(self, arg: object, /) -> bool"))
       .def("hash", &FiniteElement<T>::hash)

@@ -81,24 +81,9 @@ Basix requires a C++20 compiler and depends on BLAS and LAPACK.
 Both `pyproject.toml` files declare non-Python build dependencies in an
 `[external]` table using the draft [PEP 725](https://peps.python.org/pep-0725/)
 format and dependency identifiers described by
-[PEP 804](https://peps.python.org/pep-0804/). The root project declares CMake,
-a C++ compiler, BLAS and LAPACK. The Python-only project instead declares
-CMake, a C++ compiler and the installed Basix C++ library, identified by
-`dep:github/fenics/basix`. The compiler must support C++20; CMake enforces
-this requirement.
-
-Libraries used for linking are listed under `host-requires`, which covers
-dependencies needed at build time and potentially at runtime. This keeps
-the metadata independent of the BLAS/LAPACK implementation and whether
-shared libraries are bundled into a wheel.
-
-These PEPs are still drafts. Tools supporting them can read the tables
-from the source tree or source distribution; pip does not automatically
-install these external dependencies. Package name mappings are maintained
-outside Basix, and the Basix C++ dependency may need a mapping supplied by
-the packaging ecosystem. Install external libraries and their development
-headers before building from source. CMake can also be provided by
-scikit-build-core's PyPI fallback.
+[PEP 804](https://peps.python.org/pep-0804/). In the future this will allow Basix
+to be built on all packaging platforms supporting PEP 804, without duplicating
+non-Python build dependency information.
 
 ### Python
 

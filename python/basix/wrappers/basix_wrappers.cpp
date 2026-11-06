@@ -124,7 +124,8 @@ NB_MODULE(_basixcpp, m)
       .value("default", quadrature::type::Default)
       .value("gauss_jacobi", quadrature::type::gauss_jacobi)
       .value("gll", quadrature::type::gll)
-      .value("xiao_gimbutas", quadrature::type::xiao_gimbutas);
+      .value("xiao_gimbutas", quadrature::type::xiao_gimbutas)
+      .value("witherden_vincent", quadrature::type::witherden_vincent);
 
   nb::enum_<cell::type>(m, "CellType", nb::is_arithmetic(), "Cell type.")
       .value("point", cell::type::point)

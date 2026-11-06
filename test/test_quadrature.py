@@ -245,3 +245,74 @@ def test_gauss_jacobi_rule(alpha, degree):
 
     expected = 1 / (alpha + degree + 1)
     assert np.isclose(integral, expected)
+
+
+_WITHERDEN_VINCENT_MAX_DEGREE = {
+    basix.CellType.triangle: 20,
+    basix.CellType.quadrilateral: 21,
+    basix.CellType.tetrahedron: 10,
+    basix.CellType.hexahedron: 11,
+    basix.CellType.prism: 10,
+    basix.CellType.pyramid: 10,
+}
+
+
+def _monomial_integral(celltype, e):
+    """Integral of a monomial with exponents e over a reference cell."""
+    f = sympy.factorial
+    if celltype == basix.CellType.triangle:
+        a, b = e
+        return sympy.Rational(f(a) * f(b), f(a + b + 2))
+    elif celltype == basix.CellType.quadrilateral:
+        a, b = e
+        return sympy.Rational(1, (a + 1) * (b + 1))
+    elif celltype == basix.CellType.tetrahedron:
+        a, b, c = e
+        return sympy.Rational(f(a) * f(b) * f(c), f(a + b + c + 3))
+    elif celltype == basix.CellType.hexahedron:
+        a, b, c = e
+        return sympy.Rational(1, (a + 1) * (b + 1) * (c + 1))
+    elif celltype == basix.CellType.prism:
+        a, b, c = e
+        return sympy.Rational(f(a) * f(b), f(a + b + 2) * (c + 1))
+    else:
+        assert celltype == basix.CellType.pyramid
+        a, b, c = e
+        return sympy.Rational(f(c) * f(a + b + 2), (a + 1) * (b + 1) * f(a + b + c + 3))
+
+
+def _monomials(tdim, degree):
+    """Exponents of the monomials of total degree at most ``degree``."""
+    if tdim == 2:
+        return [(a, b) for a in range(degree + 1) for b in range(degree + 1 - a)]
+    else:
+        return [
+            (a, b, c)
+            for a in range(degree + 1)
+            for b in range(degree + 1 - a)
+            for c in range(degree + 1 - a - b)
+        ]
+
+
+@pytest.mark.parametrize(
+    ("celltype", "m"),
+    [(c, m) for c, d in _WITHERDEN_VINCENT_MAX_DEGREE.items() for m in range(1, d + 1)],
+)
+def test_witherden_vincent(celltype, m):
+    Qpts, Qwts = basix.make_quadrature(celltype, m, rule=basix.QuadratureType.witherden_vincent)
+    assert (Qwts > 0).all()
+    for e in _monomials(Qpts.shape[1], m):
+        s = (Qwts * np.prod(Qpts**e, axis=1)).sum()
+        assert np.isclose(s, float(_monomial_integral(celltype, e)))
+
+
+@pytest.mark.parametrize("celltype", _WITHERDEN_VINCENT_MAX_DEGREE)
+def test_witherden_vincent_degree_too_high(celltype):
+    m = _WITHERDEN_VINCENT_MAX_DEGREE[celltype] + 1
+    with pytest.raises(RuntimeError):
+        basix.make_quadrature(celltype, m, rule=basix.QuadratureType.witherden_vincent)
+
+
+def test_witherden_vincent_unsupported_cell():
+    with pytest.raises(RuntimeError):
+        basix.make_quadrature(basix.CellType.point, 1, rule=basix.QuadratureType.witherden_vincent)

@@ -90,7 +90,9 @@ FiniteElement<T> basix::element::create_hhj(cell::type celltype, int degree,
 
     FiniteElement<T> moment_space = create_lagrange<T>(
         ct, degree, element::lagrange_variant::legendre, true);
-    const auto [phib, phishape] = moment_space.tabulate(0, pts);
+    const auto phishape = moment_space.tabulate_shape(0, pts.extent(0));
+    std::vector<T> phib(phishape[0] * phishape[1] * phishape[2] * phishape[3]);
+    moment_space.tabulate(0, pts, impl::mdspan_t<T, 4>(phib.data(), phishape));
     impl::mdspan_t<const T, 4> moment_values(phib.data(), phishape);
 
     for (std::size_t e = 0; e < topology[facet_dim].size(); ++e)
@@ -164,7 +166,11 @@ FiniteElement<T> basix::element::create_hhj(cell::type celltype, int degree,
 
       FiniteElement<T> moment_space = create_lagrange<T>(
           celltype, degree - 1, element::lagrange_variant::legendre, true);
-      const auto [phib, phishape] = moment_space.tabulate(0, pts);
+      const auto phishape = moment_space.tabulate_shape(0, pts.extent(0));
+      std::vector<T> phib(phishape[0] * phishape[1] * phishape[2]
+                          * phishape[3]);
+      moment_space.tabulate(0, pts,
+                            impl::mdspan_t<T, 4>(phib.data(), phishape));
       impl::mdspan_t<const T, 4> moment_values(phib.data(), phishape);
 
       for (int n = 0; n < moment_space.dim(); ++n)
@@ -215,7 +221,11 @@ FiniteElement<T> basix::element::create_hhj(cell::type celltype, int degree,
     {
       FiniteElement<T> moment_space = create_lagrange<T>(
           celltype, degree - 1, element::lagrange_variant::legendre, true);
-      const auto [phib, phishape] = moment_space.tabulate(0, pts);
+      const auto phishape = moment_space.tabulate_shape(0, pts.extent(0));
+      std::vector<T> phib(phishape[0] * phishape[1] * phishape[2]
+                          * phishape[3]);
+      moment_space.tabulate(0, pts,
+                            impl::mdspan_t<T, 4>(phib.data(), phishape));
       impl::mdspan_t<const T, 4> moment_values(phib.data(), phishape);
 
       for (int n = 0; n < moment_space.dim(); ++n)
@@ -261,7 +271,9 @@ FiniteElement<T> basix::element::create_hhj(cell::type celltype, int degree,
     }
     FiniteElement<T> moment_space = create_lagrange<T>(
         celltype, degree, element::lagrange_variant::legendre, true);
-    const auto [phib, phishape] = moment_space.tabulate(0, pts);
+    const auto phishape = moment_space.tabulate_shape(0, pts.extent(0));
+    std::vector<T> phib(phishape[0] * phishape[1] * phishape[2] * phishape[3]);
+    moment_space.tabulate(0, pts, impl::mdspan_t<T, 4>(phib.data(), phishape));
     impl::mdspan_t<const T, 4> moment_values(phib.data(), phishape);
 
     for (int n = 0; n < moment_space.dim(); ++n)

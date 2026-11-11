@@ -44,7 +44,10 @@ int main(int argc, char* argv[])
   // of the Lagrange element at these points.
   std::vector<T> points = {0.0, 0.0, 0.1, 0.1, 0.2, 0.3, 0.3, 0.6, 0.4, 1.0};
 
-  auto [tab_data, shape] = lagrange.tabulate(0, points, {points.size() / 2, 2});
+  // Allocate the output using the shape required for these points.
+  const auto shape = lagrange.tabulate_shape(0, points.size() / 2);
+  std::vector<T> tab_data(shape[0] * shape[1] * shape[2] * shape[3]);
+  lagrange.tabulate(0, points, {points.size() / 2, 2}, tab_data);
 
   std::cout << "Tabulate data shape: [ ";
   for (auto s : shape)

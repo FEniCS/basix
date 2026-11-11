@@ -44,8 +44,9 @@ TEST_CASE("Lagrange elements are a partition of unity", "[finite-element]")
       quadrature::type::Default, celltype, polyset::type::standard, 3);
   const std::size_t tdim = cell::topological_dimension(celltype);
 
-  auto [_T, shape]
-      = e.tabulate(1, std::span<const double>(pts), {wts.size(), tdim});
+  const auto shape = e.tabulate_shape(1, wts.size());
+  std::vector<double> _T(shape[0] * shape[1] * shape[2] * shape[3]);
+  e.tabulate(1, pts, {wts.size(), tdim}, _T);
   md::mdspan<const double, md::dextents<std::size_t, 4>> T(_T.data(), shape);
   REQUIRE(shape == e.tabulate_shape(1, wts.size()));
   REQUIRE(shape[2] == static_cast<std::size_t>(e.dim()));
@@ -83,7 +84,9 @@ TEST_CASE("The Lagrange basis is a Kronecker delta at the element points",
   const auto& [x, xshape] = e.points();
   REQUIRE(xshape[0] == static_cast<std::size_t>(e.dim()));
 
-  auto [_T, shape] = e.tabulate(0, std::span<const double>(x), xshape);
+  const auto shape = e.tabulate_shape(0, xshape[0]);
+  std::vector<double> _T(shape[0] * shape[1] * shape[2] * shape[3]);
+  e.tabulate(0, x, xshape, _T);
   md::mdspan<const double, md::dextents<std::size_t, 4>> T(_T.data(), shape);
   for (std::size_t p = 0; p < shape[1]; ++p)
     for (std::size_t i = 0; i < shape[2]; ++i)

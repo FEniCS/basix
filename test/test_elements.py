@@ -231,6 +231,31 @@ def test_hash():
             assert hash(d0) != hash(d1)
 
 
+@pytest.mark.parametrize("dtype", [np.float32, np.float64])
+def test_tabulation_storage(dtype):
+    element = basix.create_element(basix.ElementFamily.P, basix.CellType.triangle, 1, dtype=dtype)
+    points = np.array([[0.2, 0.3], [0.1, 0.6]], dtype=dtype)
+    values = element.tabulate(1, points)
+    expected = np.array(
+        [
+            [[[0.5], [0.2], [0.3]], [[0.3], [0.1], [0.6]]],
+            [[[-1], [1], [0]], [[-1], [1], [0]]],
+            [[[-1], [0], [1]], [[-1], [0], [1]]],
+        ],
+        dtype=dtype,
+    )
+    assert values.dtype == dtype
+    assert values.flags.c_contiguous
+    np.testing.assert_allclose(values, expected, atol=1e-6)
+
+    # Each result owns storage that survives subsequent calls and the element.
+    other = element.tabulate(1, points)
+    other.fill(42)
+    empty = element.tabulate(1, np.empty((0, 2), dtype=dtype))
+    assert empty.shape == (3, 0, 3, 1)
+    assert empty.dtype == dtype
+    del element, points, other
+    np.testing.assert_allclose(values, expected, atol=1e-6)
 def test_hash_dof_ordering():
     """Orderings with the same offsets at different positions hash differently."""
     P, quad = basix.ElementFamily.P, basix.CellType.quadrilateral

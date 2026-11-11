@@ -348,11 +348,15 @@ public:
 
   /// @brief Check if two elements are the same
   /// @note This operator compares the element properties, e.g. family,
-  /// degree, etc, and not computed numerical data
+  /// degree, etc, and not computed numerical data. Custom elements are
+  /// compared on the exact data that defines them.
   /// @return True if elements are the same
   bool operator==(const FiniteElement& e) const;
 
-  /// Get a unique hash of this element
+  /// @brief Hash of this element.
+  /// @note Equal elements, as compared by `operator==`, have equal
+  /// hashes.
+  /// @return The hash
   std::size_t hash() const;
 
   /// @brief Array shape for tabulate basis values and derivatives at
@@ -1122,18 +1126,29 @@ public:
     return _points;
   }
 
-  /// @brief Return a matrix of weights interpolation.
+  /// @brief Return a matrix of interpolation weights.
   ///
-  /// To interpolate a function in this finite element, the functions
-  /// should be evaluated at each point given by points(). These
-  /// function values should then be multiplied by the weight matrix to
-  /// give the coefficients of the interpolated function.
+  /// To interpolate a function in this finite element, the function
+  /// and its derivatives up to interpolation_nderivs() should be
+  /// evaluated at each point given by points(). These samples should
+  /// then be multiplied by the weight matrix to give the coefficients
+  /// of the interpolated function.
   ///
-  /// The shape of the returned matrix will be `(dim, num_points *
-  /// value_size)`, where `dim` is the number of DOFs in the finite
-  /// element, `num_points` is the number of points returned by
-  /// points(), and `value_size` is the value size of the finite
-  /// element.
+  /// The shape of the returned matrix will be `(dim, value_size *
+  /// num_points * num_derivatives)`, where `dim` is the number of DOFs in the
+  /// finite element, `num_points` is the number of points returned by points(),
+  /// and `value_size` is the value size of the finite element.
+  /// `num_derivatives` counts all partial derivatives up to
+  /// interpolation_nderivs(), including the function value, in the same
+  /// order as tabulate().
+  ///
+  /// Columns are flattened in row-major order from `(component, point,
+  /// derivative)`. Function samples must be flattened in this same order.
+  /// With no derivatives, the point weights for each component of a DOF
+  /// are contiguous. The data can also be viewed without copying as a
+  /// rank-4 mdspan with shape `(dim, value_size, num_points,
+  /// num_derivatives)`. For per-entity interpolation tensors, see M()
+  /// and x(). The examples below use elements with no derivative DOFs.
   ///
   /// For example, to interpolate into a Lagrange space, the following
   /// should be done:
@@ -1168,11 +1183,11 @@ public:
   ///     values = vector(pts.shape(0))
   ///     FOR i, p IN ENUMERATE(pts):
   ///         values[i] = f.evaluate_at(p)[b]
-  ///     coefficients[::block_size] = i_m * values
+  ///     coefficients[b::block_size] = i_m * values
   /// \endcode
   ///
-  /// @return The interpolation matrix. Shape is `(ndofs, number of
-  /// interpolation points)`.
+  /// @return The interpolation matrix. Shape is `(dim(), value_size *
+  /// num_points * num_derivatives)`.
   const std::pair<std::vector<F>, std::array<std::size_t, 2>>&
   interpolation_matrix() const
   {
@@ -1274,8 +1289,7 @@ public:
   /// entities that are not edges, the entries in `x()` and `M()` for a degree 1
   /// RT element would have size 0.
   ///
-  /// These matrices are only stored for custom elements. This function will
-  /// throw an exception if called on a non-custom element
+  /// These matrices are available for both built-in and custom elements.
   /// @return The interpolation matrices. The indices of this data are `(tdim,
   /// entity index, dof, vs, point_index, derivative)`.
   const std::array<
@@ -1526,7 +1540,16 @@ private:
   std::array<array4_t, 4> _M;
 };
 
-/// Create a custom finite element
+/// @brief Create a custom finite element.
+///
+/// @note The DOF transformations are computed from a single
+/// representative sub-entity of each type and applied to every
+/// sub-entity of that type, so all sub-entities of the same type must
+/// carry the same number of DOFs. An element that attaches, say,
+/// different numbers of DOFs to different edges of a cell, as an
+/// anisotropic tensor-product element on a hexahedron does, cannot be
+/// represented and is rejected.
+///
 /// @param[in] cell_type The cell type
 /// @param[in] value_shape The value shape of the element
 /// @param[in] wcoeffs Matrices for the kth value index containing the

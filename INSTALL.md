@@ -3,6 +3,7 @@
 ## Standard
 
 Basix can be installed using:
+
 ```console
 pip install .
 ```
@@ -16,6 +17,7 @@ development.
 ### C++ library
 
 In the `cpp/` directory:
+
 ```console
 cmake -DCMAKE_BUILD_TYPE=Release -B build-dir -S .
 cmake --build build-dir
@@ -25,19 +27,21 @@ cmake --install build-dir
 Using the CMake build type `Release` or `RelWithDebInfo` is strongly recommended
 for performance.
 
-
 ### Python interface
 
 After installing the C++ library, install the Python interface by
 running in the directory `python/`:
+
 ```console
 pip install .
 ```
 
 For a debug and editable build for development:
+
 ```console
 pip -v install --check-build-dependencies -Cbuild-dir="build" -Ccmake.build-type="Developer" -Cinstall.strip=false --no-build-isolation -e .
 ```
+
 When using the `--no-build-isolation` option all build dependencies must
 already be installed, e.g. via `pip install --group build`
 (see `python/pyproject.toml`).
@@ -76,16 +80,33 @@ ctest --test-dir build-dir-test --output-on-failure
 
 Basix requires a C++20 compiler and depends on BLAS and LAPACK.
 
+### External dependency metadata
+
+Both `pyproject.toml` files declare non-Python build dependencies in an
+`[external]` table using the draft [PEP 725](https://peps.python.org/pep-0725/)
+format and dependency identifiers described by
+[PEP 804](https://peps.python.org/pep-0804/). In the future this will allow Basix
+to be built on all packaging platforms supporting PEP 804, without duplicating
+non-Python build dependency information.
+
 ### Python
 
-When using the standard install approach all build and runtime
-dependencies for the C++ and Python parts of Basix are fetched
-automatically.
+Python build and runtime dependencies are fetched automatically by pip
+when using the standard install approach. Building from source also
+requires the external dependencies described above.
 
 Basix specifies the optional extra `optional` for enabling optional
 features, and the dependency groups `build`, `docs`, `lint`, `test`,
 and `ci` for installing build dependencies, building documentation,
 linting, testing and continuous integration, respectively, e.g.:
+
 ```console
 pip install --group docs --group lint .
+```
+
+On `main`, `optional` and `test` need the development version of UFL,
+so install it first:
+
+```console
+pip install git+https://github.com/FEniCS/ufl.git
 ```

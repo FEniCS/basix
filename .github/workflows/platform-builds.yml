@@ -82,6 +82,10 @@ jobs:
       - name: Upgrade pip
         run: python3 -m pip install pip --upgrade
       - uses: actions/checkout@v7
+      - name: Load environment variables
+        run: cat .github/workflows/fenicsx-refs.env >> "$GITHUB_ENV"
+      - name: Install UFL
+        run: python3 -m pip -v install git+https://github.com/${{ env.ufl_repository }}.git@${{ env.ufl_ref }}
       - name: Install Basix
         run: python3 -m pip install -Ccmake.build-type="Developer" --group test .
       - name: Run tests
@@ -101,6 +105,10 @@ jobs:
           python-version: "3.13"
       - name: Install dependencies (non-Python)
         run: brew install ninja
+      - name: Load environment variables
+        run: cat .github/workflows/fenicsx-refs.env >> "$GITHUB_ENV"
+      - name: Install UFL
+        run: pip -v install git+https://github.com/${{ env.ufl_repository }}.git@${{ env.ufl_ref }}
       - name: Install Basix
         run: pip -v install -Ccmake.build-type="Developer" --group test .
       - name: Run tests

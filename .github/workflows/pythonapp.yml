@@ -6,6 +6,8 @@ name: Basix CI
 
 on:
   push:
+    branches:
+      - main
     tags:
       - "v*"
   pull_request:
@@ -90,6 +92,8 @@ jobs:
           cd doc/cpp
           doxygen
       - name: Build Python documentation
+        env:
+          DOCS_VERSION: ${{ github.ref_name }}
         run: |
           export BASIX_VERSION=`python3 -c "import basix; print(basix.__version__)"`
           cd doc/python
@@ -111,10 +115,6 @@ jobs:
           retention-days: 2
           if-no-files-found: error
 
-      - name: Set version name
-        if: ${{ github.repository == 'FEniCS/basix' && ( github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/') ) && matrix.python-version == '3.13' }}
-        run: |
-          echo "VERSION_NAME=${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
       - name: Checkout FEniCS/docs
         if: ${{ github.repository == 'FEniCS/basix' && ( github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/') ) && matrix.python-version == '3.13' }}
         uses: actions/checkout@v7
@@ -126,10 +126,10 @@ jobs:
         if: ${{ github.repository == 'FEniCS/basix' && ( github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/') ) && matrix.python-version == '3.13' }}
         run: |
           cd docs
-          git rm -r --ignore-unmatch basix/${{ env.VERSION_NAME }}
-          mkdir -p basix/${{ env.VERSION_NAME }}
-          cp -r ../doc/cpp/html basix/${{ env.VERSION_NAME }}/cpp
-          cp -r ../doc/python/build/html basix/${{ env.VERSION_NAME }}/python
+          git rm -r --ignore-unmatch basix/${{ github.ref_name }}
+          mkdir -p basix/${{ github.ref_name }}
+          cp -r ../doc/cpp/html basix/${{ github.ref_name }}/cpp
+          cp -r ../doc/python/build/html basix/${{ github.ref_name }}/python
       - name: Commit and push documentation to FEniCS/docs
         if: ${{ github.repository == 'FEniCS/basix' && ( github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/') ) && matrix.python-version == '3.13' }}
         run: |
@@ -178,6 +178,10 @@ jobs:
           cmake -DCMAKE_BUILD_TYPE=Developer -B build-dir -S . # Use make (not ninja)
           cmake --build build-dir
           sudo cmake --install build-dir
+      - name: Load environment variables
+        run: cat .github/workflows/fenicsx-refs.env >> "$GITHUB_ENV"
+      - name: Install UFL
+        run: pip -v install git+https://github.com/${{ env.ufl_repository }}.git@${{ env.ufl_ref }}
       - name: Install Basix Python wrapper
         run: |
           cd python

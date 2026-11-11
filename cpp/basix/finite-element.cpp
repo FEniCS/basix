@@ -195,6 +195,17 @@ void combine_hashes(std::size_t& a, std::size_t b)
   a ^= b + 0x9e3779b9 + (a << 6) + (a >> 2);
 }
 //-----------------------------------------------------------------------------
+template <std::floating_point F, std::size_t N>
+void combine_array_hash(
+    std::size_t& h,
+    const std::pair<std::vector<F>, std::array<std::size_t, N>>& a)
+{
+  for (std::size_t n : a.second)
+    combine_hashes(h, std::hash<std::size_t>{}(n));
+  for (F v : a.first)
+    combine_hashes(h, std::hash<F>{}(v));
+}
+//-----------------------------------------------------------------------------
 } // namespace
 //-----------------------------------------------------------------------------
 template <std::floating_point T>
@@ -1177,6 +1188,31 @@ FiniteElement<F>::FiniteElement(
         "Number of entity dofs does not match total number of dofs");
   }
 
+  // The DOF transformations are computed once per sub-entity type, from a
+  // single representative sub-entity, and then applied to every
+  // sub-entity of that type. All sub-entities of a given type must
+  // therefore carry the same number of DOFs. An element that violates
+  // this, e.g. an anisotropic tensor-product element on a hexahedron, would
+  // have different transformations on entities of the same dimension - this is
+  // not currently supported.
+  for (std::size_t d = 0; d <= _cell_tdim; ++d)
+  {
+    std::map<cell::type, std::size_t> ndofs;
+    for (std::size_t e = 0; e < M[d].size(); ++e)
+    {
+      auto [it, inserted]
+          = ndofs.try_emplace(_cell_subentity_types[d][e], M[d][e].extent(0));
+      if (!inserted and it->second != M[d][e].extent(0))
+      {
+        throw std::runtime_error(
+            "All sub-entities of the same type must have the same number of "
+            "DOFs, but sub-entities of dimension "
+            + std::to_string(d) + " have " + std::to_string(it->second)
+            + " and " + std::to_string(M[d][e].extent(0)) + " DOFs.");
+      }
+    }
+  }
+
   _entity_transformations = doftransforms::compute_entity_transformations(
       cell_type, x, M,
       mdspan_t<const F, 2>(_coeffs.first.data(), _coeffs.second),
@@ -1615,6 +1651,9 @@ FiniteElement<F>::FiniteElement(
         auto& trans2 = _eperm.at(cell::type::triangle);
         auto& trans3 = _eperm_inv.at(cell::type::triangle);
 
+        // Each edge of the sub-entity carries the same number of DOFs
+        // (checked in the constructor), so a single test covers every
+        // edge used below.
         if (!dofs[1][0].empty())
         {
           precompute::apply_permutation(trans1, std::span(rot), dofs[1][0][0]);
@@ -1721,6 +1760,9 @@ FiniteElement<F>::FiniteElement(
         auto& trans2 = _eperm.at(cell::type::quadrilateral);
         auto& trans3 = _eperm_inv.at(cell::type::quadrilateral);
 
+        // Each edge of the sub-entity carries the same number of DOFs
+        // (checked in the constructor), so a single test covers every
+        // edge used below.
         if (!dofs[1][0].empty())
         {
           precompute::apply_permutation(trans1, std::span(rot), dofs[1][1][0]);
@@ -1786,22 +1828,13 @@ bool FiniteElement<F>::operator==(const FiniteElement& e) const
   else if (family() == element::family::custom
            and e.family() == element::family::custom)
   {
-    bool coeff_equal = false;
-    if (_coeffs.first.size() == e.coefficient_matrix().first.size()
-        and _coeffs.second == e.coefficient_matrix().second
-        and std::ranges::equal(_coeffs.first, e.coefficient_matrix().first,
-                               [](auto x, auto y)
-                               { return std::abs(x - y) < 1.0e-10; }))
-    {
-      coeff_equal = true;
-    }
-
     return cell_type() == e.cell_type() and discontinuous() == e.discontinuous()
            and map_type() == e.map_type()
            and sobolev_space() == e.sobolev_space()
            and value_shape() == e.value_shape()
            and embedded_superdegree() == e.embedded_superdegree()
-           and embedded_subdegree() == e.embedded_subdegree() and coeff_equal
+           and embedded_subdegree() == e.embedded_subdegree()
+           and _wcoeffs == e._wcoeffs and _x == e._x and _M == e._M
            and entity_dofs() == e.entity_dofs()
            and dof_ordering() == e.dof_ordering()
            and polyset_type() == e.polyset_type();
@@ -1820,42 +1853,42 @@ bool FiniteElement<F>::operator==(const FiniteElement& e) const
 template <std::floating_point F>
 std::size_t FiniteElement<F>::hash() const
 {
-  std::size_t dof_ordering_hash = 0;
-  for (std::size_t i = 0; i < dof_ordering().size(); ++i)
-  {
-    if (dof_ordering()[i] != static_cast<int>(i))
-    {
-      combine_hashes(dof_ordering_hash,
-                     std::hash<int>{}(dof_ordering()[i] - i));
-    }
-  }
-
   std::size_t h = std::hash<int>{}(static_cast<int>(family()));
-  combine_hashes(h, dof_ordering_hash);
-  combine_hashes(h, dof_ordering_hash);
   combine_hashes(h, std::hash<int>{}(static_cast<int>(cell_type())));
+  combine_hashes(h, std::hash<bool>{}(discontinuous()));
   combine_hashes(h, std::hash<int>{}(static_cast<int>(lagrange_variant())));
   combine_hashes(h, std::hash<int>{}(static_cast<int>(dpc_variant())));
   combine_hashes(h, std::hash<int>{}(static_cast<int>(sobolev_space())));
   combine_hashes(h, std::hash<int>{}(static_cast<int>(map_type())));
 
+  // An identity ordering hashes as no ordering. Otherwise hash every entry
+  // in turn, so the position of each entry counts.
+  const std::vector<int>& ordering = dof_ordering();
+  bool identity = true;
+  for (std::size_t i = 0; i < ordering.size(); ++i)
+    identity = identity and ordering[i] == static_cast<int>(i);
+  if (!identity)
+  {
+    for (int d : ordering)
+      combine_hashes(h, std::hash<int>{}(d));
+  }
+
   if (family() == element::family::custom)
   {
-    std::size_t coeff_hash = 0;
-    for (auto i : _coeffs.first)
-    {
-      // This takes five decimal places of each matrix entry. We should revisit
-      // this
-      combine_hashes(coeff_hash, int(i * 100000));
-    }
-    std::size_t vs_hash = 0;
-    for (std::size_t i = 0; i < value_shape().size(); ++i)
-      combine_hashes(vs_hash, std::hash<int>{}(value_shape()[i]));
-    combine_hashes(h, coeff_hash);
+    for (std::size_t n : value_shape())
+      combine_hashes(h, std::hash<std::size_t>{}(n));
     combine_hashes(h, std::hash<int>{}(embedded_superdegree()));
     combine_hashes(h, std::hash<int>{}(embedded_subdegree()));
     combine_hashes(h, std::hash<int>{}(static_cast<int>(polyset_type())));
-    combine_hashes(h, vs_hash);
+
+    // Hash the defining data exactly, as operator== compares it
+    combine_array_hash(h, _wcoeffs);
+    for (const auto& x_d : _x)
+      for (const auto& x : x_d)
+        combine_array_hash(h, x);
+    for (const auto& M_d : _M)
+      for (const auto& M : M_d)
+        combine_array_hash(h, M);
   }
   else
     combine_hashes(h, std::hash<int>{}(degree()));

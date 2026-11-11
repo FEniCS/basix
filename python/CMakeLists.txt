@@ -168,43 +168,65 @@ elseif(BASIX_SET_INSTALL_RPATH)
   set_target_properties(_basixcpp PROPERTIES INSTALL_RPATH ${_basix_dir})
 endif()
 
-# Generate nanobind type stubs (.pyi). On UNIX-like systems the freshly
-# built module can be imported directly from the build tree (rpath
-# resolves its dependencies), so stubs are generated at build time. On
-# Windows, _basixcpp cannot be imported until it is installed next to
-# its dependent DLLs, so stub generation is deferred to install time -
-# nanobind installs the .pyi automatically in that mode.
+# Generate nanobind type stubs (.pyi). On Windows the module can only be
+# imported once its dependent DLLs sit beside it, so stubs are generated at
+# install time. The DLLs are installed for that step only and removed after,
+# leaving delvewheel to vendor them.
 if(WIN32)
-  # This *must* be called prior to nanobind_add_stub
   install(TARGETS _basixcpp LIBRARY DESTINATION basix)
 
-  # DEPENDS is redundant in INSTALL_TIME mode - _basixcpp must be installed.
+  install(CODE "set(_basix_installed_before \${CMAKE_INSTALL_MANIFEST_FILES})")
+  if(TARGET basix)
+    set(_basix_dll_set dependencies)
+  else()
+    set(_basix_dll_set basix_stub_dependencies)
+    install(
+      IMPORTED_RUNTIME_ARTIFACTS Basix::basix
+      RUNTIME_DEPENDENCY_SET ${_basix_dll_set}
+      RUNTIME DESTINATION basix
+    )
+  endif()
+  install(
+    RUNTIME_DEPENDENCY_SET ${_basix_dll_set} DESTINATION basix
+    PRE_EXCLUDE_REGEXES [[api-ms-win-.*]] [[ext-ms-.*]]
+    POST_EXCLUDE_REGEXES [[.*(\\|/)system32(\\|/).*\.dll]]
+  )
   nanobind_add_stub(
-      _basixcpp_stub
-      MODULE basix._basixcpp
-      INSTALL_TIME
-      VERBOSE
-      OUTPUT
-        basix/_basixcpp.pyi
+    _basixcpp_stub
+    MODULE basix._basixcpp
+    INSTALL_TIME
+    VERBOSE
+    MARKER_FILE basix/py.typed
+    OUTPUT
+      basix/_basixcpp.pyi
+  )
+
+  install(
+    CODE
+      "
+    set(_basix_stub_dlls \${CMAKE_INSTALL_MANIFEST_FILES})
+    list(REMOVE_ITEM _basix_stub_dlls \${_basix_installed_before})
+    list(FILTER _basix_stub_dlls INCLUDE REGEX \\.dll\$)
+    file(REMOVE \${_basix_stub_dlls})
+  "
   )
 else()
   nanobind_add_stub(
-      _basixcpp_stub
-      MODULE _basixcpp
-      PYTHON_PATH $<TARGET_FILE_DIR:_basixcpp>
-      DEPENDS _basixcpp
-      VERBOSE
-      OUTPUT
-        _basixcpp.pyi
+    _basixcpp_stub
+    MODULE _basixcpp
+    PYTHON_PATH $<TARGET_FILE_DIR:_basixcpp>
+    DEPENDS _basixcpp
+    VERBOSE
+    MARKER_FILE py.typed
+    OUTPUT
+      _basixcpp.pyi
   )
 
   install(TARGETS _basixcpp LIBRARY DESTINATION basix)
-  install(FILES ${CMAKE_CURRENT_BINARY_DIR}/_basixcpp.pyi DESTINATION basix)
+  install(
+    FILES
+      ${CMAKE_CURRENT_BINARY_DIR}/_basixcpp.pyi
+      ${CMAKE_CURRENT_BINARY_DIR}/py.typed
+    DESTINATION basix
+  )
 endif()
-
-# py.typed (PEP 561 marker) is not a tracked source file - write it
-# directly at install time on both platforms rather than relying on
-# nanobind's MARKER_FILE option, which requires importing the freshly
-# built module (unreliable on Windows, see above) and would otherwise
-# write a build artifact into the source tree on UNIX.
-install(CODE "file(WRITE \"\${CMAKE_INSTALL_PREFIX}/basix/py.typed\" \"\")")

@@ -14,7 +14,7 @@ from .utils import cached_create_lattice
     "lattice_type, simplex_method",
     [
         (basix.LatticeType.equispaced, basix.LatticeSimplexMethod.none),
-        # (basix.LatticeType.gll, basix.LatticeSimplexMethod.warp),
+        (basix.LatticeType.gll, basix.LatticeSimplexMethod.warp),
     ],
 )
 @pytest.mark.parametrize("n", [1, 2, 4, 8])

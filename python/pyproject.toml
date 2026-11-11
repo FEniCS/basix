@@ -2,6 +2,12 @@
 requires = ["scikit-build-core[pyproject]>=0.11", "nanobind>=2.5.0"]
 build-backend = "scikit_build_core.build"
 
+[external]
+# PEP 725 (draft). CMake checks that the compiler supports C++20.
+build-requires = ["dep:generic/cmake@>=3.21", "dep:virtual/compiler/cxx"]
+# The Python-only build links against an installed Basix C++ library.
+host-requires = ["dep:github/fenics/basix"]
+
 [project]
 name = "fenics-basix"
 version = "0.12.0.dev0"
@@ -23,7 +29,7 @@ documentation = "https://docs.fenicsproject.org"
 
 [project.optional-dependencies]
 # llvmlite (numba) is not built for x86_64 on macOS or arm64 on Windows.
-optional = ["numba; (sys_platform != 'darwin' or platform_machine != 'x86_64') and (sys_platform != 'win32' or platform_machine != 'ARM64')", "fenics-ufl@git+https://github.com/fenics/ufl"]
+optional = ["numba; (sys_platform != 'darwin' or platform_machine != 'x86_64') and (sys_platform != 'win32' or platform_machine != 'ARM64')", "fenics-ufl>=2026.3.0.dev0"]
 
 [dependency-groups]
 # Keep in sync with [build-system].requires above.

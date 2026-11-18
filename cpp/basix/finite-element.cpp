@@ -25,10 +25,12 @@
 #include <concepts>
 #include <cstddef>
 #include <functional>
+#include <iterator>
 #include <limits>
 #include <map>
 #include <numeric>
 #include <optional>
+#include <ranges>
 #include <span>
 #include <stdexcept>
 #include <string>
@@ -204,6 +206,43 @@ void combine_array_hash(
     combine_hashes(h, std::hash<std::size_t>{}(n));
   for (F v : a.first)
     combine_hashes(h, std::hash<F>{}(v));
+}
+//-----------------------------------------------------------------------------
+/// @brief Permutation that a square matrix represents.
+///
+/// Each row must have its largest entry within `tol` of 1, its smallest
+/// within `tol` of 0 and its sum within `tol` of 1, and the columns of
+/// the largest entries must be distinct.
+///
+/// @param[in] A Square matrix.
+/// @param[in] tol Tolerance.
+/// @return `p` with `A(i, p[i])` close to 1 and all other entries
+/// close to 0, or `std::nullopt` if `A` is not a permutation matrix.
+template <std::floating_point F>
+std::optional<std::vector<std::size_t>> to_permutation(mdspan_t<const F, 2> A,
+                                                       F tol)
+{
+  const std::size_t n = A.extent(1);
+  std::vector<std::size_t> perm(A.extent(0));
+  std::vector<bool> used(n, false);
+  for (std::size_t row = 0; row < A.extent(0); ++row)
+  {
+    std::span<const F> r(A.data_handle() + row * n, n);
+    const auto [rmin, rmax] = std::ranges::minmax_element(r);
+    if ((n != 1 and std::abs(*rmin) > tol) or std::abs(*rmax - 1) > tol
+        or std::abs(std::reduce(r.begin(), r.end()) - 1) > tol)
+    {
+      return std::nullopt;
+    }
+
+    const std::size_t col = std::distance(r.begin(), rmax);
+    if (used[col])
+      return std::nullopt;
+    used[col] = true;
+    perm[row] = col;
+  }
+
+  return perm;
 }
 //-----------------------------------------------------------------------------
 } // namespace
@@ -1348,38 +1387,33 @@ FiniteElement<F>::FiniteElement(
   }
 
   // Check if base transformations are all permutations
+  const F tol = 10 * degree * degree * std::numeric_limits<F>::epsilon();
+  std::map<cell::type, std::vector<std::vector<std::size_t>>> perms;
   _dof_transformations_are_permutations = true;
   _dof_transformations_are_identity = true;
   for (const auto& [ctype, trans_data] : _entity_transformations)
   {
-    mdspan_t<const F, 3> trans(trans_data.first.data(), trans_data.second);
-    for (std::size_t i = 0;
-         _dof_transformations_are_permutations and i < trans.extent(0); ++i)
+    const std::size_t num_trans = trans_data.second[0];
+    const std::size_t dim = trans_data.second[1];
+    assert(dim == trans_data.second[2]);
+    for (std::size_t i = 0; i < num_trans; ++i)
     {
-      for (std::size_t row = 0; row < trans.extent(1); ++row)
+      std::optional<std::vector<std::size_t>> perm = to_permutation(
+          mdspan_t<const F, 2>(trans_data.first.data() + i * dim * dim, dim,
+                               dim),
+          tol);
+      if (!perm)
       {
-        F rmin(0), rmax(0), rtot(0);
-        for (std::size_t k = 0; k < trans.extent(2); ++k)
-        {
-          F r = trans(i, row, k);
-          rmin = std::min(r, rmin);
-          rmax = std::max(r, rmax);
-          rtot += r;
-        }
-
-        const F eps = 10 * degree * degree * std::numeric_limits<F>::epsilon();
-        if ((trans.extent(2) != 1 and std::abs(rmin) > eps)
-            or std::abs(rmax - 1.0) > eps or std::abs(rtot - 1.0) > eps)
-        {
-          _dof_transformations_are_permutations = false;
-          _dof_transformations_are_identity = false;
-          break;
-        }
-
-        if (std::abs(trans(i, row, row) - 1) > eps)
-          _dof_transformations_are_identity = false;
+        _dof_transformations_are_permutations = false;
+        _dof_transformations_are_identity = false;
+        break;
       }
+
+      if (!std::ranges::equal(*perm, std::views::iota(std::size_t(0), dim)))
+        _dof_transformations_are_identity = false;
+      perms[ctype].push_back(std::move(*perm));
     }
+
     if (!_dof_transformations_are_permutations)
       break;
   }
@@ -1389,25 +1423,13 @@ FiniteElement<F>::FiniteElement(
     // If transformations are permutations, then create the permutations
     if (_dof_transformations_are_permutations)
     {
-      for (const auto& [ctype, trans_data] : _entity_transformations)
+      for (auto& [ctype, cperms] : perms)
       {
-        mdspan_t<const F, 3> trans(trans_data.first.data(), trans_data.second);
-        for (std::size_t i = 0; i < trans.extent(0); ++i)
+        for (std::vector<std::size_t>& perm : cperms)
         {
-          std::vector<std::size_t> perm(trans.extent(1));
-          std::vector<std::size_t> inv_perm(trans.extent(1));
-          for (std::size_t row = 0; row < trans.extent(1); ++row)
-          {
-            for (std::size_t col = 0; col < trans.extent(1); ++col)
-            {
-              if (trans(i, row, col) > 0.5)
-              {
-                perm[row] = col;
-                inv_perm[col] = row;
-                break;
-              }
-            }
-          }
+          std::vector<std::size_t> inv_perm(perm.size());
+          for (std::size_t row = 0; row < perm.size(); ++row)
+            inv_perm[perm[row]] = row;
 
           // Factorise the permutations
           precompute::prepare_permutation(perm);

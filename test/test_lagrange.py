@@ -972,6 +972,43 @@ def test_lagrange_transform(celltype, dtype):
         assert e.dof_transformations_are_permutations
 
 
+@pytest.mark.parametrize(
+    "celltype,degree",
+    [
+        (basix.CellType.triangle, 16),
+        (basix.CellType.quadrilateral, 16),
+        (basix.CellType.tetrahedron, 14),
+        (basix.CellType.hexahedron, 12),
+        (basix.CellType.prism, 12),
+        (basix.CellType.pyramid, 12),
+    ],
+)
+def test_equispaced_transform_is_permutation(celltype, degree):
+    """High-degree equispaced transformations are exact permutations in any dtype.
+
+    Interpolating the mapped basis functions gives transformations that
+    deviate from 0 and 1 by far more than machine epsilon at these
+    degrees.
+    """
+    transformations = []
+    for dtype in [np.float32, np.float64]:
+        e = basix.create_element(
+            basix.ElementFamily.P, celltype, degree, basix.LagrangeVariant.equispaced, dtype=dtype
+        )
+        assert e.dof_transformations_are_permutations
+        t = e.base_transformations()
+        assert np.all((t == 0) | (t == 1))
+        assert np.all(t.sum(axis=1) == 1) and np.all(t.sum(axis=2) == 1)
+
+        # Reversing edge 0 reverses the order of its DOFs
+        dofs = e.entity_dofs[1][0]
+        np.testing.assert_array_equal(t[0][np.ix_(dofs, dofs)], np.eye(len(dofs))[::-1])
+        transformations.append(t)
+
+    t32, t64 = transformations
+    np.testing.assert_array_equal(t32, t64)
+
+
 @pytest.mark.parametrize("degree", [1, 2, 3, 4])
 @pytest.mark.parametrize(
     "celltype",

@@ -41,7 +41,7 @@ def test_if_permutations(cell_type, element_type, degree, element_args):
 )
 @pytest.mark.parametrize("dtype", [np.float32, np.float64])
 def test_high_degree_not_permutations(family, args, dtype):
-    """Transformations with entries close to 0 and 1 are not permutations."""
+    """High-degree transformations that are not permutations are detected."""
     e = basix.create_element(family, basix.CellType.tetrahedron, 10, *args, dtype=dtype)
     assert not e.dof_transformations_are_permutations
 

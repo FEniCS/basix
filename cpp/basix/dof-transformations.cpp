@@ -9,11 +9,16 @@
 #include <algorithm>
 #include <array>
 #include <cassert>
+#include <cmath>
 #include <concepts>
 #include <cstddef>
 #include <functional>
 #include <iterator>
+#include <limits>
 #include <map>
+#include <numeric>
+#include <optional>
+#include <ranges>
 #include <span>
 #include <stdexcept>
 #include <tuple>
@@ -369,6 +374,113 @@ mapinfo_t<T> get_mapinfo(cell::type cell_type)
   }
 }
 //-----------------------------------------------------------------------------
+/// @brief Transformation of point-evaluation DOFs, computed from the
+/// points.
+///
+/// If each DOF evaluates one value component at one point, and the map
+/// takes the point of each DOF onto the point of a DOF with the same
+/// component and weight, the transformation is that permutation of the
+/// DOFs. It is exact, unlike the result of interpolating the mapped
+/// basis functions, whose rounding errors grow with the degree.
+///
+/// @note Returns `std::nullopt` for DOFs that are not single point
+/// evaluations, e.g. integral moments or derivatives, and when a mapped
+/// point matches no point of the entity. The caller then interpolates
+/// the mapped basis functions.
+///
+/// @param[in] pts Points of the entity, shape `(npoints, tdim)`.
+/// @param[in] imat Interpolation matrix of the entity, shape `(ndofs,
+/// value_size, npoints, nderivs)`.
+/// @param[in] map_point Map of a point under the entity transformation.
+/// @return The transformation (row-major, shape `(ndofs, ndofs)`), or
+/// `std::nullopt`.
+template <std::floating_point T>
+std::optional<std::vector<T>> point_evaluation_transformation(
+    mdspan_t<const T, 2> pts, mdspan_t<const T, 4> imat,
+    const std::function<std::array<T, 3>(std::span<const T>)>& map_point)
+{
+  // Component, point and weight of each DOF
+  const std::size_t ndofs = imat.extent(0);
+  std::vector<std::tuple<std::size_t, std::size_t, T>> dofs;
+  dofs.reserve(ndofs);
+  for (std::size_t i = 0; i < ndofs; ++i)
+  {
+    std::optional<std::tuple<std::size_t, std::size_t, T>> dof;
+    for (std::size_t c = 0; c < imat.extent(1); ++c)
+    {
+      for (std::size_t p = 0; p < imat.extent(2); ++p)
+      {
+        for (std::size_t d = 0; d < imat.extent(3); ++d)
+        {
+          if (const T w = imat(i, c, p, d); w != 0)
+          {
+            if (dof or d != 0)
+              return std::nullopt;
+            dof = {c, p, w};
+          }
+        }
+      }
+    }
+
+    if (!dof)
+      return std::nullopt;
+    dofs.push_back(*dof);
+  }
+
+  // Points and weights are computed directly, so their rounding errors
+  // are O(eps) relative to their magnitude at any degree, while distinct
+  // points are O(1/degree^2) apart
+  const T tol = 100 * std::numeric_limits<T>::epsilon();
+  auto close = [tol](T a, T b)
+  {
+    return std::abs(a - b) <= tol * std::max({T(1), std::abs(a), std::abs(b)});
+  };
+
+  // DOFs sorted by the first coordinate of their points, so that a
+  // mapped point is compared with the DOFs in a narrow window only
+  const std::size_t tdim = pts.extent(1);
+  auto first_coord
+      = [&pts, &dofs](std::size_t j) { return pts(std::get<1>(dofs[j]), 0); };
+  std::vector<std::size_t> sorted(ndofs);
+  std::iota(sorted.begin(), sorted.end(), 0);
+  std::ranges::sort(sorted, {}, first_coord);
+
+  // Basis function match[i] evaluated at the mapped point of DOF i is 1
+  std::vector<std::size_t> match(ndofs);
+  std::vector<bool> matched(ndofs, false);
+  for (std::size_t i = 0; i < ndofs; ++i)
+  {
+    const std::size_t ci = std::get<0>(dofs[i]);
+    const T wi = std::get<2>(dofs[i]);
+    const std::array<T, 3> q = map_point(
+        std::span(pts.data_handle() + std::get<1>(dofs[i]) * tdim, tdim));
+    const T margin = tol * std::max(T(1), std::abs(q[0]));
+    auto window = std::ranges::subrange(
+        std::ranges::lower_bound(sorted, q[0] - margin, {}, first_coord),
+        std::ranges::upper_bound(sorted, q[0] + margin, {}, first_coord));
+    auto it = std::ranges::find_if(
+        window,
+        [&dofs, &matched, &pts, &q, &close, ci, wi, tdim](std::size_t j)
+        {
+          const auto [cj, pj, wj] = dofs[j];
+          return !matched[j] and cj == ci and close(wj, wi)
+                 and std::ranges::all_of(std::views::iota(std::size_t(0), tdim),
+                                         [&pts, &q, &close, pj](std::size_t k)
+                                         { return close(pts(pj, k), q[k]); });
+        });
+    if (it == window.end())
+      return std::nullopt;
+
+    matched[*it] = true;
+    match[i] = *it;
+  }
+
+  std::vector<T> transform(ndofs * ndofs, 0);
+  for (std::size_t i = 0; i < ndofs; ++i)
+    transform[match[i] * ndofs + i] = 1;
+  return transform;
+}
+//-----------------------------------------------------------------------------
 template <std::floating_point T>
 std::pair<std::vector<T>, std::array<std::size_t, 2>> compute_transformation(
     cell::type cell_type, std::array<std::vector<mdspan_t<const T, 2>>, 4> x,
@@ -386,6 +498,15 @@ std::pair<std::vector<T>, std::array<std::size_t, 2>> compute_transformation(
   mdspan_t<const T, 4> imat = M[tdim][entity];
 
   const std::size_t ndofs = imat.extent(0);
+  if (map_type == maps::type::identity)
+  {
+    if (std::optional<std::vector<T>> transform
+        = point_evaluation_transformation(pts, imat, map_point))
+    {
+      return {std::move(*transform), {ndofs, ndofs}};
+    }
+  }
+
   const std::size_t npts = pts.extent(0);
   const int psize = polyset::dim(cell_type, ptype, degree);
 

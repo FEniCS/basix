@@ -1005,7 +1005,8 @@ def test_equispaced_transform_is_permutation(celltype, degree):
         np.testing.assert_array_equal(t[0][np.ix_(dofs, dofs)], np.eye(len(dofs))[::-1])
         transformations.append(t)
 
-    np.testing.assert_array_equal(*transformations)
+    t32, t64 = transformations
+    np.testing.assert_array_equal(t32, t64)
 
 
 @pytest.mark.parametrize("degree", [1, 2, 3, 4])

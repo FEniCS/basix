@@ -28,6 +28,24 @@ def test_if_permutations(cell_type, element_type, degree, element_args):
     assert e.dof_transformations_are_permutations
 
 
+@pytest.mark.parametrize(
+    "family,args",
+    [
+        (basix.ElementFamily.N1E, (basix.LagrangeVariant.legendre,)),
+        (basix.ElementFamily.RT, (basix.LagrangeVariant.legendre,)),
+        (basix.ElementFamily.N2E, (basix.LagrangeVariant.legendre, basix.DPCVariant.legendre)),
+        (basix.ElementFamily.BDM, (basix.LagrangeVariant.legendre, basix.DPCVariant.legendre)),
+        (basix.ElementFamily.Regge, ()),
+        (basix.ElementFamily.HHJ, ()),
+    ],
+)
+@pytest.mark.parametrize("dtype", [np.float32, np.float64])
+def test_high_degree_not_permutations(family, args, dtype):
+    """Transformations with entries close to 0 and 1 are not permutations."""
+    e = basix.create_element(family, basix.CellType.tetrahedron, 10, *args, dtype=dtype)
+    assert not e.dof_transformations_are_permutations
+
+
 @parametrize_over_elements(3)
 def test_if_identity(cell_type, element_type, degree, element_args):
     e = cached_create_element(element_type, cell_type, degree, tuple(element_args))

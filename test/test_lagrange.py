@@ -972,6 +972,28 @@ def test_lagrange_transform(celltype, dtype):
         assert e.dof_transformations_are_permutations
 
 
+@pytest.mark.parametrize(
+    "celltype,degree",
+    [
+        (basix.CellType.tetrahedron, 12),
+        (basix.CellType.hexahedron, 11),
+        (basix.CellType.prism, 10),
+        (basix.CellType.pyramid, 10),
+    ],
+)
+@pytest.mark.parametrize("dtype", [np.float32, np.float64])
+def test_equispaced_transform_is_permutation(celltype, degree, dtype):
+    """Rounding errors must not hide that the transformations permute.
+
+    The base transformations of high-degree equispaced elements deviate
+    from 0 and 1 by far more than machine epsilon.
+    """
+    e = basix.create_element(
+        basix.ElementFamily.P, celltype, degree, basix.LagrangeVariant.equispaced, dtype=dtype
+    )
+    assert e.dof_transformations_are_permutations
+
+
 @pytest.mark.parametrize("degree", [1, 2, 3, 4])
 @pytest.mark.parametrize(
     "celltype",

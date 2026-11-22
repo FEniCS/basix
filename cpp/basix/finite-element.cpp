@@ -386,30 +386,21 @@ basix::tp_factors(element::family family, cell::type cell, int degree,
     return std::nullopt;
   }
 
-  switch (family)
+  if (family != element::family::P)
+    return std::nullopt;
+
+  FiniteElement<T> sub_element
+      = create_element<T>(element::family::P, cell::type::interval, degree,
+                          lvariant, dvariant, true);
+  switch (cell)
   {
-  case element::family::P:
-  {
-    FiniteElement<T> sub_element
-        = create_element<T>(element::family::P, cell::type::interval, degree,
-                            lvariant, dvariant, true);
-    switch (cell)
-    {
-    case cell::type::quadrilateral:
-      return {{{sub_element, sub_element}}};
-    case cell::type::hexahedron:
-      return {{{sub_element, sub_element, sub_element}}};
-    default:
-      return std::nullopt;
-    }
-    break;
-  }
+  case cell::type::quadrilateral:
+    return {{{sub_element, sub_element}}};
+  case cell::type::hexahedron:
+    return {{{sub_element, sub_element, sub_element}}};
   default:
     return std::nullopt;
   }
-  // C++ 23:
-  // std::unreachable()
-  return std::nullopt;
 }
 //-----------------------------------------------------------------------------
 template std::optional<std::vector<std::vector<basix::FiniteElement<float>>>>

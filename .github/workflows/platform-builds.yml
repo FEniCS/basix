@@ -1,8 +1,8 @@
 name: Platform builds
 
 # This workflow builds and tests Basix on additional platforms/toolchains
-# not covered by the main CI: Intel oneAPI compilers/MKL, Red Hat, and
-# macOS.
+# not covered by the main CI: Intel oneAPI compilers/MKL, NVIDIA HPC SDK
+# (nvc++), Red Hat, and macOS.
 
 on:
   push:
@@ -61,6 +61,58 @@ jobs:
       - name: Run tests
         run: |
           pip -v install git+https://github.com/FEniCS/ufl.git
+          pytest -n auto --durations 20 test/
+          pytest demo/python/test.py
+          pytest demo/cpp/test.py
+
+  nvhpc:
+    name: Build and test (NVIDIA HPC SDK)
+    runs-on: ubuntu-26.04
+    container: nvcr.io/nvidia/nvhpc:26.9-devel-cuda13.3-ubuntu24.04
+    env:
+      CC: nvc
+      CXX: nvc++
+      CMAKE_GENERATOR: Ninja
+      DEBIAN_FRONTEND: noninteractive
+    steps:
+      - name: Install dependencies
+        run: |
+          apt-get -y update
+          apt-get -y install catch2 git libopenblas-dev liblapack-dev ninja-build python3-dev python3-venv
+      - uses: actions/checkout@v7
+      - name: Set up Python environment
+        run: |
+          python3 -m venv /opt/venv
+          /opt/venv/bin/pip install --upgrade pip
+          echo "/opt/venv/bin" >> "$GITHUB_PATH"
+      - name: Load environment variables
+        run: cat .github/workflows/fenicsx-refs.env >> "$GITHUB_ENV"
+      - name: Install Basix (C++)
+        run: |
+          cmake -DCMAKE_BUILD_TYPE=Developer -B build-dir -S cpp
+          cmake --build build-dir
+          cmake --install build-dir
+      - name: Run C++ unit tests
+        run: |
+          cmake -DCMAKE_BUILD_TYPE=Developer -B build-dir-test -S cpp/test
+          cmake --build build-dir-test
+          ctest --test-dir build-dir-test --output-on-failure
+      - name: Install UFL
+        run: pip install git+https://github.com/${{ env.ufl_repository }}.git@${{ env.ufl_ref }}
+      # nanobind rejects nvc++ (it cannot identify the C++ ABI), so build
+      # the extension with gcc against the nvc++-built library; both use
+      # the system libstdc++
+      - name: Install Basix (Python)
+        env:
+          CC: gcc
+          CXX: g++
+        run: |
+          cd python
+          pip install --group build
+          pip -v install --no-build-isolation -Ccmake.build-type="Developer" --group test .
+      - name: Run tests
+        run: |
+          pip install pytest-xdist
           pytest -n auto --durations 20 test/
           pytest demo/python/test.py
           pytest demo/cpp/test.py

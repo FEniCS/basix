@@ -131,7 +131,9 @@ moments::make_integral_moments(const FiniteElement<T>& V, cell::type celltype,
   assert(std::accumulate(V.value_shape().begin(), V.value_shape().end(),
                          std::size_t{1}, std::multiplies{})
          == 1);
-  const auto [phib, phishape] = V.tabulate(0, pts);
+  const auto phishape = V.tabulate_shape(0, pts.extent(0));
+  std::vector<T> phib(phishape[0] * phishape[1] * phishape[2] * phishape[3]);
+  V.tabulate(0, pts, mdspan_t<T, 4>(phib.data(), phishape));
   mdspan_t<const T, 4> phi(phib.data(), phishape);
 
   // Pad out \phi moment is against a vector-valued function
@@ -220,7 +222,9 @@ moments::make_dot_integral_moments(const FiniteElement<T>& V,
   assert(std::size_t(cell::topological_dimension(celltype)) == value_size);
 
   // Evaluate moment space at quadrature points
-  const auto [phib, phishape] = V.tabulate(0, pts);
+  const auto phishape = V.tabulate_shape(0, pts.extent(0));
+  std::vector<T> phib(phishape[0] * phishape[1] * phishape[2] * phishape[3]);
+  V.tabulate(0, pts, mdspan_t<T, 4>(phib.data(), phishape));
   mdspan_t<const T, 4> phi(phib.data(), phishape);
   assert(phi.extent(3) == entity_dim);
 
@@ -304,7 +308,9 @@ moments::make_tangent_integral_moments(const FiniteElement<T>& V,
   assert(std::accumulate(V.value_shape().begin(), V.value_shape().end(),
                          std::size_t{1}, std::multiplies{})
          == 1);
-  const auto [phib, phishape] = V.tabulate(0, pts);
+  const auto phishape = V.tabulate_shape(0, pts.extent(0));
+  std::vector<T> phib(phishape[0] * phishape[1] * phishape[2] * phishape[3]);
+  V.tabulate(0, pts, mdspan_t<T, 4>(phib.data(), phishape));
   mdspan_t<const T, 4> phi(phib.data(), phishape);
 
   const std::array<std::size_t, 2> pshape = {pts.extent(0), tdim};
@@ -378,7 +384,9 @@ moments::make_normal_integral_moments(const FiniteElement<T>& V,
   assert(std::accumulate(V.value_shape().begin(), V.value_shape().end(),
                          std::size_t{1}, std::multiplies{})
          == 1);
-  const auto [phib, phishape] = V.tabulate(0, pts);
+  const auto phishape = V.tabulate_shape(0, pts.extent(0));
+  std::vector<T> phib(phishape[0] * phishape[1] * phishape[2] * phishape[3]);
+  V.tabulate(0, pts, mdspan_t<T, 4>(phib.data(), phishape));
   mdspan_t<const T, 4> phi(phib.data(), phishape);
 
   // Storage for coordinates of evaluations points in the reference cell

@@ -166,15 +166,24 @@ set(BASIX_CXX_DEVELOPER_FLAGS "")
 set(BASIX_CXX_DEVELOPER_DEFINITIONS "")
 
 # Add some strict compiler checks
-check_cxx_compiler_flag(
-  "-Wall -Werror -Wextra -pedantic -Wno-comment"
-  HAVE_PEDANTIC
-)
-
+check_cxx_compiler_flag("-Wall -Werror -Wextra -pedantic" HAVE_PEDANTIC)
 if(HAVE_PEDANTIC)
+  list(APPEND BASIX_CXX_DEVELOPER_FLAGS -Wall;-Werror;-Wextra;-pedantic)
+endif()
+
+# Checked separately: nvc++ rejects -Wno-comment, which would otherwise
+# disable all the strict checks above
+check_cxx_compiler_flag(-Wno-comment HAVE_NO_COMMENT)
+if(HAVE_NO_COMMENT)
+  list(APPEND BASIX_CXX_DEVELOPER_FLAGS -Wno-comment)
+endif()
+
+if(CMAKE_CXX_COMPILER_ID STREQUAL "NVHPC")
+  # The vendored mdspan.hpp has a 'using std::dynamic_extent;' inside
+  # namespace std, which nvc++ warns about
   list(
     APPEND BASIX_CXX_DEVELOPER_FLAGS
-    -Wall;-Werror;-Wextra;-pedantic;-Wno-comment
+    --diag_suppress=useless_using_declaration
   )
 endif()
 

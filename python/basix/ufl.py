@@ -716,7 +716,7 @@ class _ComponentElement(_ElementBase):
 
     @property
     def basix_element(self):
-        return self._element
+        return self._element.basix_element
 
 
 class _MixedElement(_ElementBase):

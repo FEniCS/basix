@@ -387,7 +387,7 @@ class _ElementBase(_AbstractFiniteElement):
         return False
 
     @property
-    def basix_element(self):
+    def basix_element(self) -> _basix.finite_element.FiniteElement:
         """Underlying Basix element."""
         raise NotImplementedError()
 
@@ -574,7 +574,7 @@ class _BasixElement(_ElementBase):
         return self._element.has_tensor_product_factorisation
 
     @property
-    def basix_element(self):
+    def basix_element(self) -> _basix.finite_element.FiniteElement:
         return self._element
 
 
@@ -715,8 +715,8 @@ class _ComponentElement(_ElementBase):
         return self._element.embedded_subdegree
 
     @property
-    def basix_element(self):
-        return self._element
+    def basix_element(self) -> _basix.finite_element.FiniteElement:
+        return self._element.basix_element
 
 
 class _MixedElement(_ElementBase):
@@ -1232,7 +1232,7 @@ class _BlockedElement(_ElementBase):
         return self._sub_element.has_custom_quadrature
 
     @property
-    def basix_element(self):
+    def basix_element(self) -> _basix.finite_element.FiniteElement:
         return self._sub_element.basix_element
 
 
@@ -1530,7 +1530,7 @@ class _RealElement(_ElementBase):
         return True
 
     @property
-    def basix_element(self):
+    def basix_element(self) -> _basix.finite_element.FiniteElement:
         return _basix.create_element(
             _basix.ElementFamily.P, self.cell_type, 0, discontinuous=True, dtype=self._dtype
         )

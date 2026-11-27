@@ -57,6 +57,26 @@ std::array<std::vector<T>, 2> make_quadrature(const quadrature::type rule,
 /// @return Quadrature type that will be used by default.
 quadrature::type get_default_rule(cell::type celltype, int m);
 
+/// @brief Get the quadrature type for integral moments in element dual
+/// bases.
+///
+/// Cells sharing a sub-entity see it in different orientations, so
+/// moments on it are only conforming for non-polynomial data if the
+/// rule is invariant under the symmetry group of the sub-entity.
+/// get_default_rule() does not guarantee this.
+///
+/// For the cells that occur as sub-entities (interval, triangle,
+/// quadrilateral) the rule is invariant under the symmetry group of the
+/// cell, except on a triangle for `m > 30`, where no symmetric rule is
+/// available. For other cells, get_default_rule() is returned and the
+/// rule need not be symmetric.
+///
+/// @param[in] celltype Cell type.
+/// @param[in] m Maximum degree of polynomial that this quadrature rule
+/// will integrate exactly.
+/// @return Quadrature type.
+quadrature::type get_symmetric_rule(cell::type celltype, int m);
+
 /// @brief Get Gauss-Lobatto-Legendre (GLL) points on the interval [0,
 /// 1].
 /// @tparam T The floating point type.

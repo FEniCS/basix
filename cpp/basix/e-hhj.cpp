@@ -85,7 +85,8 @@ FiniteElement<T> basix::element::create_hhj(cell::type celltype, int degree,
 
     const std::size_t ndofs = polyset::dim(ct, polyset::type::standard, degree);
     const auto [ptsbuffer, wts] = quadrature::make_quadrature<T>(
-        quadrature::type::Default, ct, polyset::type::standard, 2 * degree);
+        quadrature::get_symmetric_rule(ct, 2 * degree), ct,
+        polyset::type::standard, 2 * degree);
     impl::mdspan_t<const T, 2> pts(ptsbuffer.data(), wts.size(), facet_dim);
 
     FiniteElement<T> moment_space = create_lagrange<T>(
@@ -148,8 +149,8 @@ FiniteElement<T> basix::element::create_hhj(cell::type celltype, int degree,
           = polyset::dim(celltype, polyset::type::standard, degree - 1);
 
       const auto [ptsbuffer, wts] = quadrature::make_quadrature<T>(
-          quadrature::type::Default, celltype, polyset::type::standard,
-          2 * degree - 1);
+          quadrature::get_symmetric_rule(celltype, 2 * degree - 1), celltype,
+          polyset::type::standard, 2 * degree - 1);
       impl::mdspan_t<const T, 2> pts(ptsbuffer.data(), wts.size(), tdim);
 
       // Copy points
@@ -195,9 +196,9 @@ FiniteElement<T> basix::element::create_hhj(cell::type celltype, int degree,
     const std::size_t ndofs1
         = polyset::dim(celltype, polyset::type::standard, degree);
 
-    const auto [ptsbuffer, wts]
-        = quadrature::make_quadrature<T>(quadrature::type::Default, celltype,
-                                         polyset::type::standard, 2 * degree);
+    const auto [ptsbuffer, wts] = quadrature::make_quadrature<T>(
+        quadrature::get_symmetric_rule(celltype, 2 * degree), celltype,
+        polyset::type::standard, 2 * degree);
     impl::mdspan_t<const T, 2> pts(ptsbuffer.data(), wts.size(), tdim);
 
     // Copy points

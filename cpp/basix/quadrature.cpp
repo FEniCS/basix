@@ -4958,6 +4958,16 @@ quadrature::type quadrature::get_default_rule(cell::type celltype, int m)
     return type::gauss_jacobi;
 }
 //-----------------------------------------------------------------------------
+quadrature::type quadrature::get_symmetric_rule(cell::type celltype, int m)
+{
+  // Default degree-3 triangle rule (Gauss-Jacobi, 4 points) is not
+  // symmetric
+  if (celltype == cell::type::triangle and m == 3)
+    return type::strang_fix;
+  else
+    return get_default_rule(celltype, m);
+}
+//-----------------------------------------------------------------------------
 template <std::floating_point T>
 std::array<std::vector<T>, 2> quadrature::gauss_jacobi_rule(T a, int m)
 {

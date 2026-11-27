@@ -3,6 +3,7 @@
 // SPDX-License-Identifier:    MIT
 
 #include <algorithm>
+#include <array>
 #include <basix/cell.h>
 #include <basix/element-families.h>
 #include <basix/finite-element.h>
@@ -14,6 +15,7 @@
 #include <catch2/catch_approx.hpp>
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/generators/catch_generators.hpp>
+#include <cmath>
 #include <cstddef>
 #include <span>
 #include <vector>
@@ -225,4 +227,43 @@ TEST_CASE("Lagrange elements are H1 and embed degree-k polynomials",
   CHECK(!e.discontinuous());
   CHECK(e.embedded_subdegree() == degree);
   CHECK(e.embedded_superdegree() >= degree);
+}
+
+TEST_CASE("Face interpolation points are invariant under the face symmetries",
+          "[finite-element]")
+{
+  // Face 0 of the reference tetrahedron lies on x + y + z = 1, with
+  // barycentric coordinates (x, y, z). Its symmetries permute (x, y, z).
+  auto family = GENERATE(element::family::RT, element::family::N1E,
+                         element::family::N2E, element::family::BDM,
+                         element::family::Regge, element::family::HHJ);
+  auto degree = GENERATE(1, 2, 3, 4);
+  const bool tensor
+      = family == element::family::Regge or family == element::family::HHJ;
+  const bool dpc
+      = family == element::family::N2E or family == element::family::BDM;
+  auto e = create_element<double>(family, cell::type::tetrahedron, degree,
+                                  tensor ? element::lagrange_variant::unset
+                                         : element::lagrange_variant::legendre,
+                                  dpc ? element::dpc_variant::legendre
+                                      : element::dpc_variant::unset,
+                                  false);
+  const auto& [pts, shape] = e.x()[2][0];
+  CAPTURE(static_cast<int>(family), degree);
+  for (std::size_t i = 0; i < shape[0]; ++i)
+  {
+    std::array<double, 3> p{pts[i * 3], pts[i * 3 + 1], pts[i * 3 + 2]};
+    std::ranges::sort(p);
+    do
+    {
+      bool found = false;
+      for (std::size_t j = 0; j < shape[0] and !found; ++j)
+      {
+        found = std::abs(pts[j * 3] - p[0]) + std::abs(pts[j * 3 + 1] - p[1])
+                    + std::abs(pts[j * 3 + 2] - p[2])
+                < 1e-12;
+      }
+      CHECK(found);
+    } while (std::ranges::next_permutation(p).found);
+  }
 }

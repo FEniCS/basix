@@ -121,7 +121,7 @@ moments::make_integral_moments(const FiniteElement<T>& V, cell::type celltype,
 
   // Get the quadrature points and weights
   const auto [_pts, wts] = quadrature::make_quadrature<T>(
-      quadrature::type::Default, sub_celltype,
+      quadrature::get_symmetric_rule(sub_celltype, q_deg), sub_celltype,
       polyset::superset(sub_celltype, V.polyset_type(),
                         polyset::restriction(ptype, celltype, sub_celltype)),
       q_deg);
@@ -210,7 +210,7 @@ moments::make_dot_integral_moments(const FiniteElement<T>& V,
   const std::size_t num_entities = cell::num_sub_entities(celltype, entity_dim);
 
   const auto [_pts, wts] = quadrature::make_quadrature<T>(
-      quadrature::type::Default, sub_celltype,
+      quadrature::get_symmetric_rule(sub_celltype, q_deg), sub_celltype,
       polyset::superset(sub_celltype, V.polyset_type(),
                         polyset::restriction(ptype, celltype, sub_celltype)),
       q_deg);
@@ -294,7 +294,8 @@ moments::make_tangent_integral_moments(const FiniteElement<T>& V,
     throw std::runtime_error("Tangent is only well-defined on an edge.");
 
   const auto [_pts, wts] = quadrature::make_quadrature<T>(
-      quadrature::type::Default, cell::type::interval,
+      quadrature::get_symmetric_rule(cell::type::interval, q_deg),
+      cell::type::interval,
       polyset::superset(sub_celltype, V.polyset_type(),
                         polyset::restriction(ptype, celltype, sub_celltype)),
       q_deg);
@@ -368,7 +369,7 @@ moments::make_normal_integral_moments(const FiniteElement<T>& V,
 
   // Compute quadrature points for evaluating integral
   const auto [_pts, wts] = quadrature::make_quadrature<T>(
-      quadrature::type::Default, sub_celltype,
+      quadrature::get_symmetric_rule(sub_celltype, q_deg), sub_celltype,
       polyset::superset(sub_celltype, V.polyset_type(),
                         polyset::restriction(ptype, celltype, sub_celltype)),
       q_deg);

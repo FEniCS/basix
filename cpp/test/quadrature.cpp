@@ -3,6 +3,7 @@
 // SPDX-License-Identifier:    MIT
 
 #include <algorithm>
+#include <array>
 #include <basix/cell.h>
 #include <basix/polyset.h>
 #include <basix/quadrature.h>
@@ -13,6 +14,7 @@
 #include <cmath>
 #include <cstddef>
 #include <numeric>
+#include <tuple>
 #include <vector>
 
 using namespace basix;
@@ -120,4 +122,52 @@ TEST_CASE("The default quadrature rule agrees with the rule it selects",
     CHECK(p0[i] == Catch::Approx(p1[i]).margin(1e-14));
   for (std::size_t i = 0; i < w0.size(); ++i)
     CHECK(w0[i] == Catch::Approx(w1[i]).margin(1e-14));
+}
+
+TEST_CASE("Symmetric quadrature rules are invariant under the cell symmetries",
+          "[quadrature]")
+{
+  // Each symmetry maps a point (x, y) of the reference cell to a point
+  // of the same cell.
+  using map_t = std::array<double, 2> (*)(double, double);
+  auto [celltype, mmax, maps] = GENERATE(
+      std::tuple{cell::type::interval, 40,
+                 std::vector<map_t>{[](double x, double)
+                                    { return std::array{1 - x, 0.0}; }}},
+      std::tuple{
+          cell::type::triangle, 30,
+          std::vector<map_t>{
+              [](double x, double y) { return std::array{y, x}; },
+              [](double x, double y) { return std::array{1 - x - y, y}; },
+              [](double x, double y) { return std::array{y, 1 - x - y}; }}},
+      std::tuple{cell::type::quadrilateral, 30,
+                 std::vector<map_t>{
+                     [](double x, double y) { return std::array{y, x}; },
+                     [](double x, double y) { return std::array{1 - x, y}; }}});
+
+  const std::size_t tdim = cell::topological_dimension(celltype);
+  for (int m = 0; m <= mmax; ++m)
+  {
+    CAPTURE(m);
+    auto [pts, wts] = quadrature::make_quadrature<double>(
+        quadrature::get_symmetric_rule(celltype, m), celltype,
+        polyset::type::standard, m);
+    for (map_t f : maps)
+    {
+      for (std::size_t i = 0; i < wts.size(); ++i)
+      {
+        const std::array<double, 2> q
+            = f(pts[i * tdim], tdim == 2 ? pts[i * tdim + 1] : 0.0);
+        bool found = false;
+        for (std::size_t j = 0; j < wts.size() and !found; ++j)
+        {
+          double d = 0.0;
+          for (std::size_t k = 0; k < tdim; ++k)
+            d += std::abs(pts[j * tdim + k] - q[k]);
+          found = d < 1e-12 and std::abs(wts[i] - wts[j]) < 1e-12;
+        }
+        CHECK(found);
+      }
+    }
+  }
 }

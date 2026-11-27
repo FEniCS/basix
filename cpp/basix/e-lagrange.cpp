@@ -365,9 +365,9 @@ FiniteElement<T> create_bernstein(cell::type celltype, int degree,
     }
     else
     {
-      const auto [_pts, wts]
-          = quadrature::make_quadrature<T>(quadrature::type::Default, ct[d],
-                                           polyset::type::standard, degree * 2);
+      const auto [_pts, wts] = quadrature::make_quadrature<T>(
+          quadrature::get_symmetric_rule(ct[d], degree * 2), ct[d],
+          polyset::type::standard, degree * 2);
       assert(!wts.empty());
       impl::mdspan_t<const T, 2> pts(_pts.data(), wts.size(),
                                      _pts.size() / wts.size());
